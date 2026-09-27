@@ -16,9 +16,20 @@ class GoodsReceipt extends Model
 {
     use HasUlids;
 
-    public function purchaseOrder(): BelongsTo { return $this->belongsTo(PurchaseOrder::class); }
-    public function supplier(): BelongsTo { return $this->belongsTo(Supplier::class); }
-    public function lines(): HasMany { return $this->hasMany(GoodsReceiptLine::class); }
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function lines(): HasMany
+    {
+        return $this->hasMany(GoodsReceiptLine::class);
+    }
 
     protected function casts(): array
     {

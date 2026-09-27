@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Pharmacy;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Pharmacy\StoreGoodsReceiptRequest;
 use App\Models\GoodsReceipt;
-use App\Models\Medicine;
 use App\Models\PurchaseOrder;
 use Brick\Math\BigDecimal;
 use Illuminate\Http\RedirectResponse;
@@ -31,10 +30,28 @@ class GoodsReceiptController extends Controller
 
         $data = $request->validated();
 
-        $receipt = DB::transaction(function () use ($data, $purchaseOrder, $request): GoodsReceipt {
+        if (! empty($data['idempotency_key'])) {
+            $existing = GoodsReceipt::query()->where('idempotency_key', $data['idempotency_key'])->first();
+            if ($existing) {
+                abort_unless($existing->purchase_order_id === $purchaseOrder->id, 409, 'Idempotency key already belongs to another purchase order.');
+
+                return redirect()->route('pharmacy.purchase-orders.show', $purchaseOrder)
+                    ->with('success', "Goods receipt {$existing->receipt_number} was already captured.");
+            }
+        }
+
+        $receiptLines = collect($data['lines'])
+            ->filter(fn (array $line) => BigDecimal::of((string) $line['received_quantity'])->isGreaterThan(BigDecimal::zero()))
+            ->values();
+
+        if ($receiptLines->isEmpty()) {
+            throw ValidationException::withMessages(['lines' => 'Enter a received quantity for at least one purchase-order line.']);
+        }
+
+        $receipt = DB::transaction(function () use ($data, $receiptLines, $purchaseOrder, $request): GoodsReceipt {
             $orderLines = $purchaseOrder->lines()->with('medicine')->get()->keyBy('id');
 
-            foreach ($data['lines'] as $line) {
+            foreach ($receiptLines as $line) {
                 $orderLine = $orderLines->get($line['purchase_order_line_id']);
                 if (! $orderLine) {
                     throw ValidationException::withMessages(['lines' => 'A receipt line does not belong to this purchase order.']);
@@ -72,7 +89,7 @@ class GoodsReceiptController extends Controller
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            foreach ($data['lines'] as $line) {
+            foreach ($receiptLines as $line) {
                 $orderLine = $orderLines->get($line['purchase_order_line_id']);
                 $receipt->lines()->create([
                     'purchase_order_line_id' => $orderLine->id,

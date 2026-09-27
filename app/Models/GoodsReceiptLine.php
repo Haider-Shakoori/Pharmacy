@@ -16,9 +16,20 @@ class GoodsReceiptLine extends Model
 {
     use HasUlids;
 
-    public function receipt(): BelongsTo { return $this->belongsTo(GoodsReceipt::class, 'goods_receipt_id'); }
-    public function medicine(): BelongsTo { return $this->belongsTo(Medicine::class); }
-    public function orderLine(): BelongsTo { return $this->belongsTo(PurchaseOrderLine::class, 'purchase_order_line_id'); }
+    public function receipt(): BelongsTo
+    {
+        return $this->belongsTo(GoodsReceipt::class, 'goods_receipt_id');
+    }
+
+    public function medicine(): BelongsTo
+    {
+        return $this->belongsTo(Medicine::class);
+    }
+
+    public function orderLine(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderLine::class, 'purchase_order_line_id');
+    }
 
     protected function casts(): array
     {

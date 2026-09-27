@@ -15,8 +15,15 @@ class SupplierPayment extends Model
 {
     use HasUlids;
 
-    public function invoice(): BelongsTo { return $this->belongsTo(PurchaseInvoice::class, 'purchase_invoice_id'); }
-    public function supplier(): BelongsTo { return $this->belongsTo(Supplier::class); }
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseInvoice::class, 'purchase_invoice_id');
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
 
     protected function casts(): array
     {

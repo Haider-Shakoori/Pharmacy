@@ -8,6 +8,7 @@ use App\Models\GoodsReceipt;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseOrder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -40,8 +41,7 @@ class PurchaseInvoiceController extends Controller
         }
 
         $invoice = DB::transaction(function () use ($data, $purchaseOrder, $request): PurchaseInvoice {
-            $dueDate = $data['due_date'] ?? now()
-                ->parse($data['invoice_date'])
+            $dueDate = $data['due_date'] ?? Carbon::parse($data['invoice_date'])
                 ->addDays($purchaseOrder->supplier->payment_terms_days)
                 ->toDateString();
 

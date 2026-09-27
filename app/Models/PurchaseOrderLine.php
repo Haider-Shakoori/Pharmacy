@@ -16,8 +16,15 @@ class PurchaseOrderLine extends Model
 {
     use HasUlids;
 
-    public function purchaseOrder(): BelongsTo { return $this->belongsTo(PurchaseOrder::class); }
-    public function medicine(): BelongsTo { return $this->belongsTo(Medicine::class); }
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function medicine(): BelongsTo
+    {
+        return $this->belongsTo(Medicine::class);
+    }
 
     protected function casts(): array
     {

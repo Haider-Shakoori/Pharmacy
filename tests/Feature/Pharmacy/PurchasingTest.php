@@ -2,11 +2,16 @@
 
 namespace Tests\Feature\Pharmacy;
 
+use App\Models\GoodsReceipt;
+use App\Models\Medicine;
 use App\Models\PurchaseInvoice;
+use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\Access\RbacProvisioner;
 use App\Services\Purchasing\PurchaseTotalsCalculator;
 use App\Services\Purchasing\RecordSupplierPayment;
+use App\Services\Subscriptions\TrialProvisioner;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -20,7 +25,6 @@ class PurchasingTest extends TestCase
     {
         $tenantA = $this->createTenant(['name' => 'A Pharmacy', 'slug' => 'purchase-a']);
         $tenantB = $this->createTenant(['name' => 'B Pharmacy', 'slug' => 'purchase-b']);
-
         app(TenantContext::class)->run($tenantA, fn () => Supplier::query()->create([
             'code' => 'SUP-001',
             'name' => 'Kabul Supplier',
@@ -95,6 +99,93 @@ class PurchasingTest extends TestCase
             $this->assertSame('10.0000', $invoice->paid_total);
             $this->assertSame('90.0000', $invoice->balance_due);
             $this->assertSame('partially_paid', $invoice->status);
+        });
+    }
+
+    public function test_owner_can_approve_po_and_retry_goods_receipt_without_duplicate_stock_source(): void
+    {
+        $tenant = $this->createTenant(['name' => 'Flow Pharmacy', 'slug' => 'flow-pharmacy']);
+        app(TrialProvisioner::class)->provision($tenant);
+        $owner = app(RbacProvisioner::class)->provisionOwner(
+            $tenant,
+            'Owner',
+            'owner@flow.test',
+            'password123',
+        );
+
+        [$supplier, $medicine] = app(TenantContext::class)->run($tenant, function (): array {
+            $supplier = Supplier::query()->create(['code' => 'SUP-FLOW', 'name' => 'Flow Supplier']);
+            $medicine = Medicine::query()->create([
+                'medicine_code' => 'MED-FLOW',
+                'brand_name' => 'Flow Medicine',
+                'purchase_unit' => 'box',
+                'sale_unit' => 'tablet',
+                'units_per_purchase_unit' => 10,
+                'reorder_level' => 5,
+            ]);
+
+            return [$supplier, $medicine];
+        });
+
+        $this->actingAs($owner);
+        $this->onTenantDomain($tenant)->post('/purchase-orders', [
+            'supplier_id' => $supplier->id,
+            'order_date' => now()->toDateString(),
+            'currency' => 'AFN',
+            'lines' => [[
+                'medicine_id' => $medicine->id,
+                'ordered_quantity' => '10',
+                'unit_cost' => '25.5000',
+                'discount_amount' => '5.0000',
+                'landed_cost_allocated' => '10.0000',
+            ]],
+        ])->assertRedirect();
+
+        $order = app(TenantContext::class)->run(
+            $tenant,
+            fn () => PurchaseOrder::query()->with('lines')->firstOrFail(),
+        );
+
+        $this->onTenantDomain($tenant)->post("/purchase-orders/{$order->id}/submit")->assertRedirect();
+        $this->onTenantDomain($tenant)->post("/purchase-orders/{$order->id}/approve")->assertRedirect();
+
+        $order = app(TenantContext::class)->run(
+            $tenant,
+            fn () => PurchaseOrder::query()->with('lines')->findOrFail($order->id),
+        );
+
+        $line = $order->lines->firstOrFail();
+        $payload = [
+            'received_at' => now()->format('Y-m-d H:i:s'),
+            'idempotency_key' => 'grn-flow-key',
+            'lines' => [[
+                'purchase_order_line_id' => $line->id,
+                'received_quantity' => '5',
+                'bonus_quantity' => '1',
+                'batch_number' => 'BATCH-FLOW-01',
+                'manufactured_at' => now()->subMonth()->toDateString(),
+                'expires_at' => now()->addYear()->toDateString(),
+                'unit_cost' => '25.5000',
+                'sale_price' => '35.0000',
+            ]],
+        ];
+
+        $this->onTenantDomain($tenant)
+            ->post("/purchase-orders/{$order->id}/receipts", $payload)
+            ->assertRedirect();
+
+        $this->onTenantDomain($tenant)
+            ->post("/purchase-orders/{$order->id}/receipts", $payload)
+            ->assertRedirect();
+
+        app(TenantContext::class)->run($tenant, function () use ($line): void {
+            $this->assertSame(1, GoodsReceipt::query()->count());
+
+            $receipt = GoodsReceipt::query()->with('lines')->firstOrFail();
+            $this->assertSame('pending_inventory', $receipt->status);
+            $this->assertNull($receipt->inventory_posted_at);
+            $this->assertSame('1.0000', $receipt->lines->firstOrFail()->bonus_quantity);
+            $this->assertSame('0.0000', $line->fresh()->received_quantity);
         });
     }
 }
