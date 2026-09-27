@@ -10,11 +10,10 @@
     </div>
 
     <form method="GET" class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_180px_auto]">
-        <input name="search" value="{{ $search }}" placeholder="Search pharmacy"
-               class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+        <input name="search" value="{{ $search }}" placeholder="Search pharmacy" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
         <select name="status" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
             <option value="">All statuses</option>
-            @foreach (['pending', 'active', 'suspended', 'expired', 'cancelled'] as $option)
+            @foreach (['trial', 'pending', 'active', 'suspended', 'expired', 'cancelled'] as $option)
                 <option value="{{ $option }}" @selected($status === $option)>{{ ucfirst($option) }}</option>
             @endforeach
         </select>
@@ -29,6 +28,7 @@
                         <th class="px-4 py-3 text-start">Pharmacy</th>
                         <th class="px-4 py-3 text-start">Plan</th>
                         <th class="px-4 py-3 text-start">Status</th>
+                        <th class="px-4 py-3 text-start">Health</th>
                         <th class="px-4 py-3 text-start">Period</th>
                         <th class="px-4 py-3 text-end">Action</th>
                     </tr>
@@ -42,17 +42,26 @@
                             </td>
                             <td class="px-4 py-3">{{ $subscription->plan->name }}</td>
                             <td class="px-4 py-3"><span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold">{{ $subscription->status->value }}</span></td>
+                            <td class="px-4 py-3">
+                                <span class="rounded-full px-2.5 py-1 text-xs font-bold {{ $subscription->health_state->isOperational() ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700' }}">
+                                    {{ $subscription->health_state->label() }}
+                                </span>
+                            </td>
                             <td class="px-4 py-3 text-xs text-slate-600">
-                                {{ $subscription->starts_at?->format('Y-m-d') ?? '—' }}
-                                →
-                                {{ $subscription->ends_at?->format('Y-m-d') ?? 'Open' }}
+                                @if ($subscription->status->value === 'trial')
+                                    Trial until {{ $subscription->trial_ends_at?->format('Y-m-d H:i') ?? '—' }}
+                                @else
+                                    {{ $subscription->starts_at?->format('Y-m-d') ?? '—' }}
+                                    →
+                                    {{ $subscription->ends_at?->format('Y-m-d') ?? 'Open' }}
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-end">
                                 <a href="{{ route('platform.subscriptions.edit', $subscription->tenant) }}" class="text-sm font-bold text-teal-700">Manage</a>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-4 py-10 text-center text-slate-500">No subscriptions have been assigned yet.</td></tr>
+                        <tr><td colspan="6" class="px-4 py-10 text-center text-slate-500">No subscriptions have been assigned yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -61,7 +70,5 @@
             <div class="border-t border-slate-100 px-4 py-3">{{ $subscriptions->links() }}</div>
         @endif
     </div>
-
-    <p class="text-xs text-slate-500">To assign a first subscription, open a pharmacy and use its subscription management page. License generation is introduced in Batch 5.</p>
 </div>
 @endsection

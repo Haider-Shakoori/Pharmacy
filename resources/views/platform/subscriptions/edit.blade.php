@@ -10,6 +10,12 @@
         <p class="mt-1 text-sm text-slate-500">{{ $tenant->slug }}</p>
     </div>
 
+    @if ($subscription?->status?->value === 'trial')
+        <div class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+            Trial ends {{ $subscription->trial_ends_at?->format('Y-m-d H:i') }}. Saving this subscription as a paid/non-trial status clears the trial timestamps.
+        </div>
+    @endif
+
     @if ($subscription?->license)
         <section class="rounded-2xl border border-slate-200 bg-white p-5">
             <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -44,7 +50,7 @@
             <label class="block">
                 <span class="text-sm font-semibold">Status</span>
                 <select name="status" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
-                    @foreach (['pending', 'active', 'suspended', 'expired', 'cancelled'] as $option)
+                    @foreach (['trial', 'pending', 'active', 'suspended', 'expired', 'cancelled'] as $option)
                         <option value="{{ $option }}" @selected(old('status', $subscription?->status?->value ?? 'pending') === $option)>{{ ucfirst($option) }}</option>
                     @endforeach
                 </select>
@@ -71,10 +77,6 @@
                 <span class="text-sm font-semibold">Notes</span>
                 <textarea name="notes" rows="3" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">{{ old('notes', $subscription?->notes) }}</textarea>
             </label>
-        </div>
-
-        <div class="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
-            A license key is generated automatically when this pharmacy receives its first subscription. The plaintext key is shown only once.
         </div>
 
         <button class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">Save subscription</button>

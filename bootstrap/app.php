@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureOperationalSubscription;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'tenant' => ResolveTenant::class,
+            'subscription.operational' => EnsureOperationalSubscription::class,
         ]);
 
         $middleware->redirectGuestsTo(

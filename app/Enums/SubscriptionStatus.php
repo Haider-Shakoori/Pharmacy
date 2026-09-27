@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum SubscriptionStatus: string
 {
+    case Trial = 'trial';
     case Pending = 'pending';
     case Active = 'active';
     case Suspended = 'suspended';

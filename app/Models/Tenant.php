@@ -24,6 +24,13 @@ class Tenant extends Model
 {
     use HasFactory, HasUlids;
 
+    protected $attributes = [
+        'status' => 'active',
+        'timezone' => 'Asia/Kabul',
+        'currency' => 'AFN',
+        'locale' => 'en',
+    ];
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class)

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Platform\StoreTenantRequest;
 use App\Http\Requests\Platform\UpdateTenantRequest;
 use App\Models\Tenant;
+use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -43,13 +44,22 @@ class TenantController extends Controller
         return view('platform.tenants.create');
     }
 
-    public function store(StoreTenantRequest $request): RedirectResponse
-    {
+    public function store(
+        StoreTenantRequest $request,
+        TrialProvisioner $trials,
+    ): RedirectResponse {
         $tenant = Tenant::query()->create($request->validated());
+        $licenseKey = $trials->provision($tenant);
 
-        return redirect()
+        $response = redirect()
             ->route('platform.tenants.edit', $tenant)
-            ->with('success', 'Pharmacy tenant created.');
+            ->with('success', 'Pharmacy tenant created with a 7-day trial.');
+
+        if ($licenseKey !== null) {
+            $response->with('generated_license_key', $licenseKey);
+        }
+
+        return $response;
     }
 
     public function edit(Tenant $tenant): View

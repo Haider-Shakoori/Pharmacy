@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'tenant_id',
     'plan_id',
     'status',
+    'trial_started_at',
+    'trial_ends_at',
     'starts_at',
     'ends_at',
     'auto_renew',
@@ -42,6 +44,8 @@ class Subscription extends Model
     {
         return [
             'status' => SubscriptionStatus::class,
+            'trial_started_at' => 'datetime',
+            'trial_ends_at' => 'datetime',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'auto_renew' => 'boolean',
