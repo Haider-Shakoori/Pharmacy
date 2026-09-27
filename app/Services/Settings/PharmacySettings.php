@@ -39,7 +39,10 @@ class PharmacySettings
 
     public function dailyClosing(Tenant $tenant): array
     {
-        return $this->all($tenant)['daily_closing'];
+        $settings = $this->all($tenant)['daily_closing'];
+        $settings['variance_note_threshold'] = (float) $settings['variance_note_threshold'];
+
+        return $settings;
     }
 
     public function persist(
