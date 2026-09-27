@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
+use App\Http\Controllers\Pharmacy\BatchStatusController;
 use App\Http\Controllers\Pharmacy\GoodsReceiptController;
+use App\Http\Controllers\Pharmacy\GoodsReceiptInventoryController;
+use App\Http\Controllers\Pharmacy\InventoryAdjustmentController;
+use App\Http\Controllers\Pharmacy\InventoryController;
+use App\Http\Controllers\Pharmacy\InventoryLocationController;
 use App\Http\Controllers\Pharmacy\MedicineController as PharmacyMedicineController;
 use App\Http\Controllers\Pharmacy\MedicineReferenceController as PharmacyMedicineReferenceController;
 use App\Http\Controllers\Pharmacy\PurchaseInvoiceController;
@@ -88,6 +93,23 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
             Route::post('/purchase-invoices/{purchaseInvoice}/payments', [SupplierPaymentController::class, 'store'])
                 ->middleware('permission:purchases.pay')
                 ->name('supplier-payments.store');
+
+            Route::middleware('permission:inventory.manage')->group(function (): void {
+                Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+                Route::get('/inventory/locations', [InventoryLocationController::class, 'index'])->name('inventory.locations');
+                Route::post('/inventory/branches', [InventoryLocationController::class, 'storeBranch'])->name('inventory.branches.store');
+                Route::post('/inventory/locations', [InventoryLocationController::class, 'storeLocation'])->name('inventory.locations.store');
+                Route::get('/inventory/batches/{productBatch}', [InventoryController::class, 'show'])->name('inventory.show');
+                Route::post('/goods-receipts/{goodsReceipt}/post-inventory', GoodsReceiptInventoryController::class)->name('inventory.receipts.post');
+            });
+
+            Route::post('/inventory/adjustments', [InventoryAdjustmentController::class, 'store'])
+                ->middleware('permission:inventory.adjust')
+                ->name('inventory.adjustments.store');
+
+            Route::post('/inventory/batches/{productBatch}/status', BatchStatusController::class)
+                ->middleware('permission:inventory.status')
+                ->name('inventory.status');
 
             Route::get('/settings', [PharmacySettingsController::class, 'edit'])
                 ->middleware('permission:settings.manage')
