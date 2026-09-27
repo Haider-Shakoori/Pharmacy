@@ -3,10 +3,10 @@
 namespace App\Services\Licensing;
 
 use App\Enums\LicenseStatus;
-use App\Enums\SubscriptionStatus;
-use App\Enums\TenantStatus;
+use App\Enums\SubscriptionHealth;
 use App\Models\License;
 use App\Models\LicenseActivation;
+use App\Services\Subscriptions\SubscriptionHealthService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +16,7 @@ class LicenseActivationService
     public function __construct(
         private readonly LicenseKeyService $keys,
         private readonly OfflineLeaseSigner $signer,
+        private readonly SubscriptionHealthService $health,
     ) {}
 
     public function activate(
@@ -92,9 +93,14 @@ class LicenseActivationService
             $activation->save();
 
             $leaseExpiresAt = $now->addDays($plan->offline_grace_days);
+            $effectiveEnd = $subscription->ends_at;
 
-            if ($subscription->ends_at !== null && $leaseExpiresAt->greaterThan($subscription->ends_at)) {
-                $leaseExpiresAt = CarbonImmutable::instance($subscription->ends_at);
+            if ($subscription->status->value === 'trial') {
+                $effectiveEnd = $subscription->trial_ends_at;
+            }
+
+            if ($effectiveEnd !== null && $leaseExpiresAt->greaterThan($effectiveEnd)) {
+                $leaseExpiresAt = CarbonImmutable::instance($effectiveEnd);
             }
 
             $payload = [
@@ -106,6 +112,7 @@ class LicenseActivationService
                 'activation_id' => $activation->id,
                 'device_id' => $deviceId,
                 'plan_code' => $plan->code,
+                'subscription_status' => $subscription->status->value,
                 'issued_at' => $now->getTimestamp(),
                 'expires_at' => $leaseExpiresAt->getTimestamp(),
             ];
@@ -113,6 +120,7 @@ class LicenseActivationService
             return [
                 'lease_token' => $this->signer->sign($payload),
                 'lease_expires_at' => $leaseExpiresAt->toIso8601String(),
+                'subscription_health' => $this->health->forSubscription($subscription)->value,
                 'tenant' => [
                     'id' => $subscription->tenant->id,
                     'name' => $subscription->tenant->name,
@@ -133,37 +141,21 @@ class LicenseActivationService
 
     private function assertLicenseUsable(License $license): void
     {
-        $subscription = $license->subscription;
-        $tenant = $subscription->tenant;
-        $now = now();
-
         if ($license->status !== LicenseStatus::Active || $license->revoked_at !== null) {
             throw ValidationException::withMessages([
                 'license_key' => 'The license has been revoked.',
             ]);
         }
 
-        if ($tenant->status !== TenantStatus::Active) {
-            throw ValidationException::withMessages([
-                'license_key' => 'The pharmacy is not active.',
-            ]);
-        }
+        $health = $this->health->forSubscription($license->subscription);
 
-        if ($subscription->status !== SubscriptionStatus::Active) {
+        if (! in_array($health, [
+            SubscriptionHealth::Healthy,
+            SubscriptionHealth::Trial,
+            SubscriptionHealth::Expiring,
+        ], true)) {
             throw ValidationException::withMessages([
-                'license_key' => 'The subscription is not active.',
-            ]);
-        }
-
-        if ($subscription->starts_at !== null && $subscription->starts_at->isFuture()) {
-            throw ValidationException::withMessages([
-                'license_key' => 'The subscription has not started yet.',
-            ]);
-        }
-
-        if ($subscription->ends_at !== null && ! $subscription->ends_at->isFuture()) {
-            throw ValidationException::withMessages([
-                'license_key' => 'The subscription has expired.',
+                'license_key' => 'The subscription is not operational: '.$health->value.'.',
             ]);
         }
     }

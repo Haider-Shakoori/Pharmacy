@@ -15,6 +15,10 @@ return [
         'external_fonts' => false,
     ],
 
+    'trial' => [
+        'days' => 7,
+    ],
+
     'offline' => [
         'mobile_first' => true,
         'default_license_grace_days' => 7,

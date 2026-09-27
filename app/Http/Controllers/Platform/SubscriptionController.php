@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Services\Licensing\LicenseKeyService;
+use App\Services\Subscriptions\SubscriptionHealthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +16,10 @@ use Illuminate\View\View;
 
 class SubscriptionController extends Controller
 {
-    public function index(Request $request): View
-    {
+    public function index(
+        Request $request,
+        SubscriptionHealthService $health,
+    ): View {
         $search = trim((string) $request->query('search'));
         $status = trim((string) $request->query('status'));
 
@@ -32,6 +35,10 @@ class SubscriptionController extends Controller
             ->latest('updated_at')
             ->paginate(config('pharmacy.performance.default_page_size'))
             ->withQueryString();
+
+        $subscriptions->getCollection()->each(function (Subscription $subscription) use ($health): void {
+            $subscription->setAttribute('health_state', $health->forSubscription($subscription));
+        });
 
         return view('platform.subscriptions.index', compact('subscriptions', 'search', 'status'));
     }
@@ -65,6 +72,12 @@ class SubscriptionController extends Controller
             ]);
 
             $subscription->fill($validated);
+
+            if ($subscription->status->value !== 'trial') {
+                $subscription->trial_started_at = null;
+                $subscription->trial_ends_at = null;
+            }
+
             $subscription->tenant_id = $tenant->id;
             $subscription->save();
 
