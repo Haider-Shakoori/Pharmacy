@@ -14,6 +14,8 @@ class PharmacyDashboardTest extends TestCase
 
     public function test_pharmacy_dashboard_is_available(): void
     {
+        $this->withoutVite();
+
         $this->get('/pharmacy')
             ->assertOk()
             ->assertSee('BusinessOS Pharmacy')
