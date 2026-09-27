@@ -37,6 +37,9 @@ class TrialProvisioningTest extends TestCase
             'timezone' => 'Asia/Kabul',
             'currency' => 'AFN',
             'locale' => 'fa',
+            'owner_name' => 'Trial Owner',
+            'owner_email' => 'owner@trial.test',
+            'owner_password' => 'password123',
         ])->assertRedirect();
 
         $tenant = Tenant::query()->where('slug', 'kabul-trial')->firstOrFail();
