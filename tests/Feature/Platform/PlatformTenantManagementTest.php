@@ -35,6 +35,9 @@ class PlatformTenantManagementTest extends TestCase
             'timezone' => 'Asia/Kabul',
             'currency' => 'AFN',
             'locale' => 'fa',
+            'owner_name' => 'Kabul Owner',
+            'owner_email' => 'owner@kabul.test',
+            'owner_password' => 'password123',
         ])->assertRedirect();
 
         $tenant = Tenant::query()->where('slug', 'kabul-central')->firstOrFail();
