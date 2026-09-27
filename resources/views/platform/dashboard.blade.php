@@ -20,7 +20,7 @@
             ['Active', $metrics['active_pharmacies']],
             ['Suspended', $metrics['suspended_pharmacies']],
             ['Archived', $metrics['archived_pharmacies']],
-            ['Pharmacy users', $metrics['pharmacy_users']],
+            ['Provisioning failures', $metrics['provisioning_failures']],
         ] as [$label, $value])
             <article class="rounded-2xl border border-slate-200 bg-white p-5">
                 <p class="text-sm font-medium text-slate-500">{{ $label }}</p>
@@ -39,7 +39,7 @@
                 <div class="flex items-center justify-between gap-4 px-5 py-4">
                     <div>
                         <p class="font-semibold">{{ $tenant->name }}</p>
-                        <p class="text-xs text-slate-500">{{ $tenant->slug }} · {{ $tenant->users_count }} users</p>
+                        <p class="text-xs text-slate-500">{{ $tenant->slug }} · {{ str_replace('_', ' ', $tenant->provisioning_status) }}</p>
                     </div>
                     <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold">{{ $tenant->status->value }}</span>
                 </div>

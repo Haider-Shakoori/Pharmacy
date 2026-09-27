@@ -1,19 +1,27 @@
-# Multi-tenancy
+# Multi-database Tenancy
 
-Batch 2 establishes fail-closed tenant isolation.
+The pharmacy SaaS uses database-per-tenant isolation.
 
 ## Rules
 
-- Every pharmacy is represented by a Tenant with a ULID primary key.
-- Tenant-owned models use the BelongsToTenant concern.
-- TenantScope automatically limits queries to the active TenantContext.
-- If no tenant context exists, tenant-owned queries return no rows.
-- New tenant-owned records require an active tenant context.
-- A model cannot spoof another tenant's tenant_id.
-- Tenant identity is resolved from server-side session state by ResolveTenant.
-- Suspended or unknown tenants are rejected before tenant routes execute.
-- Email uniqueness for pharmacy users is per tenant, allowing the same email address to belong to different pharmacies.
+- Each pharmacy has one infrastructure `Tenant` in the central database and one separate operational database.
+- Each tenant is mapped to one or more domain records in the central database.
+- Tenant routes use domain identification before auth/session handling.
+- Pharmacy operational models do not contain `tenant_id`; their database connection is the isolation boundary.
+- Central commercial models explicitly use the central connection.
+- Pharmacy users, roles, settings, medicines, stock, sales, prescriptions and accounting are never queried by the central dashboard.
+- Same email/code values may exist in different tenant databases without collision.
+- Cache, files and queued jobs must retain tenant context.
+- Automatic tenant database deletion is disabled. Decommissioning requires an explicit, authorized archival/destructive workflow.
 
-Platform-wide code that legitimately needs cross-tenant access must explicitly remove TenantScope; normal pharmacy controllers, jobs, reports and APIs must never do so.
+## Migration boundary
 
-Future tenant-owned models must include a foreign tenant_id, use BelongsToTenant, and have isolation tests.
+Central migrations: `database/migrations`
+
+Tenant migrations: `database/migrations/tenant`
+
+A bare central migration must never create pharmacy-operating tables.
+
+## Testing boundary
+
+Tests must prove two separate tenant databases cannot read each other's rows, and must cover tenant domain resolution, cache isolation, filesystem isolation, queue context, sessions, exports and report tokens as those surfaces are implemented.

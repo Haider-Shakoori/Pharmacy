@@ -11,14 +11,11 @@ return new class extends Migration
     {
         Schema::create('tenants', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->string('name');
-            $table->string('slug')->unique();
             $table->string('status', 24)->default(TenantStatus::Active->value)->index();
-            $table->string('timezone', 64)->default('Asia/Kabul');
-            $table->char('currency', 3)->default('AFN');
-            $table->string('locale', 8)->default('en');
-            $table->json('settings')->nullable();
+            $table->string('provisioning_status', 32)->default('pending')->index();
+            $table->text('provisioning_error')->nullable();
             $table->timestamps();
+            $table->json('data')->nullable();
         });
     }
 

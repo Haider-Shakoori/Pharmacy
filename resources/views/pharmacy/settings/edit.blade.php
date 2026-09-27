@@ -18,7 +18,7 @@
             <div class="mt-5 grid gap-4 sm:grid-cols-2">
                 <label class="block sm:col-span-2">
                     <span class="text-sm font-semibold">{{ __('settings.name') }}</span>
-                    <input name="name" value="{{ old('name', $tenant->name) }}" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
+                    <input name="name" value="{{ old('name', $profile['name']) }}" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
                     @error('name')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
                 </label>
 
@@ -29,7 +29,7 @@
 
                 <label class="block">
                     <span class="text-sm font-semibold">{{ __('settings.currency') }}</span>
-                    <input value="{{ $tenant->currency }}" disabled class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5">
+                    <input value="{{ $profile['currency'] }}" disabled class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5">
                 </label>
 
                 <label class="block sm:col-span-2">
@@ -39,7 +39,7 @@
 
                 <label class="block">
                     <span class="text-sm font-semibold">{{ __('settings.timezone') }}</span>
-                    <input name="timezone" value="{{ old('timezone', $tenant->timezone) }}" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
+                    <input name="timezone" value="{{ old('timezone', $profile['timezone']) }}" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
                     @error('timezone')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
                 </label>
 
@@ -47,7 +47,7 @@
                     <span class="text-sm font-semibold">{{ __('settings.language') }}</span>
                     <select name="locale" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
                         @foreach (['en' => 'English', 'fa' => 'دری', 'ps' => 'پښتو'] as $code => $label)
-                            <option value="{{ $code }}" @selected(old('locale', $tenant->locale) === $code)>{{ $label }}</option>
+                            <option value="{{ $code }}" @selected(old('locale', $profile['locale']) === $code)>{{ $label }}</option>
                         @endforeach
                     </select>
                 </label>

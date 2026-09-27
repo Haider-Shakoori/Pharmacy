@@ -31,7 +31,8 @@
                     <tr>
                         <th class="px-4 py-3 text-start">Pharmacy</th>
                         <th class="px-4 py-3 text-start">Status</th>
-                        <th class="px-4 py-3 text-start">Users</th>
+                        <th class="px-4 py-3 text-start">Provisioning</th>
+                        <th class="px-4 py-3 text-start">Domain</th>
                         <th class="px-4 py-3 text-start">Locale</th>
                         <th class="px-4 py-3 text-end">Actions</th>
                     </tr>
@@ -44,7 +45,8 @@
                                 <p class="text-xs text-slate-500">{{ $tenant->slug }}</p>
                             </td>
                             <td class="px-4 py-3"><span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold">{{ $tenant->status->value }}</span></td>
-                            <td class="px-4 py-3">{{ $tenant->users_count }}</td>
+                            <td class="px-4 py-3">{{ str_replace('_', ' ', $tenant->provisioning_status) }}</td>
+                            <td class="px-4 py-3 text-xs">{{ $tenant->domains->first()?->domain ?? '—' }}</td>
                             <td class="px-4 py-3">{{ strtoupper($tenant->locale) }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-2">
@@ -62,7 +64,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-4 py-10 text-center text-slate-500">No pharmacies match this filter.</td></tr>
+                        <tr><td colspan="6" class="px-4 py-10 text-center text-slate-500">No pharmacies match this filter.</td></tr>
                     @endforelse
                 </tbody>
             </table>

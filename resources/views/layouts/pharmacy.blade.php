@@ -30,7 +30,7 @@
 
                 <div class="flex items-center gap-2 text-xs font-semibold">
                     @foreach (['en' => 'EN', 'fa' => 'دری', 'ps' => 'پښتو'] as $locale => $label)
-                        <a href="{{ route('locale.switch', $locale) }}"
+                        <a href="{{ route('pharmacy.locale.switch', $locale) }}"
                            class="rounded-md px-2.5 py-1.5 {{ app()->getLocale() === $locale ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">{{ $label }}</a>
                     @endforeach
                     <form method="POST" action="{{ route('pharmacy.logout') }}">

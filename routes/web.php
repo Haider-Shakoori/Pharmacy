@@ -1,12 +1,5 @@
 <?php
 
-use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
-use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
-use App\Http\Controllers\Pharmacy\MedicineController as PharmacyMedicineController;
-use App\Http\Controllers\Pharmacy\MedicineReferenceController as PharmacyMedicineReferenceController;
-use App\Http\Controllers\Pharmacy\RoleController as PharmacyRoleController;
-use App\Http\Controllers\Pharmacy\SettingsController as PharmacySettingsController;
-use App\Http\Controllers\Pharmacy\UserController as PharmacyUserController;
 use App\Http\Controllers\Platform\Auth\LoginController as PlatformLoginController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\Platform\LicenseController;
@@ -16,82 +9,35 @@ use App\Http\Controllers\Platform\TenantController;
 use App\Http\Controllers\Platform\TenantStatusController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/pharmacy');
+Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
+    Route::redirect('/', '/platform');
 
-Route::get('/locale/{locale}', function (string $locale) {
-    abort_unless(in_array($locale, config('pharmacy.locales'), true), 404);
+    Route::prefix('platform')->name('platform.')->group(function (): void {
+        Route::middleware('guest:platform')->group(function (): void {
+            Route::get('/login', [PlatformLoginController::class, 'create'])->name('login');
+            Route::post('/login', [PlatformLoginController::class, 'store'])
+                ->middleware('throttle:5,1')
+                ->name('login.store');
+        });
 
-    session(['locale' => $locale]);
+        Route::middleware('auth:platform')->group(function (): void {
+            Route::get('/', PlatformDashboardController::class)->name('dashboard');
+            Route::post('/logout', [PlatformLoginController::class, 'destroy'])->name('logout');
 
-    return back();
-})->name('locale.switch');
+            Route::resource('tenants', TenantController::class)->except(['show', 'destroy']);
+            Route::put('/tenants/{tenant}/status/{status}', TenantStatusController::class)
+                ->whereIn('status', ['active', 'suspended', 'archived'])
+                ->name('tenants.status');
 
-Route::prefix('pharmacy')->name('pharmacy.')->group(function (): void {
-    Route::get('/login', [PharmacyLoginController::class, 'create'])->name('login');
-    Route::post('/login', [PharmacyLoginController::class, 'store'])
-        ->middleware('throttle:10,1')
-        ->name('login.store');
+            Route::resource('plans', PlanController::class)->except(['show', 'destroy']);
 
-    Route::middleware(['tenant', 'tenant.preferences', 'auth:web', 'subscription.operational'])->group(function (): void {
-        Route::get('/', PharmacyDashboardController::class)
-            ->middleware('permission:dashboard.view')
-            ->name('dashboard');
+            Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+            Route::get('/subscriptions/{tenant}/edit', [SubscriptionController::class, 'edit'])->name('subscriptions.edit');
+            Route::put('/subscriptions/{tenant}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
 
-        Route::post('/logout', [PharmacyLoginController::class, 'destroy'])->name('logout');
-
-        Route::resource('users', PharmacyUserController::class)
-            ->except(['show', 'destroy'])
-            ->middleware('permission:users.manage');
-
-        Route::resource('roles', PharmacyRoleController::class)
-            ->except(['show', 'destroy'])
-            ->middleware('permission:roles.manage');
-
-        Route::resource('medicines', PharmacyMedicineController::class)
-            ->except(['show', 'destroy'])
-            ->middleware('permission:medicines.manage');
-
-        Route::get('/medicine-setup', [PharmacyMedicineReferenceController::class, 'index'])
-            ->middleware('permission:medicines.manage')
-            ->name('medicine-references.index');
-        Route::post('/medicine-setup/{type}', [PharmacyMedicineReferenceController::class, 'store'])
-            ->middleware('permission:medicines.manage')
-            ->name('medicine-references.store');
-
-        Route::get('/settings', [PharmacySettingsController::class, 'edit'])
-            ->middleware('permission:settings.manage')
-            ->name('settings.edit');
-        Route::put('/settings', [PharmacySettingsController::class, 'update'])
-            ->middleware('permission:settings.manage')
-            ->name('settings.update');
-    });
-});
-
-Route::prefix('platform')->name('platform.')->group(function (): void {
-    Route::middleware('guest:platform')->group(function (): void {
-        Route::get('/login', [PlatformLoginController::class, 'create'])->name('login');
-        Route::post('/login', [PlatformLoginController::class, 'store'])
-            ->middleware('throttle:5,1')
-            ->name('login.store');
-    });
-
-    Route::middleware('auth:platform')->group(function (): void {
-        Route::get('/', PlatformDashboardController::class)->name('dashboard');
-        Route::post('/logout', [PlatformLoginController::class, 'destroy'])->name('logout');
-
-        Route::resource('tenants', TenantController::class)->except(['show', 'destroy']);
-        Route::put('/tenants/{tenant}/status/{status}', TenantStatusController::class)
-            ->whereIn('status', ['active', 'suspended', 'archived'])
-            ->name('tenants.status');
-
-        Route::resource('plans', PlanController::class)->except(['show', 'destroy']);
-
-        Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
-        Route::get('/subscriptions/{tenant}/edit', [SubscriptionController::class, 'edit'])->name('subscriptions.edit');
-        Route::put('/subscriptions/{tenant}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
-
-        Route::get('/licenses', [LicenseController::class, 'index'])->name('licenses.index');
-        Route::post('/licenses/{subscription}/regenerate', [LicenseController::class, 'regenerate'])->name('licenses.regenerate');
-        Route::post('/licenses/{subscription}/revoke', [LicenseController::class, 'revoke'])->name('licenses.revoke');
+            Route::get('/licenses', [LicenseController::class, 'index'])->name('licenses.index');
+            Route::post('/licenses/{subscription}/regenerate', [LicenseController::class, 'regenerate'])->name('licenses.regenerate');
+            Route::post('/licenses/{subscription}/revoke', [LicenseController::class, 'revoke'])->name('licenses.revoke');
+        });
     });
 });
