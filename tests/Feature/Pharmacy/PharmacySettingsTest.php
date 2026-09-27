@@ -3,9 +3,11 @@
 namespace Tests\Feature\Pharmacy;
 
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Settings\PharmacySettings;
 use App\Services\Subscriptions\TrialProvisioner;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -62,8 +64,8 @@ class PharmacySettingsTest extends TestCase
         app(TrialProvisioner::class)->provision($tenant);
         $roles = app(RbacProvisioner::class)->ensureForTenant($tenant);
 
-        $cashier = app(\App\Support\Tenancy\TenantContext::class)->run($tenant, function () use ($roles) {
-            $user = \App\Models\User::query()->create([
+        $cashier = app(TenantContext::class)->run($tenant, function () use ($roles) {
+            $user = User::query()->create([
                 'name' => 'Cashier',
                 'email' => 'cashier@example.test',
                 'password' => 'password123',
