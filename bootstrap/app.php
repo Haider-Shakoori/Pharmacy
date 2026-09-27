@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ApplyTenantPreferences;
 use App\Http\Middleware\EnsureOperationalSubscription;
 use App\Http\Middleware\RequirePermission;
 use App\Http\Middleware\ResolveTenant;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'tenant' => ResolveTenant::class,
+            'tenant.preferences' => ApplyTenantPreferences::class,
             'subscription.operational' => EnsureOperationalSubscription::class,
             'permission' => RequirePermission::class,
         ]);
