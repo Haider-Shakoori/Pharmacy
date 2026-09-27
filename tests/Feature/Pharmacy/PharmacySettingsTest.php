@@ -43,11 +43,16 @@ class PharmacySettingsTest extends TestCase
                 'require_close_before_next_day' => '1',
                 'block_online_sales_after_close' => '1',
                 'warn_unsynced_devices_before_close' => '1',
+                'low_stock_threshold' => '15',
+                'near_expiry_days' => '60',
+                'block_expired_sales' => '1',
+                'fefo_enabled' => '1',
             ])
             ->assertRedirect();
 
         $profile = app(PharmacySettings::class)->profile($tenant);
         $closing = app(PharmacySettings::class)->dailyClosing($tenant);
+        $inventory = app(PharmacySettings::class)->inventory($tenant);
 
         $this->assertSame('Kabul City Pharmacy', $profile['name']);
         $this->assertSame('fa', $profile['locale']);
@@ -56,6 +61,10 @@ class PharmacySettingsTest extends TestCase
         $this->assertEquals(100.0, $closing['variance_note_threshold']);
         $this->assertTrue($closing['require_counted_cash']);
         $this->assertTrue($closing['allow_reopen']);
+        $this->assertSame(15, $inventory['low_stock_threshold']);
+        $this->assertSame(60, $inventory['near_expiry_days']);
+        $this->assertTrue($inventory['block_expired_sales']);
+        $this->assertTrue($inventory['fefo_enabled']);
     }
 
     public function test_cashier_cannot_open_settings(): void
