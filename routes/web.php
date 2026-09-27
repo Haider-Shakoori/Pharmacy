@@ -3,6 +3,7 @@
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
 use App\Http\Controllers\Pharmacy\RoleController as PharmacyRoleController;
+use App\Http\Controllers\Pharmacy\SettingsController as PharmacySettingsController;
 use App\Http\Controllers\Pharmacy\UserController as PharmacyUserController;
 use App\Http\Controllers\Platform\Auth\LoginController as PlatformLoginController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
@@ -29,7 +30,7 @@ Route::prefix('pharmacy')->name('pharmacy.')->group(function (): void {
         ->middleware('throttle:10,1')
         ->name('login.store');
 
-    Route::middleware(['tenant', 'auth:web', 'subscription.operational'])->group(function (): void {
+    Route::middleware(['tenant', 'tenant.preferences', 'auth:web', 'subscription.operational'])->group(function (): void {
         Route::get('/', PharmacyDashboardController::class)
             ->middleware('permission:dashboard.view')
             ->name('dashboard');
@@ -43,6 +44,13 @@ Route::prefix('pharmacy')->name('pharmacy.')->group(function (): void {
         Route::resource('roles', PharmacyRoleController::class)
             ->except(['show', 'destroy'])
             ->middleware('permission:roles.manage');
+
+        Route::get('/settings', [PharmacySettingsController::class, 'edit'])
+            ->middleware('permission:settings.manage')
+            ->name('settings.edit');
+        Route::put('/settings', [PharmacySettingsController::class, 'update'])
+            ->middleware('permission:settings.manage')
+            ->name('settings.update');
     });
 });
 

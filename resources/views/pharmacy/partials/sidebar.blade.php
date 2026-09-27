@@ -11,13 +11,16 @@
 
     <nav class="flex-1 space-y-1 px-4 py-5">
         @if (auth()->user()->hasPermission('dashboard.view'))
-            <a href="{{ route('pharmacy.dashboard') }}" class="block rounded-lg bg-teal-50 px-3 py-2.5 text-sm font-semibold text-teal-800">{{ __('pharmacy.nav.dashboard') }}</a>
+            <a href="{{ route('pharmacy.dashboard') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('pharmacy.dashboard') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.dashboard') }}</a>
         @endif
         @if (auth()->user()->hasPermission('users.manage'))
-            <a href="{{ route('pharmacy.users.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">{{ __('pharmacy.nav.users') }}</a>
+            <a href="{{ route('pharmacy.users.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.users.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.users') }}</a>
         @endif
         @if (auth()->user()->hasPermission('roles.manage'))
-            <a href="{{ route('pharmacy.roles.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">Roles & Permissions</a>
+            <a href="{{ route('pharmacy.roles.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.roles.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Roles & Permissions</a>
+        @endif
+        @if (auth()->user()->hasPermission('settings.manage'))
+            <a href="{{ route('pharmacy.settings.edit') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.settings.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.settings') }}</a>
         @endif
 
         <div class="my-3 border-t border-slate-100"></div>
