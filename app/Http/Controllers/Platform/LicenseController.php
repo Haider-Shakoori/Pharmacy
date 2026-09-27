@@ -17,9 +17,6 @@ class LicenseController extends Controller
 
         $subscriptions = Subscription::query()
             ->with(['tenant', 'plan', 'license'])
-            ->withCount([
-                'license as active_devices_count' => fn ($query) => $query,
-            ])
             ->when($search !== '', function ($query) use ($search): void {
                 $query->whereHas('tenant', function ($query) use ($search): void {
                     $query->where('name', 'like', "%{$search}%")
