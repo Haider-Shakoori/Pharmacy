@@ -24,6 +24,8 @@ class RbacProvisioner
         'purchases.approve' => 'Approve purchase orders',
         'purchases.pay' => 'Record supplier payments',
         'pos.sell' => 'Use point of sale',
+        'pos.discount' => 'Apply POS discounts',
+        'pos.price_override' => 'Override POS sale price',
         'returns.manage' => 'Manage returns',
         'daily_closing.perform' => 'Perform Daily Closing',
         'daily_closing.reopen' => 'Reopen a finalized Daily Closing',
@@ -38,7 +40,7 @@ class RbacProvisioner
         'administrator' => '*',
         'pharmacist' => [
             'dashboard.view', 'medicines.manage', 'inventory.manage',
-            'inventory.status', 'pos.sell', 'returns.manage',
+            'inventory.status', 'pos.sell', 'pos.discount', 'returns.manage',
             'daily_closing.perform', 'reports.view',
         ],
         'cashier' => ['dashboard.view', 'pos.sell', 'returns.manage', 'daily_closing.perform'],
