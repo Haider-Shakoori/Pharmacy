@@ -16,6 +16,12 @@ class ReportsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+    }
+
     public function test_report_is_tenant_scoped_and_exportable(): void
     {
         $tenant = $this->createTenant(['slug' => 'reports-test']);
