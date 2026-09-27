@@ -17,10 +17,25 @@ class StockMovement extends Model
 {
     use HasUlids;
 
-    public function batch(): BelongsTo { return $this->belongsTo(ProductBatch::class, 'product_batch_id'); }
-    public function medicine(): BelongsTo { return $this->belongsTo(Medicine::class); }
-    public function location(): BelongsTo { return $this->belongsTo(StockLocation::class, 'stock_location_id'); }
-    public function actor(): BelongsTo { return $this->belongsTo(User::class, 'actor_id'); }
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(ProductBatch::class, 'product_batch_id');
+    }
+
+    public function medicine(): BelongsTo
+    {
+        return $this->belongsTo(Medicine::class);
+    }
+
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(StockLocation::class, 'stock_location_id');
+    }
+
+    public function actor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_id');
+    }
 
     protected function casts(): array
     {
