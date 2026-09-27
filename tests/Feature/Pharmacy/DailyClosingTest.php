@@ -9,6 +9,8 @@ use App\Models\SalePayment;
 use App\Models\StockLocation;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
+use App\Services\DailyClosing\BusinessDateResolver;
+use App\Services\DailyClosing\DailyClosingService;
 use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -32,7 +34,7 @@ class DailyClosingTest extends TestCase
             $sale = Sale::query()->create([
                 'sale_number' => 'POS-TEST',
                 'stock_location_id' => $location->id,
-                'business_date' => now()->toDateString(),
+                'business_date' => app(BusinessDateResolver::class)->resolve($tenant),
                 'status' => 'completed',
                 'currency' => 'AFN',
                 'subtotal' => 100,
@@ -68,19 +70,21 @@ class DailyClosingTest extends TestCase
             $this->actingAs($owner)->withHeader('Host', $host)->post('/daily-closing/finalize', [
                 'stock_location_id' => $location->id,
                 'counted_cash' => 100,
-            ])->assertRedirect();
+            ])->assertRedirect()->assertSessionHasNoErrors();
 
             $closing = DailyClosing::query()->firstOrFail();
             $this->assertSame('finalized', $closing->status);
             $this->assertSame('100.0000', $closing->cash_collected);
             $this->assertSame('100.0000', $closing->expected_cash);
             $this->assertSame(1, $closing->events()->where('event_type', 'finalized')->count());
+            $this->assertTrue(app(DailyClosingService::class)->salesBlocked($location, $closing->business_date->toDateString()));
 
             $this->actingAs($owner)->withHeader('Host', $host)->post('/daily-closing/'.$closing->id.'/approve')->assertRedirect();
             $this->assertSame('approved', $closing->fresh()->status);
 
             $this->actingAs($owner)->withHeader('Host', $host)->post('/daily-closing/'.$closing->id.'/reopen', ['reason' => 'Correction required'])->assertRedirect();
             $this->assertSame('reopened', $closing->fresh()->status);
+            $this->assertFalse(app(DailyClosingService::class)->salesBlocked($location, $closing->business_date->toDateString()));
             $this->assertSame(3, $closing->events()->count());
         });
     }
