@@ -8,6 +8,7 @@ use App\Http\Requests\Platform\StoreTenantRequest;
 use App\Http\Requests\Platform\UpdateTenantRequest;
 use App\Models\Tenant;
 use App\Services\Subscriptions\TrialProvisioner;
+use Database\Seeders\DefaultRoleSeeder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -49,6 +50,7 @@ class TenantController extends Controller
         TrialProvisioner $trials,
     ): RedirectResponse {
         $tenant = Tenant::query()->create($request->validated());
+        (new DefaultRoleSeeder)->forTenant($tenant);
         $licenseKey = $trials->provision($tenant);
 
         $response = redirect()
