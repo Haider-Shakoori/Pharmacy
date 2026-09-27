@@ -14,7 +14,9 @@ class LicenseActivationApiTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private Subscription $subscription;
+
     private string $plainTextKey;
 
     protected function setUp(): void
