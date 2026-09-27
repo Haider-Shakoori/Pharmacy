@@ -1,0 +1,141 @@
+<?php
+
+namespace App\Services\Access;
+
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Support\Tenancy\TenantContext;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+class RbacProvisioner
+{
+    public const PERMISSIONS = [
+        'dashboard.view' => 'View dashboard',
+        'users.manage' => 'Manage pharmacy users',
+        'roles.manage' => 'Manage roles and permissions',
+        'medicines.manage' => 'Manage medicines',
+        'inventory.manage' => 'Manage inventory',
+        'purchases.manage' => 'Manage purchasing',
+        'pos.sell' => 'Use point of sale',
+        'returns.manage' => 'Manage returns',
+        'daily_closing.perform' => 'Perform Daily Closing',
+        'daily_closing.reopen' => 'Reopen a finalized Daily Closing',
+        'reports.view' => 'View reports',
+        'accounting.manage' => 'Manage accounting',
+        'settings.manage' => 'Manage pharmacy settings',
+        'sync.manage' => 'Manage devices and synchronization',
+    ];
+
+    private const ROLE_PERMISSIONS = [
+        'owner' => '*',
+        'administrator' => '*',
+        'pharmacist' => [
+            'dashboard.view',
+            'medicines.manage',
+            'inventory.manage',
+            'pos.sell',
+            'returns.manage',
+            'daily_closing.perform',
+            'reports.view',
+        ],
+        'cashier' => [
+            'dashboard.view',
+            'pos.sell',
+            'returns.manage',
+            'daily_closing.perform',
+        ],
+        'inventory' => [
+            'dashboard.view',
+            'medicines.manage',
+            'inventory.manage',
+            'purchases.manage',
+            'reports.view',
+        ],
+        'accountant' => [
+            'dashboard.view',
+            'daily_closing.perform',
+            'daily_closing.reopen',
+            'reports.view',
+            'accounting.manage',
+        ],
+    ];
+
+    public function __construct(
+        private readonly TenantContext $tenantContext,
+    ) {}
+
+    public function provisionOwner(
+        Tenant $tenant,
+        string $name,
+        string $email,
+        string $password,
+    ): User {
+        return DB::transaction(function () use ($tenant, $name, $email, $password): User {
+            $this->ensurePermissions();
+
+            return $this->tenantContext->run($tenant, function () use ($name, $email, $password): User {
+                $roles = $this->ensureStandardRoles();
+
+                $user = User::query()->create([
+                    'name' => $name,
+                    'email' => Str::lower($email),
+                    'password' => $password,
+                    'is_active' => true,
+                ]);
+
+                $user->roles()->sync([$roles['owner']->id]);
+
+                return $user;
+            });
+        });
+    }
+
+    public function ensureForTenant(Tenant $tenant): array
+    {
+        $this->ensurePermissions();
+
+        return $this->tenantContext->run(
+            $tenant,
+            fn () => $this->ensureStandardRoles(),
+        );
+    }
+
+    public function ensurePermissions(): void
+    {
+        foreach (self::PERMISSIONS as $code => $name) {
+            Permission::query()->firstOrCreate(
+                ['code' => $code],
+                ['name' => $name],
+            );
+        }
+    }
+
+    private function ensureStandardRoles(): array
+    {
+        $allPermissionIds = Permission::query()->pluck('id');
+        $permissionsByCode = Permission::query()->pluck('id', 'code');
+        $roles = [];
+
+        foreach (self::ROLE_PERMISSIONS as $code => $permissionCodes) {
+            $role = Role::query()->firstOrCreate(
+                ['code' => $code],
+                [
+                    'name' => Str::headline($code),
+                    'is_system' => true,
+                ],
+            );
+
+            $ids = $permissionCodes === '*'
+                ? $allPermissionIds
+                : collect($permissionCodes)->map(fn (string $permission) => $permissionsByCode[$permission]);
+
+            $role->permissions()->sync($ids);
+            $roles[$code] = $role;
+        }
+
+        return $roles;
+    }
+}

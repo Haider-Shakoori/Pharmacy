@@ -23,18 +23,20 @@
                         <span class="mt-1 block h-0.5 w-5 bg-slate-700"></span>
                     </button>
                     <div>
-                        <p class="text-sm font-semibold">{{ __('pharmacy.product') }}</p>
-                        <p class="text-xs text-slate-500">{{ __('pharmacy.offline_ready') }}</p>
+                        <p class="text-sm font-semibold">{{ app(\App\Support\Tenancy\TenantContext::class)->tenant()->name }}</p>
+                        <p class="text-xs text-slate-500">{{ auth()->user()->name }}</p>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 text-xs font-semibold">
                     @foreach (['en' => 'EN', 'fa' => 'دری', 'ps' => 'پښتو'] as $locale => $label)
                         <a href="{{ route('locale.switch', $locale) }}"
-                           class="rounded-md px-2.5 py-1.5 {{ app()->getLocale() === $locale ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
-                            {{ $label }}
-                        </a>
+                           class="rounded-md px-2.5 py-1.5 {{ app()->getLocale() === $locale ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">{{ $label }}</a>
                     @endforeach
+                    <form method="POST" action="{{ route('pharmacy.logout') }}">
+                        @csrf
+                        <button class="rounded-md bg-slate-900 px-2.5 py-1.5 text-white">Sign out</button>
+                    </form>
                 </div>
             </div>
             <div class="border-t border-slate-100 bg-white lg:hidden" x-show="mobileNav" x-cloak>
@@ -43,6 +45,9 @@
         </header>
 
         <main class="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            @if (session('success'))
+                <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">{{ session('success') }}</div>
+            @endif
             @yield('content')
         </main>
     </div>

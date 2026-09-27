@@ -7,9 +7,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Platform\StoreTenantRequest;
 use App\Http\Requests\Platform\UpdateTenantRequest;
 use App\Models\Tenant;
+use App\Services\Access\RbacProvisioner;
 use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class TenantController extends Controller
@@ -47,13 +50,34 @@ class TenantController extends Controller
     public function store(
         StoreTenantRequest $request,
         TrialProvisioner $trials,
+        RbacProvisioner $rbac,
     ): RedirectResponse {
-        $tenant = Tenant::query()->create($request->validated());
-        $licenseKey = $trials->provision($tenant);
+        $validated = $request->validated();
+
+        [$tenant, $licenseKey] = DB::transaction(function () use ($validated, $trials, $rbac): array {
+            $tenant = Tenant::query()->create(Arr::only($validated, [
+                'name',
+                'slug',
+                'timezone',
+                'currency',
+                'locale',
+            ]));
+
+            $licenseKey = $trials->provision($tenant);
+
+            $rbac->provisionOwner(
+                $tenant,
+                $validated['owner_name'],
+                $validated['owner_email'],
+                $validated['owner_password'],
+            );
+
+            return [$tenant, $licenseKey];
+        });
 
         $response = redirect()
             ->route('platform.tenants.edit', $tenant)
-            ->with('success', 'Pharmacy tenant created with a 7-day trial.');
+            ->with('success', 'Pharmacy created with a 7-day trial and owner account.');
 
         if ($licenseKey !== null) {
             $response->with('generated_license_key', $licenseKey);
