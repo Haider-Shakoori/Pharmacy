@@ -4,7 +4,6 @@ namespace App\Services\Sales;
 
 use App\Models\ProductBatch;
 use App\Models\Sale;
-use App\Models\SaleBatchAllocation;
 use App\Models\SaleLine;
 use App\Models\SaleReturn;
 use App\Models\SaleReturnAllocation;
