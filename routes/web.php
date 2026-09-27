@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
+use App\Http\Controllers\Pharmacy\MedicineController as PharmacyMedicineController;
+use App\Http\Controllers\Pharmacy\MedicineReferenceController as PharmacyMedicineReferenceController;
 use App\Http\Controllers\Pharmacy\RoleController as PharmacyRoleController;
 use App\Http\Controllers\Pharmacy\SettingsController as PharmacySettingsController;
 use App\Http\Controllers\Pharmacy\UserController as PharmacyUserController;
@@ -44,6 +46,17 @@ Route::prefix('pharmacy')->name('pharmacy.')->group(function (): void {
         Route::resource('roles', PharmacyRoleController::class)
             ->except(['show', 'destroy'])
             ->middleware('permission:roles.manage');
+
+        Route::resource('medicines', PharmacyMedicineController::class)
+            ->except(['show', 'destroy'])
+            ->middleware('permission:medicines.manage');
+
+        Route::get('/medicine-setup', [PharmacyMedicineReferenceController::class, 'index'])
+            ->middleware('permission:medicines.manage')
+            ->name('medicine-references.index');
+        Route::post('/medicine-setup/{type}', [PharmacyMedicineReferenceController::class, 'store'])
+            ->middleware('permission:medicines.manage')
+            ->name('medicine-references.store');
 
         Route::get('/settings', [PharmacySettingsController::class, 'edit'])
             ->middleware('permission:settings.manage')

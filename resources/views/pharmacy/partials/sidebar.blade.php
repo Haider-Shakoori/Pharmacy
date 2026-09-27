@@ -24,7 +24,9 @@
         @endif
 
         <div class="my-3 border-t border-slate-100"></div>
-        <span class="block rounded-lg px-3 py-2.5 text-sm text-slate-400">{{ __('pharmacy.nav.medicines') }} · Batch 9</span>
+        @if (auth()->user()->hasPermission('medicines.manage'))
+            <a href="{{ route('pharmacy.medicines.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.medicines.*') || request()->routeIs('pharmacy.medicine-references.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.medicines') }}</a>
+        @endif
         <span class="block rounded-lg px-3 py-2.5 text-sm text-slate-400">{{ __('pharmacy.nav.inventory') }} · Batch 11</span>
         <span class="block rounded-lg px-3 py-2.5 text-sm text-slate-400">{{ __('pharmacy.nav.pos') }} · Batch 12</span>
         <span class="block rounded-lg px-3 py-2.5 text-sm text-slate-400">Daily Closing · Batch 13</span>
