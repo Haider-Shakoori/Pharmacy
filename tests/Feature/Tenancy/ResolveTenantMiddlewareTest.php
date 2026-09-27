@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class ResolveTenantMiddlewareTest extends TestCase
@@ -31,13 +32,16 @@ class ResolveTenantMiddlewareTest extends TestCase
 
     public function test_missing_tenant_context_is_rejected(): void
     {
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-        $this->expectExceptionCode(0);
+        try {
+            app(ResolveTenant::class)->handle(
+                $this->requestWithTenant(),
+                fn () => response()->noContent(),
+            );
 
-        app(ResolveTenant::class)->handle(
-            $this->requestWithTenant(),
-            fn () => response()->noContent(),
-        );
+            $this->fail('Missing tenant context was not rejected.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
     }
 
     public function test_suspended_tenant_is_rejected(): void
@@ -55,7 +59,7 @@ class ResolveTenantMiddlewareTest extends TestCase
             );
 
             $this->fail('Suspended tenant was not rejected.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
         }
     }
