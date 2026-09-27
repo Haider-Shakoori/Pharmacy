@@ -20,6 +20,9 @@ class StoreTenantRequest extends FormRequest
             'timezone' => ['required', 'timezone'],
             'currency' => ['required', 'alpha', 'size:3'],
             'locale' => ['required', Rule::in(config('pharmacy.locales'))],
+            'owner_name' => ['required', 'string', 'max:160'],
+            'owner_email' => ['required', 'email', 'max:255'],
+            'owner_password' => ['required', 'string', 'min:8', 'max:255'],
         ];
     }
 }
