@@ -6,6 +6,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Services\Licensing\LicenseKeyService;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -51,7 +52,7 @@ class TrialLicenseActivationTest extends TestCase
         ])->assertOk();
 
         $this->assertSame('trial', $response->json('data.subscription_health'));
-        $leaseEnd = \Carbon\CarbonImmutable::parse($response->json('data.lease_expires_at'));
+        $leaseEnd = CarbonImmutable::parse($response->json('data.lease_expires_at'));
 
         $this->assertTrue($leaseEnd->lessThanOrEqualTo($trialEndsAt));
     }
