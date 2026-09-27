@@ -27,6 +27,12 @@
         @if (auth()->user()->hasPermission('medicines.manage'))
             <a href="{{ route('pharmacy.medicines.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.medicines.*') || request()->routeIs('pharmacy.medicine-references.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.medicines') }}</a>
         @endif
+        @if (auth()->user()->hasAnyPermission(['purchases.manage', 'purchases.approve', 'purchases.pay']))
+            <a href="{{ route('pharmacy.purchase-orders.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.purchase-*') || request()->routeIs('pharmacy.supplier-payments.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Purchasing</a>
+        @endif
+        @if (auth()->user()->hasPermission('purchases.manage'))
+            <a href="{{ route('pharmacy.suppliers.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.suppliers.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Suppliers</a>
+        @endif
         <span class="block rounded-lg px-3 py-2.5 text-sm text-slate-400">{{ __('pharmacy.nav.inventory') }} · Batch 11</span>
         <span class="block rounded-lg px-3 py-2.5 text-sm text-slate-400">{{ __('pharmacy.nav.pos') }} · Batch 12</span>
         <span class="block rounded-lg px-3 py-2.5 text-sm text-slate-400">Daily Closing · Batch 13</span>

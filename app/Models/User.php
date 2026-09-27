@@ -29,6 +29,13 @@ class User extends Authenticatable
             ->exists();
     }
 
+    public function hasAnyPermission(array $permissionCodes): bool
+    {
+        return $this->roles()
+            ->whereHas('permissions', fn ($query) => $query->whereIn('code', $permissionCodes))
+            ->exists();
+    }
+
     protected function casts(): array
     {
         return [

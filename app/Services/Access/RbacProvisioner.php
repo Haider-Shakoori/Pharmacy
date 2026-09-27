@@ -18,7 +18,9 @@ class RbacProvisioner
         'roles.manage' => 'Manage roles and permissions',
         'medicines.manage' => 'Manage medicines',
         'inventory.manage' => 'Manage inventory',
-        'purchases.manage' => 'Manage purchasing',
+        'purchases.manage' => 'Prepare suppliers and purchases',
+        'purchases.approve' => 'Approve purchase orders',
+        'purchases.pay' => 'Record supplier payments',
         'pos.sell' => 'Use point of sale',
         'returns.manage' => 'Manage returns',
         'daily_closing.perform' => 'Perform Daily Closing',
@@ -33,46 +35,25 @@ class RbacProvisioner
         'owner' => '*',
         'administrator' => '*',
         'pharmacist' => [
-            'dashboard.view',
-            'medicines.manage',
-            'inventory.manage',
-            'pos.sell',
-            'returns.manage',
-            'daily_closing.perform',
-            'reports.view',
+            'dashboard.view', 'medicines.manage', 'inventory.manage', 'pos.sell',
+            'returns.manage', 'daily_closing.perform', 'reports.view',
         ],
-        'cashier' => [
-            'dashboard.view',
-            'pos.sell',
-            'returns.manage',
-            'daily_closing.perform',
-        ],
+        'cashier' => ['dashboard.view', 'pos.sell', 'returns.manage', 'daily_closing.perform'],
         'inventory' => [
-            'dashboard.view',
-            'medicines.manage',
-            'inventory.manage',
-            'purchases.manage',
-            'reports.view',
+            'dashboard.view', 'medicines.manage', 'inventory.manage',
+            'purchases.manage', 'reports.view',
         ],
+        'purchaser' => ['dashboard.view', 'medicines.manage', 'purchases.manage', 'reports.view'],
         'accountant' => [
-            'dashboard.view',
-            'daily_closing.perform',
-            'daily_closing.reopen',
-            'reports.view',
-            'accounting.manage',
+            'dashboard.view', 'purchases.pay', 'daily_closing.perform',
+            'daily_closing.reopen', 'reports.view', 'accounting.manage',
         ],
     ];
 
-    public function __construct(
-        private readonly TenantContext $tenantContext,
-    ) {}
+    public function __construct(private readonly TenantContext $tenantContext) {}
 
-    public function provisionOwner(
-        Tenant $tenant,
-        string $name,
-        string $email,
-        string $password,
-    ): User {
+    public function provisionOwner(Tenant $tenant, string $name, string $email, string $password): User
+    {
         return $this->tenantContext->run($tenant, function () use ($name, $email, $password): User {
             return DB::transaction(function () use ($name, $email, $password): User {
                 $this->ensurePermissions();
@@ -106,10 +87,7 @@ class RbacProvisioner
     public function ensurePermissions(): void
     {
         foreach (self::PERMISSIONS as $code => $name) {
-            Permission::query()->firstOrCreate(
-                ['code' => $code],
-                ['name' => $name],
-            );
+            Permission::query()->updateOrCreate(['code' => $code], ['name' => $name]);
         }
     }
 
@@ -122,10 +100,7 @@ class RbacProvisioner
         foreach (self::ROLE_PERMISSIONS as $code => $permissionCodes) {
             $role = Role::query()->firstOrCreate(
                 ['code' => $code],
-                [
-                    'name' => Str::headline($code),
-                    'is_system' => true,
-                ],
+                ['name' => Str::headline($code), 'is_system' => true],
             );
 
             $ids = $permissionCodes === '*'
