@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
-use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
 use App\Http\Controllers\Pharmacy\BatchStatusController;
+use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
 use App\Http\Controllers\Pharmacy\GoodsReceiptController;
 use App\Http\Controllers\Pharmacy\GoodsReceiptInventoryController;
 use App\Http\Controllers\Pharmacy\InventoryAdjustmentController;
