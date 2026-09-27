@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
 use App\Http\Controllers\Pharmacy\BatchStatusController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
+use App\Http\Controllers\Pharmacy\DailyClosingController;
 use App\Http\Controllers\Pharmacy\GoodsReceiptController;
 use App\Http\Controllers\Pharmacy\GoodsReceiptInventoryController;
 use App\Http\Controllers\Pharmacy\InventoryAdjustmentController;
@@ -118,6 +119,20 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
                 Route::post('/pos/sales', [PosController::class, 'store'])->name('pos.store');
                 Route::get('/pos/sales/{sale}/receipt', [PosController::class, 'receipt'])->name('pos.receipt');
             });
+
+            Route::middleware('permission:daily_closing.perform')->group(function (): void {
+                Route::get('/daily-closing', [DailyClosingController::class, 'index'])->name('daily-closing.index');
+                Route::post('/daily-closing/shifts/open', [DailyClosingController::class, 'openShift'])->name('daily-closing.shifts.open');
+                Route::post('/daily-closing/shifts/{cashierShift}/close', [DailyClosingController::class, 'closeShift'])->name('daily-closing.shifts.close');
+                Route::post('/daily-closing/finalize', [DailyClosingController::class, 'finalize'])->name('daily-closing.finalize');
+            });
+
+            Route::post('/daily-closing/{dailyClosing}/approve', [DailyClosingController::class, 'approve')
+                ->middleware('permission:daily_closing.approve')
+                ->name('daily-closing.approve');
+            Route::post('/daily-closing/{dailyClosing}/reopen', [DailyClosingController::class, 'reopen')
+                ->middleware('permission:daily_closing.reopen')
+                ->name('daily-closing.reopen');
 
             Route::get('/settings', [PharmacySettingsController::class, 'edit'])
                 ->middleware('permission:settings.manage')

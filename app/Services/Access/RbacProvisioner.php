@@ -28,6 +28,7 @@ class RbacProvisioner
         'pos.price_override' => 'Override POS sale price',
         'returns.manage' => 'Manage returns',
         'daily_closing.perform' => 'Perform Daily Closing',
+        'daily_closing.approve' => 'Approve Daily Closing',
         'daily_closing.reopen' => 'Reopen a finalized Daily Closing',
         'reports.view' => 'View reports',
         'accounting.manage' => 'Manage accounting',
@@ -50,7 +51,7 @@ class RbacProvisioner
         ],
         'purchaser' => ['dashboard.view', 'medicines.manage', 'purchases.manage', 'reports.view'],
         'accountant' => [
-            'dashboard.view', 'purchases.pay', 'daily_closing.perform',
+            'dashboard.view', 'purchases.pay', 'daily_closing.perform', 'daily_closing.approve',
             'daily_closing.reopen', 'reports.view', 'accounting.manage',
         ],
     ];
