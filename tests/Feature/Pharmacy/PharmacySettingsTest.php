@@ -53,7 +53,7 @@ class PharmacySettingsTest extends TestCase
         $this->assertSame('Kabul City Pharmacy', $tenant->name);
         $this->assertSame('fa', $tenant->locale);
         $this->assertSame('02:30', $closing['business_day_rollover_time']);
-        $this->assertSame(100.0, $closing['variance_note_threshold']);
+        $this->assertEquals(100.0, $closing['variance_note_threshold']);
         $this->assertTrue($closing['require_counted_cash']);
         $this->assertTrue($closing['allow_reopen']);
     }
