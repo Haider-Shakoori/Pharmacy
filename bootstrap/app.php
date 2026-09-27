@@ -3,7 +3,6 @@
 use App\Http\Middleware\ApplyTenantPreferences;
 use App\Http\Middleware\EnsureOperationalSubscription;
 use App\Http\Middleware\RequirePermission;
-use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -23,7 +22,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'tenant' => ResolveTenant::class,
             'tenant.preferences' => ApplyTenantPreferences::class,
             'subscription.operational' => EnsureOperationalSubscription::class,
             'permission' => RequirePermission::class,
@@ -32,13 +30,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(
             fn (Request $request) => $request->is('platform*')
                 ? route('platform.login')
-                : route('pharmacy.login'),
+                : '/login',
         );
 
         $middleware->redirectUsersTo(
             fn (Request $request) => $request->is('platform*')
                 ? route('platform.dashboard')
-                : route('pharmacy.dashboard'),
+                : '/',
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {

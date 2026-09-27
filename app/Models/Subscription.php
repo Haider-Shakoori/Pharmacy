@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 #[Fillable([
-    'tenant_id',
+    'business_id',
     'plan_id',
     'status',
     'trial_started_at',
@@ -23,11 +24,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 ])]
 class Subscription extends Model
 {
-    use HasFactory, HasUlids;
+    use CentralConnection, HasFactory, HasUlids;
 
-    public function tenant(): BelongsTo
+    public function business(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Business::class);
     }
 
     public function plan(): BelongsTo
@@ -38,6 +39,11 @@ class Subscription extends Model
     public function license(): HasOne
     {
         return $this->hasOne(License::class);
+    }
+
+    public function tenant(): Tenant
+    {
+        return $this->business->tenant;
     }
 
     protected function casts(): array

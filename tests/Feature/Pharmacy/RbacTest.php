@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Pharmacy;
 
-use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Subscriptions\TrialProvisioner;
@@ -22,7 +21,7 @@ class RbacTest extends TestCase
 
     public function test_cashier_can_close_day_but_cannot_reopen_or_manage_users(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
+        $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
         app(TrialProvisioner::class)->provision($tenant);
         $roles = app(RbacProvisioner::class)->ensureForTenant($tenant);
 
@@ -46,7 +45,7 @@ class RbacTest extends TestCase
 
     public function test_owner_has_daily_closing_reopen_and_access_management_permissions(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Owner Pharmacy', 'slug' => 'owner-pharmacy']);
+        $tenant = $this->createTenant(['name' => 'Owner Pharmacy', 'slug' => 'owner-pharmacy']);
         app(TrialProvisioner::class)->provision($tenant);
         $owner = app(RbacProvisioner::class)->provisionOwner($tenant, 'Owner', 'owner@example.test', 'password123');
 

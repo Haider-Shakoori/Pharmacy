@@ -12,21 +12,15 @@
             <div class="grid h-12 w-12 place-items-center rounded-xl bg-teal-700 text-lg font-black text-white">Rx</div>
             <p class="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-teal-700">BusinessOS Pharmacy</p>
             <h1 class="mt-1 text-2xl font-bold">Pharmacy sign in</h1>
-            <p class="mt-2 text-sm leading-6 text-slate-500">Use your pharmacy code and staff account.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-500">Sign in with your staff account for this pharmacy.</p>
         </div>
 
         <form method="POST" action="{{ route('pharmacy.login.store') }}" class="space-y-4">
             @csrf
-            <label class="block">
-                <span class="text-sm font-semibold">Pharmacy code</span>
-                <input name="tenant" value="{{ old('tenant') }}" required autofocus autocomplete="organization"
-                       class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
-                @error('tenant')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
-            </label>
 
             <label class="block">
                 <span class="text-sm font-semibold">Email</span>
-                <input type="email" name="email" value="{{ old('email') }}" required autocomplete="username"
+                <input type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username"
                        class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
                 @error('email')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
             </label>

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,27 +11,31 @@ class PharmacyDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_root_redirects_to_pharmacy_workspace(): void
+    public function test_central_root_redirects_to_platform(): void
     {
-        $this->get('/')->assertRedirect('/pharmacy');
+        $this->get('/')->assertRedirect('/platform');
     }
 
-    public function test_pharmacy_dashboard_requires_login(): void
+    public function test_tenant_dashboard_requires_login(): void
     {
-        $this->get('/pharmacy')->assertRedirect('/pharmacy/login');
+        $tenant = $this->createTenant(['name' => 'Demo Pharmacy', 'slug' => 'demo']);
+
+        $this->onTenantDomain($tenant)
+            ->get('/')
+            ->assertRedirect('/login');
     }
 
     public function test_authenticated_operational_owner_can_open_dashboard(): void
     {
         $this->withoutVite();
 
-        $tenant = Tenant::query()->create(['name' => 'Demo Pharmacy', 'slug' => 'demo']);
+        $tenant = $this->createTenant(['name' => 'Demo Pharmacy', 'slug' => 'demo']);
         app(TrialProvisioner::class)->provision($tenant);
         $owner = app(RbacProvisioner::class)->provisionOwner($tenant, 'Demo Owner', 'owner@example.test', 'password123');
 
-        $this->actingAs($owner)
-            ->withSession(['tenant_id' => $tenant->id])
-            ->get('/pharmacy')
+        $this->onTenantDomain($tenant)
+            ->actingAs($owner)
+            ->get('/')
             ->assertOk()
             ->assertSee('Demo Pharmacy')
             ->assertSee('Demo Owner');

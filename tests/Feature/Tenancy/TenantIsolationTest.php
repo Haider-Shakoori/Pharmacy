@@ -2,63 +2,54 @@
 
 namespace Tests\Feature\Tenancy;
 
-use App\Models\Scopes\TenantScope;
-use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use LogicException;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class TenantIsolationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_tenant_owned_queries_are_isolated_and_fail_closed(): void
+    public function test_pharmacies_use_different_databases_and_cannot_read_each_others_users(): void
     {
-        $tenantA = Tenant::query()->create(['name' => 'A Pharmacy', 'slug' => 'a-pharmacy']);
-        $tenantB = Tenant::query()->create(['name' => 'B Pharmacy', 'slug' => 'b-pharmacy']);
+        $tenantA = $this->createTenant(['name' => 'A Pharmacy', 'slug' => 'a-pharmacy']);
+        $tenantB = $this->createTenant(['name' => 'B Pharmacy', 'slug' => 'b-pharmacy']);
         $context = app(TenantContext::class);
 
-        $userA = $context->run($tenantA, fn () => User::factory()->create([
+        $context->run($tenantA, fn () => User::factory()->create([
+            'name' => 'Owner A',
             'email' => 'owner@example.test',
         ]));
 
-        $userB = $context->run($tenantB, fn () => User::factory()->create([
+        $context->run($tenantB, fn () => User::factory()->create([
+            'name' => 'Owner B',
             'email' => 'owner@example.test',
         ]));
 
-        $context->set($tenantA);
-        $this->assertTrue(User::query()->whereKey($userA->id)->exists());
-        $this->assertFalse(User::query()->whereKey($userB->id)->exists());
-        $this->assertSame(1, User::query()->count());
+        $this->assertNotSame($tenantA->database()->getName(), $tenantB->database()->getName());
+        $this->assertFalse(Schema::connection('central')->hasTable('users'));
 
-        $context->set($tenantB);
-        $this->assertFalse(User::query()->whereKey($userA->id)->exists());
-        $this->assertTrue(User::query()->whereKey($userB->id)->exists());
-        $this->assertSame(1, User::query()->count());
+        $context->run($tenantA, function (): void {
+            $this->assertSame(['Owner A'], User::query()->pluck('name')->all());
+        });
 
-        $context->clear();
-        $this->assertSame(0, User::query()->count());
-        $this->assertSame(2, User::withoutGlobalScope(TenantScope::class)->count());
+        $context->run($tenantB, function (): void {
+            $this->assertSame(['Owner B'], User::query()->pluck('name')->all());
+        });
     }
 
-    public function test_tenant_owned_records_cannot_be_created_without_context(): void
+    public function test_same_email_is_valid_in_two_pharmacy_databases(): void
     {
-        $this->expectException(LogicException::class);
+        $tenantA = $this->createTenant(['name' => 'A Pharmacy', 'slug' => 'a-pharmacy']);
+        $tenantB = $this->createTenant(['name' => 'B Pharmacy', 'slug' => 'b-pharmacy']);
+        $context = app(TenantContext::class);
 
-        User::factory()->create();
-    }
+        $context->run($tenantA, fn () => User::factory()->create(['email' => 'same@example.test']));
+        $context->run($tenantB, fn () => User::factory()->create(['email' => 'same@example.test']));
 
-    public function test_tenant_id_cannot_be_spoofed_across_contexts(): void
-    {
-        $tenantA = Tenant::query()->create(['name' => 'A Pharmacy', 'slug' => 'a-pharmacy']);
-        $tenantB = Tenant::query()->create(['name' => 'B Pharmacy', 'slug' => 'b-pharmacy']);
-
-        app(TenantContext::class)->set($tenantA);
-
-        $this->expectException(LogicException::class);
-
-        User::factory()->create(['tenant_id' => $tenantB->id]);
+        $context->run($tenantA, fn () => $this->assertSame(1, User::query()->where('email', 'same@example.test')->count()));
+        $context->run($tenantB, fn () => $this->assertSame(1, User::query()->where('email', 'same@example.test')->count()));
     }
 }

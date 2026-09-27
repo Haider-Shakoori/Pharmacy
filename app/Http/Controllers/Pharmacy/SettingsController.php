@@ -11,10 +11,8 @@ use Illuminate\View\View;
 
 class SettingsController extends Controller
 {
-    public function edit(
-        TenantContext $tenantContext,
-        PharmacySettings $settings,
-    ): View {
+    public function edit(TenantContext $tenantContext, PharmacySettings $settings): View
+    {
         $tenant = $tenantContext->tenant();
 
         return view('pharmacy.settings.edit', [
@@ -32,19 +30,15 @@ class SettingsController extends Controller
         $validated = $request->validated();
         $tenant = $tenantContext->tenant();
 
-        $tenant->fill([
-            'name' => $validated['name'],
-            'timezone' => $validated['timezone'],
-            'locale' => $validated['locale'],
-        ]);
-        $tenant->save();
-
         $settings->persist(
             $tenant,
             [
+                'name' => $validated['name'],
                 'phone' => $validated['phone'],
                 'address' => $validated['address'],
                 'receipt_footer' => $validated['receipt_footer'],
+                'timezone' => $validated['timezone'],
+                'locale' => $validated['locale'],
             ],
             [
                 'business_day_rollover_time' => $validated['business_day_rollover_time'],
@@ -58,7 +52,7 @@ class SettingsController extends Controller
             ],
         );
 
-        $request->session()->put('locale', $tenant->locale);
+        $request->session()->put('locale', $validated['locale']);
 
         return back()->with('success', __('settings.saved'));
     }

@@ -5,9 +5,9 @@ namespace Tests\Feature\Pharmacy;
 use App\Models\Manufacturer;
 use App\Models\Medicine;
 use App\Models\MedicineCategory;
-use App\Models\Tenant;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class MedicineMasterTest extends TestCase
@@ -16,8 +16,8 @@ class MedicineMasterTest extends TestCase
 
     public function test_medicine_master_is_tenant_isolated(): void
     {
-        $tenantA = Tenant::query()->create(['name' => 'A Pharmacy', 'slug' => 'a']);
-        $tenantB = Tenant::query()->create(['name' => 'B Pharmacy', 'slug' => 'b']);
+        $tenantA = $this->createTenant(['name' => 'A Pharmacy', 'slug' => 'a']);
+        $tenantB = $this->createTenant(['name' => 'B Pharmacy', 'slug' => 'b']);
 
         $medicineA = app(TenantContext::class)->run($tenantA, function () {
             $category = MedicineCategory::query()->create(['name' => 'Analgesics']);
@@ -66,12 +66,12 @@ class MedicineMasterTest extends TestCase
 
         app(TenantContext::class)->clear();
 
-        $this->assertSame(0, Medicine::query()->count());
+        $this->assertFalse(Schema::connection('central')->hasTable('medicines'));
     }
 
     public function test_batch_and_expiry_tracking_default_to_enabled(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
+        $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
 
         $medicine = app(TenantContext::class)->run($tenant, fn () => Medicine::query()->create([
             'medicine_code' => 'AMOX-500',

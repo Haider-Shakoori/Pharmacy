@@ -7,11 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Platform\StoreTenantRequest;
 use App\Http\Requests\Platform\UpdateTenantRequest;
 use App\Models\Tenant;
-use App\Services\Access\RbacProvisioner;
-use App\Services\Subscriptions\TrialProvisioner;
+use App\Services\Tenancy\TenantProvisioningService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -23,23 +21,21 @@ class TenantController extends Controller
         $status = (string) $request->query('status');
 
         $tenants = Tenant::query()
-            ->withCount('users')
+            ->with(['business', 'domains'])
             ->when($search !== '', function ($query) use ($search): void {
-                $query->where(function ($query) use ($search): void {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('slug', 'like', "%{$search}%");
+                $query->whereHas('business', function ($query) use ($search): void {
+                    $query->where('pharmacy_name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('owner_email', 'like', "%{$search}%")
+                        ->orWhere('phone_whatsapp', 'like', "%{$search}%");
                 });
             })
             ->when(TenantStatus::tryFrom($status), fn ($query, TenantStatus $tenantStatus) => $query->where('status', $tenantStatus))
-            ->orderBy('name')
+            ->latest()
             ->paginate(config('pharmacy.performance.default_page_size'))
             ->withQueryString();
 
-        return view('platform.tenants.index', [
-            'tenants' => $tenants,
-            'search' => $search,
-            'status' => $status,
-        ]);
+        return view('platform.tenants.index', compact('tenants', 'search', 'status'));
     }
 
     public function create(): View
@@ -49,35 +45,13 @@ class TenantController extends Controller
 
     public function store(
         StoreTenantRequest $request,
-        TrialProvisioner $trials,
-        RbacProvisioner $rbac,
+        TenantProvisioningService $provisioner,
     ): RedirectResponse {
-        $validated = $request->validated();
-
-        [$tenant, $licenseKey] = DB::transaction(function () use ($validated, $trials, $rbac): array {
-            $tenant = Tenant::query()->create(Arr::only($validated, [
-                'name',
-                'slug',
-                'timezone',
-                'currency',
-                'locale',
-            ]));
-
-            $licenseKey = $trials->provision($tenant);
-
-            $rbac->provisionOwner(
-                $tenant,
-                $validated['owner_name'],
-                $validated['owner_email'],
-                $validated['owner_password'],
-            );
-
-            return [$tenant, $licenseKey];
-        });
+        [$tenant, $licenseKey] = $provisioner->provision($request->validated());
 
         $response = redirect()
             ->route('platform.tenants.edit', $tenant)
-            ->with('success', 'Pharmacy created with a 7-day trial and owner account.');
+            ->with('success', 'Pharmacy application provisioned with isolated database, domain, trial, and owner account.');
 
         if ($licenseKey !== null) {
             $response->with('generated_license_key', $licenseKey);
@@ -88,15 +62,33 @@ class TenantController extends Controller
 
     public function edit(Tenant $tenant): View
     {
+        $tenant->load(['business', 'domains']);
+
         return view('platform.tenants.edit', compact('tenant'));
     }
 
     public function update(UpdateTenantRequest $request, Tenant $tenant): RedirectResponse
     {
-        $tenant->update($request->validated());
+        $validated = $request->validated();
+
+        DB::connection('central')->transaction(function () use ($tenant, $validated): void {
+            $tenant->business()->firstOrFail()->update([
+                'pharmacy_name' => $validated['name'],
+                'slug' => $validated['slug'],
+                'contact_person' => $validated['contact_person'],
+                'phone_whatsapp' => $validated['phone_whatsapp'],
+                'location' => $validated['location'],
+                'billing_currency' => strtoupper($validated['currency']),
+                'default_timezone' => $validated['timezone'],
+                'default_locale' => $validated['locale'],
+            ]);
+
+            $domain = $validated['slug'].'.'.config('pharmacy.deployment_host');
+            $tenant->domains()->first()?->update(['domain' => $domain]);
+        });
 
         return redirect()
             ->route('platform.tenants.edit', $tenant)
-            ->with('success', 'Pharmacy tenant updated.');
+            ->with('success', 'Pharmacy commercial profile updated.');
     }
 }

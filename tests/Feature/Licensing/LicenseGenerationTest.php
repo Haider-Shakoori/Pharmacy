@@ -5,7 +5,6 @@ namespace Tests\Feature\Licensing;
 use App\Models\License;
 use App\Models\Plan;
 use App\Models\PlatformAdmin;
-use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -30,7 +29,7 @@ class LicenseGenerationTest extends TestCase
 
     public function test_first_subscription_assignment_generates_one_time_plaintext_license_key(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
+        $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
         $plan = Plan::query()->create([
             'name' => 'Standard',
             'code' => 'STANDARD',
@@ -66,7 +65,7 @@ class LicenseGenerationTest extends TestCase
 
     public function test_regeneration_rotates_hash_and_increments_version(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
+        $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
         $plan = Plan::query()->create([
             'name' => 'Standard',
             'code' => 'STANDARD',

@@ -6,7 +6,6 @@ use App\Enums\LicenseStatus;
 use App\Enums\SubscriptionHealth;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Models\Tenant;
 use App\Services\Licensing\LicenseKeyService;
 use App\Services\Subscriptions\SubscriptionHealthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,7 +17,7 @@ class TrialEnforcementTest extends TestCase
 
     public function test_elapsed_trial_is_non_operational_and_expiration_command_revokes_license(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Expired Trial', 'slug' => 'expired-trial']);
+        $tenant = $this->createTenant(['name' => 'Expired Trial', 'slug' => 'expired-trial']);
         $plan = Plan::query()->create([
             'name' => 'Trial',
             'code' => 'TRIAL',
@@ -30,7 +29,7 @@ class TrialEnforcementTest extends TestCase
             'sort_order' => 0,
         ]);
         $subscription = Subscription::query()->create([
-            'tenant_id' => $tenant->id,
+            'business_id' => $tenant->business->id,
             'plan_id' => $plan->id,
             'status' => 'trial',
             'trial_started_at' => now()->subDays(8),

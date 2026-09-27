@@ -4,6 +4,7 @@ namespace Tests\Feature\Subscriptions;
 
 use App\Enums\SubscriptionHealth;
 use App\Enums\SubscriptionStatus;
+use App\Models\Business;
 use App\Models\PlatformAdmin;
 use App\Models\Tenant;
 use App\Services\Subscriptions\SubscriptionHealthService;
@@ -34,6 +35,9 @@ class TrialProvisioningTest extends TestCase
         $response = $this->post('/platform/tenants', [
             'name' => 'Kabul Trial Pharmacy',
             'slug' => 'kabul-trial',
+            'contact_person' => 'Trial Owner',
+            'phone_whatsapp' => '+93700123456',
+            'location' => 'Kabul, Afghanistan',
             'timezone' => 'Asia/Kabul',
             'currency' => 'AFN',
             'locale' => 'fa',
@@ -42,7 +46,8 @@ class TrialProvisioningTest extends TestCase
             'owner_password' => 'password123',
         ])->assertRedirect();
 
-        $tenant = Tenant::query()->where('slug', 'kabul-trial')->firstOrFail();
+        $business = Business::query()->where('slug', 'kabul-trial')->firstOrFail();
+        $tenant = Tenant::query()->findOrFail($business->tenant_id);
         $tenant->load('subscription.license');
 
         $this->assertSame(SubscriptionStatus::Trial, $tenant->subscription->status);

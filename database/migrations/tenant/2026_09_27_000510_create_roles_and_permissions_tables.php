@@ -18,27 +18,23 @@ return new class extends Migration
 
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->foreignUlid('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('name', 100);
-            $table->string('code', 80);
+            $table->string('code', 80)->unique();
             $table->boolean('is_system')->default(false);
             $table->timestamps();
 
-            $table->unique(['tenant_id', 'code']);
-            $table->index(['tenant_id', 'name']);
+            $table->index('name');
         });
 
         Schema::create('permission_role', function (Blueprint $table) {
             $table->foreignId('permission_id')->constrained()->cascadeOnDelete();
             $table->foreignId('role_id')->constrained()->cascadeOnDelete();
-
             $table->primary(['permission_id', 'role_id']);
         });
 
         Schema::create('role_user', function (Blueprint $table) {
             $table->foreignId('role_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-
             $table->primary(['role_id', 'user_id']);
         });
     }

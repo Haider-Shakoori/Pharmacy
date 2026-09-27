@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('tenant_id')->unique()->constrained()->cascadeOnDelete();
+            $table->foreignUlid('business_id')->unique()->constrained()->cascadeOnDelete();
             $table->foreignUlid('plan_id')->constrained()->restrictOnDelete();
             $table->string('status', 24)->default(SubscriptionStatus::Pending->value)->index();
             $table->timestamp('starts_at')->nullable();

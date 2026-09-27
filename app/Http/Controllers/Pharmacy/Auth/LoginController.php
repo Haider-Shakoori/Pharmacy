@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Pharmacy\Auth;
 
 use App\Enums\TenantStatus;
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,50 +18,31 @@ class LoginController extends Controller
         return view('pharmacy.auth.login');
     }
 
-    public function store(
-        Request $request,
-        TenantContext $tenantContext,
-    ): RedirectResponse {
+    public function store(Request $request): RedirectResponse
+    {
         $validated = $request->validate([
-            'tenant' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string'],
             'remember' => ['nullable', 'boolean'],
         ]);
 
-        $tenant = Tenant::query()
-            ->where('slug', Str::lower($validated['tenant']))
-            ->where('status', TenantStatus::Active)
-            ->first();
+        abort_unless(tenant()?->status === TenantStatus::Active, 403, 'This pharmacy is not active.');
 
-        if ($tenant === null) {
+        if (! Auth::guard('web')->attempt([
+            'email' => Str::lower($validated['email']),
+            'password' => $validated['password'],
+            'is_active' => true,
+        ], (bool) ($validated['remember'] ?? false))) {
             throw ValidationException::withMessages([
-                'tenant' => 'The pharmacy code or credentials are invalid.',
+                'email' => 'The provided credentials are invalid.',
             ]);
         }
 
-        $tenantContext->set($tenant);
+        $request->session()->regenerate();
 
-        try {
-            if (! Auth::guard('web')->attempt([
-                'email' => Str::lower($validated['email']),
-                'password' => $validated['password'],
-                'is_active' => true,
-            ], (bool) ($validated['remember'] ?? false))) {
-                throw ValidationException::withMessages([
-                    'email' => 'The pharmacy code or credentials are invalid.',
-                ]);
-            }
-
-            $request->session()->regenerate();
-            $request->session()->put('tenant_id', $tenant->id);
-
-            Auth::guard('web')->user()?->forceFill([
-                'last_login_at' => now(),
-            ])->save();
-        } finally {
-            $tenantContext->clear();
-        }
+        Auth::guard('web')->user()?->forceFill([
+            'last_login_at' => now(),
+        ])->save();
 
         return redirect()->intended(route('pharmacy.dashboard'));
     }
@@ -71,7 +50,6 @@ class LoginController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Pharmacy;
 
-use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +14,6 @@ class StoreMedicineReferenceRequest extends FormRequest
 
     public function rules(): array
     {
-        $tenantId = app(TenantContext::class)->id();
         $type = $this->route('type');
 
         abort_unless(in_array($type, ['category', 'manufacturer'], true), 404);
@@ -25,7 +23,7 @@ class StoreMedicineReferenceRequest extends FormRequest
         return [
             'name' => [
                 'required', 'string', 'max:160',
-                Rule::unique($table, 'name')->where('tenant_id', $tenantId),
+                Rule::unique($table, 'name'),
             ],
             'country' => [
                 Rule::requiredIf($type === 'manufacturer'),

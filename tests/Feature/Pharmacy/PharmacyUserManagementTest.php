@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Pharmacy;
 
-use App\Models\Tenant;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,16 +17,16 @@ class PharmacyUserManagementTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_owner_can_create_cashier_inside_own_tenant(): void
+    public function test_owner_can_create_cashier_inside_own_tenant_database(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
+        $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
         app(TrialProvisioner::class)->provision($tenant);
         $owner = app(RbacProvisioner::class)->provisionOwner($tenant, 'Owner', 'owner@example.test', 'password123');
         $roles = app(RbacProvisioner::class)->ensureForTenant($tenant);
 
-        $this->actingAs($owner)
-            ->withSession(['tenant_id' => $tenant->id])
-            ->post('/pharmacy/users', [
+        $this->onTenantDomain($tenant)
+            ->actingAs($owner)
+            ->post('/users', [
                 'name' => 'Cashier One',
                 'email' => 'cashier@example.test',
                 'password' => 'password123',
@@ -36,8 +35,8 @@ class PharmacyUserManagementTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->withSession(['tenant_id' => $tenant->id])
-            ->get('/pharmacy/users')
+        $this->onTenantDomain($tenant)
+            ->get('/users')
             ->assertOk()
             ->assertSee('Cashier One');
     }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 #[Fillable([
     'name',
@@ -26,7 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Plan extends Model
 {
-    use HasFactory, HasUlids;
+    use CentralConnection, HasFactory, HasUlids;
 
     public function subscriptions(): HasMany
     {

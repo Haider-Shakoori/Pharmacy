@@ -8,44 +8,41 @@ use LogicException;
 
 class TenantContext
 {
-    private ?Tenant $tenant = null;
-
     public function set(Tenant $tenant): void
     {
-        $this->tenant = $tenant;
+        tenancy()->initialize($tenant);
     }
 
     public function clear(): void
     {
-        $this->tenant = null;
+        if (tenancy()->initialized) {
+            tenancy()->end();
+        }
     }
 
     public function has(): bool
     {
-        return $this->tenant !== null;
+        return tenancy()->initialized && tenancy()->tenant instanceof Tenant;
     }
 
     public function tenant(): Tenant
     {
-        return $this->tenant
-            ?? throw new LogicException('No tenant context is active.');
+        $tenant = tenancy()->tenant;
+
+        if (! $tenant instanceof Tenant) {
+            throw new LogicException('No tenant context is active.');
+        }
+
+        return $tenant;
     }
 
     public function id(): string
     {
-        return (string) $this->tenant()->getKey();
+        return (string) $this->tenant()->getTenantKey();
     }
 
     public function run(Tenant $tenant, Closure $callback): mixed
     {
-        $previous = $this->tenant;
-
-        try {
-            $this->set($tenant);
-
-            return $callback();
-        } finally {
-            $this->tenant = $previous;
-        }
+        return $tenant->run($callback);
     }
 }
