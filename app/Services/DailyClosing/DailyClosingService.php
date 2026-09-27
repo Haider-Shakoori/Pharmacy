@@ -37,7 +37,7 @@ class DailyClosingService
 
         $sales = Sale::query()
             ->where('stock_location_id', $location->id)
-            ->where('business_date', $date)
+            ->whereDate('business_date', $date)
             ->where('status', 'completed');
 
         $grossSales = BigDecimal::of((string) ($sales->clone()->sum('grand_total') ?? 0));
@@ -49,14 +49,14 @@ class DailyClosingService
             ->selectRaw('sale_payments.method, SUM(sale_payments.amount) as total')
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
             ->where('sales.stock_location_id', $location->id)
-            ->where('sales.business_date', $date)
+            ->whereDate('sales.business_date', $date)
             ->where('sales.status', 'completed')
             ->groupBy('sale_payments.method')
             ->pluck('total', 'method');
 
         $returnTotal = BigDecimal::of((string) SaleReturn::query()
             ->where('stock_location_id', $location->id)
-            ->where('business_date', $date)
+            ->whereDate('business_date', $date)
             ->where('status', 'completed')
             ->sum('refund_total'));
 
@@ -64,7 +64,7 @@ class DailyClosingService
             ->selectRaw('sale_return_refunds.method, SUM(sale_return_refunds.amount) as total')
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_refunds.sale_return_id')
             ->where('sale_returns.stock_location_id', $location->id)
-            ->where('sale_returns.business_date', $date)
+            ->whereDate('sale_returns.business_date', $date)
             ->where('sale_returns.status', 'completed')
             ->groupBy('sale_return_refunds.method')
             ->pluck('total', 'method');
@@ -80,7 +80,7 @@ class DailyClosingService
 
         $openingCash = BigDecimal::of((string) CashierShift::query()
             ->where('stock_location_id', $location->id)
-            ->where('business_date', $date)
+            ->whereDate('business_date', $date)
             ->sum('opening_cash'));
 
         return [
@@ -170,7 +170,7 @@ class DailyClosingService
             $date = $this->businessDate();
             $existing = DailyClosing::query()
                 ->where('stock_location_id', $location->id)
-                ->where('business_date', $date)
+                ->whereDate('business_date', $date)
                 ->lockForUpdate()
                 ->first();
 
@@ -178,7 +178,7 @@ class DailyClosingService
                 throw ValidationException::withMessages(['closing' => 'This business day is already finalized.']);
             }
 
-            if (CashierShift::query()->where('stock_location_id', $location->id)->where('business_date', $date)->where('status', 'open')->exists()) {
+            if (CashierShift::query()->where('stock_location_id', $location->id)->whereDate('business_date', $date)->where('status', 'open')->exists()) {
                 throw ValidationException::withMessages(['closing' => 'Close all cashier shifts before Daily Closing.']);
             }
 
@@ -197,20 +197,22 @@ class DailyClosingService
                 throw ValidationException::withMessages(['notes' => 'A note is required for this cash variance.']);
             }
 
-            $closing = DailyClosing::query()->updateOrCreate(
-                ['stock_location_id' => $location->id, 'business_date' => $date],
-                [
-                    ...$snapshot,
-                    'status' => 'finalized',
-                    'counted_cash' => $this->decimal($counted),
-                    'variance' => $this->decimal($variance),
-                    'finalized_by' => $user->id,
-                    'finalized_at' => now(),
-                    'approved_by' => null,
-                    'approved_at' => null,
-                    'closing_notes' => $notes,
-                ],
-            );
+            $closing = $existing ?? new DailyClosing([
+                'stock_location_id' => $location->id,
+                'business_date' => $date,
+            ]);
+
+            $closing->fill([
+                ...$snapshot,
+                'status' => 'finalized',
+                'counted_cash' => $this->decimal($counted),
+                'variance' => $this->decimal($variance),
+                'finalized_by' => $user->id,
+                'finalized_at' => now(),
+                'approved_by' => null,
+                'approved_at' => null,
+                'closing_notes' => $notes,
+            ])->save();
 
             $this->event($closing, 'finalized', $user, $notes, $snapshot);
 
@@ -267,7 +269,7 @@ class DailyClosingService
 
         return DailyClosing::query()
             ->where('stock_location_id', $location->id)
-            ->where('business_date', $businessDate ?? $this->businessDate())
+            ->whereDate('business_date', $businessDate ?? $this->businessDate())
             ->whereIn('status', ['finalized', 'approved'])
             ->exists();
     }
