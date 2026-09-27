@@ -127,10 +127,10 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
                 Route::post('/daily-closing/finalize', [DailyClosingController::class, 'finalize'])->name('daily-closing.finalize');
             });
 
-            Route::post('/daily-closing/{dailyClosing}/approve', [DailyClosingController::class, 'approve')
+            Route::post('/daily-closing/{dailyClosing}/approve', [DailyClosingController::class, 'approve'])
                 ->middleware('permission:daily_closing.approve')
                 ->name('daily-closing.approve');
-            Route::post('/daily-closing/{dailyClosing}/reopen', [DailyClosingController::class, 'reopen')
+            Route::post('/daily-closing/{dailyClosing}/reopen', [DailyClosingController::class, 'reopen'])
                 ->middleware('permission:daily_closing.reopen')
                 ->name('daily-closing.reopen');
 
