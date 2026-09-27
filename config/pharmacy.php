@@ -19,4 +19,12 @@ return [
         'mobile_first' => true,
         'default_license_grace_days' => 7,
     ],
+
+    'platform' => [
+        'bootstrap_admin' => [
+            'name' => env('PLATFORM_ADMIN_NAME', 'Platform Administrator'),
+            'email' => env('PLATFORM_ADMIN_EMAIL'),
+            'password' => env('PLATFORM_ADMIN_PASSWORD'),
+        ],
+    ],
 ];

@@ -21,6 +21,18 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => ResolveTenant::class,
         ]);
+
+        $middleware->redirectGuestsTo(
+            fn (Request $request) => $request->is('platform*')
+                ? route('platform.login')
+                : route('pharmacy.dashboard'),
+        );
+
+        $middleware->redirectUsersTo(
+            fn (Request $request) => $request->is('platform*')
+                ? route('platform.dashboard')
+                : route('pharmacy.dashboard'),
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
