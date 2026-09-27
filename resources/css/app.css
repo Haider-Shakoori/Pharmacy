@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+@source '../js/**/*.js';
+
+@theme {
+    --font-sans: Tahoma, Arial, ui-sans-serif, system-ui, sans-serif;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+html {
+    background: #f8fafc;
+}
+
+body {
+    min-height: 100vh;
+}
