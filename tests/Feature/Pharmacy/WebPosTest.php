@@ -11,6 +11,7 @@ use App\Models\StockMovement;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Inventory\StockMovementService;
+use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,6 +22,7 @@ class WebPosTest extends TestCase
     public function test_completed_sale_allocates_fefo_stock_exactly_once(): void
     {
         $tenant = $this->createTenant(['slug' => 'pos-test']);
+        app(TrialProvisioner::class)->provision($tenant);
 
         $tenant->run(function () use ($tenant): void {
             $roles = app(RbacProvisioner::class)->ensureForTenant($tenant);
