@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Pharmacy;
 
-use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,24 +24,22 @@ class StoreMedicineRequest extends FormRequest
 
     public function rules(): array
     {
-        $tenantId = app(TenantContext::class)->id();
-
         return [
             'medicine_category_id' => [
                 'nullable',
-                Rule::exists('medicine_categories', 'id')->where('tenant_id', $tenantId),
+                Rule::exists('medicine_categories', 'id'),
             ],
             'manufacturer_id' => [
                 'nullable',
-                Rule::exists('manufacturers', 'id')->where('tenant_id', $tenantId),
+                Rule::exists('manufacturers', 'id'),
             ],
             'medicine_code' => [
                 'required', 'string', 'max:80',
-                Rule::unique('medicines', 'medicine_code')->where('tenant_id', $tenantId),
+                Rule::unique('medicines', 'medicine_code'),
             ],
             'barcode' => [
                 'nullable', 'string', 'max:120',
-                Rule::unique('medicines', 'barcode')->where('tenant_id', $tenantId),
+                Rule::unique('medicines', 'barcode'),
             ],
             'brand_name' => ['required', 'string', 'max:180'],
             'generic_name' => ['nullable', 'string', 'max:180'],

@@ -24,10 +24,10 @@ class SubscriptionController extends Controller
         $status = trim((string) $request->query('status'));
 
         $subscriptions = Subscription::query()
-            ->with(['tenant', 'plan', 'license'])
+            ->with(['business.tenant', 'plan', 'license'])
             ->when($search !== '', function ($query) use ($search): void {
-                $query->whereHas('tenant', function ($query) use ($search): void {
-                    $query->where('name', 'like', "%{$search}%")
+                $query->whereHas('business', function ($query) use ($search): void {
+                    $query->where('pharmacy_name', 'like', "%{$search}%")
                         ->orWhere('slug', 'like', "%{$search}%");
                 });
             })
@@ -45,11 +45,11 @@ class SubscriptionController extends Controller
 
     public function edit(Tenant $tenant): View
     {
-        $tenant->load('subscription.plan', 'subscription.license.activations');
+        $tenant->load('business.subscription.plan', 'business.subscription.license.activations');
 
         return view('platform.subscriptions.edit', [
             'tenant' => $tenant,
-            'subscription' => $tenant->subscription,
+            'subscription' => $tenant->business?->subscription,
             'plans' => Plan::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')
@@ -68,7 +68,7 @@ class SubscriptionController extends Controller
 
         DB::transaction(function () use ($tenant, $validated, $keys, &$generatedKey): void {
             $subscription = Subscription::query()->firstOrNew([
-                'tenant_id' => $tenant->id,
+                'business_id' => $tenant->business()->firstOrFail()->id,
             ]);
 
             $subscription->fill($validated);
@@ -78,7 +78,7 @@ class SubscriptionController extends Controller
                 $subscription->trial_ends_at = null;
             }
 
-            $subscription->tenant_id = $tenant->id;
+            $subscription->business_id = $tenant->business()->firstOrFail()->id;
             $subscription->save();
 
             $generatedKey = $keys->ensureForSubscription($subscription);

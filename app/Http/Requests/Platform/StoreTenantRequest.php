@@ -16,7 +16,10 @@ class StoreTenantRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:160'],
-            'slug' => ['required', 'alpha_dash:ascii', 'max:100', 'unique:tenants,slug'],
+            'slug' => ['required', 'alpha_dash:ascii', 'max:100', 'unique:businesses,slug'],
+            'contact_person' => ['required', 'string', 'max:160'],
+            'phone_whatsapp' => ['required', 'string', 'max:64'],
+            'location' => ['required', 'string', 'max:255'],
             'timezone' => ['required', 'timezone'],
             'currency' => ['required', 'alpha', 'size:3'],
             'locale' => ['required', Rule::in(config('pharmacy.locales'))],

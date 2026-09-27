@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Settings\PharmacySettings;
 use App\Support\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
@@ -12,17 +13,18 @@ class ApplyTenantPreferences
 {
     public function __construct(
         private readonly TenantContext $tenantContext,
+        private readonly PharmacySettings $settings,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
         $tenant = $this->tenantContext->tenant();
         $previousLocale = App::getLocale();
-
-        $locale = (string) $request->session()->get('locale', $tenant->locale);
+        $defaultLocale = $this->settings->locale($tenant);
+        $locale = (string) $request->session()->get('locale', $defaultLocale);
 
         if (! in_array($locale, config('pharmacy.locales'), true)) {
-            $locale = $tenant->locale;
+            $locale = $defaultLocale;
         }
 
         App::setLocale($locale);
