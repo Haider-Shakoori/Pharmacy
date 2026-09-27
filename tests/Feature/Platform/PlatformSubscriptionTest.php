@@ -6,7 +6,6 @@ use App\Enums\SubscriptionStatus;
 use App\Models\Plan;
 use App\Models\PlatformAdmin;
 use App\Models\Subscription;
-use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -31,7 +30,7 @@ class PlatformSubscriptionTest extends TestCase
 
     public function test_platform_admin_can_assign_and_replace_current_subscription_settings(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Kabul Pharmacy', 'slug' => 'kabul-pharmacy']);
+        $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul-pharmacy']);
         $plan = Plan::query()->create([
             'name' => 'Standard',
             'code' => 'STANDARD',
@@ -52,7 +51,7 @@ class PlatformSubscriptionTest extends TestCase
             'notes' => 'Paid manually',
         ])->assertRedirect();
 
-        $subscription = Subscription::query()->where('tenant_id', $tenant->id)->firstOrFail();
+        $subscription = Subscription::query()->where('business_id', $tenant->business->id)->firstOrFail();
 
         $this->assertSame($plan->id, $subscription->plan_id);
         $this->assertSame(SubscriptionStatus::Active, $subscription->status);
@@ -66,13 +65,13 @@ class PlatformSubscriptionTest extends TestCase
             'auto_renew' => '0',
         ])->assertRedirect();
 
-        $this->assertSame(1, Subscription::query()->where('tenant_id', $tenant->id)->count());
+        $this->assertSame(1, Subscription::query()->where('business_id', $tenant->business->id)->count());
         $this->assertSame(SubscriptionStatus::Suspended, $subscription->fresh()->status);
     }
 
     public function test_inactive_plan_cannot_be_assigned(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Herat Pharmacy', 'slug' => 'herat-pharmacy']);
+        $tenant = $this->createTenant(['name' => 'Herat Pharmacy', 'slug' => 'herat-pharmacy']);
         $plan = Plan::query()->create([
             'name' => 'Legacy',
             'code' => 'LEGACY',
@@ -93,6 +92,6 @@ class PlatformSubscriptionTest extends TestCase
             ->assertRedirect("/platform/subscriptions/{$tenant->id}/edit")
             ->assertSessionHasErrors('plan_id');
 
-        $this->assertDatabaseMissing('subscriptions', ['tenant_id' => $tenant->id]);
+        $this->assertDatabaseMissing('subscriptions', ['business_id' => $tenant->business->id]);
     }
 }

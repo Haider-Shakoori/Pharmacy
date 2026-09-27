@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Pharmacy;
 
-use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Settings\PharmacySettings;
@@ -21,15 +20,15 @@ class PharmacySettingsTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_owner_can_update_profile_localization_and_daily_closing_policy(): void
+    public function test_owner_can_update_tenant_local_profile_and_daily_closing_policy(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
+        $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
         app(TrialProvisioner::class)->provision($tenant);
         $owner = app(RbacProvisioner::class)->provisionOwner($tenant, 'Owner', 'owner@example.test', 'password123');
 
-        $this->actingAs($owner)
-            ->withSession(['tenant_id' => $tenant->id])
-            ->put('/pharmacy/settings', [
+        $this->onTenantDomain($tenant)
+            ->actingAs($owner)
+            ->put('/settings', [
                 'name' => 'Kabul City Pharmacy',
                 'timezone' => 'Asia/Kabul',
                 'locale' => 'fa',
@@ -47,11 +46,12 @@ class PharmacySettingsTest extends TestCase
             ])
             ->assertRedirect();
 
-        $tenant->refresh();
+        $profile = app(PharmacySettings::class)->profile($tenant);
         $closing = app(PharmacySettings::class)->dailyClosing($tenant);
 
-        $this->assertSame('Kabul City Pharmacy', $tenant->name);
-        $this->assertSame('fa', $tenant->locale);
+        $this->assertSame('Kabul City Pharmacy', $profile['name']);
+        $this->assertSame('fa', $profile['locale']);
+        $this->assertSame('Kabul Pharmacy', $tenant->fresh()->business->pharmacy_name);
         $this->assertSame('02:30', $closing['business_day_rollover_time']);
         $this->assertEquals(100.0, $closing['variance_note_threshold']);
         $this->assertTrue($closing['require_counted_cash']);
@@ -60,7 +60,7 @@ class PharmacySettingsTest extends TestCase
 
     public function test_cashier_cannot_open_settings(): void
     {
-        $tenant = Tenant::query()->create(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
+        $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
         app(TrialProvisioner::class)->provision($tenant);
         $roles = app(RbacProvisioner::class)->ensureForTenant($tenant);
 
@@ -75,9 +75,9 @@ class PharmacySettingsTest extends TestCase
             return $user;
         });
 
-        $this->actingAs($cashier)
-            ->withSession(['tenant_id' => $tenant->id])
-            ->get('/pharmacy/settings')
+        $this->onTenantDomain($tenant)
+            ->actingAs($cashier)
+            ->get('/settings')
             ->assertForbidden();
     }
 }

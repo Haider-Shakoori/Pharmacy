@@ -2,20 +2,30 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class LocaleSwitchTest extends TestCase
 {
-    public function test_supported_locale_is_stored_in_session(): void
+    use RefreshDatabase;
+
+    public function test_supported_locale_is_stored_in_tenant_session(): void
     {
-        $this->from('/pharmacy')
+        $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
+
+        $this->onTenantDomain($tenant)
+            ->from('/')
             ->get('/locale/fa')
-            ->assertRedirect('/pharmacy')
+            ->assertRedirect('/')
             ->assertSessionHas('locale', 'fa');
     }
 
-    public function test_unsupported_locale_is_rejected(): void
+    public function test_unsupported_locale_is_rejected_on_tenant_domain(): void
     {
-        $this->get('/locale/de')->assertNotFound();
+        $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
+
+        $this->onTenantDomain($tenant)
+            ->get('/locale/de')
+            ->assertNotFound();
     }
 }

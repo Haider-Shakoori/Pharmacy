@@ -4,7 +4,6 @@ namespace Tests\Feature\Licensing;
 
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Models\Tenant;
 use App\Services\Licensing\LicenseKeyService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,7 +21,7 @@ class TrialLicenseActivationTest extends TestCase
             'pharmacy.license.signing_public_key' => base64_encode(sodium_crypto_sign_publickey($keyPair)),
         ]);
 
-        $tenant = Tenant::query()->create(['name' => 'Trial Pharmacy', 'slug' => 'trial-pharmacy']);
+        $tenant = $this->createTenant(['name' => 'Trial Pharmacy', 'slug' => 'trial-pharmacy']);
         $plan = Plan::query()->create([
             'name' => 'Trial',
             'code' => 'TRIAL',
@@ -36,7 +35,7 @@ class TrialLicenseActivationTest extends TestCase
         ]);
         $trialEndsAt = now()->addDay();
         $subscription = Subscription::query()->create([
-            'tenant_id' => $tenant->id,
+            'business_id' => $tenant->business->id,
             'plan_id' => $plan->id,
             'status' => 'trial',
             'trial_started_at' => now(),

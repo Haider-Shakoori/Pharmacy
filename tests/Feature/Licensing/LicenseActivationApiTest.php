@@ -29,7 +29,7 @@ class LicenseActivationApiTest extends TestCase
             'pharmacy.license.signing_public_key' => base64_encode(sodium_crypto_sign_publickey($keyPair)),
         ]);
 
-        $this->tenant = Tenant::query()->create([
+        $this->tenant = $this->createTenant([
             'name' => 'Kabul Pharmacy',
             'slug' => 'kabul',
         ]);
@@ -47,7 +47,7 @@ class LicenseActivationApiTest extends TestCase
         ]);
 
         $this->subscription = Subscription::query()->create([
-            'tenant_id' => $this->tenant->id,
+            'business_id' => $this->tenant->business->id,
             'plan_id' => $plan->id,
             'status' => 'active',
             'starts_at' => now()->subDay(),

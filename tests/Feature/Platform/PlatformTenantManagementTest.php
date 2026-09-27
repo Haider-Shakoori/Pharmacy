@@ -5,6 +5,8 @@ namespace Tests\Feature\Platform;
 use App\Enums\TenantStatus;
 use App\Models\PlatformAdmin;
 use App\Models\Tenant;
+use App\Models\User;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -32,6 +34,9 @@ class PlatformTenantManagementTest extends TestCase
         $this->post('/platform/tenants', [
             'name' => 'Kabul Central Pharmacy',
             'slug' => 'kabul-central',
+            'contact_person' => 'Kabul Contact',
+            'phone_whatsapp' => '+93700000000',
+            'location' => 'Kabul',
             'timezone' => 'Asia/Kabul',
             'currency' => 'AFN',
             'locale' => 'fa',
@@ -40,11 +45,20 @@ class PlatformTenantManagementTest extends TestCase
             'owner_password' => 'password123',
         ])->assertRedirect();
 
-        $tenant = Tenant::query()->where('slug', 'kabul-central')->firstOrFail();
+        $tenant = Tenant::query()->whereHas('business', fn ($query) => $query->where('slug', 'kabul-central'))->firstOrFail();
+
+        $this->assertSame('application_ready', $tenant->provisioning_status);
+        $this->assertSame('kabul-central.'.config('pharmacy.deployment_host'), $tenant->domains()->value('domain'));
+        app(TenantContext::class)->run($tenant, function (): void {
+            $this->assertTrue(User::query()->where('email', 'owner@kabul.test')->exists());
+        });
 
         $this->put("/platform/tenants/{$tenant->id}", [
             'name' => 'Kabul Central Pharmacy Updated',
             'slug' => 'kabul-central',
+            'contact_person' => 'Updated Contact',
+            'phone_whatsapp' => '+93711111111',
+            'location' => 'Kabul City',
             'timezone' => 'Asia/Kabul',
             'currency' => 'AFN',
             'locale' => 'ps',
@@ -62,8 +76,8 @@ class PlatformTenantManagementTest extends TestCase
 
     public function test_tenant_search_is_server_side_and_filterable(): void
     {
-        Tenant::query()->create(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
-        Tenant::query()->create([
+        $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
+        $this->createTenant([
             'name' => 'Herat Pharmacy',
             'slug' => 'herat',
             'status' => TenantStatus::Suspended,

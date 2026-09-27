@@ -5,7 +5,6 @@ namespace Tests\Feature\Subscriptions;
 use App\Http\Middleware\EnsureOperationalSubscription;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Models\Tenant;
 use App\Services\Licensing\LicenseKeyService;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,7 +22,7 @@ class OperationalSubscriptionMiddlewareTest extends TestCase
         app(TenantContext::class)->set($tenant);
 
         $response = app(EnsureOperationalSubscription::class)->handle(
-            Request::create('/pharmacy', 'GET'),
+            Request::create('/', 'GET'),
             fn () => response('ok'),
         );
 
@@ -37,7 +36,7 @@ class OperationalSubscriptionMiddlewareTest extends TestCase
 
         try {
             app(EnsureOperationalSubscription::class)->handle(
-                Request::create('/pharmacy', 'GET'),
+                Request::create('/', 'GET'),
                 fn () => response('ok'),
             );
 
@@ -49,7 +48,7 @@ class OperationalSubscriptionMiddlewareTest extends TestCase
 
     private function trial($trialEnd): array
     {
-        $tenant = Tenant::query()->create([
+        $tenant = $this->createTenant([
             'name' => 'Trial Pharmacy '.uniqid(),
             'slug' => 'trial-'.uniqid(),
         ]);
@@ -64,7 +63,7 @@ class OperationalSubscriptionMiddlewareTest extends TestCase
             'sort_order' => 0,
         ]);
         $subscription = Subscription::query()->create([
-            'tenant_id' => $tenant->id,
+            'business_id' => $tenant->business->id,
             'plan_id' => $plan->id,
             'status' => 'trial',
             'trial_started_at' => now(),
