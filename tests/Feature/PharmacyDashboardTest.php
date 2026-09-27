@@ -12,13 +12,9 @@ class PharmacyDashboardTest extends TestCase
             ->assertRedirect('/pharmacy');
     }
 
-    public function test_pharmacy_dashboard_is_available(): void
+    public function test_pharmacy_dashboard_requires_authentication(): void
     {
-        $this->withoutVite();
-
         $this->get('/pharmacy')
-            ->assertOk()
-            ->assertSee('BusinessOS Pharmacy')
-            ->assertSee('pharmacy.businessos.af');
+            ->assertRedirect('/pharmacy/login');
     }
 }

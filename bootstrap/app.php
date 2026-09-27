@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureOperationalSubscription;
+use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -23,12 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => ResolveTenant::class,
             'subscription.operational' => EnsureOperationalSubscription::class,
+            'permission' => EnsurePermission::class,
         ]);
 
         $middleware->redirectGuestsTo(
             fn (Request $request) => $request->is('platform*')
                 ? route('platform.login')
-                : route('pharmacy.dashboard'),
+                : route('pharmacy.login'),
         );
 
         $middleware->redirectUsersTo(

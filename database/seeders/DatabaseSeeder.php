@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Tenancy\TenantContext;
@@ -14,7 +15,10 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        $this->call(PlatformAdminSeeder::class);
+        $this->call([
+            PlatformAdminSeeder::class,
+            PermissionSeeder::class,
+        ]);
 
         $tenant = Tenant::query()->firstOrCreate(
             ['slug' => 'demo-pharmacy'],
@@ -26,14 +30,21 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
+        (new DefaultRoleSeeder)->forTenant($tenant);
+
         app(TenantContext::class)->run($tenant, function (): void {
-            User::query()->firstOrCreate(
+            $user = User::query()->firstOrCreate(
                 ['email' => 'owner@demo.test'],
                 [
                     'name' => 'Demo Pharmacy Owner',
                     'password' => 'password',
+                    'is_active' => true,
+                    'preferred_locale' => 'en',
                 ],
             );
+
+            $owner = Role::query()->where('slug', 'owner')->firstOrFail();
+            $user->roles()->syncWithoutDetaching([$owner->id]);
         });
     }
 }

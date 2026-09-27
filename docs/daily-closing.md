@@ -1,42 +1,35 @@
-# Daily Closing Requirement
+# Daily Closing
 
-Daily Closing is a mandatory pharmacy workflow requirement captured before POS implementation so sales, shifts, reporting, and accounting are designed around it.
+Daily Closing is a core operational control, not an optional reporting feature.
 
-## Scope
+## Required behavior
 
-A pharmacy business day must be closed with a permanent closing record containing, at minimum:
+Each pharmacy business day and cashier shift must be auditable from opening through closure. The implementation will cover:
 
-- pharmacy/branch;
-- business date;
-- opening cash;
-- gross sales;
-- discounts;
-- returns/refunds;
-- cash sales;
-- card/bank/other payment totals when enabled;
-- collections or other cash inflows when applicable;
-- paid expenses or cash withdrawals when applicable;
-- expected closing cash;
-- actual counted cash;
-- shortage/overage variance;
-- transaction count;
-- opening user/cashier;
-- closing user;
-- opened and closed timestamps;
-- notes;
-- immutable audit metadata.
+- opening user, time and opening cash;
+- cashier/terminal/branch identity;
+- gross sales and discounts;
+- sales returns and voids;
+- payment-method totals;
+- credit sales and collections where applicable;
+- cash expenses/payouts recorded during the shift;
+- expected cash;
+- physically counted cash;
+- shortage or overage variance;
+- closing notes;
+- close user/time;
+- supervisor approval;
+- controlled reopen with reason and audit trail;
+- final re-close after corrections;
+- late transactions arriving from offline Android devices;
+- protection against silently changing an already approved closing.
 
-## Rules
+## Permission keys reserved in Batch 7
 
-- A business date cannot have more than one final Daily Closing per branch.
-- Final closing must use server-calculated totals rather than user-entered sales totals.
-- The closer enters counted cash; the system calculates shortage/overage.
-- A closing cannot silently rewrite completed sales.
-- Reopening a finalized day must require explicit authorization and create an audit event; the previous close is retained.
-- Offline Android sales that belong to an already closed business day must enter a controlled late-sync exception flow rather than changing the closing silently.
-- Reports and accounting must reconcile to the closing record.
-- The next business day/shift opening must use the prior close according to pharmacy configuration.
+- daily-closing.view
+- daily-closing.open
+- daily-closing.close
+- daily-closing.approve
+- daily-closing.reopen
 
-## Delivery point
-
-The data contract is reserved now. The operational UI and reconciliation engine will be implemented with POS/shifts and daily operations after the Web POS foundation, with Batch 13 covering cashier shifts, returns, and Daily Closing.
+A cashier may open and close their own shift, while approval/reopening can be restricted to supervisors, managers or owners. Exact workflow and accounting posting are implemented with the POS/returns phase.

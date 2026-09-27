@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
+use App\Http\Controllers\Pharmacy\UserController as PharmacyUserController;
 use App\Http\Controllers\Platform\Auth\LoginController as PlatformLoginController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\Platform\LicenseController;
@@ -12,8 +14,26 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/pharmacy');
 
-Route::get('/pharmacy', PharmacyDashboardController::class)
-    ->name('pharmacy.dashboard');
+Route::prefix('pharmacy')->name('pharmacy.')->group(function (): void {
+    Route::middleware('guest:web')->group(function (): void {
+        Route::get('/login', [PharmacyLoginController::class, 'create'])->name('login');
+        Route::post('/login', [PharmacyLoginController::class, 'store'])
+            ->middleware('throttle:8,1')
+            ->name('login.store');
+    });
+
+    Route::middleware(['auth:web', 'tenant', 'subscription.operational'])->group(function (): void {
+        Route::get('/', PharmacyDashboardController::class)
+            ->middleware('permission:dashboard.view')
+            ->name('dashboard');
+
+        Route::post('/logout', [PharmacyLoginController::class, 'destroy'])->name('logout');
+
+        Route::resource('users', PharmacyUserController::class)
+            ->except(['show', 'destroy'])
+            ->middleware('permission:users.manage');
+    });
+});
 
 Route::get('/locale/{locale}', function (string $locale) {
     abort_unless(in_array($locale, config('pharmacy.locales'), true), 404);
