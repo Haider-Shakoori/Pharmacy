@@ -12,6 +12,7 @@ use App\Http\Controllers\Pharmacy\InventoryController;
 use App\Http\Controllers\Pharmacy\InventoryLocationController;
 use App\Http\Controllers\Pharmacy\MedicineController as PharmacyMedicineController;
 use App\Http\Controllers\Pharmacy\MedicineReferenceController as PharmacyMedicineReferenceController;
+use App\Http\Controllers\Pharmacy\PosController;
 use App\Http\Controllers\Pharmacy\PurchaseInvoiceController;
 use App\Http\Controllers\Pharmacy\PurchaseOrderController;
 use App\Http\Controllers\Pharmacy\RoleController as PharmacyRoleController;
@@ -110,6 +111,13 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
             Route::post('/inventory/batches/{productBatch}/status', BatchStatusController::class)
                 ->middleware('permission:inventory.status')
                 ->name('inventory.status');
+
+            Route::middleware('permission:pos.sell')->group(function (): void {
+                Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
+                Route::get('/pos/search', [PosController::class, 'search'])->name('pos.search');
+                Route::post('/pos/sales', [PosController::class, 'store'])->name('pos.store');
+                Route::get('/pos/sales/{sale}/receipt', [PosController::class, 'receipt'])->name('pos.receipt');
+            });
 
             Route::get('/settings', [PharmacySettingsController::class, 'edit'])
                 ->middleware('permission:settings.manage')
