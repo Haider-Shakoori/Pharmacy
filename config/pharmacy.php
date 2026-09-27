@@ -20,6 +20,12 @@ return [
         'default_license_grace_days' => 7,
     ],
 
+    'license' => [
+        'key_prefix' => 'PHM',
+        'signing_private_key' => env('LICENSE_SIGNING_PRIVATE_KEY_B64'),
+        'signing_public_key' => env('LICENSE_SIGNING_PUBLIC_KEY_B64'),
+    ],
+
     'platform' => [
         'bootstrap_admin' => [
             'name' => env('PLATFORM_ADMIN_NAME', 'Platform Administrator'),
