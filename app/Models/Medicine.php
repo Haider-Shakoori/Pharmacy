@@ -31,6 +31,17 @@ class Medicine extends Model
 {
     use BelongsToTenant, HasUlids;
 
+    protected $attributes = [
+        'purchase_unit' => 'pack',
+        'sale_unit' => 'unit',
+        'units_per_purchase_unit' => 1,
+        'reorder_level' => 0,
+        'prescription_required' => false,
+        'batch_tracking_required' => true,
+        'expiry_tracking_required' => true,
+        'is_active' => true,
+    ];
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(MedicineCategory::class, 'medicine_category_id');
