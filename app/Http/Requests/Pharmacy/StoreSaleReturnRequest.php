@@ -19,7 +19,7 @@ class StoreSaleReturnRequest extends FormRequest
             'reason' => ['required', 'string', 'max:1000'],
             'lines' => ['required', 'array', 'min:1'],
             'lines.*.sale_line_id' => ['required', 'string', 'exists:sale_lines,id'],
-            'lines.*.quantity' => ['required', 'numeric', 'gt:0'],
+            'lines.*.quantity' => ['required', 'numeric', 'min:0'],
             'refunds' => ['required', 'array', 'min:1'],
             'refunds.*.method' => ['required', Rule::in(['cash', 'bank', 'mobile', 'credit'])],
             'refunds.*.amount' => ['required', 'numeric', 'gt:0'],
