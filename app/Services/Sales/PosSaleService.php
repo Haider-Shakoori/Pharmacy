@@ -12,6 +12,7 @@ use App\Models\SalePayment;
 use App\Models\StockLocation;
 use App\Models\User;
 use App\Services\DailyClosing\BusinessDateResolver;
+use App\Services\DailyClosing\DailyClosingService;
 use App\Services\Inventory\FefoAllocator;
 use App\Support\Tenancy\TenantContext;
 use Brick\Math\BigDecimal;
@@ -25,6 +26,7 @@ class PosSaleService
     public function __construct(
         private readonly FefoAllocator $allocator,
         private readonly BusinessDateResolver $businessDates,
+        private readonly DailyClosingService $dailyClosing,
         private readonly TenantContext $tenantContext,
     ) {}
 
@@ -40,6 +42,12 @@ class PosSaleService
             $tenant = $this->tenantContext->tenant();
             $businessDate = $this->businessDates->resolve($tenant);
             $location = StockLocation::query()->where('is_active', true)->findOrFail($data['stock_location_id']);
+            if ($this->dailyClosing->salesBlocked($location, $businessDate)) {
+                throw ValidationException::withMessages([
+                    'closing' => 'Sales are blocked because this business day is finalized. Reopen Daily Closing before posting another sale.',
+                ]);
+            }
+
             $customer = isset($data['customer_id'])
                 ? Customer::query()->where('is_active', true)->findOrFail($data['customer_id'])
                 : null;

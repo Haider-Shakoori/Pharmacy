@@ -69,12 +69,18 @@ class StockMovementService
 
             $scaledAfter = (string) $after->toScale(4, RoundingMode::HalfUp);
 
+            $status = $locked->status;
+
+            if ($after->isZero() && $status === 'active') {
+                $status = 'depleted';
+            } elseif ($delta->isPositive() && $status === 'depleted' && ! $locked->isExpired()) {
+                $status = 'active';
+            }
+
             $locked->update([
                 'available_quantity' => $scaledAfter,
                 'last_movement_at' => now(),
-                'status' => $after->isZero() && $locked->status === 'active'
-                    ? 'depleted'
-                    : $locked->status,
+                'status' => $status,
             ]);
 
             return StockMovement::query()->create([

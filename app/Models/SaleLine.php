@@ -32,6 +32,11 @@ class SaleLine extends Model
         return $this->hasMany(SaleBatchAllocation::class);
     }
 
+    public function returnLines(): HasMany
+    {
+        return $this->hasMany(SaleReturnLine::class);
+    }
+
     protected function casts(): array
     {
         return [

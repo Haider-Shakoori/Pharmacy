@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
 use App\Http\Controllers\Pharmacy\BatchStatusController;
+use App\Http\Controllers\Pharmacy\DailyClosingController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
 use App\Http\Controllers\Pharmacy\GoodsReceiptController;
 use App\Http\Controllers\Pharmacy\GoodsReceiptInventoryController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Pharmacy\PosController;
 use App\Http\Controllers\Pharmacy\PurchaseInvoiceController;
 use App\Http\Controllers\Pharmacy\PurchaseOrderController;
 use App\Http\Controllers\Pharmacy\RoleController as PharmacyRoleController;
+use App\Http\Controllers\Pharmacy\SaleReturnController;
 use App\Http\Controllers\Pharmacy\SettingsController as PharmacySettingsController;
 use App\Http\Controllers\Pharmacy\SupplierController;
 use App\Http\Controllers\Pharmacy\SupplierPaymentController;
@@ -118,6 +120,25 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
                 Route::post('/pos/sales', [PosController::class, 'store'])->name('pos.store');
                 Route::get('/pos/sales/{sale}/receipt', [PosController::class, 'receipt'])->name('pos.receipt');
             });
+
+            Route::middleware('permission:returns.manage')->group(function (): void {
+                Route::get('/pos/sales/{sale}/returns/create', [SaleReturnController::class, 'create'])->name('returns.create');
+                Route::post('/pos/sales/{sale}/returns', [SaleReturnController::class, 'store'])->name('returns.store');
+            });
+
+            Route::middleware('permission:daily_closing.perform')->group(function (): void {
+                Route::get('/daily-closing', [DailyClosingController::class, 'index'])->name('daily-closing.index');
+                Route::post('/daily-closing/shifts/open', [DailyClosingController::class, 'openShift'])->name('daily-closing.shifts.open');
+                Route::post('/daily-closing/shifts/{cashierShift}/close', [DailyClosingController::class, 'closeShift'])->name('daily-closing.shifts.close');
+                Route::post('/daily-closing/finalize', [DailyClosingController::class, 'finalize'])->name('daily-closing.finalize');
+            });
+
+            Route::post('/daily-closing/{dailyClosing}/approve', [DailyClosingController::class, 'approve'])
+                ->middleware('permission:daily_closing.approve')
+                ->name('daily-closing.approve');
+            Route::post('/daily-closing/{dailyClosing}/reopen', [DailyClosingController::class, 'reopen'])
+                ->middleware('permission:daily_closing.reopen')
+                ->name('daily-closing.reopen');
 
             Route::get('/settings', [PharmacySettingsController::class, 'edit'])
                 ->middleware('permission:settings.manage')

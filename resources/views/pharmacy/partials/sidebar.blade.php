@@ -39,7 +39,9 @@
         @if (auth()->user()->hasPermission('pos.sell'))
             <a href="{{ route('pharmacy.pos.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.pos.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.pos') }}</a>
         @endif
-        <span class="block rounded-lg px-3 py-2.5 text-sm text-slate-400">Daily Closing · Batch 13</span>
+        @if (auth()->user()->hasPermission('daily_closing.perform'))
+            <a href="{{ route('pharmacy.daily-closing.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.daily-closing.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Daily Closing</a>
+        @endif
     </nav>
 
     <div class="border-t border-slate-100 p-4">
