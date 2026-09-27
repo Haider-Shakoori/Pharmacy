@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Pharmacy\StorePurchaseOrderRequest;
 use App\Models\Medicine;
 use App\Models\PurchaseOrder;
+use App\Models\StockLocation;
 use App\Models\Supplier;
 use App\Services\Purchasing\PurchaseTotalsCalculator;
 use Illuminate\Http\RedirectResponse;
@@ -93,7 +94,15 @@ class PurchaseOrderController extends Controller
     {
         $purchaseOrder->load(['supplier', 'lines.medicine', 'receipts.lines.medicine', 'invoices.payments']);
 
-        return view('pharmacy.purchasing.orders.show', ['order' => $purchaseOrder]);
+        return view('pharmacy.purchasing.orders.show', [
+            'order' => $purchaseOrder,
+            'stockLocations' => StockLocation::query()
+                ->with('branch')
+                ->where('is_active', true)
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get(),
+        ]);
     }
 
     public function submit(PurchaseOrder $purchaseOrder): RedirectResponse

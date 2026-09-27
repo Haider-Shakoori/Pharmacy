@@ -15,6 +15,8 @@ class UpdateSettingsRequest extends FormRequest
             'require_close_before_next_day' => $this->boolean('require_close_before_next_day'),
             'block_online_sales_after_close' => $this->boolean('block_online_sales_after_close'),
             'warn_unsynced_devices_before_close' => $this->boolean('warn_unsynced_devices_before_close'),
+            'block_expired_sales' => $this->boolean('block_expired_sales'),
+            'fefo_enabled' => $this->boolean('fefo_enabled'),
         ]);
     }
 
@@ -41,6 +43,11 @@ class UpdateSettingsRequest extends FormRequest
             'require_close_before_next_day' => ['required', 'boolean'],
             'block_online_sales_after_close' => ['required', 'boolean'],
             'warn_unsynced_devices_before_close' => ['required', 'boolean'],
+
+            'low_stock_threshold' => ['required', 'integer', 'min:0', 'max:1000000'],
+            'near_expiry_days' => ['required', 'integer', 'min:1', 'max:3650'],
+            'block_expired_sales' => ['required', 'boolean'],
+            'fefo_enabled' => ['required', 'boolean'],
         ];
     }
 }

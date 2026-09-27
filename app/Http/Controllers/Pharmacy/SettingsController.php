@@ -19,6 +19,7 @@ class SettingsController extends Controller
             'tenant' => $tenant,
             'profile' => $settings->profile($tenant),
             'closing' => $settings->dailyClosing($tenant),
+            'inventory' => $settings->inventory($tenant),
         ]);
     }
 
@@ -49,6 +50,12 @@ class SettingsController extends Controller
                 'require_close_before_next_day' => $validated['require_close_before_next_day'],
                 'block_online_sales_after_close' => $validated['block_online_sales_after_close'],
                 'warn_unsynced_devices_before_close' => $validated['warn_unsynced_devices_before_close'],
+            ],
+            [
+                'low_stock_threshold' => $validated['low_stock_threshold'],
+                'near_expiry_days' => $validated['near_expiry_days'],
+                'block_expired_sales' => $validated['block_expired_sales'],
+                'fefo_enabled' => $validated['fefo_enabled'],
             ],
         );
 

@@ -17,7 +17,11 @@ class PurchaseInvoiceController extends Controller
 {
     public function store(StorePurchaseInvoiceRequest $request, PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        abort_unless($purchaseOrder->status === 'approved', 422, 'Only approved purchase orders can be invoiced.');
+        abort_unless(
+            in_array($purchaseOrder->status, ['approved', 'partially_received', 'received'], true),
+            422,
+            'This purchase order cannot be invoiced.',
+        );
         abort_if($purchaseOrder->invoices()->where('status', '!=', 'cancelled')->exists(), 422, 'This purchase order already has an active invoice.');
 
         $data = $request->validated();
