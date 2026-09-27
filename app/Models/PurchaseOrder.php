@@ -20,6 +20,7 @@ class PurchaseOrder extends Model
     public function supplier(): BelongsTo { return $this->belongsTo(Supplier::class); }
     public function lines(): HasMany { return $this->hasMany(PurchaseOrderLine::class); }
     public function receipts(): HasMany { return $this->hasMany(GoodsReceipt::class); }
+    public function invoices(): HasMany { return $this->hasMany(PurchaseInvoice::class); }
     public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
     public function approver(): BelongsTo { return $this->belongsTo(User::class, 'approved_by'); }
 
