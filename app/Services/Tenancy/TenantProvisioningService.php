@@ -5,6 +5,7 @@ namespace App\Services\Tenancy;
 use App\Models\Business;
 use App\Models\Tenant;
 use App\Services\Access\RbacProvisioner;
+use App\Services\Inventory\InventoryProvisioner;
 use App\Services\Settings\PharmacySettings;
 use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,7 @@ class TenantProvisioningService
         private readonly RbacProvisioner $rbac,
         private readonly PharmacySettings $settings,
         private readonly TrialProvisioner $trials,
+        private readonly InventoryProvisioner $inventory,
     ) {}
 
     public function provision(array $data): array
@@ -52,6 +54,7 @@ class TenantProvisioningService
             $tenant->forceFill(['provisioning_status' => 'tenant_migrated'])->save();
 
             $this->settings->record($tenant);
+            $this->inventory->ensureDefaults($tenant);
             $this->rbac->provisionOwner(
                 $tenant,
                 $data['owner_name'],

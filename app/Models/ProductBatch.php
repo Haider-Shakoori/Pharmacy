@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Brick\Math\BigDecimal;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -18,12 +19,35 @@ class ProductBatch extends Model
 {
     use HasUlids;
 
-    public function medicine(): BelongsTo { return $this->belongsTo(Medicine::class); }
-    public function supplier(): BelongsTo { return $this->belongsTo(Supplier::class); }
-    public function branch(): BelongsTo { return $this->belongsTo(Branch::class); }
-    public function location(): BelongsTo { return $this->belongsTo(StockLocation::class, 'stock_location_id'); }
-    public function movements(): HasMany { return $this->hasMany(StockMovement::class); }
-    public function statusEvents(): HasMany { return $this->hasMany(BatchStatusEvent::class); }
+    public function medicine(): BelongsTo
+    {
+        return $this->belongsTo(Medicine::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(StockLocation::class, 'stock_location_id');
+    }
+
+    public function movements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    public function statusEvents(): HasMany
+    {
+        return $this->hasMany(BatchStatusEvent::class);
+    }
 
     public function isExpired(): bool
     {
@@ -34,7 +58,7 @@ class ProductBatch extends Model
     {
         return $this->status === 'active'
             && ! $this->isExpired()
-            && bccomp($this->available_quantity, '0', 4) === 1;
+            && BigDecimal::of($this->available_quantity)->isGreaterThan(BigDecimal::zero());
     }
 
     protected function casts(): array
