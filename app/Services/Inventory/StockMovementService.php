@@ -42,6 +42,17 @@ class StockMovementService
                 ->first();
 
             if ($existing) {
+                $sameOperation = $existing->product_batch_id === $batch->id
+                    && $existing->source_type === $sourceType
+                    && $existing->source_id === $sourceId
+                    && BigDecimal::of($existing->quantity_delta)->isEqualTo(BigDecimal::of($quantityDelta));
+
+                if (! $sameOperation) {
+                    throw ValidationException::withMessages([
+                        'idempotency_key' => 'This inventory idempotency key was already used for another operation.',
+                    ]);
+                }
+
                 return $existing;
             }
 
