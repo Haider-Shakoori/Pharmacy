@@ -36,7 +36,7 @@ class LicenseActivationService
         return DB::transaction(function () use ($license, $deviceId, $deviceName, $appVersion): array {
             /** @var License $license */
             $license = License::query()
-                ->with(['subscription.plan', 'subscription.tenant'])
+                ->with(['subscription.plan', 'subscription.business.tenant'])
                 ->lockForUpdate()
                 ->findOrFail($license->id);
 
@@ -105,7 +105,7 @@ class LicenseActivationService
 
             $payload = [
                 'v' => 1,
-                'tenant_id' => $subscription->tenant_id,
+                'tenant_id' => $subscription->business->tenant_id,
                 'subscription_id' => $subscription->id,
                 'license_id' => $license->id,
                 'license_version' => $license->version,
@@ -122,12 +122,12 @@ class LicenseActivationService
                 'lease_expires_at' => $leaseExpiresAt->toIso8601String(),
                 'subscription_health' => $this->health->forSubscription($subscription)->value,
                 'tenant' => [
-                    'id' => $subscription->tenant->id,
-                    'name' => $subscription->tenant->name,
-                    'slug' => $subscription->tenant->slug,
-                    'timezone' => $subscription->tenant->timezone,
-                    'currency' => $subscription->tenant->currency,
-                    'locale' => $subscription->tenant->locale,
+                    'id' => $subscription->business->tenant->id,
+                    'name' => $subscription->business->pharmacy_name,
+                    'slug' => $subscription->business->slug,
+                    'timezone' => $subscription->business->default_timezone,
+                    'currency' => $subscription->business->billing_currency,
+                    'locale' => $subscription->business->default_locale,
                 ],
                 'plan' => [
                     'code' => $plan->code,

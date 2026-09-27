@@ -73,10 +73,9 @@ class RbacProvisioner
         string $email,
         string $password,
     ): User {
-        return DB::transaction(function () use ($tenant, $name, $email, $password): User {
-            $this->ensurePermissions();
-
-            return $this->tenantContext->run($tenant, function () use ($name, $email, $password): User {
+        return $this->tenantContext->run($tenant, function () use ($name, $email, $password): User {
+            return DB::transaction(function () use ($name, $email, $password): User {
+                $this->ensurePermissions();
                 $roles = $this->ensureStandardRoles();
 
                 $user = User::query()->create([
@@ -95,12 +94,13 @@ class RbacProvisioner
 
     public function ensureForTenant(Tenant $tenant): array
     {
-        $this->ensurePermissions();
+        return $this->tenantContext->run($tenant, function (): array {
+            return DB::transaction(function (): array {
+                $this->ensurePermissions();
 
-        return $this->tenantContext->run(
-            $tenant,
-            fn () => $this->ensureStandardRoles(),
-        );
+                return $this->ensureStandardRoles();
+            });
+        });
     }
 
     public function ensurePermissions(): void

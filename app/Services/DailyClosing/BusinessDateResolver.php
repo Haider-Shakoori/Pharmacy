@@ -13,13 +13,12 @@ class BusinessDateResolver
         private readonly PharmacySettings $settings,
     ) {}
 
-    public function resolve(
-        Tenant $tenant,
-        DateTimeInterface|string|null $at = null,
-    ): string {
+    public function resolve(Tenant $tenant, DateTimeInterface|string|null $at = null): string
+    {
+        $timezone = $this->settings->timezone($tenant);
         $local = $at === null
-            ? CarbonImmutable::now($tenant->timezone)
-            : CarbonImmutable::parse($at, $tenant->timezone)->setTimezone($tenant->timezone);
+            ? CarbonImmutable::now($timezone)
+            : CarbonImmutable::parse($at, $timezone)->setTimezone($timezone);
 
         [$hour, $minute] = array_map(
             'intval',

@@ -42,7 +42,7 @@ class TrialProvisioner
 
             $now = now();
             $subscription = Subscription::query()->create([
-                'tenant_id' => $tenant->id,
+                'business_id' => $tenant->business()->firstOrFail()->id,
                 'plan_id' => $plan->id,
                 'status' => SubscriptionStatus::Trial,
                 'trial_started_at' => $now,

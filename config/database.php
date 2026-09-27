@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => 'central',
 
     /*
     |--------------------------------------------------------------------------
@@ -31,6 +31,30 @@ return [
     */
 
     'connections' => [
+
+        'central' => [
+            'driver' => env('CENTRAL_DB_CONNECTION', env('DB_CONNECTION', 'sqlite')),
+            'url' => env('CENTRAL_DB_URL', env('DB_URL')),
+            'host' => env('CENTRAL_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('CENTRAL_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('CENTRAL_DB_DATABASE', env('DB_DATABASE', database_path('database.sqlite'))),
+            'username' => env('CENTRAL_DB_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('CENTRAL_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('CENTRAL_DB_SOCKET', env('DB_SOCKET', '')),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'foreign_key_constraints' => true,
+            'busy_timeout' => null,
+            'journal_mode' => null,
+            'synchronous' => null,
+            'transaction_mode' => 'DEFERRED',
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
 
         'sqlite' => [
             'driver' => 'sqlite',

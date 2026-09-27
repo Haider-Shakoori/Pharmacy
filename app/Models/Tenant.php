@@ -3,50 +3,78 @@
 namespace App\Models;
 
 use App\Enums\TenantStatus;
-use App\Models\Scopes\TenantScope;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Stancl\Tenancy\Contracts\TenantWithDatabase;
+use Stancl\Tenancy\Database\Concerns\HasDatabase;
+use Stancl\Tenancy\Database\Concerns\HasDomains;
+use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
-#[Fillable([
-    'name',
-    'slug',
-    'status',
-    'timezone',
-    'currency',
-    'locale',
-    'settings',
-])]
-class Tenant extends Model
+class Tenant extends BaseTenant implements TenantWithDatabase
 {
-    use HasFactory, HasUlids;
+    use HasDatabase, HasDomains;
 
     protected $attributes = [
         'status' => 'active',
-        'timezone' => 'Asia/Kabul',
-        'currency' => 'AFN',
-        'locale' => 'en',
+        'provisioning_status' => 'pending',
     ];
 
-    public function users(): HasMany
+    public static function getCustomColumns(): array
     {
-        return $this->hasMany(User::class)
-            ->withoutGlobalScope(TenantScope::class);
+        return [
+            'id',
+            'status',
+            'provisioning_status',
+            'provisioning_error',
+        ];
     }
 
-    public function subscription(): HasOne
+    public function business(): HasOne
     {
-        return $this->hasOne(Subscription::class);
+        return $this->hasOne(Business::class);
+    }
+
+    public function subscription(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Subscription::class,
+            Business::class,
+            'tenant_id',
+            'business_id',
+            'id',
+            'id',
+        );
+    }
+
+    public function getNameAttribute(): ?string
+    {
+        return $this->business?->pharmacy_name;
+    }
+
+    public function getSlugAttribute(): ?string
+    {
+        return $this->business?->slug;
+    }
+
+    public function getTimezoneAttribute(): string
+    {
+        return $this->business?->default_timezone ?? 'Asia/Kabul';
+    }
+
+    public function getCurrencyAttribute(): string
+    {
+        return $this->business?->billing_currency ?? 'AFN';
+    }
+
+    public function getLocaleAttribute(): string
+    {
+        return $this->business?->default_locale ?? 'en';
     }
 
     protected function casts(): array
     {
         return [
             'status' => TenantStatus::class,
-            'settings' => 'array',
         ];
     }
 }

@@ -28,9 +28,9 @@ class SubscriptionHealthService
 
     public function forSubscription(Subscription $subscription): SubscriptionHealth
     {
-        $subscription->loadMissing('tenant', 'license');
+        $subscription->loadMissing('business.tenant', 'license');
 
-        if ($subscription->tenant->status !== TenantStatus::Active) {
+        if ($subscription->business->tenant->status !== TenantStatus::Active) {
             return SubscriptionHealth::InactiveTenant;
         }
 
