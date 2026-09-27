@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Tenant;
 use App\Models\User;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -10,16 +12,26 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $tenant = Tenant::query()->firstOrCreate(
+            ['slug' => 'demo-pharmacy'],
+            [
+                'name' => 'Demo Pharmacy',
+                'timezone' => 'Asia/Kabul',
+                'currency' => 'AFN',
+                'locale' => 'en',
+            ],
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        app(TenantContext::class)->run($tenant, function (): void {
+            User::query()->firstOrCreate(
+                ['email' => 'owner@demo.test'],
+                [
+                    'name' => 'Demo Pharmacy Owner',
+                    'password' => 'password',
+                ],
+            );
+        });
     }
 }
