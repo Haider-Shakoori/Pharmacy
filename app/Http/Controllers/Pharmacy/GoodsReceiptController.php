@@ -15,9 +15,11 @@ use Illuminate\View\View;
 
 class GoodsReceiptController extends Controller
 {
+    private const RECEIVABLE_STATUSES = ['approved', 'partially_received'];
+
     public function create(PurchaseOrder $purchaseOrder): View
     {
-        abort_unless($purchaseOrder->status === 'approved', 422, 'Only approved purchase orders can receive goods.');
+        abort_unless(in_array($purchaseOrder->status, self::RECEIVABLE_STATUSES, true), 422, 'This purchase order cannot receive more goods.');
 
         return view('pharmacy.purchasing.receipts.create', [
             'order' => $purchaseOrder->load(['supplier', 'lines.medicine']),
@@ -26,7 +28,7 @@ class GoodsReceiptController extends Controller
 
     public function store(StoreGoodsReceiptRequest $request, PurchaseOrder $purchaseOrder): RedirectResponse
     {
-        abort_unless($purchaseOrder->status === 'approved', 422, 'Only approved purchase orders can receive goods.');
+        abort_unless(in_array($purchaseOrder->status, self::RECEIVABLE_STATUSES, true), 422, 'This purchase order cannot receive more goods.');
 
         $data = $request->validated();
 
@@ -108,6 +110,6 @@ class GoodsReceiptController extends Controller
         });
 
         return redirect()->route('pharmacy.purchase-orders.show', $purchaseOrder)
-            ->with('success', "Goods receipt {$receipt->receipt_number} captured and is waiting for Batch 11 inventory posting.");
+            ->with('success', "Goods receipt {$receipt->receipt_number} captured and waiting for inventory posting.");
     }
 }

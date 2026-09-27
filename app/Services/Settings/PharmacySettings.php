@@ -19,6 +19,13 @@ class PharmacySettings
         'warn_unsynced_devices_before_close' => true,
     ];
 
+    public const INVENTORY_DEFAULTS = [
+        'low_stock_threshold' => 10,
+        'near_expiry_days' => 90,
+        'block_expired_sales' => true,
+        'fefo_enabled' => true,
+    ];
+
     public function record(Tenant $tenant): PharmacySetting
     {
         return $this->inside($tenant, function () use ($tenant): PharmacySetting {
@@ -32,6 +39,7 @@ class PharmacySettings
                     'locale' => $business?->default_locale ?? 'en',
                     'currency' => $business?->billing_currency ?? 'AFN',
                     'daily_closing' => self::DAILY_CLOSING_DEFAULTS,
+                    'inventory_policy' => self::INVENTORY_DEFAULTS,
                 ],
             );
         });
@@ -63,6 +71,21 @@ class PharmacySettings
         return $settings;
     }
 
+    public function inventory(Tenant $tenant): array
+    {
+        $settings = array_replace(
+            self::INVENTORY_DEFAULTS,
+            $this->record($tenant)->inventory_policy ?? [],
+        );
+
+        $settings['low_stock_threshold'] = (int) $settings['low_stock_threshold'];
+        $settings['near_expiry_days'] = (int) $settings['near_expiry_days'];
+        $settings['block_expired_sales'] = (bool) $settings['block_expired_sales'];
+        $settings['fefo_enabled'] = (bool) $settings['fefo_enabled'];
+
+        return $settings;
+    }
+
     public function timezone(Tenant $tenant): string
     {
         return $this->record($tenant)->timezone;
@@ -73,9 +96,13 @@ class PharmacySettings
         return $this->record($tenant)->locale;
     }
 
-    public function persist(Tenant $tenant, array $profile, array $dailyClosing): void
-    {
-        $this->inside($tenant, function () use ($tenant, $profile, $dailyClosing): void {
+    public function persist(
+        Tenant $tenant,
+        array $profile,
+        array $dailyClosing,
+        ?array $inventory = null,
+    ): void {
+        $this->inside($tenant, function () use ($tenant, $profile, $dailyClosing, $inventory): void {
             $record = $this->record($tenant);
             $record->fill([
                 'display_name' => $profile['name'],
@@ -85,6 +112,10 @@ class PharmacySettings
                 'timezone' => $profile['timezone'],
                 'locale' => $profile['locale'],
                 'daily_closing' => array_replace(self::DAILY_CLOSING_DEFAULTS, $dailyClosing),
+                'inventory_policy' => array_replace(
+                    self::INVENTORY_DEFAULTS,
+                    $inventory ?? $record->inventory_policy ?? [],
+                ),
             ])->save();
         });
     }

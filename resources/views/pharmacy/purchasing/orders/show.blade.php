@@ -7,7 +7,7 @@
         <div class="flex flex-wrap gap-2">
             @if ($order->status === 'draft')<form method="POST" action="{{ route('pharmacy.purchase-orders.submit', $order) }}">@csrf<button class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">Submit</button></form>@endif
             @if ($order->status === 'submitted' && auth()->user()->hasPermission('purchases.approve'))<form method="POST" action="{{ route('pharmacy.purchase-orders.approve', $order) }}">@csrf<button class="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">Approve</button></form>@endif
-            @if ($order->status === 'approved' && auth()->user()->hasPermission('purchases.manage'))<a href="{{ route('pharmacy.purchase-receipts.create', $order) }}" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">Capture goods receipt</a>@endif
+            @if (in_array($order->status, ['approved','partially_received'], true) && auth()->user()->hasPermission('purchases.manage'))<a href="{{ route('pharmacy.purchase-receipts.create', $order) }}" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">Capture goods receipt</a>@endif
             @if (in_array($order->status, ['draft','submitted','approved'], true) && $order->receipts->isEmpty())<form method="POST" action="{{ route('pharmacy.purchase-orders.cancel', $order) }}">@csrf<button class="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700">Cancel</button></form>@endif
         </div>
     </div>
@@ -26,7 +26,7 @@
         </table></div>
     </section>
 
-    @if ($order->status === 'approved' && $order->invoices->isEmpty() && auth()->user()->hasPermission('purchases.manage'))
+    @if (in_array($order->status, ['approved','partially_received','received'], true) && $order->invoices->isEmpty() && auth()->user()->hasPermission('purchases.manage'))
     <section class="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 class="font-bold">Record supplier invoice</h2>
         <form method="POST" action="{{ route('pharmacy.purchase-invoices.store', $order) }}" class="mt-4 grid gap-3 md:grid-cols-4">
@@ -61,10 +61,36 @@
     @endforeach
 
     @if ($order->receipts->isNotEmpty())
-    <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-        <h2 class="font-bold text-amber-950">Goods receipts awaiting inventory posting</h2>
-        <p class="mt-1 text-sm text-amber-800">Batch 10 captures physical receipt facts. Batch 11 will create stock batches/movements transactionally and stamp <code>inventory_posted_at</code>.</p>
-        <div class="mt-3 space-y-2">@foreach ($order->receipts as $receipt)<div class="rounded-xl bg-white p-3 text-sm"><div class="flex justify-between"><span class="font-semibold">{{ $receipt->receipt_number }}</span><span>{{ str($receipt->status)->headline() }}</span></div><p class="mt-1 text-xs text-slate-500">{{ $receipt->lines->count() }} lines · {{ $receipt->received_at->format('Y-m-d H:i') }}</p></div>@endforeach</div>
+    <section class="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 class="font-bold">Goods receipts & inventory posting</h2>
+        <p class="mt-1 text-sm text-slate-500">Posting creates product batches and immutable stock movements exactly once.</p>
+        <div class="mt-3 space-y-3">
+            @foreach ($order->receipts as $receipt)
+                <div class="rounded-xl border border-slate-200 p-3 text-sm">
+                    <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                        <div>
+                            <p class="font-semibold">{{ $receipt->receipt_number }}</p>
+                            <p class="text-xs text-slate-500">{{ $receipt->lines->count() }} lines · {{ $receipt->received_at->format('Y-m-d H:i') }} · {{ str($receipt->status)->headline() }}</p>
+                        </div>
+                        @if ($receipt->inventory_posted_at)
+                            <span class="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">Posted {{ $receipt->inventory_posted_at->format('Y-m-d H:i') }}</span>
+                        @elseif (auth()->user()->hasPermission('inventory.manage'))
+                            <form method="POST" action="{{ route('pharmacy.inventory.receipts.post', $receipt) }}" class="flex gap-2">
+                                @csrf
+                                <select name="stock_location_id" required class="rounded-lg border border-slate-300 px-2 py-2 text-xs">
+                                    @foreach ($stockLocations as $location)
+                                        <option value="{{ $location->id }}">{{ $location->branch->name }} · {{ $location->name }}</option>
+                                    @endforeach
+                                </select>
+                                <button class="rounded-lg bg-teal-700 px-3 py-2 text-xs font-bold text-white">Post to inventory</button>
+                            </form>
+                        @else
+                            <span class="text-xs font-semibold text-amber-700">Awaiting inventory authorization</span>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
     </section>
     @endif
 </div>

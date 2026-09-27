@@ -108,6 +108,33 @@
             </div>
         </section>
 
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div>
+                <h2 class="text-lg font-bold">Inventory policy</h2>
+                <p class="mt-1 text-sm text-slate-500">Shared thresholds for inventory alerts, expiry handling and POS stock allocation.</p>
+            </div>
+            <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                <label class="block">
+                    <span class="text-sm font-semibold">Low-stock threshold</span>
+                    <input type="number" min="0" name="low_stock_threshold" value="{{ old('low_stock_threshold', $inventory['low_stock_threshold']) }}" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
+                </label>
+                <label class="block">
+                    <span class="text-sm font-semibold">Near-expiry window (days)</span>
+                    <input type="number" min="1" name="near_expiry_days" value="{{ old('near_expiry_days', $inventory['near_expiry_days']) }}" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
+                </label>
+                @foreach ([
+                    'block_expired_sales' => 'Block expired batches from sales',
+                    'fefo_enabled' => 'Use FEFO by default',
+                ] as $key => $label)
+                    <label class="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 text-sm font-medium">
+                        <input type="hidden" name="{{ $key }}" value="0">
+                        <input type="checkbox" name="{{ $key }}" value="1" @checked(old($key, $inventory[$key]))>
+                        <span>{{ $label }}</span>
+                    </label>
+                @endforeach
+            </div>
+        </section>
+
         <button class="rounded-xl bg-teal-700 px-5 py-3 text-sm font-bold text-white">{{ __('settings.save') }}</button>
     </form>
 </div>

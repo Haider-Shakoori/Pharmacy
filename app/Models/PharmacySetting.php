@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
     'locale',
     'currency',
     'daily_closing',
+    'inventory_policy',
 ])]
 class PharmacySetting extends Model
 {
@@ -27,6 +28,7 @@ class PharmacySetting extends Model
     {
         return [
             'daily_closing' => 'array',
+            'inventory_policy' => 'array',
         ];
     }
 }

@@ -17,7 +17,9 @@ class RbacProvisioner
         'users.manage' => 'Manage pharmacy users',
         'roles.manage' => 'Manage roles and permissions',
         'medicines.manage' => 'Manage medicines',
-        'inventory.manage' => 'Manage inventory',
+        'inventory.manage' => 'View and manage inventory',
+        'inventory.adjust' => 'Post inventory adjustments',
+        'inventory.status' => 'Quarantine recall or release batches',
         'purchases.manage' => 'Prepare suppliers and purchases',
         'purchases.approve' => 'Approve purchase orders',
         'purchases.pay' => 'Record supplier payments',
@@ -35,13 +37,14 @@ class RbacProvisioner
         'owner' => '*',
         'administrator' => '*',
         'pharmacist' => [
-            'dashboard.view', 'medicines.manage', 'inventory.manage', 'pos.sell',
-            'returns.manage', 'daily_closing.perform', 'reports.view',
+            'dashboard.view', 'medicines.manage', 'inventory.manage',
+            'inventory.status', 'pos.sell', 'returns.manage',
+            'daily_closing.perform', 'reports.view',
         ],
         'cashier' => ['dashboard.view', 'pos.sell', 'returns.manage', 'daily_closing.perform'],
         'inventory' => [
             'dashboard.view', 'medicines.manage', 'inventory.manage',
-            'purchases.manage', 'reports.view',
+            'inventory.adjust', 'inventory.status', 'purchases.manage', 'reports.view',
         ],
         'purchaser' => ['dashboard.view', 'medicines.manage', 'purchases.manage', 'reports.view'],
         'accountant' => [
