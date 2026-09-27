@@ -73,10 +73,17 @@ class PharmacySettings
 
     public function inventory(Tenant $tenant): array
     {
-        return array_replace(
+        $settings = array_replace(
             self::INVENTORY_DEFAULTS,
             $this->record($tenant)->inventory_policy ?? [],
         );
+
+        $settings['low_stock_threshold'] = (int) $settings['low_stock_threshold'];
+        $settings['near_expiry_days'] = (int) $settings['near_expiry_days'];
+        $settings['block_expired_sales'] = (bool) $settings['block_expired_sales'];
+        $settings['fefo_enabled'] = (bool) $settings['fefo_enabled'];
+
+        return $settings;
     }
 
     public function timezone(Tenant $tenant): string
