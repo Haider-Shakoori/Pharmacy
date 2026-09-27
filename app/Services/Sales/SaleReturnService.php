@@ -67,6 +67,11 @@ class SaleReturnService
                     ->findOrFail($input['sale_line_id']);
 
                 $quantity = BigDecimal::of((string) $input['quantity']);
+
+                if ($quantity->isZero()) {
+                    continue;
+                }
+
                 $alreadyReturned = BigDecimal::of((string) SaleReturnLine::query()
                     ->where('sale_line_id', $line->id)
                     ->whereHas('saleReturn', fn ($query) => $query->where('status', 'completed'))
@@ -155,6 +160,12 @@ class SaleReturnService
                 }
 
                 $refundTotal = $refundTotal->plus($refundAmount);
+            }
+
+            if ($refundTotal->isZero()) {
+                throw ValidationException::withMessages([
+                    'lines' => 'Select at least one item quantity to return.',
+                ]);
             }
 
             $submittedRefund = BigDecimal::zero();
