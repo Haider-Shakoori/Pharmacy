@@ -16,6 +16,7 @@ use App\Http\Controllers\Pharmacy\MedicineReferenceController as PharmacyMedicin
 use App\Http\Controllers\Pharmacy\PosController;
 use App\Http\Controllers\Pharmacy\PurchaseInvoiceController;
 use App\Http\Controllers\Pharmacy\PurchaseOrderController;
+use App\Http\Controllers\Pharmacy\ReportController;
 use App\Http\Controllers\Pharmacy\RoleController as PharmacyRoleController;
 use App\Http\Controllers\Pharmacy\SaleReturnController;
 use App\Http\Controllers\Pharmacy\SettingsController as PharmacySettingsController;
@@ -139,6 +140,11 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
             Route::post('/daily-closing/{dailyClosing}/reopen', [DailyClosingController::class, 'reopen'])
                 ->middleware('permission:daily_closing.reopen')
                 ->name('daily-closing.reopen');
+
+            Route::middleware('permission:reports.view')->group(function (): void {
+                Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+                Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
+            });
 
             Route::get('/settings', [PharmacySettingsController::class, 'edit'])
                 ->middleware('permission:settings.manage')
