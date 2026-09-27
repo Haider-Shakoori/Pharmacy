@@ -34,6 +34,7 @@ return new class extends Migration
             $table->decimal('tax_total', 20, 4)->default(0);
             $table->decimal('grand_total', 20, 4)->default(0);
             $table->decimal('paid_total', 20, 4)->default(0);
+            $table->decimal('due_total', 20, 4)->default(0);
             $table->decimal('change_total', 20, 4)->default(0);
             $table->string('payment_status', 32)->default('unpaid')->index();
             $table->string('idempotency_key', 191)->nullable()->unique();

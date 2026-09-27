@@ -36,7 +36,9 @@
         @if (auth()->user()->hasPermission('inventory.manage'))
             <a href="{{ route('pharmacy.inventory.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.inventory.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.inventory') }}</a>
         @endif
-        <span class="block rounded-lg px-3 py-2.5 text-sm text-slate-400">{{ __('pharmacy.nav.pos') }} · Batch 12</span>
+        @if (auth()->user()->hasPermission('pos.sell'))
+            <a href="{{ route('pharmacy.pos.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.pos.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.pos') }}</a>
+        @endif
         <span class="block rounded-lg px-3 py-2.5 text-sm text-slate-400">Daily Closing · Batch 13</span>
     </nav>
 

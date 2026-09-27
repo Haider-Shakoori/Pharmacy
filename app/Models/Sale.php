@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'sale_number', 'stock_location_id', 'customer_id', 'business_date',
     'status', 'currency', 'subtotal', 'discount_total', 'tax_total',
-    'grand_total', 'paid_total', 'change_total', 'payment_status',
+    'grand_total', 'paid_total', 'due_total', 'change_total', 'payment_status',
     'idempotency_key', 'notes', 'created_by', 'held_at', 'completed_at',
 ])]
 class Sale extends Model
@@ -52,6 +52,7 @@ class Sale extends Model
             'tax_total' => 'decimal:4',
             'grand_total' => 'decimal:4',
             'paid_total' => 'decimal:4',
+            'due_total' => 'decimal:4',
             'change_total' => 'decimal:4',
             'held_at' => 'datetime',
             'completed_at' => 'datetime',
