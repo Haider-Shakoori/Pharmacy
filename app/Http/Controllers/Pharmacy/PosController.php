@@ -100,7 +100,7 @@ class PosController extends Controller
         abort_unless($sale->status === 'completed', 404);
 
         return view('pharmacy.pos.receipt', [
-            'sale' => $sale->load(['lines.allocations.batch', 'payments', 'customer', 'location.branch', 'cashier:id,name']),
+            'sale' => $sale->load(['lines.allocations.batch', 'lines.returnLines.saleReturn', 'payments', 'customer', 'location.branch', 'cashier:id,name']),
         ]);
     }
 }

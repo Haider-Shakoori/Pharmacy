@@ -17,6 +17,7 @@ use App\Http\Controllers\Pharmacy\PosController;
 use App\Http\Controllers\Pharmacy\PurchaseInvoiceController;
 use App\Http\Controllers\Pharmacy\PurchaseOrderController;
 use App\Http\Controllers\Pharmacy\RoleController as PharmacyRoleController;
+use App\Http\Controllers\Pharmacy\SaleReturnController;
 use App\Http\Controllers\Pharmacy\SettingsController as PharmacySettingsController;
 use App\Http\Controllers\Pharmacy\SupplierController;
 use App\Http\Controllers\Pharmacy\SupplierPaymentController;
@@ -118,6 +119,11 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
                 Route::get('/pos/search', [PosController::class, 'search'])->name('pos.search');
                 Route::post('/pos/sales', [PosController::class, 'store'])->name('pos.store');
                 Route::get('/pos/sales/{sale}/receipt', [PosController::class, 'receipt'])->name('pos.receipt');
+            });
+
+            Route::middleware('permission:returns.manage')->group(function (): void {
+                Route::get('/pos/sales/{sale}/returns/create', [SaleReturnController::class, 'create'])->name('returns.create');
+                Route::post('/pos/sales/{sale}/returns', [SaleReturnController::class, 'store'])->name('returns.store');
             });
 
             Route::middleware('permission:daily_closing.perform')->group(function (): void {

@@ -7,6 +7,8 @@ use App\Models\DailyClosing;
 use App\Models\DailyClosingEvent;
 use App\Models\Sale;
 use App\Models\SalePayment;
+use App\Models\SaleReturn;
+use App\Models\SaleReturnRefund;
 use App\Models\StockLocation;
 use App\Models\User;
 use App\Services\Settings\PharmacySettings;
@@ -52,7 +54,30 @@ class DailyClosingService
             ->groupBy('sale_payments.method')
             ->pluck('total', 'method');
 
-        $cash = BigDecimal::of((string) ($payments['cash'] ?? 0))->minus($change);
+        $returnTotal = BigDecimal::of((string) SaleReturn::query()
+            ->where('stock_location_id', $location->id)
+            ->where('business_date', $date)
+            ->where('status', 'completed')
+            ->sum('refund_total'));
+
+        $refunds = SaleReturnRefund::query()
+            ->selectRaw('sale_return_refunds.method, SUM(sale_return_refunds.amount) as total')
+            ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_refunds.sale_return_id')
+            ->where('sale_returns.stock_location_id', $location->id)
+            ->where('sale_returns.business_date', $date)
+            ->where('sale_returns.status', 'completed')
+            ->groupBy('sale_return_refunds.method')
+            ->pluck('total', 'method');
+
+        $cash = BigDecimal::of((string) ($payments['cash'] ?? 0))
+            ->minus($change)
+            ->minus(BigDecimal::of((string) ($refunds['cash'] ?? 0)));
+        $bank = BigDecimal::of((string) ($payments['bank'] ?? 0))
+            ->minus(BigDecimal::of((string) ($refunds['bank'] ?? 0)));
+        $mobile = BigDecimal::of((string) ($payments['mobile'] ?? 0))
+            ->minus(BigDecimal::of((string) ($refunds['mobile'] ?? 0)));
+        $credit = $credit->minus(BigDecimal::of((string) ($refunds['credit'] ?? 0)));
+
         $openingCash = BigDecimal::of((string) CashierShift::query()
             ->where('stock_location_id', $location->id)
             ->where('business_date', $date)
@@ -62,10 +87,10 @@ class DailyClosingService
             'business_date' => $date,
             'gross_sales' => $this->decimal($grossSales),
             'discount_total' => $this->decimal($discounts),
-            'returns_total' => '0.0000',
+            'returns_total' => $this->decimal($returnTotal),
             'cash_collected' => $this->decimal($cash),
-            'bank_collected' => $this->decimal(BigDecimal::of((string) ($payments['bank'] ?? 0))),
-            'mobile_collected' => $this->decimal(BigDecimal::of((string) ($payments['mobile'] ?? 0))),
+            'bank_collected' => $this->decimal($bank),
+            'mobile_collected' => $this->decimal($mobile),
             'credit_sales' => $this->decimal($credit),
             'opening_cash' => $this->decimal($openingCash),
             'expected_cash' => $this->decimal($openingCash->plus($cash)),
