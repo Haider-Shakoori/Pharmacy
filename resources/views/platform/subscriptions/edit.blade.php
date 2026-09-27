@@ -10,6 +10,19 @@
         <p class="mt-1 text-sm text-slate-500">{{ $tenant->slug }}</p>
     </div>
 
+    @if ($subscription?->license)
+        <section class="rounded-2xl border border-slate-200 bg-white p-5">
+            <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">License</p>
+                    <p class="mt-1 font-mono text-sm font-bold">{{ $subscription->license->key_hint }}</p>
+                    <p class="mt-1 text-xs text-slate-500">Version {{ $subscription->license->version }} · {{ $subscription->license->status->value }} · {{ $subscription->license->activations->whereNull('revoked_at')->count() }} active devices</p>
+                </div>
+                <a href="{{ route('platform.licenses.index', ['search' => $tenant->slug]) }}" class="text-sm font-bold text-teal-700">Manage license</a>
+            </div>
+        </section>
+    @endif
+
     <form method="POST" action="{{ route('platform.subscriptions.update', $tenant) }}" class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
         @csrf
         @method('PUT')
@@ -45,14 +58,12 @@
 
             <label class="block">
                 <span class="text-sm font-semibold">Starts at</span>
-                <input type="datetime-local" name="starts_at" value="{{ old('starts_at', $subscription?->starts_at?->format('Y-m-d\TH:i')) }}"
-                       class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
+                <input type="datetime-local" name="starts_at" value="{{ old('starts_at', $subscription?->starts_at?->format('Y-m-d\TH:i')) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
             </label>
 
             <label class="block">
                 <span class="text-sm font-semibold">Ends at</span>
-                <input type="datetime-local" name="ends_at" value="{{ old('ends_at', $subscription?->ends_at?->format('Y-m-d\TH:i')) }}"
-                       class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
+                <input type="datetime-local" name="ends_at" value="{{ old('ends_at', $subscription?->ends_at?->format('Y-m-d\TH:i')) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
                 @error('ends_at')<span class="mt-1 block text-xs text-red-600">{{ $message }}</span>@enderror
             </label>
 
@@ -62,8 +73,8 @@
             </label>
         </div>
 
-        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            License keys and offline activation leases are intentionally not created here yet; they are added in Batch 5.
+        <div class="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+            A license key is generated automatically when this pharmacy receives its first subscription. The plaintext key is shown only once.
         </div>
 
         <button class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">Save subscription</button>

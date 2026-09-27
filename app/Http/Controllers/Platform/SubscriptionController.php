@@ -7,6 +7,7 @@ use App\Http\Requests\Platform\UpdateSubscriptionRequest;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Services\Licensing\LicenseKeyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class SubscriptionController extends Controller
         $status = trim((string) $request->query('status'));
 
         $subscriptions = Subscription::query()
-            ->with(['tenant', 'plan'])
+            ->with(['tenant', 'plan', 'license'])
             ->when($search !== '', function ($query) use ($search): void {
                 $query->whereHas('tenant', function ($query) use ($search): void {
                     $query->where('name', 'like', "%{$search}%")
@@ -37,7 +38,7 @@ class SubscriptionController extends Controller
 
     public function edit(Tenant $tenant): View
     {
-        $tenant->load('subscription.plan');
+        $tenant->load('subscription.plan', 'subscription.license.activations');
 
         return view('platform.subscriptions.edit', [
             'tenant' => $tenant,
@@ -50,11 +51,15 @@ class SubscriptionController extends Controller
         ]);
     }
 
-    public function update(UpdateSubscriptionRequest $request, Tenant $tenant): RedirectResponse
-    {
+    public function update(
+        UpdateSubscriptionRequest $request,
+        Tenant $tenant,
+        LicenseKeyService $keys,
+    ): RedirectResponse {
         $validated = $request->validated();
+        $generatedKey = null;
 
-        DB::transaction(function () use ($tenant, $validated): void {
+        DB::transaction(function () use ($tenant, $validated, $keys, &$generatedKey): void {
             $subscription = Subscription::query()->firstOrNew([
                 'tenant_id' => $tenant->id,
             ]);
@@ -62,10 +67,18 @@ class SubscriptionController extends Controller
             $subscription->fill($validated);
             $subscription->tenant_id = $tenant->id;
             $subscription->save();
+
+            $generatedKey = $keys->ensureForSubscription($subscription);
         });
 
-        return redirect()
+        $response = redirect()
             ->route('platform.subscriptions.edit', $tenant)
             ->with('success', 'Subscription assignment updated.');
+
+        if ($generatedKey !== null) {
+            $response->with('generated_license_key', $generatedKey);
+        }
+
+        return $response;
     }
 }
