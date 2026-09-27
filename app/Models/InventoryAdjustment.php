@@ -16,8 +16,15 @@ class InventoryAdjustment extends Model
 {
     use HasUlids;
 
-    public function location(): BelongsTo { return $this->belongsTo(StockLocation::class, 'stock_location_id'); }
-    public function lines(): HasMany { return $this->hasMany(InventoryAdjustmentLine::class); }
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(StockLocation::class, 'stock_location_id');
+    }
+
+    public function lines(): HasMany
+    {
+        return $this->hasMany(InventoryAdjustmentLine::class);
+    }
 
     protected function casts(): array
     {
