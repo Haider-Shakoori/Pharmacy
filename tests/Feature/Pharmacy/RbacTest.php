@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Pharmacy;
 
-use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
