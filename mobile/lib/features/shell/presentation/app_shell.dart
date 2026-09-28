@@ -1,6 +1,7 @@
 import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
+import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,8 +91,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                   children: <Widget>[
                     Text(
                       strings.foundation,
-                      style: Theme.of(context).textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w800),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(strings.foundationBody),
@@ -103,7 +105,9 @@ class _AppShellState extends ConsumerState<AppShell> {
             _FeaturePanel(destination: current),
             if (_selectedIndex == 3) ...<Widget>[
               const SizedBox(height: 16),
-              _ApiConfigurationCard(environment: AppEnvironment.current),
+              ConnectionModeCard(
+                defaultCloudUri: AppEnvironment.current.apiBaseUri,
+              ),
             ],
           ],
         ),
@@ -128,31 +132,6 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 }
 
-class _ApiConfigurationCard extends StatelessWidget {
-  const _ApiConfigurationCard({required this.environment});
-
-  final AppEnvironment environment;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppStrings strings = AppStrings.of(context);
-
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.dns_outlined),
-        title: Text(
-          environment.isApiConfigured
-              ? strings.apiConfigured
-              : strings.apiNotConfigured,
-        ),
-        subtitle: environment.apiBaseUri == null
-            ? null
-            : Text(environment.apiBaseUri.toString()),
-      ),
-    );
-  }
-}
-
 class _FeaturePanel extends StatelessWidget {
   const _FeaturePanel({required this.destination});
 
@@ -170,8 +149,9 @@ class _FeaturePanel extends StatelessWidget {
             Text(
               destination.title,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
