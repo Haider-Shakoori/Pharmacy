@@ -24,6 +24,12 @@
     @if (auth()->user()->hasPermission('inventory.manage'))
         <a href="{{ route('pharmacy.inventory.index') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">{{ __('pharmacy.nav.inventory') }}</a>
     @endif
+    @if (auth()->user()->hasPermission('daily_closing.perform'))
+        <a href="{{ route('pharmacy.daily-closing.index') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">Daily Closing</a>
+    @endif
+    @if (auth()->user()->hasPermission('safe.view'))
+        <a href="{{ route('pharmacy.safe.index') }}" class="rounded-lg bg-amber-50 px-3 py-2 font-bold text-amber-900">{{ __('safe.nav') }}</a>
+    @endif
     @if (auth()->user()->hasPermission('users.manage'))
         <a href="{{ route('pharmacy.users.index') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">{{ __('pharmacy.nav.users') }}</a>
     @endif
