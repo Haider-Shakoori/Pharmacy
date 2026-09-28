@@ -4,11 +4,14 @@ use App\Console\Commands\BackfillAccounting;
 use App\Console\Commands\CheckProductionReadiness;
 use App\Console\Commands\CreateBackup;
 use App\Console\Commands\PruneBackups;
+use App\Console\Commands\OfflineLicenseActivate;
+use App\Console\Commands\OfflineLicenseStatus;
 use App\Console\Commands\RestoreBackup;
 use App\Console\Commands\RetryTenantProvisioning;
 use App\Console\Commands\VerifyBackup;
 use App\Http\Middleware\ApplyTenantPreferences;
 use App\Http\Middleware\EnsureOperationalSubscription;
+use App\Http\Middleware\EnsureOfflineLicense;
 use App\Http\Middleware\RejectOversizedApiPayload;
 use App\Http\Middleware\RequirePermission;
 use App\Http\Middleware\SecurityHeaders;
@@ -24,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
         CheckProductionReadiness::class,
         CreateBackup::class,
         PruneBackups::class,
+        OfflineLicenseActivate::class,
+        OfflineLicenseStatus::class,
         RestoreBackup::class,
         RetryTenantProvisioning::class,
         VerifyBackup::class,
@@ -36,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecurityHeaders::class);
+        $middleware->append(EnsureOfflineLicense::class);
 
         $middleware->web(append: [
             SetLocale::class,
