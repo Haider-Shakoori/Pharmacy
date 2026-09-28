@@ -330,8 +330,9 @@ class MobileSyncRepository {
   }
 
   Future<FixedDecimal> _outstandingAllocationQuantity(String batchId) async {
-    final List<QueryRow> rows = await _database.customSelect(
-      '''
+    final List<QueryRow> rows = await _database
+        .customSelect(
+          '''
       SELECT allocation.quantity
       FROM local_sale_batch_allocations allocation
       INNER JOIN local_sale_lines line
@@ -341,8 +342,9 @@ class MobileSyncRepository {
       WHERE allocation.product_batch_id = ?
         AND sale.sync_state <> 'synced'
       ''',
-      variables: <Variable<Object>>[Variable<String>(batchId)],
-    ).get();
+          variables: <Variable<Object>>[Variable<String>(batchId)],
+        )
+        .get();
 
     FixedDecimal total = FixedDecimal.zero;
     for (final QueryRow row in rows) {

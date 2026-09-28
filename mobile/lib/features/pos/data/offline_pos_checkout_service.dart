@@ -313,8 +313,9 @@ class OfflinePosCheckoutService {
   ) async {
     final DateTime today = DateTime(now.year, now.month, now.day);
     final int todaySeconds = today.millisecondsSinceEpoch ~/ 1000;
-    final List<QueryRow> rows = await _database.customSelect(
-      '''
+    final List<QueryRow> rows = await _database
+        .customSelect(
+          '''
       SELECT id, available_quantity, sale_price, purchase_cost
       FROM local_inventory_batches
       WHERE medicine_id = ?
@@ -329,12 +330,13 @@ class OfflinePosCheckoutService {
         server_created_at,
         id
       ''',
-      variables: <Variable<Object>>[
-        Variable<String>(medicineId),
-        Variable<String>(stockLocationId),
-        Variable<int>(todaySeconds),
-      ],
-    ).get();
+          variables: <Variable<Object>>[
+            Variable<String>(medicineId),
+            Variable<String>(stockLocationId),
+            Variable<int>(todaySeconds),
+          ],
+        )
+        .get();
 
     return rows
         .map(

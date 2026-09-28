@@ -104,7 +104,9 @@ void main() {
     );
     expect(
       await database
-          .customSelect('SELECT COUNT(*) AS c FROM local_sale_batch_allocations')
+          .customSelect(
+            'SELECT COUNT(*) AS c FROM local_sale_batch_allocations',
+          )
           .map((QueryRow row) => row.read<int>('c'))
           .getSingle(),
       1,
@@ -113,9 +115,7 @@ void main() {
     final QueryRow batch = await database
         .customSelect(
           'SELECT available_quantity FROM local_inventory_batches WHERE id = ?',
-          variables: <Variable<Object>>[
-            const Variable<String>('batch-1'),
-          ],
+          variables: <Variable<Object>>[const Variable<String>('batch-1')],
         )
         .getSingle();
     expect(batch.read<String>('available_quantity'), '18.0000');
@@ -187,13 +187,11 @@ void main() {
       ),
     );
 
-    final List<QueryRow> allocations = await database.customSelect(
-      '''
+    final List<QueryRow> allocations = await database.customSelect('''
       SELECT product_batch_id, quantity
       FROM local_sale_batch_allocations
       ORDER BY created_at, local_id
-      ''',
-    ).get();
+      ''').get();
     expect(allocations.length, 2);
     expect(allocations[0].read<String>('product_batch_id'), 'batch-1');
     expect(allocations[0].read<String>('quantity'), '1.0000');
@@ -203,9 +201,7 @@ void main() {
     final QueryRow secondBatch = await database
         .customSelect(
           'SELECT available_quantity FROM local_inventory_batches WHERE id = ?',
-          variables: <Variable<Object>>[
-            const Variable<String>('batch-2'),
-          ],
+          variables: <Variable<Object>>[const Variable<String>('batch-2')],
         )
         .getSingle();
     expect(secondBatch.read<String>('available_quantity'), '1.0000');
@@ -252,9 +248,7 @@ void main() {
     final QueryRow preserved = await database
         .customSelect(
           'SELECT available_quantity FROM local_inventory_batches WHERE id = ?',
-          variables: <Variable<Object>>[
-            const Variable<String>('batch-2'),
-          ],
+          variables: <Variable<Object>>[const Variable<String>('batch-2')],
         )
         .getSingle();
     expect(preserved.read<String>('available_quantity'), '1.0000');
