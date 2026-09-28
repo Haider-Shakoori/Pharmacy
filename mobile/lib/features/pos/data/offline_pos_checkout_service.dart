@@ -47,16 +47,14 @@ class OfflinePosCheckoutService {
     }
 
     final DateTime now = _clock();
-    final String businessDate =
-        request.businessDate ?? _businessDate(now);
+    final String businessDate = request.businessDate ?? _businessDate(now);
     final String saleId = _idGenerator();
     final String idempotencyKey = 'sale:$saleId:completed';
 
     return _database.transaction(() async {
       FixedDecimal subtotal = FixedDecimal.zero;
       FixedDecimal discountTotal = FixedDecimal.zero;
-      final List<Map<String, Object?>> linePayload =
-          <Map<String, Object?>>[];
+      final List<Map<String, Object?>> linePayload = <Map<String, Object?>>[];
 
       for (final OfflinePosLineInput input in request.lines) {
         final medicine = await (_database.select(_database.localMedicines)
