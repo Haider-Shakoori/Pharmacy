@@ -1,0 +1,20 @@
+:__OFFLINE_HTTP_PORT__ {
+    encode zstd gzip
+    root * "__APP_PUBLIC__"
+
+    @blocked path /.env /.git/* /storage/* /vendor/* /composer.* /artisan
+    respond @blocked 404
+
+    php_fastcgi 127.0.0.1:9074 {
+        env APP_EDITION offline
+    }
+
+    file_server
+
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+}
