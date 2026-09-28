@@ -5,12 +5,11 @@ import 'package:http/http.dart' as http;
 enum ServerReachability { notConfigured, reachable, unreachable }
 
 class ServerReachabilityProbe {
-  ServerReachabilityProbe({
-    required http.Client client,
-    required Uri? apiBaseUri,
+  ServerReachabilityProbe(
+    this._client,
+    this._apiBaseUri, {
     this.timeout = const Duration(seconds: 5),
-  }) : _client = client,
-       _apiBaseUri = apiBaseUri;
+  });
 
   final http.Client _client;
   final Uri? _apiBaseUri;
