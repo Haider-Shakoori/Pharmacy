@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\LicenseActivationController;
 use App\Http\Controllers\Api\MobileDeviceRegistrationController;
+use App\Http\Controllers\Api\OfflineLicenseActivationController;
 use App\Http\Controllers\Api\MobileSessionRefreshController;
 use App\Http\Controllers\Api\MobileSyncPullController;
 use App\Http\Controllers\Api\MobileSyncPushController;
@@ -9,6 +10,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('api.payload')->group(function (): void {
     Route::post('/v1/license/activate', LicenseActivationController::class)
+        ->middleware('throttle:license-activation');
+
+    Route::post('/v1/offline/license/activate', OfflineLicenseActivationController::class)
         ->middleware('throttle:license-activation');
 
     Route::post('/v1/mobile/register', MobileDeviceRegistrationController::class)
