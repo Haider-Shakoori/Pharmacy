@@ -32,6 +32,7 @@ void main() {
         'local_customers',
         'local_inventory_batches',
         'local_medicines',
+        'local_sale_batch_allocations',
         'local_sale_lines',
         'local_sale_payments',
         'local_sales',
@@ -39,6 +40,10 @@ void main() {
         'sync_outbox_entries',
       ]),
     );
+  });
+
+  test('Batch 22 schema upgrades local stock allocation storage', () async {
+    expect(database.schemaVersion, 2);
   });
 
   test('financial and quantity values round-trip as exact text', () async {

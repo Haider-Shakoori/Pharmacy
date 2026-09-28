@@ -191,6 +191,64 @@ class MobileSyncApiTest extends TestCase
         });
     }
 
+    public function test_offline_sale_with_insufficient_server_stock_returns_stock_conflict(): void
+    {
+        $references = $this->tenant->run(function (): array {
+            return [
+                'medicine_id' => Medicine::query()
+                    ->where('medicine_code', 'SYNC-001')
+                    ->value('id'),
+                'location_id' => StockLocation::query()
+                    ->where('code', 'MAIN')
+                    ->value('id'),
+            ];
+        });
+
+        $event = [
+            'idempotency_key' => 'sale:mobile-stock-conflict:completed',
+            'event_type' => 'sale.completed',
+            'payload' => [
+                'v' => 1,
+                'local_id' => 'mobile-stock-conflict',
+                'idempotency_key' => 'sale:mobile-stock-conflict:completed',
+                'stock_location_id' => $references['location_id'],
+                'customer_id' => null,
+                'cashier_user_id' => '1',
+                'business_date' => today()->toDateString(),
+                'currency' => 'AFN',
+                'lines' => [[
+                    'medicine_id' => $references['medicine_id'],
+                    'quantity' => '25.0000',
+                    'unit_price' => '10.0000',
+                    'discount_amount' => '0.0000',
+                    'batch_allocations' => [],
+                ]],
+                'payments' => [[
+                    'method' => 'cash',
+                    'amount' => '250.0000',
+                ]],
+            ],
+        ];
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/sync/push', [
+                'events' => [$event],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.status', 'rejected')
+            ->assertJsonPath('data.results.0.code', 'stock_conflict')
+            ->assertJsonPath('data.results.0.retryable', false);
+
+        $this->tenant->run(function (): void {
+            $this->assertSame(
+                0,
+                Sale::query()
+                    ->where('idempotency_key', 'sale:mobile-stock-conflict:completed')
+                    ->count(),
+            );
+        });
+    }
+
     public function test_incremental_pull_returns_catalog_and_cursor(): void
     {
         foreach (['medicines', 'inventory', 'customers'] as $stream) {

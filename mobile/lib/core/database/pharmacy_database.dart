@@ -24,6 +24,7 @@ class LocalMedicines extends Table {
       boolean().withDefault(const Constant<bool>(true))();
   BoolColumn get isDeleted =>
       boolean().withDefault(const Constant<bool>(false))();
+  DateTimeColumn get serverCreatedAt => dateTime().nullable()();
   DateTimeColumn get serverUpdatedAt => dateTime().nullable()();
 
   @override
@@ -107,6 +108,18 @@ class LocalSaleLines extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{localId};
 }
 
+class LocalSaleBatchAllocations extends Table {
+  TextColumn get localId => text()();
+  TextColumn get saleLineLocalId => text()();
+  TextColumn get productBatchId => text()();
+  TextColumn get quantity => text()();
+  TextColumn get unitCost => text()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{localId};
+}
+
 class LocalSalePayments extends Table {
   TextColumn get localId => text()();
   TextColumn get saleLocalId => text()();
@@ -153,6 +166,7 @@ class SyncCheckpoints extends Table {
     LocalCustomers,
     LocalSales,
     LocalSaleLines,
+    LocalSaleBatchAllocations,
     LocalSalePayments,
     SyncOutboxEntries,
     SyncCheckpoints,
@@ -170,10 +184,19 @@ final class PharmacyDatabase extends _$PharmacyDatabase {
       );
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        await m.addColumn(
+          localInventoryBatches,
+          localInventoryBatches.serverCreatedAt,
+        );
+        await m.createTable(localSaleBatchAllocations);
+      }
+    },
     beforeOpen: (OpeningDetails details) async {
       await customStatement('PRAGMA foreign_keys = ON');
       await customStatement('PRAGMA journal_mode = WAL');

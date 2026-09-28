@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\Sales\PosSaleService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -115,14 +116,14 @@ class MobileSyncPushService
                 ];
             });
         } catch (ValidationException $exception) {
-            $message = collect($exception->errors())
-                ->flatten()
-                ->first() ?? 'The synchronized sale was rejected.';
+            [$code, $message] = $this->validationConflict(
+                $exception->errors(),
+            );
 
             return $this->rejected(
                 $idempotencyKey,
-                'validation_failed',
-                (string) $message,
+                $code,
+                $message,
             );
         } catch (ModelNotFoundException) {
             return $this->rejected(
@@ -140,6 +141,29 @@ class MobileSyncPushService
                 retryable: true,
             );
         }
+    }
+
+    private function validationConflict(array $errors): array
+    {
+        $message = (string) (
+            collect($errors)->flatten()->first()
+            ?? 'The synchronized sale was rejected.'
+        );
+
+        if (array_key_exists('closing', $errors)) {
+            return ['daily_closing_conflict', $message];
+        }
+
+        $normalized = Str::lower($message);
+
+        if (Str::contains($normalized, [
+            'insufficient eligible stock',
+            'no sellable priced stock',
+        ])) {
+            return ['stock_conflict', $message];
+        }
+
+        return ['validation_failed', $message];
     }
 
     private function rejected(
