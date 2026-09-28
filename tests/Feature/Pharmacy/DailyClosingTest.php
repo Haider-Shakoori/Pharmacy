@@ -4,6 +4,7 @@ namespace Tests\Feature\Pharmacy;
 
 use App\Models\Branch;
 use App\Models\DailyClosing;
+use App\Models\JournalEntry;
 use App\Models\Sale;
 use App\Models\SalePayment;
 use App\Models\StockLocation;
@@ -69,13 +70,18 @@ class DailyClosingTest extends TestCase
 
             $this->actingAs($owner)->withHeader('Host', $host)->post('/daily-closing/finalize', [
                 'stock_location_id' => $location->id,
-                'counted_cash' => 100,
+                'counted_cash' => 95,
+                'notes' => 'Cash shortage counted at close',
             ])->assertRedirect()->assertSessionHasNoErrors();
 
             $closing = DailyClosing::query()->firstOrFail();
             $this->assertSame('finalized', $closing->status);
             $this->assertSame('100.0000', $closing->cash_collected);
             $this->assertSame('100.0000', $closing->expected_cash);
+            $this->assertSame('-5.0000', $closing->variance);
+            $varianceEntry = JournalEntry::query()->where('source_type', DailyClosing::class)->where('source_id', $closing->id)->firstOrFail();
+            $this->assertSame('5.0000', $varianceEntry->total_debit);
+            $this->assertSame('5.0000', $varianceEntry->total_credit);
             $this->assertSame(1, $closing->events()->where('event_type', 'finalized')->count());
             $this->assertTrue(app(DailyClosingService::class)->salesBlocked($location, $closing->business_date->toDateString()));
 
@@ -86,6 +92,8 @@ class DailyClosingTest extends TestCase
             $this->assertSame('reopened', $closing->fresh()->status);
             $this->assertFalse(app(DailyClosingService::class)->salesBlocked($location, $closing->business_date->toDateString()));
             $this->assertSame(3, $closing->events()->count());
+            $this->assertSame('reversed', $varianceEntry->fresh()->status);
+            $this->assertSame(1, JournalEntry::query()->where('reversal_of_id', $varianceEntry->id)->count());
         });
     }
 }

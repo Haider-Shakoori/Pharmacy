@@ -11,6 +11,7 @@ use App\Models\SaleReturn;
 use App\Models\SaleReturnRefund;
 use App\Models\StockLocation;
 use App\Models\User;
+use App\Services\Accounting\OperationalAccountingService;
 use App\Services\Settings\PharmacySettings;
 use App\Support\Tenancy\TenantContext;
 use Brick\Math\BigDecimal;
@@ -24,6 +25,7 @@ class DailyClosingService
         private readonly BusinessDateResolver $businessDates,
         private readonly PharmacySettings $settings,
         private readonly TenantContext $tenantContext,
+        private readonly OperationalAccountingService $accounting,
     ) {}
 
     public function businessDate(): string
@@ -214,7 +216,8 @@ class DailyClosingService
                 'closing_notes' => $notes,
             ])->save();
 
-            $this->event($closing, 'finalized', $user, $notes, $snapshot);
+            $event = $this->event($closing, 'finalized', $user, $notes, $snapshot);
+            $this->accounting->postDailyClosingVariance($closing, $event);
 
             return $closing;
         });
@@ -255,6 +258,7 @@ class DailyClosingService
             'reopen_reason' => $reason,
         ]);
         $this->event($closing, 'reopened', $user, $reason);
+        $this->accounting->reverseDailyClosingVariance($closing, 'Daily Closing reopened: '.$reason, $user->id);
 
         return $closing->fresh();
     }
@@ -274,9 +278,9 @@ class DailyClosingService
             ->exists();
     }
 
-    private function event(DailyClosing $closing, string $type, User $user, ?string $reason = null, ?array $snapshot = null): void
+    private function event(DailyClosing $closing, string $type, User $user, ?string $reason = null, ?array $snapshot = null): DailyClosingEvent
     {
-        DailyClosingEvent::query()->create([
+        return DailyClosingEvent::query()->create([
             'daily_closing_id' => $closing->id,
             'event_type' => $type,
             'actor_id' => $user->id,

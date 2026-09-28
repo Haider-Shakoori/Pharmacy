@@ -4,6 +4,7 @@ namespace App\Services\Purchasing;
 
 use App\Models\PurchaseInvoice;
 use App\Models\SupplierPayment;
+use App\Services\Accounting\OperationalAccountingService;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class RecordSupplierPayment
 {
+    public function __construct(private readonly OperationalAccountingService $accounting) {}
+
     public function record(PurchaseInvoice $invoice, array $data, int $userId): SupplierPayment
     {
         return DB::transaction(function () use ($invoice, $data, $userId): SupplierPayment {
@@ -55,6 +58,8 @@ class RecordSupplierPayment
                 'balance_due' => (string) $newBalance->toScale(4, RoundingMode::HalfUp),
                 'status' => $newBalance->isZero() ? 'paid' : 'partially_paid',
             ]);
+
+            $this->accounting->postSupplierPayment($payment);
 
             return $payment;
         });

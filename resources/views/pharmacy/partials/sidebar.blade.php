@@ -45,6 +45,9 @@
         @if (auth()->user()->hasPermission('reports.view'))
             <a href="{{ route('pharmacy.reports.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.reports.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Reports</a>
         @endif
+        @if (auth()->user()->hasPermission('accounting.manage'))
+            <a href="{{ route('pharmacy.accounting.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.accounting.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Accounting</a>
+        @endif
     </nav>
 
     <div class="border-t border-slate-100 p-4">

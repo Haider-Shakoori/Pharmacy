@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\BackfillAccounting;
 use App\Console\Commands\RetryTenantProvisioning;
 use App\Http\Middleware\ApplyTenantPreferences;
 use App\Http\Middleware\EnsureOperationalSubscription;
@@ -11,7 +12,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
-    ->withCommands([RetryTenantProvisioning::class])
+    ->withCommands([BackfillAccounting::class, RetryTenantProvisioning::class])
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',

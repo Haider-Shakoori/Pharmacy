@@ -8,6 +8,7 @@ use App\Models\Business;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
+use App\Services\Accounting\AccountingProvisioner;
 use App\Services\Inventory\InventoryProvisioner;
 use App\Services\Settings\PharmacySettings;
 use App\Services\Subscriptions\TrialProvisioner;
@@ -28,6 +29,7 @@ class TenantProvisioningService
         private readonly PharmacySettings $settings,
         private readonly TrialProvisioner $trials,
         private readonly InventoryProvisioner $inventory,
+        private readonly AccountingProvisioner $accounting,
     ) {}
 
     public function provision(array $data): array
@@ -80,8 +82,9 @@ class TenantProvisioningService
 
                 $this->settings->record($tenant);
                 $this->inventory->ensureDefaults($tenant);
+                $this->accounting->ensureDefaults($tenant);
                 $this->ensureOwner($tenant);
-                $this->events->record($tenant, 'baseline', 'success', 'Settings, inventory defaults, RBAC, and owner are ready.');
+                $this->events->record($tenant, 'baseline', 'success', 'Settings, inventory/accounting defaults, RBAC, and owner are ready.');
             }
 
             $domain = $tenant->business->slug.'.'.config('pharmacy.deployment_host');

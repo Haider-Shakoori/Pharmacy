@@ -11,6 +11,7 @@ use App\Models\SaleLine;
 use App\Models\SalePayment;
 use App\Models\StockLocation;
 use App\Models\User;
+use App\Services\Accounting\OperationalAccountingService;
 use App\Services\DailyClosing\BusinessDateResolver;
 use App\Services\DailyClosing\DailyClosingService;
 use App\Services\Inventory\FefoAllocator;
@@ -25,6 +26,7 @@ class PosSaleService
 {
     public function __construct(
         private readonly FefoAllocator $allocator,
+        private readonly OperationalAccountingService $accounting,
         private readonly BusinessDateResolver $businessDates,
         private readonly DailyClosingService $dailyClosing,
         private readonly TenantContext $tenantContext,
@@ -168,6 +170,8 @@ class PosSaleService
                 'status' => 'completed',
                 'completed_at' => now(),
             ]);
+
+            $this->accounting->postSale($sale->fresh(['lines', 'payments']));
 
             return $sale->fresh(['lines.allocations.batch', 'payments', 'customer', 'location.branch']);
         });

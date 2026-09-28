@@ -7,6 +7,7 @@ use App\Http\Requests\Pharmacy\StorePurchaseInvoiceRequest;
 use App\Models\GoodsReceipt;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseOrder;
+use App\Services\Accounting\OperationalAccountingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +16,11 @@ use Illuminate\Validation\ValidationException;
 
 class PurchaseInvoiceController extends Controller
 {
-    public function store(StorePurchaseInvoiceRequest $request, PurchaseOrder $purchaseOrder): RedirectResponse
-    {
+    public function store(
+        StorePurchaseInvoiceRequest $request,
+        PurchaseOrder $purchaseOrder,
+        OperationalAccountingService $accounting,
+    ): RedirectResponse {
         abort_unless(
             in_array($purchaseOrder->status, ['approved', 'partially_received', 'received'], true),
             422,
@@ -44,12 +48,12 @@ class PurchaseInvoiceController extends Controller
             throw ValidationException::withMessages(['supplier_invoice_number' => 'This supplier invoice number has already been recorded.']);
         }
 
-        $invoice = DB::transaction(function () use ($data, $purchaseOrder, $request): PurchaseInvoice {
+        $invoice = DB::transaction(function () use ($data, $purchaseOrder, $request, $accounting): PurchaseInvoice {
             $dueDate = $data['due_date'] ?? Carbon::parse($data['invoice_date'])
                 ->addDays($purchaseOrder->supplier->payment_terms_days)
                 ->toDateString();
 
-            return PurchaseInvoice::query()->create([
+            $invoice = PurchaseInvoice::query()->create([
                 'supplier_id' => $purchaseOrder->supplier_id,
                 'purchase_order_id' => $purchaseOrder->id,
                 'goods_receipt_id' => $data['goods_receipt_id'] ?? null,
@@ -68,6 +72,10 @@ class PurchaseInvoiceController extends Controller
                 'created_by' => $request->user()->id,
                 'notes' => $data['notes'] ?? null,
             ]);
+
+            $accounting->postPurchaseInvoice($invoice);
+
+            return $invoice;
         });
 
         return redirect()->route('pharmacy.purchase-orders.show', $purchaseOrder)
