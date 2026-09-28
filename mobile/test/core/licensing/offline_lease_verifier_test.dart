@@ -34,7 +34,8 @@ Future<MobileRegistration> _registration({
 }) async {
   final Ed25519 algorithm = Ed25519();
   final KeyPair keyPair = await algorithm.newKeyPair();
-  final PublicKey publicKey = await keyPair.extractPublicKey();
+  final SimplePublicKey publicKey =
+      (await keyPair.extractPublicKey()) as SimplePublicKey;
   final Map<String, Object?> payload = <String, Object?>{
     'v': 1,
     'tenant_id': 'tenant-1',
