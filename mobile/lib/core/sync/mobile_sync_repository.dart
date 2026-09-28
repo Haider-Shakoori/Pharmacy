@@ -174,10 +174,13 @@ class MobileSyncRepository {
         switch (page.stream) {
           case 'medicines':
             await _applyMedicine(item);
+            break;
           case 'inventory':
             await _applyInventory(item);
+            break;
           case 'customers':
             await _applyCustomer(item);
+            break;
           default:
             throw const FormatException(
               'Unsupported local synchronization stream.',
@@ -246,7 +249,7 @@ class MobileSyncRepository {
   }
 
   int _retryDelaySeconds(int attempt) {
-    final int exponent = attempt.clamp(0, 6);
+    final int exponent = attempt < 0 ? 0 : (attempt > 6 ? 6 : attempt);
     return 30 * (1 << exponent);
   }
 
