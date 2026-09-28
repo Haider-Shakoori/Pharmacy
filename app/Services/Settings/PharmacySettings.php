@@ -8,6 +8,9 @@ use Closure;
 
 class PharmacySettings
 {
+    /** @var array<string, PharmacySetting> */
+    private array $records = [];
+
     public const DAILY_CLOSING_DEFAULTS = [
         'business_day_rollover_time' => '00:00',
         'opening_cash_mode' => 'carry_forward',
@@ -28,21 +31,30 @@ class PharmacySettings
 
     public function record(Tenant $tenant): PharmacySetting
     {
-        return $this->inside($tenant, function () use ($tenant): PharmacySetting {
-            $business = $tenant->business;
+        $tenantId = (string) $tenant->getTenantKey();
 
-            return PharmacySetting::query()->firstOrCreate(
-                ['id' => 1],
-                [
-                    'display_name' => $business?->pharmacy_name,
-                    'timezone' => $business?->default_timezone ?? 'Asia/Kabul',
-                    'locale' => $business?->default_locale ?? 'en',
-                    'currency' => $business?->billing_currency ?? 'AFN',
-                    'daily_closing' => self::DAILY_CLOSING_DEFAULTS,
-                    'inventory_policy' => self::INVENTORY_DEFAULTS,
-                ],
-            );
-        });
+        if (isset($this->records[$tenantId])) {
+            return $this->records[$tenantId];
+        }
+
+        return $this->records[$tenantId] = $this->inside(
+            $tenant,
+            function () use ($tenant): PharmacySetting {
+                $business = $tenant->business;
+
+                return PharmacySetting::query()->firstOrCreate(
+                    ['id' => 1],
+                    [
+                        'display_name' => $business?->pharmacy_name,
+                        'timezone' => $business?->default_timezone ?? 'Asia/Kabul',
+                        'locale' => $business?->default_locale ?? 'en',
+                        'currency' => $business?->billing_currency ?? 'AFN',
+                        'daily_closing' => self::DAILY_CLOSING_DEFAULTS,
+                        'inventory_policy' => self::INVENTORY_DEFAULTS,
+                    ],
+                );
+            },
+        );
     }
 
     public function profile(Tenant $tenant): array

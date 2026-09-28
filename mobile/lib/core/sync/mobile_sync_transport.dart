@@ -23,7 +23,7 @@ abstract interface class MobileSyncTransport {
     required MobileRegistration registration,
     required String stream,
     required String? cursor,
-    int limit = 200,
+    int limit = 100,
   });
 }
 
@@ -84,7 +84,7 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
     required MobileRegistration registration,
     required String stream,
     required String? cursor,
-    int limit = 200,
+    int limit = 100,
   }) async {
     final Uri uri = endpoint.uri
         .resolve('/api/v1/mobile/sync/pull/$stream')

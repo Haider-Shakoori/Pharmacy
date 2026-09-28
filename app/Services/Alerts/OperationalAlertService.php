@@ -28,24 +28,28 @@ class OperationalAlertService
 
             $medicines = Medicine::query()
                 ->where('is_active', true)
-                ->with(['batches' => function ($query) use ($today): void {
-                    $query
-                        ->where('status', 'active')
-                        ->where('available_quantity', '>', 0)
-                        ->where(function ($query) use ($today): void {
-                            $query->whereNull('expires_at')
-                                ->orWhereDate('expires_at', '>=', $today->toDateString());
-                        });
-                }])
+                ->withSum([
+                    'batches as sellable_quantity' => function ($query) use ($today): void {
+                        $query
+                            ->where('status', 'active')
+                            ->where('available_quantity', '>', 0)
+                            ->where(function ($query) use ($today): void {
+                                $query->whereNull('expires_at')
+                                    ->orWhereDate('expires_at', '>=', $today->toDateString());
+                            });
+                    },
+                ], 'available_quantity')
                 ->orderBy('brand_name')
-                ->get();
+                ->get([
+                    'id',
+                    'medicine_code',
+                    'brand_name',
+                    'reorder_level',
+                ]);
 
             $lowStock = $medicines
                 ->filter(function (Medicine $medicine) use ($policy): bool {
-                    $available = $medicine->batches->reduce(
-                        fn (BigDecimal $carry, ProductBatch $batch): BigDecimal => $carry->plus((string) $batch->available_quantity),
-                        BigDecimal::zero(),
-                    );
+                    $available = BigDecimal::of((string) ($medicine->sellable_quantity ?? '0'));
                     $reorder = BigDecimal::of((string) $medicine->reorder_level);
                     $threshold = $reorder->isGreaterThan(BigDecimal::zero())
                         ? $reorder
@@ -54,10 +58,7 @@ class OperationalAlertService
                     return $available->isLessThanOrEqualTo($threshold);
                 })
                 ->map(function (Medicine $medicine) use ($policy): array {
-                    $available = $medicine->batches->reduce(
-                        fn (BigDecimal $carry, ProductBatch $batch): BigDecimal => $carry->plus((string) $batch->available_quantity),
-                        BigDecimal::zero(),
-                    );
+                    $available = BigDecimal::of((string) ($medicine->sellable_quantity ?? '0'));
                     $reorder = BigDecimal::of((string) $medicine->reorder_level);
                     $threshold = $reorder->isGreaterThan(BigDecimal::zero())
                         ? (string) $medicine->reorder_level

@@ -249,6 +249,14 @@ class MobileSyncApiTest extends TestCase
         });
     }
 
+    public function test_sync_pull_rejects_pages_above_low_bandwidth_limit(): void
+    {
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/sync/pull/medicines?limit=251')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('limit');
+    }
+
     public function test_incremental_pull_returns_catalog_and_cursor(): void
     {
         foreach (['medicines', 'inventory', 'customers'] as $stream) {

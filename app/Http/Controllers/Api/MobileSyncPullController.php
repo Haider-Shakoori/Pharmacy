@@ -16,9 +16,12 @@ class MobileSyncPullController extends Controller
         MobileAccessService $access,
         MobileSyncPullService $sync,
     ): JsonResponse {
+        $maxPageSize = (int) config('pharmacy.performance.sync_max_page_size', 250);
+        $defaultPageSize = (int) config('pharmacy.performance.sync_page_size', 100);
+
         $validated = $request->validate([
             'cursor' => ['nullable', 'string', 'max:1000'],
-            'limit' => ['nullable', 'integer', 'min:1', 'max:500'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:'.$maxPageSize],
         ]);
 
         $context = $access->authenticate($request);
@@ -26,7 +29,7 @@ class MobileSyncPullController extends Controller
             $context,
             $stream,
             $validated['cursor'] ?? null,
-            (int) ($validated['limit'] ?? 200),
+            (int) ($validated['limit'] ?? $defaultPageSize),
         );
 
         return response()->json([

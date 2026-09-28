@@ -10,6 +10,8 @@ return [
     'performance' => [
         'default_page_size' => 25,
         'max_page_size' => 100,
+        'sync_page_size' => 100,
+        'sync_max_page_size' => 250,
         'server_side_search' => true,
         'delta_sync' => true,
         'external_fonts' => false,

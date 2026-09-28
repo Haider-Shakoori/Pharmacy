@@ -22,7 +22,8 @@ class MobileSyncPullService
         int $limit,
     ): array {
         $decoded = $this->cursors->decode($cursor);
-        $limit = max(1, min($limit, 500));
+        $maxPageSize = (int) config('pharmacy.performance.sync_max_page_size', 250);
+        $limit = max(1, min($limit, $maxPageSize));
 
         return $context->tenant->run(function () use (
             $stream,
@@ -31,9 +32,35 @@ class MobileSyncPullService
             $limit,
         ): array {
             $query = match ($stream) {
-                'medicines' => Medicine::query(),
-                'inventory' => ProductBatch::query(),
-                'customers' => Customer::query(),
+                'medicines' => Medicine::query()->select([
+                    'id',
+                    'medicine_code',
+                    'brand_name',
+                    'generic_name',
+                    'sale_unit',
+                    'is_active',
+                    'updated_at',
+                ]),
+                'inventory' => ProductBatch::query()->select([
+                    'id',
+                    'medicine_id',
+                    'stock_location_id',
+                    'batch_number',
+                    'expires_at',
+                    'available_quantity',
+                    'sale_price',
+                    'purchase_cost',
+                    'status',
+                    'created_at',
+                    'updated_at',
+                ]),
+                'customers' => Customer::query()->select([
+                    'id',
+                    'name',
+                    'phone',
+                    'is_active',
+                    'updated_at',
+                ]),
                 default => throw ValidationException::withMessages([
                     'stream' => 'The synchronization stream is not supported.',
                 ]),
