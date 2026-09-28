@@ -5,10 +5,8 @@ namespace App\Services\Subscriptions;
 use App\Enums\SubscriptionHealth;
 use App\Enums\SubscriptionStatus;
 use App\Models\LicenseActivation;
-use App\Models\Subscription;
 use App\Models\Tenant;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Collection;
 
 class PlatformSubscriptionMonitoringService
 {
