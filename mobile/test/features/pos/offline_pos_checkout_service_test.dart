@@ -102,6 +102,23 @@ void main() {
           .getSingle(),
       1,
     );
+    expect(
+      await database
+          .customSelect(
+            'SELECT COUNT(*) AS c FROM local_sale_batch_allocations',
+          )
+          .map((QueryRow row) => row.read<int>('c'))
+          .getSingle(),
+      1,
+    );
+
+    final QueryRow batch = await database
+        .customSelect(
+          'SELECT available_quantity FROM local_inventory_batches WHERE id = ?',
+          variables: <Variable<Object>>[const Variable<String>('batch-1')],
+        )
+        .getSingle();
+    expect(batch.read<String>('available_quantity'), '18.0000');
 
     final QueryRow outbox = await database
         .customSelect('SELECT * FROM sync_outbox_entries')
@@ -112,6 +129,129 @@ void main() {
     expect(outbox.read<String>('event_type'), 'sale.completed');
     expect(payload['cashier_user_id'], '7');
     expect(payload['total'], '24.0000');
+    final List<dynamic> lines = payload['lines'] as List<dynamic>;
+    final Map<String, dynamic> line = Map<String, dynamic>.from(
+      lines.single as Map,
+    );
+    expect((line['batch_allocations'] as List<dynamic>).length, 1);
+  });
+
+  test('FEFO spans batches and local oversell is rejected atomically', () async {
+    final int firstExpiry =
+        DateTime(2026, 10, 1).millisecondsSinceEpoch ~/ 1000;
+    final int secondExpiry =
+        DateTime(2026, 11, 1).millisecondsSinceEpoch ~/ 1000;
+
+    await database.customStatement(
+      '''
+      UPDATE local_inventory_batches
+      SET available_quantity = '1.0000', expires_at = ?
+      WHERE id = 'batch-1'
+      ''',
+      <Object?>[firstExpiry],
+    );
+    await database.customStatement(
+      '''
+      INSERT INTO local_inventory_batches (
+        id, medicine_id, stock_location_id, batch_number, expires_at,
+        available_quantity, sale_price, purchase_cost, status, is_deleted
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', 0)
+      ''',
+      <Object?>[
+        'batch-2',
+        'medicine-1',
+        'main-location',
+        'LOT-2',
+        secondExpiry,
+        '2.0000',
+        '12.5000',
+        '8.5000',
+      ],
+    );
+
+    await service.checkout(
+      const OfflinePosCheckoutRequest(
+        stockLocationId: 'main-location',
+        cashierUserId: '7',
+        permissions: <String>{'pos.sell'},
+        lines: <OfflinePosLineInput>[
+          OfflinePosLineInput(
+            medicineId: 'medicine-1',
+            quantity: '2.0000',
+            unitPrice: '12.5000',
+          ),
+        ],
+        payments: <OfflinePosPaymentInput>[
+          OfflinePosPaymentInput(method: 'cash', amount: '25.0000'),
+        ],
+      ),
+    );
+
+    final List<QueryRow> allocations = await database.customSelect('''
+      SELECT product_batch_id, quantity
+      FROM local_sale_batch_allocations
+      ORDER BY created_at, local_id
+      ''').get();
+    expect(allocations.length, 2);
+    expect(allocations[0].read<String>('product_batch_id'), 'batch-1');
+    expect(allocations[0].read<String>('quantity'), '1.0000');
+    expect(allocations[1].read<String>('product_batch_id'), 'batch-2');
+    expect(allocations[1].read<String>('quantity'), '1.0000');
+
+    final QueryRow secondBatch = await database
+        .customSelect(
+          'SELECT available_quantity FROM local_inventory_batches WHERE id = ?',
+          variables: <Variable<Object>>[const Variable<String>('batch-2')],
+        )
+        .getSingle();
+    expect(secondBatch.read<String>('available_quantity'), '1.0000');
+
+    final int saleCountBefore = await database
+        .customSelect('SELECT COUNT(*) AS c FROM local_sales')
+        .map((QueryRow row) => row.read<int>('c'))
+        .getSingle();
+
+    await expectLater(
+      service.checkout(
+        const OfflinePosCheckoutRequest(
+          stockLocationId: 'main-location',
+          cashierUserId: '7',
+          permissions: <String>{'pos.sell'},
+          lines: <OfflinePosLineInput>[
+            OfflinePosLineInput(
+              medicineId: 'medicine-1',
+              quantity: '2.0000',
+              unitPrice: '12.5000',
+            ),
+          ],
+          payments: <OfflinePosPaymentInput>[
+            OfflinePosPaymentInput(method: 'cash', amount: '25.0000'),
+          ],
+        ),
+      ),
+      throwsA(
+        isA<OfflinePosException>().having(
+          (OfflinePosException error) => error.message,
+          'message',
+          contains('Insufficient locally cached eligible stock'),
+        ),
+      ),
+    );
+
+    expect(
+      await database
+          .customSelect('SELECT COUNT(*) AS c FROM local_sales')
+          .map((QueryRow row) => row.read<int>('c'))
+          .getSingle(),
+      saleCountBefore,
+    );
+    final QueryRow preserved = await database
+        .customSelect(
+          'SELECT available_quantity FROM local_inventory_batches WHERE id = ?',
+          variables: <Variable<Object>>[const Variable<String>('batch-2')],
+        )
+        .getSingle();
+    expect(preserved.read<String>('available_quantity'), '1.0000');
   });
 
   test(

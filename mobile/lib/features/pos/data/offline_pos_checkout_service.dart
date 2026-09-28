@@ -93,11 +93,18 @@ class OfflinePosCheckoutService {
           );
         }
 
-        final FixedDecimal basePrice = await _baseSalePrice(
+        final List<_OfflineBatchSnapshot> batches = await _eligibleBatches(
           medicine.id,
           request.stockLocationId,
           now,
         );
+        if (batches.isEmpty) {
+          throw const OfflinePosException(
+            'No locally cached sellable stock is available for this medicine.',
+          );
+        }
+
+        final FixedDecimal basePrice = batches.first.salePrice;
 
         if (unitPrice != basePrice &&
             !request.permissions.contains('pos.price_override')) {
@@ -122,18 +129,28 @@ class OfflinePosCheckoutService {
 
         final FixedDecimal lineTotal = lineSubtotal - discount;
         final String lineId = _idGenerator();
+        final List<Map<String, Object?>> allocations = await _allocateFefo(
+          saleLineId: lineId,
+          requestedQuantity: quantity,
+          batches: batches,
+          now: now,
+        );
+        final String? singleBatchId = allocations.length == 1
+            ? allocations.single['product_batch_id']?.toString()
+            : null;
 
         await _database.customStatement(
           '''
           INSERT INTO local_sale_lines (
             local_id, sale_local_id, medicine_id, batch_id, quantity,
             unit_price, discount_amount, line_total
-          ) VALUES (?, ?, ?, NULL, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
           ''',
           <Object?>[
             lineId,
             saleId,
             medicine.id,
+            singleBatchId,
             quantity.toString(),
             unitPrice.toString(),
             discount.toString(),
@@ -152,6 +169,7 @@ class OfflinePosCheckoutService {
           'unit_price': unitPrice.toString(),
           'discount_amount': discount.toString(),
           'line_total': lineTotal.toString(),
+          'batch_allocations': allocations,
         });
       }
 
@@ -288,59 +306,116 @@ class OfflinePosCheckoutService {
     });
   }
 
-  Future<FixedDecimal> _baseSalePrice(
+  Future<List<_OfflineBatchSnapshot>> _eligibleBatches(
     String medicineId,
     String stockLocationId,
     DateTime now,
   ) async {
-    final batchQuery = _database.select(_database.localInventoryBatches)
-      ..where(
-        (table) =>
-            table.medicineId.equals(medicineId) &
-            table.stockLocationId.equals(stockLocationId) &
-            table.status.equals('active') &
-            table.isDeleted.equals(false),
-      );
-
-    final batches = await batchQuery.get();
-    batches.sort((a, b) {
-      final DateTime? left = a.expiresAt;
-      final DateTime? right = b.expiresAt;
-
-      if (left == null && right == null) {
-        return a.id.compareTo(b.id);
-      }
-      if (left == null) {
-        return 1;
-      }
-      if (right == null) {
-        return -1;
-      }
-
-      return left.compareTo(right);
-    });
-
     final DateTime today = DateTime(now.year, now.month, now.day);
+    final int todaySeconds = today.millisecondsSinceEpoch ~/ 1000;
+    final List<QueryRow> rows = await _database
+        .customSelect(
+          '''
+      SELECT id, available_quantity, sale_price, purchase_cost
+      FROM local_inventory_batches
+      WHERE medicine_id = ?
+        AND stock_location_id = ?
+        AND status = 'active'
+        AND is_deleted = 0
+        AND (expires_at IS NULL OR expires_at >= ?)
+      ORDER BY
+        CASE WHEN expires_at IS NULL THEN 1 ELSE 0 END,
+        expires_at,
+        CASE WHEN server_created_at IS NULL THEN 1 ELSE 0 END,
+        server_created_at,
+        id
+      ''',
+          variables: <Variable<Object>>[
+            Variable<String>(medicineId),
+            Variable<String>(stockLocationId),
+            Variable<int>(todaySeconds),
+          ],
+        )
+        .get();
 
-    for (final batch in batches) {
-      final FixedDecimal available = FixedDecimal.parse(
-        batch.availableQuantity,
+    return rows
+        .map(
+          (QueryRow row) => _OfflineBatchSnapshot(
+            id: row.read<String>('id'),
+            available: FixedDecimal.parse(
+              row.read<String>('available_quantity'),
+            ),
+            salePrice: FixedDecimal.parse(row.read<String>('sale_price')),
+            purchaseCost: FixedDecimal.parse(row.read<String>('purchase_cost')),
+          ),
+        )
+        .where((_OfflineBatchSnapshot batch) => batch.available.isPositive)
+        .toList(growable: false);
+  }
+
+  Future<List<Map<String, Object?>>> _allocateFefo({
+    required String saleLineId,
+    required FixedDecimal requestedQuantity,
+    required List<_OfflineBatchSnapshot> batches,
+    required DateTime now,
+  }) async {
+    FixedDecimal remaining = requestedQuantity;
+    final List<Map<String, Object?>> allocations = <Map<String, Object?>>[];
+    final int timestamp = now.millisecondsSinceEpoch ~/ 1000;
+
+    for (final _OfflineBatchSnapshot batch in batches) {
+      if (!remaining.isPositive) {
+        break;
+      }
+
+      final FixedDecimal take = batch.available.compareTo(remaining) < 0
+          ? batch.available
+          : remaining;
+      final FixedDecimal availableAfter = batch.available - take;
+      final String allocationId = _idGenerator();
+
+      await _database.customStatement(
+        '''
+        UPDATE local_inventory_batches
+        SET available_quantity = ?
+        WHERE id = ?
+        ''',
+        <Object?>[availableAfter.toString(), batch.id],
       );
-      if (!available.isPositive) {
-        continue;
-      }
 
-      final DateTime? expiry = batch.expiresAt;
-      if (expiry != null && expiry.isBefore(today)) {
-        continue;
-      }
+      await _database.customStatement(
+        '''
+        INSERT INTO local_sale_batch_allocations (
+          local_id, sale_line_local_id, product_batch_id,
+          quantity, unit_cost, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ''',
+        <Object?>[
+          allocationId,
+          saleLineId,
+          batch.id,
+          take.toString(),
+          batch.purchaseCost.toString(),
+          timestamp,
+        ],
+      );
 
-      return FixedDecimal.parse(batch.salePrice);
+      allocations.add(<String, Object?>{
+        'local_id': allocationId,
+        'product_batch_id': batch.id,
+        'quantity': take.toString(),
+        'unit_cost': batch.purchaseCost.toString(),
+      });
+      remaining -= take;
     }
 
-    throw const OfflinePosException(
-      'No locally cached sellable stock is available for this medicine.',
-    );
+    if (remaining.isPositive) {
+      throw const OfflinePosException(
+        'Insufficient locally cached eligible stock for this medicine.',
+      );
+    }
+
+    return allocations;
   }
 
   String _businessDate(DateTime value) {
@@ -349,4 +424,18 @@ class OfflinePosCheckoutService {
 
     return '${value.year}-$month-$day';
   }
+}
+
+class _OfflineBatchSnapshot {
+  const _OfflineBatchSnapshot({
+    required this.id,
+    required this.available,
+    required this.salePrice,
+    required this.purchaseCost,
+  });
+
+  final String id;
+  final FixedDecimal available;
+  final FixedDecimal salePrice;
+  final FixedDecimal purchaseCost;
 }

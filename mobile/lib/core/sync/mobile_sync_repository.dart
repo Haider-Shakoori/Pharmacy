@@ -1,4 +1,5 @@
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
+import 'package:businessos_pharmacy/core/decimal/fixed_decimal.dart';
 import 'package:businessos_pharmacy/core/sync/sync_models.dart';
 import 'package:drift/drift.dart';
 
@@ -274,16 +275,28 @@ class MobileSyncRepository {
     );
   }
 
-  Future<void> _applyInventory(Map<String, dynamic> item) {
+  Future<void> _applyInventory(Map<String, dynamic> item) async {
+    final String batchId = item['id'].toString();
     final String? expiresAt = item['expires_at']?.toString();
+    final String? serverCreatedAt = item['server_created_at']?.toString();
+    final FixedDecimal serverAvailable = FixedDecimal.parse(
+      item['available_quantity']?.toString() ?? '0',
+    );
+    final FixedDecimal outstanding = await _outstandingAllocationQuantity(
+      batchId,
+    );
+    final FixedDecimal effective = serverAvailable - outstanding;
+    final FixedDecimal available = effective.isNegative
+        ? FixedDecimal.zero
+        : effective;
 
-    return _database.customStatement(
+    await _database.customStatement(
       '''
       INSERT INTO local_inventory_batches (
         id, medicine_id, stock_location_id, batch_number, expires_at,
         available_quantity, sale_price, purchase_cost, status,
-        is_deleted, server_updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        is_deleted, server_created_at, server_updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         medicine_id = excluded.medicine_id,
         stock_location_id = excluded.stock_location_id,
@@ -294,22 +307,51 @@ class MobileSyncRepository {
         purchase_cost = excluded.purchase_cost,
         status = excluded.status,
         is_deleted = excluded.is_deleted,
+        server_created_at = excluded.server_created_at,
         server_updated_at = excluded.server_updated_at
       ''',
       <Object?>[
-        item['id'].toString(),
+        batchId,
         item['medicine_id'].toString(),
         item['stock_location_id'].toString(),
         item['batch_number']?.toString() ?? '',
         expiresAt == null ? null : _seconds(DateTime.parse(expiresAt).toUtc()),
-        item['available_quantity']?.toString() ?? '0',
+        available.toString(),
         item['sale_price']?.toString() ?? '0',
         item['purchase_cost']?.toString() ?? '0',
         item['status']?.toString() ?? 'active',
         item['is_deleted'] == true ? 1 : 0,
+        serverCreatedAt == null
+            ? null
+            : _seconds(DateTime.parse(serverCreatedAt).toUtc()),
         _serverSeconds(item),
       ],
     );
+  }
+
+  Future<FixedDecimal> _outstandingAllocationQuantity(String batchId) async {
+    final List<QueryRow> rows = await _database
+        .customSelect(
+          '''
+      SELECT allocation.quantity
+      FROM local_sale_batch_allocations allocation
+      INNER JOIN local_sale_lines line
+        ON line.local_id = allocation.sale_line_local_id
+      INNER JOIN local_sales sale
+        ON sale.local_id = line.sale_local_id
+      WHERE allocation.product_batch_id = ?
+        AND sale.sync_state <> 'synced'
+      ''',
+          variables: <Variable<Object>>[Variable<String>(batchId)],
+        )
+        .get();
+
+    FixedDecimal total = FixedDecimal.zero;
+    for (final QueryRow row in rows) {
+      total += FixedDecimal.parse(row.read<String>('quantity'));
+    }
+
+    return total;
   }
 
   Future<void> _applyCustomer(Map<String, dynamic> item) {

@@ -107,6 +107,7 @@ class MobileSyncPullService
                     'purchase_cost' => (string) $row->purchase_cost,
                     'status' => $row->status,
                     'is_deleted' => false,
+                    'server_created_at' => $row->created_at->toISOString(),
                     'server_updated_at' => $row->updated_at->toISOString(),
                 ],
                 'customers' => [

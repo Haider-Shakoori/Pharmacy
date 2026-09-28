@@ -260,3 +260,37 @@ Existing Batch 20 installations remain upgradeable without forced re-entry of
 the license key: older encrypted registrations may initially lack the public
 key/device fields, in which case POS is blocked until the next successful
 session refresh populates them.
+
+
+## Batch 22 — offline FEFO allocation and oversell protection
+
+Batch 22 makes the Android stock snapshot transactional rather than advisory.
+Every offline sale allocates stock from eligible local batches in FEFO order,
+matching the server rule: dated batches first by expiry, then server creation
+time, with no-expiry batches last. Expired, non-active, deleted and depleted
+batches are excluded.
+
+The sale header, lines, payments, per-line batch allocations, cached inventory
+decrements and `sale.completed` outbox event commit in one SQLite transaction.
+If any line cannot be fully allocated, the entire checkout rolls back and no
+partial sale or stock consumption remains.
+
+The local database stores the batch allocations separately because one sale
+line can span multiple batches. Allocation details are also embedded in the
+outbox payload for reconciliation and audit, while the server remains the
+authoritative inventory ledger and still runs its own locked FEFO allocation.
+
+A server inventory pull never blindly restores stock consumed by an unresolved
+offline sale. For pending or rejected local sales, their recorded allocations
+remain reserved against the fresh server quantity. Once a sale is acknowledged
+and marked synced, the reservation overlay is released and the server snapshot
+becomes authoritative.
+
+If server stock changed while a device was offline, synchronization returns an
+explicit non-retryable `stock_conflict` instead of silently changing the
+completed local sale. The sale stays visible locally for reconciliation.
+
+This prevents same-device offline overselling. No offline architecture can
+guarantee global oversell prevention across multiple disconnected devices
+without pre-allocated stock quotas; cross-device conflicts are therefore
+detected and surfaced during synchronization rather than hidden.
