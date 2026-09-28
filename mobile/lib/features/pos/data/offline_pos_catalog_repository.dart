@@ -9,15 +9,13 @@ class OfflinePosCatalogRepository {
   final PharmacyDatabase _database;
 
   Future<List<String>> stockLocationIds() async {
-    final List<QueryRow> rows = await _database.customSelect(
-      '''
+    final List<QueryRow> rows = await _database.customSelect('''
       SELECT DISTINCT stock_location_id
       FROM local_inventory_batches
       WHERE is_deleted = 0
         AND status = 'active'
       ORDER BY stock_location_id
-      ''',
-    ).get();
+      ''').get();
 
     return rows
         .map((QueryRow row) => row.read<String>('stock_location_id'))
