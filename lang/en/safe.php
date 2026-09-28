@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'nav' => 'Cash Safe',
+    'title' => 'Cash Safe',
+    'subtitle' => 'Physical cash custody, POS transfers and daily Safe Closing.',
+    'balance' => 'Safe balance',
+    'business_date' => 'Business date',
+    'opening_balance' => 'Opening balance',
+    'cash_in' => 'Cash in today',
+    'cash_out' => 'Cash out today',
+    'expected_balance' => 'Expected balance',
+    'pos_transfers' => 'POS cash transfers',
+    'pending_pos' => 'Pending closed POS shifts',
+    'movement' => 'Cash movement',
+    'history' => 'Recent movements',
+    'closing' => 'Safe Closing',
+    'closing_history' => 'Closing history',
+    'counted_balance' => 'Counted physical cash',
+    'variance' => 'Variance',
+    'finalize' => 'Finalize Safe Closing',
+    'approve' => 'Approve closing',
+    'reopen' => 'Reopen closing',
+    'create_safe' => 'Create another safe',
+    'messages' => [
+        'created' => 'Cash safe created.',
+        'movement_posted' => 'Safe cash movement posted.',
+        'pos_received' => 'POS cash transferred into the safe.',
+        'closed' => 'Safe Closing finalized.',
+        'approved' => 'Safe Closing approved.',
+        'reopened' => 'Safe Closing reopened.',
+    ],
+];
