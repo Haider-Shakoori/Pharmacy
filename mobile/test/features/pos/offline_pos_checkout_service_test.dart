@@ -6,19 +6,6 @@ import 'package:businessos_pharmacy/features/pos/domain/offline_pos_models.dart'
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:uuid/uuid.dart';
-
-class _SequenceUuid extends Uuid {
-  _SequenceUuid();
-
-  int _counter = 0;
-
-  @override
-  String v4({Map<String, dynamic>? config}) {
-    _counter += 1;
-    return '00000000-0000-4000-8000-${_counter.toString().padLeft(12, '0')}';
-  }
-}
 
 void main() {
   late PharmacyDatabase database;
@@ -26,9 +13,13 @@ void main() {
 
   setUp(() async {
     database = PharmacyDatabase(NativeDatabase.memory());
+    int idCounter = 0;
     service = OfflinePosCheckoutService(
       database,
-      uuid: _SequenceUuid(),
+      idGenerator: () {
+        idCounter += 1;
+        return '00000000-0000-4000-8000-${idCounter.toString().padLeft(12, '0')}';
+      },
       clock: () => DateTime(2026, 9, 28, 10, 30),
     );
 
@@ -39,13 +30,7 @@ void main() {
         is_active, is_deleted
       ) VALUES (?, ?, ?, ?, ?, 1, 0)
       ''',
-      <Object?>[
-        'medicine-1',
-        'MED-001',
-        'Test Medicine',
-        'Generic',
-        'box',
-      ],
+      <Object?>['medicine-1', 'MED-001', 'Test Medicine', 'Generic', 'box'],
     );
 
     await database.customStatement(
@@ -121,52 +106,54 @@ void main() {
         .customSelect('SELECT * FROM sync_outbox_entries')
         .getSingle();
     final Map<String, dynamic> payload =
-        jsonDecode(outbox.read<String>('payload_json'))
-            as Map<String, dynamic>;
+        jsonDecode(outbox.read<String>('payload_json')) as Map<String, dynamic>;
 
     expect(outbox.read<String>('event_type'), 'sale.completed');
     expect(payload['cashier_user_id'], '7');
     expect(payload['total'], '24.0000');
   });
 
-  test('failed permission validation leaves no partial local transaction', () async {
-    await expectLater(
-      service.checkout(
-        const OfflinePosCheckoutRequest(
-          stockLocationId: 'main-location',
-          cashierUserId: '7',
-          permissions: <String>{'pos.sell'},
-          lines: <OfflinePosLineInput>[
-            OfflinePosLineInput(
-              medicineId: 'medicine-1',
-              quantity: '1',
-              unitPrice: '12.5000',
-              discountAmount: '1.0000',
-            ),
-          ],
-          payments: <OfflinePosPaymentInput>[
-            OfflinePosPaymentInput(method: 'cash', amount: '20'),
-          ],
+  test(
+    'failed permission validation leaves no partial local transaction',
+    () async {
+      await expectLater(
+        service.checkout(
+          const OfflinePosCheckoutRequest(
+            stockLocationId: 'main-location',
+            cashierUserId: '7',
+            permissions: <String>{'pos.sell'},
+            lines: <OfflinePosLineInput>[
+              OfflinePosLineInput(
+                medicineId: 'medicine-1',
+                quantity: '1',
+                unitPrice: '12.5000',
+                discountAmount: '1.0000',
+              ),
+            ],
+            payments: <OfflinePosPaymentInput>[
+              OfflinePosPaymentInput(method: 'cash', amount: '20'),
+            ],
+          ),
         ),
-      ),
-      throwsA(isA<OfflinePosException>()),
-    );
+        throwsA(isA<OfflinePosException>()),
+      );
 
-    final int saleCount = await database
-        .customSelect('SELECT COUNT(*) AS c FROM local_sales')
-        .map((QueryRow row) => row.read<int>('c'))
-        .getSingle();
-    final int lineCount = await database
-        .customSelect('SELECT COUNT(*) AS c FROM local_sale_lines')
-        .map((QueryRow row) => row.read<int>('c'))
-        .getSingle();
-    final int outboxCount = await database
-        .customSelect('SELECT COUNT(*) AS c FROM sync_outbox_entries')
-        .map((QueryRow row) => row.read<int>('c'))
-        .getSingle();
+      final int saleCount = await database
+          .customSelect('SELECT COUNT(*) AS c FROM local_sales')
+          .map((QueryRow row) => row.read<int>('c'))
+          .getSingle();
+      final int lineCount = await database
+          .customSelect('SELECT COUNT(*) AS c FROM local_sale_lines')
+          .map((QueryRow row) => row.read<int>('c'))
+          .getSingle();
+      final int outboxCount = await database
+          .customSelect('SELECT COUNT(*) AS c FROM sync_outbox_entries')
+          .map((QueryRow row) => row.read<int>('c'))
+          .getSingle();
 
-    expect(saleCount, 0);
-    expect(lineCount, 0);
-    expect(outboxCount, 0);
-  });
+      expect(saleCount, 0);
+      expect(lineCount, 0);
+      expect(outboxCount, 0);
+    },
+  );
 }
