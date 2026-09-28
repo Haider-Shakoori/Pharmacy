@@ -69,3 +69,21 @@ When transaction work begins in Batch 19, sales are committed to the local
 database first. Network availability must never be a prerequisite for an
 otherwise licensed offline sale. Batch 20 synchronization uses UUIDs, an
 outbox, idempotency keys, acknowledgements and checkpoints.
+
+
+## Batch 17 local database
+
+The Android client now uses Drift/SQLite as its offline persistence boundary.
+One pharmacy tenant gets one local database regardless of whether the selected
+server mode is **Local**, **Cloud** or **Automatic**. Server failover changes
+transport only; it does not change local business data.
+
+The first schema includes medicine/batch/customer caches, local sale headers,
+sale lines, payments, an idempotent sync outbox and stream checkpoints.
+Financial and quantity decimals are retained as exact strings rather than
+floating point values. The temporary `unbound` database is used only before
+Batch 18 establishes the real tenant/device identity.
+
+Drift code is generated during CI before formatting, analysis, tests and the
+Android APK build. SQLite operation does not require either Local or Cloud to be
+reachable.

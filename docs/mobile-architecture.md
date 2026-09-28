@@ -112,3 +112,32 @@ and sync recovery.
 
 The mobile workflow must pass `dart format`, `flutter analyze`, `flutter test`
 and a clean Android debug APK build.
+
+
+## Batch 17 — tenant-scoped local database
+
+Drift/SQLite is the durable local store for Android. The database is scoped by
+the pharmacy tenant identity, never by Local, Cloud or Automatic connection
+mode. Switching transport therefore cannot create parallel inventories, sales
+queues or sync checkpoints for the same pharmacy.
+
+Before Batch 18 registration binds an installation to a tenant, the application
+uses an `unbound` database scope. Transactional POS work is not enabled in this
+state.
+
+The initial local schema contains application metadata, medicine and batch
+caches, customers, local sales, sale lines, payments, a durable synchronization
+outbox and per-stream synchronization checkpoints. Money and quantity values
+that require decimal precision are stored as exact decimal strings instead of
+binary floating-point values.
+
+The outbox uses a unique idempotency key as its primary key. This prepares Batch
+20 retries without permitting duplicate logical events. Checkpoints are stored
+per pull stream so catalog, inventory and other streams can advance
+independently.
+
+The native Drift executor is configured for WAL mode and can be shared across
+isolates, preparing for later background synchronization. Batch 17 defines
+storage and durability only: Batch 18 binds tenant/device identity, Batch 19
+implements local-first sale transactions, Batch 20 implements network sync, and
+Batch 22 enforces offline stock allocation.
