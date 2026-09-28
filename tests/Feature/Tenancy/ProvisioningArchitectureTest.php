@@ -51,7 +51,8 @@ class ProvisioningArchitectureTest extends TestCase
         $this->assertNull($tenant->getAttribute('provisioning_owner_password'));
         $this->assertTrue(ProvisioningEvent::query()->where('tenant_id', $tenant->id)->where('step', 'database')->where('status', 'success')->exists());
         $this->assertTrue(ProvisioningEvent::query()->where('tenant_id', $tenant->id)->where('step', 'readiness')->where('status', 'success')->exists());
-        $this->assertNotNull($tenant->subscription);
+        $this->assertNull($tenant->subscription);
+        $this->assertSame('application_ready', $tenant->provisioning_status);
     }
 
     public function test_non_local_readiness_requires_reachable_https_login(): void
