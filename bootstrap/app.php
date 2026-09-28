@@ -4,7 +4,9 @@ use App\Console\Commands\BackfillAccounting;
 use App\Console\Commands\RetryTenantProvisioning;
 use App\Http\Middleware\ApplyTenantPreferences;
 use App\Http\Middleware\EnsureOperationalSubscription;
+use App\Http\Middleware\RejectOversizedApiPayload;
 use App\Http\Middleware\RequirePermission;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(SecurityHeaders::class);
+
         $middleware->web(append: [
             SetLocale::class,
         ]);
@@ -28,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.preferences' => ApplyTenantPreferences::class,
             'subscription.operational' => EnsureOperationalSubscription::class,
             'permission' => RequirePermission::class,
+            'api.payload' => RejectOversizedApiPayload::class,
         ]);
 
         $middleware->redirectGuestsTo(

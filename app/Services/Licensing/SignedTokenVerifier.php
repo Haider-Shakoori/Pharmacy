@@ -12,6 +12,12 @@ class SignedTokenVerifier
         ?string $purpose = null,
         bool $allowExpired = false,
     ): array {
+        $maxBytes = (int) config('pharmacy.security.max_signed_token_bytes', 8192);
+
+        if (strlen($token) > $maxBytes) {
+            throw new AuthenticationException('The mobile access token is too large.');
+        }
+
         if (! function_exists('sodium_crypto_sign_verify_detached')) {
             throw new AuthenticationException('Token verification is unavailable.');
         }
@@ -46,20 +52,47 @@ class SignedTokenVerifier
             throw new AuthenticationException('The mobile access token payload is invalid.');
         }
 
+        $version = filter_var(
+            $payload['v'] ?? null,
+            FILTER_VALIDATE_INT,
+        );
+
+        if ($version !== 1) {
+            throw new AuthenticationException('The mobile access token version is invalid.');
+        }
+
         if ($purpose !== null && ($payload['purpose'] ?? null) !== $purpose) {
             throw new AuthenticationException('The mobile access token purpose is invalid.');
         }
 
+        $issuedAt = filter_var(
+            $payload['issued_at'] ?? null,
+            FILTER_VALIDATE_INT,
+        );
         $expiresAt = filter_var(
             $payload['expires_at'] ?? null,
             FILTER_VALIDATE_INT,
         );
 
-        if ($expiresAt === false) {
-            throw new AuthenticationException('The mobile access token expiry is invalid.');
+        if ($issuedAt === false || $expiresAt === false) {
+            throw new AuthenticationException('The mobile access token timestamps are invalid.');
         }
 
-        if (! $allowExpired && $expiresAt <= now()->getTimestamp()) {
+        if ($expiresAt <= $issuedAt) {
+            throw new AuthenticationException('The mobile access token lifetime is invalid.');
+        }
+
+        $now = now()->getTimestamp();
+        $clockSkew = (int) config(
+            'pharmacy.security.token_clock_skew_seconds',
+            300,
+        );
+
+        if ($issuedAt > $now + $clockSkew) {
+            throw new AuthenticationException('The mobile access token issue time is invalid.');
+        }
+
+        if (! $allowExpired && $expiresAt <= $now) {
             throw new AuthenticationException('The mobile access token has expired.');
         }
 

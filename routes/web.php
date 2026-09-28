@@ -18,7 +18,7 @@ Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
         Route::middleware('guest:platform')->group(function (): void {
             Route::get('/login', [PlatformLoginController::class, 'create'])->name('login');
             Route::post('/login', [PlatformLoginController::class, 'store'])
-                ->middleware('throttle:5,1')
+                ->middleware('throttle:platform-login')
                 ->name('login.store');
         });
 
