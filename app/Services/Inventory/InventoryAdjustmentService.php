@@ -4,13 +4,17 @@ namespace App\Services\Inventory;
 
 use App\Models\InventoryAdjustment;
 use App\Models\ProductBatch;
+use App\Services\Accounting\OperationalAccountingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class InventoryAdjustmentService
 {
-    public function __construct(private readonly StockMovementService $movements) {}
+    public function __construct(
+        private readonly StockMovementService $movements,
+        private readonly OperationalAccountingService $accounting,
+    ) {}
 
     public function post(
         ProductBatch $batch,
@@ -62,6 +66,8 @@ class InventoryAdjustmentService
                 'posted_by' => $userId,
                 'posted_at' => now(),
             ]);
+
+            $this->accounting->postInventoryAdjustment($adjustment->fresh(['lines.batch']));
 
             return $adjustment->fresh(['lines']);
         });

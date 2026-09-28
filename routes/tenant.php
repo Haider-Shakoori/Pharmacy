@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Pharmacy\AccountingAdjustmentController;
+use App\Http\Controllers\Pharmacy\AccountingController;
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
 use App\Http\Controllers\Pharmacy\BatchStatusController;
 use App\Http\Controllers\Pharmacy\DailyClosingController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
+use App\Http\Controllers\Pharmacy\ExpenseController;
 use App\Http\Controllers\Pharmacy\GoodsReceiptController;
 use App\Http\Controllers\Pharmacy\GoodsReceiptInventoryController;
 use App\Http\Controllers\Pharmacy\InventoryAdjustmentController;
@@ -144,6 +147,15 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
             Route::middleware('permission:reports.view')->group(function (): void {
                 Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
                 Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
+            });
+
+            Route::middleware('permission:accounting.manage')->group(function (): void {
+                Route::get('/accounting', [AccountingController::class, 'index'])->name('accounting.index');
+                Route::post('/accounting/accounts', [AccountingController::class, 'storeAccount'])->name('accounting.accounts.store');
+                Route::post('/accounting/expenses', [ExpenseController::class, 'store'])->name('accounting.expenses.store');
+                Route::post('/accounting/expenses/{expense}/reverse', [ExpenseController::class, 'reverse'])->name('accounting.expenses.reverse');
+                Route::post('/accounting/adjustments', [AccountingAdjustmentController::class, 'store'])->name('accounting.adjustments.store');
+                Route::post('/accounting/adjustments/{accountingAdjustment}/reverse', [AccountingAdjustmentController::class, 'reverse'])->name('accounting.adjustments.reverse');
             });
 
             Route::get('/settings', [PharmacySettingsController::class, 'edit'])

@@ -10,6 +10,7 @@ use App\Models\SaleReturnAllocation;
 use App\Models\SaleReturnLine;
 use App\Models\SaleReturnRefund;
 use App\Models\User;
+use App\Services\Accounting\OperationalAccountingService;
 use App\Services\DailyClosing\DailyClosingService;
 use App\Services\Inventory\StockMovementService;
 use Brick\Math\BigDecimal;
@@ -22,6 +23,7 @@ class SaleReturnService
 {
     public function __construct(
         private readonly StockMovementService $movements,
+        private readonly OperationalAccountingService $accounting,
         private readonly DailyClosingService $dailyClosing,
     ) {}
 
@@ -192,6 +194,8 @@ class SaleReturnService
                 'status' => 'completed',
                 'refund_total' => $this->decimal($refundTotal),
             ]);
+
+            $this->accounting->postSaleReturn($saleReturn->fresh(['sale', 'lines.allocations.originalAllocation', 'refunds']));
 
             return $saleReturn->fresh(['lines.allocations', 'refunds']);
         });

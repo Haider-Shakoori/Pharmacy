@@ -20,6 +20,9 @@
     @if (auth()->user()->hasPermission('roles.manage'))
         <a href="{{ route('pharmacy.roles.index') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">Roles & Permissions</a>
     @endif
+    @if (auth()->user()->hasPermission('accounting.manage'))
+        <a href="{{ route('pharmacy.accounting.index') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">Accounting</a>
+    @endif
     @if (auth()->user()->hasPermission('settings.manage'))
         <a href="{{ route('pharmacy.settings.edit') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">{{ __('pharmacy.nav.settings') }}</a>
     @endif
