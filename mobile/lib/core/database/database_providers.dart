@@ -3,9 +3,7 @@ import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final Provider<LocalDatabaseScope> localDatabaseScopeProvider =
-    Provider<LocalDatabaseScope>(
-      (Ref ref) => LocalDatabaseScope.unbound,
-    );
+    Provider<LocalDatabaseScope>((Ref ref) => LocalDatabaseScope.unbound);
 
 final Provider<PharmacyDatabase> pharmacyDatabaseProvider =
     Provider<PharmacyDatabase>((Ref ref) {

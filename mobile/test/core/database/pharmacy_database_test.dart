@@ -64,15 +64,11 @@ void main() {
       ],
     );
 
-    final QueryRow row = await database
-        .customSelect(
-          '''
+    final QueryRow row = await database.customSelect('''
           SELECT subtotal, total, tendered_amount, change_amount
           FROM local_sales
           WHERE local_id = 'sale-local-1'
-          ''',
-        )
-        .getSingle();
+          ''').getSingle();
 
     expect(row.read<String>('subtotal'), '123.4567');
     expect(row.read<String>('total'), '120.0000');
@@ -101,9 +97,6 @@ void main() {
 
     await database.customStatement(insert, values);
 
-    expect(
-      () => database.customStatement(insert, values),
-      throwsA(anything),
-    );
+    expect(() => database.customStatement(insert, values), throwsA(anything));
   });
 }

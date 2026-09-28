@@ -18,9 +18,12 @@ class LocalMedicines extends Table {
   TextColumn get medicineCode => text().nullable()();
   TextColumn get brandName => text()();
   TextColumn get genericName => text().nullable()();
-  TextColumn get saleUnit => text().withDefault(const Constant<String>('unit'))();
-  BoolColumn get isActive => boolean().withDefault(const Constant<bool>(true))();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant<bool>(false))();
+  TextColumn get saleUnit =>
+      text().withDefault(const Constant<String>('unit'))();
+  BoolColumn get isActive =>
+      boolean().withDefault(const Constant<bool>(true))();
+  BoolColumn get isDeleted =>
+      boolean().withDefault(const Constant<bool>(false))();
   DateTimeColumn get serverUpdatedAt => dateTime().nullable()();
 
   @override
@@ -33,11 +36,15 @@ class LocalInventoryBatches extends Table {
   TextColumn get stockLocationId => text()();
   TextColumn get batchNumber => text()();
   DateTimeColumn get expiresAt => dateTime().nullable()();
-  TextColumn get availableQuantity => text().withDefault(const Constant<String>('0'))();
+  TextColumn get availableQuantity =>
+      text().withDefault(const Constant<String>('0'))();
   TextColumn get salePrice => text().withDefault(const Constant<String>('0'))();
-  TextColumn get purchaseCost => text().withDefault(const Constant<String>('0'))();
-  TextColumn get status => text().withDefault(const Constant<String>('active'))();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant<bool>(false))();
+  TextColumn get purchaseCost =>
+      text().withDefault(const Constant<String>('0'))();
+  TextColumn get status =>
+      text().withDefault(const Constant<String>('active'))();
+  BoolColumn get isDeleted =>
+      boolean().withDefault(const Constant<bool>(false))();
   DateTimeColumn get serverUpdatedAt => dateTime().nullable()();
 
   @override
@@ -49,7 +56,8 @@ class LocalCustomers extends Table {
   TextColumn get name => text()();
   TextColumn get phone => text().nullable()();
   TextColumn get balance => text().withDefault(const Constant<String>('0'))();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant<bool>(false))();
+  BoolColumn get isDeleted =>
+      boolean().withDefault(const Constant<bool>(false))();
   DateTimeColumn get serverUpdatedAt => dateTime().nullable()();
 
   @override
@@ -62,14 +70,20 @@ class LocalSales extends Table {
   TextColumn get customerId => text().nullable()();
   TextColumn get stockLocationId => text()();
   TextColumn get businessDate => text()();
-  TextColumn get currency => text().withDefault(const Constant<String>('AFN'))();
-  TextColumn get status => text().withDefault(const Constant<String>('draft'))();
-  TextColumn get syncState => text().withDefault(const Constant<String>('local'))();
+  TextColumn get currency =>
+      text().withDefault(const Constant<String>('AFN'))();
+  TextColumn get status =>
+      text().withDefault(const Constant<String>('draft'))();
+  TextColumn get syncState =>
+      text().withDefault(const Constant<String>('local'))();
   TextColumn get subtotal => text().withDefault(const Constant<String>('0'))();
-  TextColumn get discountAmount => text().withDefault(const Constant<String>('0'))();
+  TextColumn get discountAmount =>
+      text().withDefault(const Constant<String>('0'))();
   TextColumn get total => text().withDefault(const Constant<String>('0'))();
-  TextColumn get tenderedAmount => text().withDefault(const Constant<String>('0'))();
-  TextColumn get changeAmount => text().withDefault(const Constant<String>('0'))();
+  TextColumn get tenderedAmount =>
+      text().withDefault(const Constant<String>('0'))();
+  TextColumn get changeAmount =>
+      text().withDefault(const Constant<String>('0'))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get completedAt => dateTime().nullable()();
@@ -85,7 +99,8 @@ class LocalSaleLines extends Table {
   TextColumn get batchId => text().nullable()();
   TextColumn get quantity => text()();
   TextColumn get unitPrice => text()();
-  TextColumn get discountAmount => text().withDefault(const Constant<String>('0'))();
+  TextColumn get discountAmount =>
+      text().withDefault(const Constant<String>('0'))();
   TextColumn get lineTotal => text()();
 
   @override
@@ -109,7 +124,8 @@ class SyncOutboxEntries extends Table {
   TextColumn get aggregateId => text()();
   TextColumn get eventType => text()();
   TextColumn get payloadJson => text()();
-  TextColumn get status => text().withDefault(const Constant<String>('pending'))();
+  TextColumn get status =>
+      text().withDefault(const Constant<String>('pending'))();
   IntColumn get attemptCount => integer().withDefault(const Constant<int>(0))();
   DateTimeColumn get nextAttemptAt => dateTime().nullable()();
   TextColumn get lastError => text().nullable()();
@@ -146,21 +162,21 @@ final class PharmacyDatabase extends _$PharmacyDatabase {
   PharmacyDatabase(super.e);
 
   PharmacyDatabase.forScope(LocalDatabaseScope scope)
-      : super(
-          driftDatabase(
-            name: scope.databaseName,
-            native: DriftNativeOptions(shareAcrossIsolates: true),
-          ),
-        );
+    : super(
+        driftDatabase(
+          name: scope.databaseName,
+          native: DriftNativeOptions(shareAcrossIsolates: true),
+        ),
+      );
 
   @override
   int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        beforeOpen: (OpeningDetails details) async {
-          await customStatement('PRAGMA foreign_keys = ON');
-          await customStatement('PRAGMA journal_mode = WAL');
-        },
-      );
+    beforeOpen: (OpeningDetails details) async {
+      await customStatement('PRAGMA foreign_keys = ON');
+      await customStatement('PRAGMA journal_mode = WAL');
+    },
+  );
 }
