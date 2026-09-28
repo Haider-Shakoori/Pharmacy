@@ -21,7 +21,11 @@ class SecurityHeaders
         );
         $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
 
-        if ($request->isSecure() &&
+        $forwardedHttps = strtolower(
+            (string) $request->header('X-Forwarded-Proto'),
+        ) === 'https';
+
+        if (($request->isSecure() || $forwardedHttps) &&
             (bool) config('pharmacy.security.hsts_enabled', true)) {
             $maxAge = (int) config('pharmacy.security.hsts_max_age', 31536000);
             $response->headers->set(

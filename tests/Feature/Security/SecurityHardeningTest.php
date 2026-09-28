@@ -22,12 +22,8 @@ class SecurityHardeningTest extends TestCase
 
     public function test_security_headers_are_present_on_platform_and_tenant_responses(): void
     {
-        $this->withServerVariables([
-            'HTTPS' => 'on',
-            'SERVER_PORT' => 443,
-        ]);
-
-        $this->get('/platform/login')
+        $this->withHeader('X-Forwarded-Proto', 'https')
+            ->get('/platform/login')
             ->assertOk()
             ->assertHeader('X-Content-Type-Options', 'nosniff')
             ->assertHeader('X-Frame-Options', 'DENY')
