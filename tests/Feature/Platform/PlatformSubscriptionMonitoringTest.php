@@ -11,6 +11,7 @@ use App\Models\PlatformAdmin;
 use App\Models\Subscription;
 use App\Services\Licensing\LicenseKeyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -94,6 +95,23 @@ class PlatformSubscriptionMonitoringTest extends TestCase
             ->assertSee('No Subscription Pharmacy');
 
         $this->assertNotNull($noSubscription->id);
+    }
+
+    public function test_monitoring_snapshot_uses_bounded_central_queries(): void
+    {
+        $this->createTenant(['name' => 'Query One', 'slug' => 'query-one']);
+        $this->createTenant(['name' => 'Query Two', 'slug' => 'query-two']);
+        $this->createTenant(['name' => 'Query Three', 'slug' => 'query-three']);
+
+        $connection = DB::connection('central');
+        $connection->enableQueryLog();
+        $connection->flushQueryLog();
+
+        app(\App\Services\Subscriptions\PlatformSubscriptionMonitoringService::class)
+            ->snapshot();
+
+        $this->assertLessThanOrEqual(8, count($connection->getQueryLog()));
+        $connection->disableQueryLog();
     }
 
     public function test_monitoring_marks_healthy_recent_device_as_operational_without_attention(): void

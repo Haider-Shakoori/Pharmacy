@@ -17,13 +17,26 @@ class SubscriptionHealthService
             return SubscriptionHealth::InactiveTenant;
         }
 
-        $tenant->loadMissing('subscription.license');
+        $subscription = null;
 
-        if ($tenant->subscription === null) {
+        if ($tenant->relationLoaded('business') &&
+            $tenant->business?->relationLoaded('subscription')) {
+            $subscription = $tenant->business->subscription;
+
+            if ($subscription !== null) {
+                $subscription->setRelation('business', $tenant->business);
+                $tenant->business->setRelation('tenant', $tenant);
+            }
+        } else {
+            $tenant->loadMissing('subscription.license');
+            $subscription = $tenant->subscription;
+        }
+
+        if ($subscription === null) {
             return SubscriptionHealth::NoSubscription;
         }
 
-        return $this->forSubscription($tenant->subscription);
+        return $this->forSubscription($subscription);
     }
 
     public function forSubscription(Subscription $subscription): SubscriptionHealth
