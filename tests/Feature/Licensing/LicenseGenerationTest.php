@@ -96,4 +96,30 @@ class LicenseGenerationTest extends TestCase
         $this->assertNotSame($oldHash, $license->key_hash);
         $this->assertSame(2, $license->version);
     }
+
+    public function test_license_index_can_search_by_pharmacy(): void
+    {
+        $tenant = $this->createTenant(['name' => 'Searchable Pharmacy', 'slug' => 'searchable']);
+        $plan = Plan::query()->create([
+            'name' => 'Standard',
+            'code' => 'SEARCH-STANDARD',
+            'price' => 1000,
+            'billing_period' => 'monthly',
+            'max_branches' => 1,
+            'offline_grace_days' => 7,
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $this->put("/platform/subscriptions/{$tenant->id}", [
+            'plan_id' => $plan->id,
+            'status' => 'active',
+            'auto_renew' => '0',
+        ])->assertRedirect();
+
+        $this->get('/platform/licenses?search=Searchable')
+            ->assertOk()
+            ->assertSee('Searchable Pharmacy');
+    }
+
 }
