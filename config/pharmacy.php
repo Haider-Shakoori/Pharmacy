@@ -17,6 +17,14 @@ return [
         'external_fonts' => false,
     ],
 
+    'security' => [
+        'hsts_enabled' => (bool) env('SECURITY_HSTS_ENABLED', true),
+        'hsts_max_age' => (int) env('SECURITY_HSTS_MAX_AGE', 31536000),
+        'max_api_payload_bytes' => (int) env('SECURITY_MAX_API_PAYLOAD_BYTES', 262144),
+        'max_signed_token_bytes' => (int) env('SECURITY_MAX_SIGNED_TOKEN_BYTES', 8192),
+        'token_clock_skew_seconds' => (int) env('SECURITY_TOKEN_CLOCK_SKEW_SECONDS', 300),
+    ],
+
     'trial' => [
         'days' => 7,
     ],

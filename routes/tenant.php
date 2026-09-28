@@ -40,7 +40,7 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
 ])->name('pharmacy.')->group(function (): void {
     Route::get('/login', [PharmacyLoginController::class, 'create'])->name('login');
     Route::post('/login', [PharmacyLoginController::class, 'store'])
-        ->middleware('throttle:10,1')
+        ->middleware('throttle:pharmacy-login')
         ->name('login.store');
 
     Route::get('/locale/{locale}', function (string $locale) {
