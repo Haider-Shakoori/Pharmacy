@@ -86,7 +86,7 @@ class SyncPullPage {
     return SyncPullPage(
       stream: json['stream'].toString(),
       data: raw
-          .whereType<Map>()
+          .whereType<Map<dynamic, dynamic>>()
           .map(
             (Map<dynamic, dynamic> value) => Map<String, dynamic>.from(value),
           )

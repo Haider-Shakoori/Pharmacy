@@ -43,6 +43,25 @@ class MobileRegistration {
     );
   }
 
+  factory MobileRegistration.fromJson(Map<String, dynamic> json) {
+    return MobileRegistration(
+      tenantId: json['tenant_id'].toString(),
+      tenantName: json['tenant_name'].toString(),
+      activationId: json['activation_id'].toString(),
+      accessToken: json['access_token'].toString(),
+      accessExpiresAt: DateTime.parse(json['access_expires_at'].toString()),
+      leaseToken: json['lease_token'].toString(),
+      leaseExpiresAt: DateTime.parse(json['lease_expires_at'].toString()),
+      userId: json['user_id'].toString(),
+      userName: json['user_name'].toString(),
+      userEmail: json['user_email'].toString(),
+      permissions: (json['permissions'] as List<dynamic>? ?? <dynamic>[])
+          .map((dynamic value) => value.toString())
+          .toList(growable: false),
+      cloudBaseUrl: json['cloud_base_url']?.toString(),
+    );
+  }
+
   MobileRegistration withRefreshedSession(Map<String, dynamic> data) {
     final Map<String, dynamic> lease = Map<String, dynamic>.from(
       data['offline_lease'] as Map,
@@ -68,25 +87,6 @@ class MobileRegistration {
                 .map((dynamic value) => value.toString())
                 .toList(growable: false),
       cloudBaseUrl: cloudBaseUrl,
-    );
-  }
-
-  factory MobileRegistration.fromJson(Map<String, dynamic> json) {
-    return MobileRegistration(
-      tenantId: json['tenant_id'].toString(),
-      tenantName: json['tenant_name'].toString(),
-      activationId: json['activation_id'].toString(),
-      accessToken: json['access_token'].toString(),
-      accessExpiresAt: DateTime.parse(json['access_expires_at'].toString()),
-      leaseToken: json['lease_token'].toString(),
-      leaseExpiresAt: DateTime.parse(json['lease_expires_at'].toString()),
-      userId: json['user_id'].toString(),
-      userName: json['user_name'].toString(),
-      userEmail: json['user_email'].toString(),
-      permissions: (json['permissions'] as List<dynamic>? ?? <dynamic>[])
-          .map((dynamic value) => value.toString())
-          .toList(growable: false),
-      cloudBaseUrl: json['cloud_base_url']?.toString(),
     );
   }
 

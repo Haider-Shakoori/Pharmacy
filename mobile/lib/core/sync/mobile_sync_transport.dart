@@ -70,7 +70,7 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
     final List<dynamic> raw = data['results'] as List<dynamic>? ?? <dynamic>[];
 
     return raw
-        .whereType<Map>()
+        .whereType<Map<dynamic, dynamic>>()
         .map(
           (Map<dynamic, dynamic> value) =>
               SyncPushResult.fromJson(Map<String, dynamic>.from(value)),
