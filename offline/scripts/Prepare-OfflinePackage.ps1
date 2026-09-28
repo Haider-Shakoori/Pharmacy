@@ -59,8 +59,5 @@ foreach ($relative in $cleanupPaths) {
 Get-ChildItem $Destination -Recurse -Force -Include '.git*', '*.map' -ErrorAction SilentlyContinue |
     Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
 
-$installScript = Join-Path $RepositoryRoot 'offline\scripts\Install-Offline.ps1'
-$installContent = (Get-Content $installScript -Raw).Replace('__APP_VERSION__', $Version)
-Set-Content -Path $installScript -Value $installContent -Encoding UTF8
 
 Write-Output "Prepared offline application package at $Destination"
