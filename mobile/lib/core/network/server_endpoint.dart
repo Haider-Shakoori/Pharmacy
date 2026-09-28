@@ -3,11 +3,6 @@ enum ServerEndpointKind { local, cloud }
 class ServerEndpoint {
   const ServerEndpoint({required this.uri, required this.kind});
 
-  final Uri uri;
-  final ServerEndpointKind kind;
-
-  bool get isSecure => uri.scheme == 'https';
-
   factory ServerEndpoint.fromUri(Uri uri, ServerEndpointKind kind) {
     return ServerEndpoint.fromInput(uri.toString(), kind);
   }
@@ -46,6 +41,11 @@ class ServerEndpoint {
 
     return ServerEndpoint(uri: uri, kind: kind);
   }
+
+  final Uri uri;
+  final ServerEndpointKind kind;
+
+  bool get isSecure => uri.scheme == 'https';
 
   static bool _isPrivateLanHost(String host) {
     final String value = host.toLowerCase();
