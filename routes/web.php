@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Health\ReadinessController;
+use App\Http\Controllers\Offline\OfflineLicenseController;
 use App\Http\Controllers\Platform\Auth\LoginController as PlatformLoginController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\Platform\LicenseController;
@@ -12,6 +13,14 @@ use App\Http\Controllers\Platform\TenantProvisioningRetryController;
 use App\Http\Controllers\Platform\TenantStatusController;
 use App\Http\Controllers\Platform\TenantTrialController;
 use Illuminate\Support\Facades\Route;
+
+if (config('offline.enabled')) {
+    Route::get('/offline/license', [OfflineLicenseController::class, 'show'])
+        ->name('offline.license.show');
+    Route::post('/offline/license', [OfflineLicenseController::class, 'activate'])
+        ->middleware('throttle:license-activation')
+        ->name('offline.license.activate');
+}
 
 Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
     Route::get('/ready', ReadinessController::class)->name('health.ready');
