@@ -49,6 +49,13 @@
         @if (auth()->user()->hasPermission('accounting.manage'))
             <a href="{{ route('pharmacy.accounting.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.accounting.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Accounting</a>
         @endif
+
+        <div class="my-3 border-t border-slate-100"></div>
+        <a href="{{ config('pharmacy.mobile.android_download_url') }}" download
+           class="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2.5 text-sm font-bold text-emerald-800 hover:bg-emerald-100">
+            <span>Download Android App</span>
+            <span class="rounded bg-emerald-700 px-1.5 py-0.5 text-[10px] text-white">APK</span>
+        </a>
     </nav>
 
     <div class="border-t border-slate-100 p-4">

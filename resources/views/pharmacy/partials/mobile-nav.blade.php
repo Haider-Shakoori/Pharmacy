@@ -27,4 +27,5 @@
     @if (auth()->user()->hasPermission('settings.manage'))
         <a href="{{ route('pharmacy.settings.edit') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">{{ __('pharmacy.nav.settings') }}</a>
     @endif
+    <a href="{{ config('pharmacy.mobile.android_download_url') }}" download class="rounded-lg bg-emerald-50 px-3 py-2 font-bold text-emerald-800">Download Android App</a>
 </nav>

@@ -29,7 +29,7 @@ abstract class TestCase extends BaseTestCase
 
         $tenant = Tenant::query()->create([
             'status' => $attributes['status'] ?? 'active',
-            'provisioning_status' => 'testing',
+            'provisioning_status' => 'application_ready',
         ]);
 
         Business::query()->create([

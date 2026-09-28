@@ -10,6 +10,7 @@ use App\Http\Controllers\Platform\SubscriptionMonitoringController;
 use App\Http\Controllers\Platform\TenantController;
 use App\Http\Controllers\Platform\TenantProvisioningRetryController;
 use App\Http\Controllers\Platform\TenantStatusController;
+use App\Http\Controllers\Platform\TenantTrialController;
 use Illuminate\Support\Facades\Route;
 
 Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
@@ -35,6 +36,9 @@ Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
 
             Route::post('/tenants/{tenant}/retry-provisioning', TenantProvisioningRetryController::class)
                 ->name('tenants.retry-provisioning');
+
+            Route::post('/tenants/{tenant}/trial/start', TenantTrialController::class)
+                ->name('tenants.trial.start');
 
             Route::resource('plans', PlanController::class)->except(['show', 'destroy']);
 

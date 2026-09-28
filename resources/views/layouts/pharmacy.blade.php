@@ -45,6 +45,16 @@
         </header>
 
         <main class="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            @php
+                $layoutTenant = app(\App\Support\Tenancy\TenantContext::class)->tenant();
+                $layoutSubscription = $layoutTenant->subscription()->first();
+            @endphp
+            @if ($layoutSubscription?->status?->value === 'trial')
+                <div class="mb-5 flex flex-col gap-1 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 sm:flex-row sm:items-center sm:justify-between">
+                    <span class="font-bold">7-day hosted trial is active</span>
+                    <span>Ends {{ $layoutSubscription->trial_ends_at?->format('Y-m-d H:i') }}</span>
+                </div>
+            @endif
             @if (session('success'))
                 <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">{{ session('success') }}</div>
             @endif

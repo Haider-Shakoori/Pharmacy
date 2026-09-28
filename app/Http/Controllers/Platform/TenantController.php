@@ -54,7 +54,7 @@ class TenantController extends Controller
             ->with(
                 'success',
                 $tenant->provisioning_status === 'application_ready'
-                    ? 'Pharmacy application provisioned with isolated database, domain, trial, and owner account.'
+                    ? 'Pharmacy application provisioned with isolated database, domain, and owner account. The hosted trial can now be started explicitly.'
                     : 'Pharmacy database and owner are provisioned; trial will start only after domain/TLS readiness.',
             );
 
@@ -67,7 +67,7 @@ class TenantController extends Controller
 
     public function edit(Tenant $tenant): View
     {
-        $tenant->load(['business', 'domains', 'provisioningEvents']);
+        $tenant->load(['business.subscription.plan', 'business.subscription.license', 'domains', 'provisioningEvents']);
 
         return view('platform.tenants.edit', compact('tenant'));
     }

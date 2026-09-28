@@ -20,10 +20,18 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
     'billing_currency',
     'default_timezone',
     'default_locale',
+    'trial_used_at',
 ])]
 class Business extends Model
 {
     use CentralConnection, HasUlids;
+
+    protected function casts(): array
+    {
+        return [
+            'trial_used_at' => 'datetime',
+        ];
+    }
 
     public function tenant(): BelongsTo
     {

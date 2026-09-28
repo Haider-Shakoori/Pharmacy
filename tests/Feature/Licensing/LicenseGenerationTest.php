@@ -121,5 +121,4 @@ class LicenseGenerationTest extends TestCase
             ->assertOk()
             ->assertSee('Searchable Pharmacy');
     }
-
 }
