@@ -1,0 +1,125 @@
+name: Offline Windows Installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Installer version, for example 1.0.0
+        required: true
+        default: 0.1.0
+        type: string
+      source_protection:
+        description: Internal validation build or protected customer build
+        required: true
+        default: none
+        type: choice
+        options:
+          - none
+          - ioncube
+
+permissions:
+  contents: read
+
+concurrency:
+  group: offline-installer-${{ github.ref }}-${{ inputs.source_protection }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Windows EXE
+    runs-on: ${{ inputs.source_protection == 'ioncube' && 'businessos-ioncube' || 'windows-latest' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql, pdo_sqlite, sodium, curl, intl, fileinfo, zip, gd
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install PHP dependencies
+        shell: pwsh
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare test environment
+        shell: pwsh
+        run: |
+          Copy-Item .env.example .env -Force
+          php artisan key:generate
+
+      - name: Run Laravel regression suite
+        shell: pwsh
+        run: php artisan test
+
+      - name: Check PHP formatting
+        shell: pwsh
+        run: vendor/bin/pint --test
+
+      - name: Install frontend dependencies
+        shell: pwsh
+        run: npm install --no-audit --no-fund
+
+      - name: Build frontend
+        shell: pwsh
+        run: npm run build
+
+      - name: Prepare production Composer dependencies
+        shell: pwsh
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
+
+      - name: Resolve installer public verification key
+        id: license_key
+        shell: pwsh
+        env:
+          CONFIGURED_PUBLIC_KEY: ${{ secrets.LICENSE_SIGNING_PUBLIC_KEY_B64 }}
+          PROTECTION_MODE: ${{ inputs.source_protection }}
+        run: |
+          $key = $env:CONFIGURED_PUBLIC_KEY
+          if ([string]::IsNullOrWhiteSpace($key)) {
+            if ($env:PROTECTION_MODE -eq 'ioncube') {
+              throw 'LICENSE_SIGNING_PUBLIC_KEY_B64 must be configured for a protected customer installer.'
+            }
+
+            $key = php -r "$kp=sodium_crypto_sign_keypair(); echo base64_encode(sodium_crypto_sign_publickey($kp));"
+            Write-Warning 'Using an ephemeral public key. This internal installer cannot activate against production.'
+          }
+
+          "public_key=$key" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Build one-click installer
+        shell: pwsh
+        env:
+          IONCUBE_ENCODER_EXE: ${{ secrets.IONCUBE_ENCODER_EXE }}
+        run: |
+          ./offline/scripts/Build-OfflineInstaller.ps1 -RepositoryRoot "${{ github.workspace }}" -Version "${{ inputs.version }}" -LicensePublicKey "${{ steps.license_key.outputs.public_key }}" -SourceProtection "${{ inputs.source_protection }}" -IonCubeEncoderPath "$env:IONCUBE_ENCODER_EXE"
+
+      - name: Verify installer exists
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem offline/dist/installer -Filter '*.exe' | Select-Object -First 1
+          if (-not $installer) { throw 'Installer EXE was not created.' }
+          Get-FileHash $installer.FullName -Algorithm SHA256
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v6
+        with:
+          name: businessos-pharmacy-offline-${{ inputs.source_protection }}-${{ inputs.version }}
+          path: |
+            offline/dist/installer/*.exe
+            offline/dist/installer/*.sha256
+            offline/dist/UNPROTECTED-INTERNAL-BUILD.txt
+          if-no-files-found: error
+          retention-days: 14
