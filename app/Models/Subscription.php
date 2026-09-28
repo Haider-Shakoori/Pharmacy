@@ -41,10 +41,6 @@ class Subscription extends Model
         return $this->hasOne(License::class);
     }
 
-    public function tenant(): Tenant
-    {
-        return $this->business->tenant;
-    }
 
     protected function casts(): array
     {
