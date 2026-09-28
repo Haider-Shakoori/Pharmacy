@@ -6,6 +6,8 @@ use App\Console\Commands\CreateBackup;
 use App\Console\Commands\PruneBackups;
 use App\Console\Commands\OfflineLicenseActivate;
 use App\Console\Commands\OfflineLicenseStatus;
+use App\Console\Commands\InstallOfflinePharmacy;
+use App\Console\Commands\SyncOfflineNetworkDomains;
 use App\Console\Commands\RestoreBackup;
 use App\Console\Commands\RetryTenantProvisioning;
 use App\Console\Commands\VerifyBackup;
@@ -29,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
         PruneBackups::class,
         OfflineLicenseActivate::class,
         OfflineLicenseStatus::class,
+        InstallOfflinePharmacy::class,
+        SyncOfflineNetworkDomains::class,
         RestoreBackup::class,
         RetryTenantProvisioning::class,
         VerifyBackup::class,
