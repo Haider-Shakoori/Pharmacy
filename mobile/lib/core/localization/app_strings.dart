@@ -54,6 +54,17 @@ class AppStrings {
   String get saveConnection => _value('saveConnection');
   String get saving => _value('saving');
   String get connectionSaved => _value('connectionSaved');
+  String get registrationTitle => _value('registrationTitle');
+  String get registrationBody => _value('registrationBody');
+  String get licenseKey => _value('licenseKey');
+  String get email => _value('email');
+  String get password => _value('password');
+  String get registerDevice => _value('registerDevice');
+  String get registering => _value('registering');
+  String get registeredDevice => _value('registeredDevice');
+  String get unregisterDevice => _value('unregisterDevice');
+  String get registrationRequired => _value('registrationRequired');
+  String get noServerConfigured => _value('noServerConfigured');
 
   static const Map<AppLocale, Map<String, String>>
   _translations = <AppLocale, Map<String, String>>{
@@ -97,6 +108,17 @@ class AppStrings {
       'saveConnection': 'Save connection',
       'saving': 'Saving…',
       'connectionSaved': 'Connection settings saved.',
+      'registrationTitle': 'Device registration',
+      'registrationBody': 'Register this Android device with a valid pharmacy license and an active pharmacy user. Local, Cloud and Automatic modes share the same tenant identity.',
+      'licenseKey': 'License key',
+      'email': 'Email',
+      'password': 'Password',
+      'registerDevice': 'Register device',
+      'registering': 'Registering…',
+      'registeredDevice': 'Registered device',
+      'unregisterDevice': 'Change pharmacy / unregister',
+      'registrationRequired': 'Device registration is required before transactional POS is enabled.',
+      'noServerConfigured': 'No reachable server is configured for the selected connection mode.',
     },
     AppLocale.dari: <String, String>{
       'appName': 'فارمسی BusinessOS',
@@ -139,6 +161,17 @@ class AppStrings {
       'saveConnection': 'ذخیره اتصال',
       'saving': 'در حال ذخیره…',
       'connectionSaved': 'تنظیمات اتصال ذخیره شد.',
+      'registrationTitle': 'ثبت دستگاه',
+      'registrationBody': 'این دستگاه اندروید را با جواز معتبر فارمسی و حساب فعال کاربر ثبت کنید. حالت‌های محلی، ابری و خودکار از یک هویت فارمسی استفاده می‌کنند.',
+      'licenseKey': 'کلید جواز',
+      'email': 'ایمیل',
+      'password': 'رمز عبور',
+      'registerDevice': 'ثبت دستگاه',
+      'registering': 'در حال ثبت…',
+      'registeredDevice': 'دستگاه ثبت‌شده',
+      'unregisterDevice': 'تغییر فارمسی / لغو ثبت',
+      'registrationRequired': 'پیش از فعال‌شدن فروش تراکنشی، ثبت دستگاه الزامی است.',
+      'noServerConfigured': 'برای حالت اتصال انتخاب‌شده هیچ سرور قابل دسترس تنظیم نشده است.',
     },
     AppLocale.pashto: <String, String>{
       'appName': 'BusinessOS فارمسي',
@@ -180,6 +213,17 @@ class AppStrings {
       'saveConnection': 'نښلون خوندي کړئ',
       'saving': 'خوندي کېږي…',
       'connectionSaved': 'د نښلون امستنې خوندي شوې.',
+      'registrationTitle': 'د وسیلې ثبت',
+      'registrationBody': 'دا Android وسیله د فارمسي له معتبر جواز او فعال کارن حساب سره ثبت کړئ. محلي، کلاوډ او اتومات حالتونه د همدې فارمسي یو هویت کاروي.',
+      'licenseKey': 'د جواز کیلي',
+      'email': 'برېښنالیک',
+      'password': 'پټنوم',
+      'registerDevice': 'وسیله ثبت کړئ',
+      'registering': 'ثبتېږي…',
+      'registeredDevice': 'ثبت شوې وسیله',
+      'unregisterDevice': 'فارمسي بدلول / ثبت لغوه کول',
+      'registrationRequired': 'د معاملاتي پلور له فعالېدو مخکې د وسیلې ثبت اړین دی.',
+      'noServerConfigured': 'د ټاکل شوي نښلون حالت لپاره د لاسرسي وړ سرور نه دی تنظیم شوی.',
     },
   };
 }
