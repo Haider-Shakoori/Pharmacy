@@ -329,3 +329,22 @@ when the user enables local notifications. A fingerprint stored in the local
 metadata table prevents the same unchanged alert summary from being emitted
 repeatedly. Alert calculation itself remains fully offline and does not require
 Firebase or a third-party push service.
+
+
+## Batch 24 — operational alerts and local notifications
+
+Batch 24 derives alerts from existing pharmacy data instead of maintaining a
+second alert ledger. The web dashboard and alert center calculate low-stock,
+near-expiry and expired-stock conditions from tenant inventory using the
+pharmacy's configured inventory policy.
+
+The authenticated Android registration/session snapshot carries the same
+low-stock threshold and near-expiry window. The mobile client applies those
+values to its tenant-scoped cached inventory and adds non-retryable
+synchronization conflicts as critical local alerts.
+
+Android notifications are opt-in. Notification permission is requested only
+when the user enables local notifications. A fingerprint stored in the local
+metadata table prevents the same unchanged alert summary from being emitted
+repeatedly. Alert calculation remains fully offline and does not depend on
+Firebase or another push service.

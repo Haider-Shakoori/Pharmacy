@@ -23,10 +23,8 @@ void main() {
   });
 
   test('derives low stock expiry and sync conflict alerts locally', () async {
-    final int near =
-        DateTime(2026, 10, 10).millisecondsSinceEpoch ~/ 1000;
-    final int expired =
-        DateTime(2026, 9, 20).millisecondsSinceEpoch ~/ 1000;
+    final int near = DateTime(2026, 10, 10).millisecondsSinceEpoch ~/ 1000;
+    final int expired = DateTime(2026, 9, 20).millisecondsSinceEpoch ~/ 1000;
     final int now = DateTime(2026, 9, 28).millisecondsSinceEpoch ~/ 1000;
 
     await database.customStatement(

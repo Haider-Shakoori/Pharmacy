@@ -16,7 +16,7 @@ class OperationalNotificationService {
     }
 
     const InitializationSettings settings = InitializationSettings(
-      android: AndroidInitializationSettings('ic_launcher'),
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
     await _plugin.initialize(settings: settings);
     _initialized = true;

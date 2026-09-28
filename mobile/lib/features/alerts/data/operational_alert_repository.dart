@@ -69,9 +69,8 @@ class OperationalAlertRepository {
       }
 
       final String name = names[medicineId] ?? medicineId;
-      final String lot = batch.read<String>('batch_number').isEmpty
-          ? '—'
-          : batch.read<String>('batch_number');
+      final String rawLot = batch.read<String>('batch_number');
+      final String lot = rawLot.isEmpty ? '—' : rawLot;
 
       if (expiresAt != null && expiresAt < todaySeconds) {
         expired.add(
@@ -79,20 +78,22 @@ class OperationalAlertRepository {
             kind: OperationalAlertKind.expired,
             severity: OperationalAlertSeverity.critical,
             title: name,
-            detail: 'Batch $lot has ${quantity.compact} expired units.',
+            detail: 'Batch $lot · ${quantity.compact} expired units',
           ),
         );
       } else if (expiresAt != null && expiresAt <= endSeconds) {
         final DateTime expiry = DateTime.fromMillisecondsSinceEpoch(
           expiresAt * 1000,
         );
+        final String date =
+            '${expiry.year}-${expiry.month.toString().padLeft(2, '0')}-'
+            '${expiry.day.toString().padLeft(2, '0')}';
         nearExpiry.add(
           LocalOperationalAlert(
             kind: OperationalAlertKind.nearExpiry,
             severity: OperationalAlertSeverity.warning,
             title: name,
-            detail:
-                'Batch $lot expires ${expiry.year}-${expiry.month.toString().padLeft(2, '0')}-${expiry.day.toString().padLeft(2, '0')}.',
+            detail: 'Batch $lot · $date',
           ),
         );
       }
@@ -113,7 +114,7 @@ class OperationalAlertRepository {
             severity: OperationalAlertSeverity.warning,
             title: medicine.read<String>('brand_name'),
             detail:
-                '${available.compact} available; alert threshold is $lowStockThreshold.',
+                '${available.compact} available · threshold $lowStockThreshold',
           ),
         );
       }
@@ -166,8 +167,8 @@ class OperationalAlertRepository {
     return row?.read<String>('value') == '1';
   }
 
-  Future<void> setNotificationsEnabled(bool enabled) async {
-    await _writeMetadata(
+  Future<void> setNotificationsEnabled(bool enabled) {
+    return _writeMetadata(
       'alerts.notifications.enabled',
       enabled ? '1' : '0',
     );
