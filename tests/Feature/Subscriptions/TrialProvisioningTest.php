@@ -30,9 +30,9 @@ class TrialProvisioningTest extends TestCase
         $this->actingAs($admin, 'platform');
     }
 
-    public function test_new_pharmacy_is_provisioned_with_seven_day_trial_and_license(): void
+    public function test_ready_pharmacy_requires_explicit_one_time_trial_start(): void
     {
-        $response = $this->post('/platform/tenants', [
+        $this->post('/platform/tenants', [
             'name' => 'Kabul Trial Pharmacy',
             'slug' => 'kabul-trial',
             'contact_person' => 'Trial Owner',
@@ -48,13 +48,27 @@ class TrialProvisioningTest extends TestCase
 
         $business = Business::query()->where('slug', 'kabul-trial')->firstOrFail();
         $tenant = Tenant::query()->findOrFail($business->tenant_id);
-        $tenant->load('subscription.license');
+
+        $this->assertSame('application_ready', $tenant->provisioning_status);
+        $this->assertNull($tenant->subscription);
+        $this->assertNull($business->trial_used_at);
+
+        $response = $this->post("/platform/tenants/{$tenant->id}/trial/start")
+            ->assertRedirect()
+            ->assertSessionHas('generated_license_key');
+
+        $tenant->refresh()->load('subscription.license');
+        $business->refresh();
 
         $this->assertSame(SubscriptionStatus::Trial, $tenant->subscription->status);
         $this->assertTrue($tenant->subscription->trial_ends_at->between(now()->addDays(6)->addHours(23), now()->addDays(7)->addMinute()));
         $this->assertNotNull($tenant->subscription->license);
+        $this->assertNotNull($business->trial_used_at);
         $this->assertSame(SubscriptionHealth::Trial, app(SubscriptionHealthService::class)->forTenant($tenant));
 
-        $response->assertSessionHas('generated_license_key');
+        $this->post("/platform/tenants/{$tenant->id}/trial/start")
+            ->assertRedirect()
+            ->assertSessionHasErrors('trial');
+
     }
 }

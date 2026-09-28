@@ -20,6 +20,51 @@
         @include('platform.tenants._form')
     </div>
 
+    @php
+        $business = $tenant->business;
+        $subscription = $business?->subscription;
+        $trialUsed = $business?->trial_used_at !== null;
+        $trialEligible = $tenant->provisioning_status === 'application_ready' && ! $trialUsed && $subscription === null;
+    @endphp
+
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+                <p class="text-sm font-semibold text-teal-700">Subscription actions</p>
+                <h3 class="mt-1 text-lg font-bold">Hosted trial</h3>
+                <p class="mt-1 text-sm text-slate-500">
+                    @if ($trialUsed)
+                        This pharmacy has already used its one-time hosted trial.
+                    @elseif ($subscription)
+                        A {{ $subscription->status->value }} subscription already exists. Manage that subscription instead of starting a trial.
+                    @elseif ($tenant->provisioning_status !== 'application_ready')
+                        The 7-day trial becomes available only after provisioning is fully ready.
+                    @else
+                        Eligible for one 7-day hosted trial. The trial starts only when you press the button below.
+                    @endif
+                </p>
+                @if ($subscription?->status?->value === 'trial')
+                    <div class="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-900">
+                        Trial active until {{ $subscription->trial_ends_at?->format('Y-m-d H:i') }}.
+                    </div>
+                @endif
+                @error('trial')
+                    <p class="mt-3 text-sm font-semibold text-red-700">{{ $message }}</p>
+                @enderror
+            </div>
+            <form method="POST" action="{{ route('platform.tenants.trial.start', $tenant) }}">
+                @csrf
+                <button @disabled(! $trialEligible)
+                        class="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-40">
+                    Start 7-day trial
+                </button>
+            </form>
+        </div>
+        @if ($business?->trial_used_at)
+            <p class="mt-4 text-xs text-slate-500">First trial started {{ $business->trial_used_at->format('Y-m-d H:i') }}.</p>
+        @endif
+    </section>
+
     <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
         <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
