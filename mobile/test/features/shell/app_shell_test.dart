@@ -20,8 +20,9 @@ void main() {
   testWidgets('foundation shell renders without network access', (
     WidgetTester tester,
   ) async {
-    final ValueNotifier<AppLocale> localeNotifier =
-        ValueNotifier<AppLocale>(AppLocale.english);
+    final ValueNotifier<AppLocale> localeNotifier = ValueNotifier<AppLocale>(
+      AppLocale.english,
+    );
     addTearDown(localeNotifier.dispose);
 
     await tester.pumpWidget(

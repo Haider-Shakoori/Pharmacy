@@ -14,43 +14,44 @@ class ConnectivityBanner extends ConsumerWidget {
     return StreamBuilder<NetworkLinkState>(
       stream: monitor.watch(),
       initialData: NetworkLinkState.unknown,
-      builder: (
-        BuildContext context,
-        AsyncSnapshot<NetworkLinkState> snapshot,
-      ) {
-        final NetworkLinkState state =
-            snapshot.data ?? NetworkLinkState.unknown;
-        final IconData icon = switch (state) {
-          NetworkLinkState.connected => Icons.wifi_rounded,
-          NetworkLinkState.offline => Icons.wifi_off_rounded,
-          NetworkLinkState.unknown => Icons.sync_rounded,
-        };
-        final String label = switch (state) {
-          NetworkLinkState.connected => strings.networkAvailable,
-          NetworkLinkState.offline => strings.networkUnavailable,
-          NetworkLinkState.unknown => strings.networkUnknown,
-        };
+      builder:
+          (BuildContext context, AsyncSnapshot<NetworkLinkState> snapshot) {
+            final NetworkLinkState state =
+                snapshot.data ?? NetworkLinkState.unknown;
+            final IconData icon = switch (state) {
+              NetworkLinkState.connected => Icons.wifi_rounded,
+              NetworkLinkState.offline => Icons.wifi_off_rounded,
+              NetworkLinkState.unknown => Icons.sync_rounded,
+            };
+            final String label = switch (state) {
+              NetworkLinkState.connected => strings.networkAvailable,
+              NetworkLinkState.offline => strings.networkUnavailable,
+              NetworkLinkState.unknown => strings.networkUnknown,
+            };
 
-        return Material(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: <Widget>[
-                Icon(icon, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '$label · ${strings.serverNotVerified}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+            return Material(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
                 ),
-              ],
-            ),
-          ),
-        );
-      },
+                child: Row(
+                  children: <Widget>[
+                    Icon(icon, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$label · ${strings.serverNotVerified}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
     );
   }
 }

@@ -1,11 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum NetworkLinkState {
-  unknown,
-  offline,
-  connected,
-}
+enum NetworkLinkState { unknown, offline, connected }
 
 abstract interface class ConnectivityMonitor {
   Future<NetworkLinkState> current();
@@ -15,7 +11,7 @@ abstract interface class ConnectivityMonitor {
 
 class ConnectivityPlusMonitor implements ConnectivityMonitor {
   ConnectivityPlusMonitor({Connectivity? connectivity})
-      : _connectivity = connectivity ?? Connectivity();
+    : _connectivity = connectivity ?? Connectivity();
 
   final Connectivity _connectivity;
 
@@ -43,6 +39,4 @@ class ConnectivityPlusMonitor implements ConnectivityMonitor {
 }
 
 final Provider<ConnectivityMonitor> connectivityMonitorProvider =
-    Provider<ConnectivityMonitor>(
-  (Ref ref) => ConnectivityPlusMonitor(),
-);
+    Provider<ConnectivityMonitor>((Ref ref) => ConnectivityPlusMonitor());

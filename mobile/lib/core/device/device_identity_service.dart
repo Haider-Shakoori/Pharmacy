@@ -12,9 +12,9 @@ class DeviceIdentityService {
     required SecureStore secureStore,
     DeviceInfoPlugin? deviceInfo,
     Uuid? uuid,
-  })  : _secureStore = secureStore,
-        _deviceInfo = deviceInfo ?? DeviceInfoPlugin(),
-        _uuid = uuid ?? Uuid();
+  }) : _secureStore = secureStore,
+       _deviceInfo = deviceInfo ?? DeviceInfoPlugin(),
+       _uuid = uuid ?? Uuid();
 
   static const String _installationIdKey = 'installation_id';
 
@@ -60,7 +60,6 @@ final Provider<SecureStore> secureStoreProvider = Provider<SecureStore>(
 
 final Provider<DeviceIdentityService> deviceIdentityServiceProvider =
     Provider<DeviceIdentityService>(
-  (Ref ref) => DeviceIdentityService(
-    secureStore: ref.watch(secureStoreProvider),
-  ),
-);
+      (Ref ref) =>
+          DeviceIdentityService(secureStore: ref.watch(secureStoreProvider)),
+    );

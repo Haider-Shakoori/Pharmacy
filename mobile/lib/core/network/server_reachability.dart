@@ -2,19 +2,15 @@ import 'dart:async';
 
 import 'package:http/http.dart' as http;
 
-enum ServerReachability {
-  notConfigured,
-  reachable,
-  unreachable,
-}
+enum ServerReachability { notConfigured, reachable, unreachable }
 
 class ServerReachabilityProbe {
   ServerReachabilityProbe({
     required http.Client client,
     required Uri? apiBaseUri,
     this.timeout = const Duration(seconds: 5),
-  })  : _client = client,
-        _apiBaseUri = apiBaseUri;
+  }) : _client = client,
+       _apiBaseUri = apiBaseUri;
 
   final http.Client _client;
   final Uri? _apiBaseUri;
@@ -27,8 +23,9 @@ class ServerReachabilityProbe {
     }
 
     try {
-      final http.Response response =
-          await _client.get(base.resolve('/up')).timeout(timeout);
+      final http.Response response = await _client
+          .get(base.resolve('/up'))
+          .timeout(timeout);
 
       if (response.statusCode >= 200 && response.statusCode < 500) {
         return ServerReachability.reachable;

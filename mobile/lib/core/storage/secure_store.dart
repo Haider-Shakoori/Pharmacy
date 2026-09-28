@@ -10,7 +10,7 @@ abstract interface class SecureStore {
 
 class EncryptedSecureStore implements SecureStore {
   EncryptedSecureStore({FlutterSecureStorage? storage})
-      : _storage = storage ?? FlutterSecureStorage();
+    : _storage = storage ?? FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 

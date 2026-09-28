@@ -39,29 +39,24 @@ class AppStrings {
   String get apiNotConfigured => _value('apiNotConfigured');
   String get language => _value('language');
 
-  static const Map<AppLocale, Map<String, String>> _translations =
-      <AppLocale, Map<String, String>>{
+  static const Map<AppLocale, Map<String, String>>
+  _translations = <AppLocale, Map<String, String>>{
     AppLocale.english: <String, String>{
       'appName': 'BusinessOS Pharmacy',
       'foundation': 'Offline-ready mobile foundation',
-      'foundationBody':
-          'The local database, offline POS and synchronization engine are enabled in the next mobile batches.',
+      'foundationBody': 'The local database, offline POS and synchronization engine are enabled in the next mobile batches.',
       'pos': 'POS',
       'stock': 'Stock',
       'customers': 'Customers',
       'sync': 'Sync',
       'posTitle': 'Point of Sale foundation',
-      'posBody':
-          'Offline sales are not enabled yet. Batch 17 adds local persistence and Batch 19 enables local-first sales.',
+      'posBody': 'Offline sales are not enabled yet. Batch 17 adds local persistence and Batch 19 enables local-first sales.',
       'stockTitle': 'Stock lookup foundation',
-      'stockBody':
-          'Local batch and stock snapshots will be added with the SQLite/Drift data layer.',
+      'stockBody': 'Local batch and stock snapshots will be added with the SQLite/Drift data layer.',
       'customersTitle': 'Customer lookup foundation',
-      'customersBody':
-          'Customer data will be cached locally only after the offline database and sync contracts are in place.',
+      'customersBody': 'Customer data will be cached locally only after the offline database and sync contracts are in place.',
       'syncTitle': 'Synchronization foundation',
-      'syncBody':
-          'Connectivity is observed separately from server reachability. No transaction is marked synced without a server acknowledgement.',
+      'syncBody': 'Connectivity is observed separately from server reachability. No transaction is marked synced without a server acknowledgement.',
       'networkAvailable': 'Network link available',
       'networkUnavailable': 'No network link',
       'networkUnknown': 'Checking network link',
@@ -73,24 +68,20 @@ class AppStrings {
     AppLocale.dari: <String, String>{
       'appName': 'فارمسی BusinessOS',
       'foundation': 'بنیاد موبایل آماده برای کار آفلاین',
-      'foundationBody':
-          'دیتابیس محلی، فروش آفلاین و سیستم همگام‌سازی در مراحل بعدی موبایل فعال می‌شوند.',
+      'foundationBody': 'دیتابیس محلی، فروش آفلاین و سیستم همگام‌سازی در مراحل بعدی موبایل فعال می‌شوند.',
       'pos': 'فروش',
       'stock': 'موجودی',
       'customers': 'مشتریان',
       'sync': 'همگام‌سازی',
       'posTitle': 'بنیاد نقطه فروش',
-      'posBody':
-          'فروش آفلاین هنوز فعال نیست. مرحله ۱۷ ذخیره‌سازی محلی و مرحله ۱۹ فروش محلی را فعال می‌کند.',
+      'posBody': 'فروش آفلاین هنوز فعال نیست. مرحله ۱۷ ذخیره‌سازی محلی و مرحله ۱۹ فروش محلی را فعال می‌کند.',
       'stockTitle': 'بنیاد جستجوی موجودی',
       'stockBody':
           'بچ‌ها و موجودی محلی با لایه دیتابیس SQLite/Drift اضافه می‌شوند.',
       'customersTitle': 'بنیاد جستجوی مشتری',
-      'customersBody':
-          'اطلاعات مشتری پس از آماده‌شدن دیتابیس آفلاین و قراردادهای همگام‌سازی به‌صورت محلی ذخیره می‌شود.',
+      'customersBody': 'اطلاعات مشتری پس از آماده‌شدن دیتابیس آفلاین و قراردادهای همگام‌سازی به‌صورت محلی ذخیره می‌شود.',
       'syncTitle': 'بنیاد همگام‌سازی',
-      'syncBody':
-          'اتصال شبکه جدا از دسترسی واقعی به سرور بررسی می‌شود. هیچ معامله بدون تأیید سرور همگام‌شده حساب نمی‌شود.',
+      'syncBody': 'اتصال شبکه جدا از دسترسی واقعی به سرور بررسی می‌شود. هیچ معامله بدون تأیید سرور همگام‌شده حساب نمی‌شود.',
       'networkAvailable': 'اتصال شبکه موجود است',
       'networkUnavailable': 'اتصال شبکه موجود نیست',
       'networkUnknown': 'در حال بررسی شبکه',
@@ -102,24 +93,20 @@ class AppStrings {
     AppLocale.pashto: <String, String>{
       'appName': 'BusinessOS فارمسي',
       'foundation': 'د آفلاین کار لپاره چمتو موبایل بنسټ',
-      'foundationBody':
-          'ځايي ډیټابیس، آفلاین پلور او همغږي په راتلونکو موبایل پړاوونو کې فعالېږي.',
+      'foundationBody': 'ځايي ډیټابیس، آفلاین پلور او همغږي په راتلونکو موبایل پړاوونو کې فعالېږي.',
       'pos': 'پلور',
       'stock': 'ذخیره',
       'customers': 'پېرودونکي',
       'sync': 'همغږي',
       'posTitle': 'د پلور بنسټ',
-      'posBody':
-          'آفلاین پلور لا فعال نه دی. ۱۷م پړاو ځايي ذخیره او ۱۹م پړاو ځايي-لومړی پلور فعالوي.',
+      'posBody': 'آفلاین پلور لا فعال نه دی. ۱۷م پړاو ځايي ذخیره او ۱۹م پړاو ځايي-لومړی پلور فعالوي.',
       'stockTitle': 'د ذخیرې لټون بنسټ',
       'stockBody':
           'ځايي بچونه او ذخیره به د SQLite/Drift ډیټابیس له طبقې سره اضافه شي.',
       'customersTitle': 'د پېرودونکي لټون بنسټ',
-      'customersBody':
-          'د پېرودونکو معلومات به د آفلاین ډیټابیس او همغږۍ تړونونو له چمتو کېدو وروسته ځايي وساتل شي.',
+      'customersBody': 'د پېرودونکو معلومات به د آفلاین ډیټابیس او همغږۍ تړونونو له چمتو کېدو وروسته ځايي وساتل شي.',
       'syncTitle': 'د همغږۍ بنسټ',
-      'syncBody':
-          'د شبکې اړیکه د سرور له لاسرسي جلا څارل کېږي. هېڅ معامله د سرور له تایید پرته همغږې شوې نه ګڼل کېږي.',
+      'syncBody': 'د شبکې اړیکه د سرور له لاسرسي جلا څارل کېږي. هېڅ معامله د سرور له تایید پرته همغږې شوې نه ګڼل کېږي.',
       'networkAvailable': 'د شبکې اړیکه شته',
       'networkUnavailable': 'د شبکې اړیکه نشته',
       'networkUnknown': 'شبکه کتل کېږي',
