@@ -14,19 +14,44 @@
         </a>
     </div>
 
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-7">
         @foreach ([
             ['Total pharmacies', $metrics['total_pharmacies']],
             ['Active', $metrics['active_pharmacies']],
             ['Suspended', $metrics['suspended_pharmacies']],
             ['Archived', $metrics['archived_pharmacies']],
             ['Provisioning failures', $metrics['provisioning_failures']],
+            ['Subscription attention', $metrics['subscription_attention']],
+            ['Stale devices', $metrics['stale_devices']],
         ] as [$label, $value])
             <article class="rounded-2xl border border-slate-200 bg-white p-5">
                 <p class="text-sm font-medium text-slate-500">{{ $label }}</p>
                 <p class="mt-3 text-3xl font-bold">{{ $value }}</p>
             </article>
         @endforeach
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white">
+        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+            <div>
+                <h3 class="font-bold">Subscription attention</h3>
+                <p class="mt-1 text-xs text-slate-500">Highest-priority subscription, license and device issues.</p>
+            </div>
+            <a href="{{ route('platform.monitoring.index') }}" class="text-sm font-semibold text-teal-700">Open monitoring</a>
+        </div>
+        <div class="divide-y divide-slate-100">
+            @forelse ($subscriptionAttention as $row)
+                <div class="flex flex-col justify-between gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                    <div>
+                        <p class="font-semibold">{{ $row['pharmacy_name'] }}</p>
+                        <p class="mt-1 text-xs text-slate-500">{{ implode(' · ', $row['reasons']) }}</p>
+                    </div>
+                    <span class="self-start rounded-full px-2.5 py-1 text-xs font-bold {{ $row['severity'] === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800' }}">{{ $row['health_label'] }}</span>
+                </div>
+            @empty
+                <p class="px-5 py-8 text-sm text-emerald-700">No subscription or device issues require attention.</p>
+            @endforelse
+        </div>
     </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white">

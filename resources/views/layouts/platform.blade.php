@@ -26,6 +26,7 @@
             <a href="{{ route('platform.tenants.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.tenants.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Pharmacies</a>
             <a href="{{ route('platform.plans.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.plans.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Plans</a>
             <a href="{{ route('platform.subscriptions.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.subscriptions.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Subscriptions</a>
+            <a href="{{ route('platform.monitoring.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.monitoring.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Monitoring</a>
             <a href="{{ route('platform.licenses.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.licenses.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Licenses</a>
         </nav>
     </aside>
