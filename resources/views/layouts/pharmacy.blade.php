@@ -7,7 +7,10 @@
     <title>@yield('title', __('pharmacy.product'))</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-slate-50 text-slate-900 antialiased">
+<body class="@yield('body_class', 'bg-slate-50 text-slate-900 antialiased')">
+@hasSection('fullscreen')
+    @yield('content')
+@else
 <div class="min-h-screen lg:flex" x-data="{ mobileNav: false }">
     <aside class="hidden w-72 shrink-0 border-e border-slate-200 bg-white lg:block">
         @include('pharmacy.partials.sidebar')
@@ -62,5 +65,6 @@
         </main>
     </div>
 </div>
+@endif
 </body>
 </html>

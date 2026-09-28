@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['sale_line_id', 'product_batch_id', 'stock_movement_id', 'quantity', 'unit_cost'])]
+#[Fillable(['sale_line_id', 'product_batch_id', 'stock_movement_id', 'quantity', 'unit_cost', 'unit_price', 'line_total'])]
 class SaleBatchAllocation extends Model
 {
     use HasUlids;
@@ -32,6 +32,8 @@ class SaleBatchAllocation extends Model
         return [
             'quantity' => 'decimal:4',
             'unit_cost' => 'decimal:4',
+            'unit_price' => 'decimal:4',
+            'line_total' => 'decimal:4',
         ];
     }
 }

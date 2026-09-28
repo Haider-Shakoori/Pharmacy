@@ -4,7 +4,6 @@ namespace App\Services\Sales;
 
 use App\Models\Customer;
 use App\Models\Medicine;
-use App\Models\ProductBatch;
 use App\Models\Sale;
 use App\Models\SaleBatchAllocation;
 use App\Models\SaleLine;
@@ -94,19 +93,20 @@ class PosSaleService
             foreach ($data['lines'] as $index => $input) {
                 $medicine = Medicine::query()->where('is_active', true)->findOrFail($input['medicine_id']);
                 $quantity = BigDecimal::of((string) $input['quantity']);
-                $basePrice = $this->fefoSalePrice($medicine, $location);
-                $requestedPrice = isset($input['unit_price'])
-                    ? BigDecimal::of((string) $input['unit_price'])
-                    : $basePrice;
+                $discount = BigDecimal::of((string) ($input['discount_amount'] ?? '0'));
+                $overridePrice = (bool) ($input['override_price'] ?? false);
 
-                if (! $requestedPrice->isEqualTo($basePrice) && ! $user->hasPermission('pos.price_override')) {
+                if ($overridePrice && ! $user->hasPermission('pos.price_override')) {
                     throw ValidationException::withMessages([
                         "lines.$index.unit_price" => 'You do not have permission to override the sale price.',
                     ]);
                 }
 
-                $lineSubtotal = $quantity->multipliedBy($requestedPrice);
-                $discount = BigDecimal::of((string) ($input['discount_amount'] ?? '0'));
+                if ($overridePrice && ! isset($input['unit_price'])) {
+                    throw ValidationException::withMessages([
+                        "lines.$index.unit_price" => 'Enter the override price.',
+                    ]);
+                }
 
                 if ($discount->isGreaterThan(BigDecimal::zero()) && ! $user->hasPermission('pos.discount')) {
                     throw ValidationException::withMessages([
@@ -114,23 +114,16 @@ class PosSaleService
                     ]);
                 }
 
-                if ($discount->isGreaterThan($lineSubtotal)) {
-                    throw ValidationException::withMessages([
-                        "lines.$index.discount_amount" => 'Discount cannot exceed the line subtotal.',
-                    ]);
-                }
-
-                $lineTotal = $lineSubtotal->minus($discount);
                 $line = SaleLine::query()->create([
                     'sale_id' => $sale->id,
                     'medicine_id' => $medicine->id,
                     'description' => trim($medicine->brand_name.' '.($medicine->strength ?? '')),
                     'sale_unit' => $medicine->sale_unit,
                     'quantity' => $this->decimal($quantity),
-                    'unit_price' => $this->decimal($requestedPrice),
-                    'discount_amount' => $this->decimal($discount),
+                    'unit_price' => '0.0000',
+                    'discount_amount' => '0.0000',
                     'tax_amount' => '0.0000',
-                    'line_total' => $this->decimal($lineTotal),
+                    'line_total' => '0.0000',
                     'cost_total' => '0.0000',
                     'prescription_required' => $medicine->prescription_required,
                 ]);
@@ -144,22 +137,49 @@ class PosSaleService
                     "sale:{$sale->id}:line:{$line->id}",
                     $user->id,
                     "POS {$sale->sale_number}",
+                    true,
                 );
 
                 $costTotal = BigDecimal::zero();
+                $lineSubtotal = BigDecimal::zero();
+                $overrideUnitPrice = $overridePrice ? BigDecimal::of((string) $input['unit_price']) : null;
 
                 foreach ($allocations as $allocation) {
+                    $allocationQuantity = BigDecimal::of($allocation['quantity']);
                     $costTotal = $costTotal->plus(
-                        BigDecimal::of($allocation['quantity'])->multipliedBy(BigDecimal::of($allocation['unit_cost'])),
+                        $allocationQuantity->multipliedBy(BigDecimal::of($allocation['unit_cost'])),
                     );
+
+                    $chargedUnitPrice = $overrideUnitPrice ?? BigDecimal::of((string) $allocation['unit_price']);
+                    $allocationTotal = $allocationQuantity->multipliedBy($chargedUnitPrice);
+                    $lineSubtotal = $lineSubtotal->plus($allocationTotal);
 
                     SaleBatchAllocation::query()->create([
                         'sale_line_id' => $line->id,
-                        ...$allocation,
+                        'product_batch_id' => $allocation['product_batch_id'],
+                        'stock_movement_id' => $allocation['stock_movement_id'],
+                        'quantity' => $allocation['quantity'],
+                        'unit_cost' => $allocation['unit_cost'],
+                        'unit_price' => $this->decimal($chargedUnitPrice),
+                        'line_total' => $this->decimal($allocationTotal),
                     ]);
                 }
 
-                $line->update(['cost_total' => $this->decimal($costTotal)]);
+                if ($discount->isGreaterThan($lineSubtotal)) {
+                    throw ValidationException::withMessages([
+                        "lines.$index.discount_amount" => 'Discount cannot exceed the line subtotal.',
+                    ]);
+                }
+
+                $lineTotal = $lineSubtotal->minus($discount);
+                $weightedUnitPrice = $lineSubtotal->dividedBy($quantity, 4, RoundingMode::HalfUp);
+                $line->update([
+                    'unit_price' => $this->decimal($weightedUnitPrice),
+                    'discount_amount' => $this->decimal($discount),
+                    'line_total' => $this->decimal($lineTotal),
+                    'cost_total' => $this->decimal($costTotal),
+                ]);
+
                 $subtotal = $subtotal->plus($lineSubtotal);
                 $discountTotal = $discountTotal->plus($discount);
             }
@@ -189,30 +209,6 @@ class PosSaleService
 
             return $sale->fresh(['lines.allocations.batch', 'payments', 'customer', 'location.branch']);
         });
-    }
-
-    private function fefoSalePrice(Medicine $medicine, StockLocation $location): BigDecimal
-    {
-        $batch = ProductBatch::query()
-            ->where('medicine_id', $medicine->id)
-            ->where('stock_location_id', $location->id)
-            ->where('status', 'active')
-            ->where('available_quantity', '>', 0)
-            ->whereNotNull('sale_price')
-            ->where(fn ($query) => $query->whereNull('expires_at')->orWhereDate('expires_at', '>=', today()))
-            ->orderByRaw('CASE WHEN expires_at IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('expires_at')
-            ->orderBy('created_at')
-            ->lockForUpdate()
-            ->first();
-
-        if (! $batch) {
-            throw ValidationException::withMessages([
-                'lines' => "No sellable priced stock is available for {$medicine->brand_name}.",
-            ]);
-        }
-
-        return BigDecimal::of($batch->sale_price);
     }
 
     private function postSettlements(Sale $sale, User $user, ?Customer $customer, array $payments, BigDecimal $grandTotal): array
