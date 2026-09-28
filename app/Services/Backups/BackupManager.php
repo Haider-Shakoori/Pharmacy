@@ -70,8 +70,7 @@ class BackupManager
                 ->orderBy('id')
                 ->get();
 
-            if (is_array($tenantIds) &&
-                $tenants->count() !== count(array_unique($tenantIds))) {
+            if (is_array($tenantIds) && $tenants->count() !== count(array_unique($tenantIds))) {
                 throw new RuntimeException(
                     'One or more requested tenants were not found.',
                 );
@@ -383,8 +382,7 @@ class BackupManager
         array $entry,
         array $config,
     ): void {
-        if ((string) ($entry['driver'] ?? '') !==
-            (string) ($config['driver'] ?? '')) {
+        if ((string) ($entry['driver'] ?? '') !== (string) ($config['driver'] ?? '')) {
             throw new RuntimeException(
                 'Backup driver does not match the target database.',
             );

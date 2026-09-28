@@ -16,8 +16,7 @@ class CreateBackup extends Command
 
     public function handle(BackupManager $backups): int
     {
-        if ($this->option('central-only') &&
-            $this->option('no-central')) {
+        if ($this->option('central-only') && $this->option('no-central')) {
             $this->error(
                 '--central-only and --no-central cannot be combined.',
             );
