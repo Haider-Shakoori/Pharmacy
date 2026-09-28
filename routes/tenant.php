@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Pharmacy\AccountingAdjustmentController;
 use App\Http\Controllers\Pharmacy\AccountingController;
 use App\Http\Controllers\Pharmacy\AlertController;
+use App\Http\Controllers\Pharmacy\AlertController;
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
 use App\Http\Controllers\Pharmacy\BatchStatusController;
 use App\Http\Controllers\Pharmacy\DailyClosingController;
@@ -57,6 +58,9 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
             Route::get('/', PharmacyDashboardController::class)
                 ->middleware('permission:dashboard.view')
                 ->name('dashboard');
+            Route::get('/alerts', AlertController::class)
+                ->middleware('permission:dashboard.view')
+                ->name('alerts.index');
             Route::get('/alerts', AlertController::class)
                 ->middleware('permission:dashboard.view')
                 ->name('alerts.index');

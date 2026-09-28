@@ -29,9 +29,7 @@
     </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white">
-        <div class="border-b border-slate-100 px-5 py-4">
-            <h2 class="font-bold">{{ __('pharmacy.alerts.low_stock') }}</h2>
-        </div>
+        <div class="border-b border-slate-100 px-5 py-4"><h2 class="font-bold">{{ __('pharmacy.alerts.low_stock') }}</h2></div>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
                 <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -50,9 +48,7 @@
 
     @foreach (['near_expiry' => 'near_expiry', 'expired' => 'expired'] as $key => $labelKey)
         <section class="rounded-2xl border border-slate-200 bg-white">
-            <div class="border-b border-slate-100 px-5 py-4">
-                <h2 class="font-bold">{{ __('pharmacy.alerts.'.$labelKey) }}</h2>
-            </div>
+            <div class="border-b border-slate-100 px-5 py-4"><h2 class="font-bold">{{ __('pharmacy.alerts.'.$labelKey) }}</h2></div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                     <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">

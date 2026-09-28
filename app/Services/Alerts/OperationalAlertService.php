@@ -9,6 +9,7 @@ use App\Models\Tenant;
 use App\Services\DailyClosing\BusinessDateResolver;
 use App\Services\Settings\PharmacySettings;
 use Brick\Math\BigDecimal;
+use Carbon\CarbonImmutable;
 
 class OperationalAlertService
 {
@@ -21,28 +22,30 @@ class OperationalAlertService
     {
         return $this->inside($tenant, function () use ($tenant): array {
             $policy = $this->settings->inventory($tenant);
-            $today = today();
-            $nearExpiryEnd = $today->copy()->addDays($policy['near_expiry_days']);
+            $timezone = $this->settings->timezone($tenant);
+            $today = CarbonImmutable::now($timezone)->startOfDay();
+            $nearExpiryEnd = $today->addDays($policy['near_expiry_days']);
 
             $medicines = Medicine::query()
                 ->where('is_active', true)
-                ->withSum([
-                    'batches as sellable_quantity' => function ($query) use ($today): void {
-                        $query
-                            ->where('status', 'active')
-                            ->where('available_quantity', '>', 0)
-                            ->where(function ($query) use ($today): void {
-                                $query->whereNull('expires_at')
-                                    ->orWhereDate('expires_at', '>=', $today);
-                            });
-                    },
-                ], 'available_quantity')
+                ->with(['batches' => function ($query) use ($today): void {
+                    $query
+                        ->where('status', 'active')
+                        ->where('available_quantity', '>', 0)
+                        ->where(function ($query) use ($today): void {
+                            $query->whereNull('expires_at')
+                                ->orWhereDate('expires_at', '>=', $today->toDateString());
+                        });
+                }])
                 ->orderBy('brand_name')
                 ->get();
 
             $lowStock = $medicines
                 ->filter(function (Medicine $medicine) use ($policy): bool {
-                    $available = BigDecimal::of((string) ($medicine->sellable_quantity ?? '0'));
+                    $available = $medicine->batches->reduce(
+                        fn (BigDecimal $carry, ProductBatch $batch): BigDecimal => $carry->plus((string) $batch->available_quantity),
+                        BigDecimal::zero(),
+                    );
                     $reorder = BigDecimal::of((string) $medicine->reorder_level);
                     $threshold = $reorder->isGreaterThan(BigDecimal::zero())
                         ? $reorder
@@ -51,6 +54,10 @@ class OperationalAlertService
                     return $available->isLessThanOrEqualTo($threshold);
                 })
                 ->map(function (Medicine $medicine) use ($policy): array {
+                    $available = $medicine->batches->reduce(
+                        fn (BigDecimal $carry, ProductBatch $batch): BigDecimal => $carry->plus((string) $batch->available_quantity),
+                        BigDecimal::zero(),
+                    );
                     $reorder = BigDecimal::of((string) $medicine->reorder_level);
                     $threshold = $reorder->isGreaterThan(BigDecimal::zero())
                         ? (string) $medicine->reorder_level
@@ -60,7 +67,7 @@ class OperationalAlertService
                         'medicine_id' => $medicine->id,
                         'medicine_code' => $medicine->medicine_code,
                         'name' => $medicine->brand_name,
-                        'available_quantity' => (string) ($medicine->sellable_quantity ?? '0.0000'),
+                        'available_quantity' => (string) $available,
                         'threshold' => $threshold,
                     ];
                 })
@@ -71,8 +78,8 @@ class OperationalAlertService
                 ->where('status', 'active')
                 ->where('available_quantity', '>', 0)
                 ->whereNotNull('expires_at')
-                ->whereDate('expires_at', '>=', $today)
-                ->whereDate('expires_at', '<=', $nearExpiryEnd)
+                ->whereDate('expires_at', '>=', $today->toDateString())
+                ->whereDate('expires_at', '<=', $nearExpiryEnd->toDateString())
                 ->orderBy('expires_at')
                 ->get()
                 ->map(fn (ProductBatch $batch): array => $this->batchAlert($batch))
@@ -83,7 +90,7 @@ class OperationalAlertService
                 ->where('status', 'active')
                 ->where('available_quantity', '>', 0)
                 ->whereNotNull('expires_at')
-                ->whereDate('expires_at', '<', $today)
+                ->whereDate('expires_at', '<', $today->toDateString())
                 ->orderBy('expires_at')
                 ->get()
                 ->map(fn (ProductBatch $batch): array => $this->batchAlert($batch))
