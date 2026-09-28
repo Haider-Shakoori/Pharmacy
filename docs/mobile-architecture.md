@@ -310,3 +310,22 @@ Android thermal printing uses flutter_thermal_printer. Receipt UI is rasterized
 from a Flutter widget instead of trusting the printer's text code page, allowing
 the same English, Dari and Pashto glyph rendering used by the app to reach
 ESC/POS printers that may not include Arabic-script fonts.
+
+
+## Batch 24 — operational alerts and local notifications
+
+Batch 24 derives alerts from existing pharmacy data instead of maintaining a
+second alert ledger. The web dashboard and alert center calculate low-stock,
+near-expiry and expired-stock conditions from tenant inventory using the
+pharmacy's configured inventory policy.
+
+The authenticated Android registration/session snapshot now carries the same
+low-stock threshold and near-expiry window. The mobile client applies those
+values to its tenant-scoped cached inventory and adds non-retryable
+synchronization conflicts as critical local alerts.
+
+Android notifications are opt-in. The app requests notification permission only
+when the user enables local notifications. A fingerprint stored in the local
+metadata table prevents the same unchanged alert summary from being emitted
+repeatedly. Alert calculation itself remains fully offline and does not require
+Firebase or a third-party push service.

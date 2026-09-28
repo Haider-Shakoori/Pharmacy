@@ -121,6 +121,18 @@ class AppStrings {
   String get receiptPrinterConnectFailed =>
       _value('receiptPrinterConnectFailed');
   String get receiptPrintingHelp => _value('receiptPrintingHelp');
+  String get alertsTitle => _value('alertsTitle');
+  String get alertsRefresh => _value('alertsRefresh');
+  String get alertsEnableNotifications => _value('alertsEnableNotifications');
+  String get alertsNone => _value('alertsNone');
+
+  String alertsSummary(int low, int near, int expired, int rejected) {
+    return _value('alertsSummary')
+        .replaceFirst('{low}', low.toString())
+        .replaceFirst('{near}', near.toString())
+        .replaceFirst('{expired}', expired.toString())
+        .replaceFirst('{rejected}', rejected.toString());
+  }
 
   String receiptPayment(String method) {
     return switch (method) {
@@ -248,6 +260,11 @@ class AppStrings {
       'receiptPrinted': 'Receipt sent to printer.',
       'receiptPrinterConnectFailed': 'Could not connect to the printer.',
       'receiptPrintingHelp': 'Printing uses the locally stored receipt and works without Internet. Bluetooth/BLE, USB and configured network printers are supported.',
+      'alertsTitle': 'Operational alerts',
+      'alertsRefresh': 'Refresh alerts',
+      'alertsEnableNotifications': 'Enable local notifications',
+      'alertsNone': 'No inventory or synchronization alerts.',
+      'alertsSummary': '{low} low stock · {near} near expiry · {expired} expired · {rejected} sync conflicts',
       'syncStatusTitle': 'Synchronization status',
       'syncPending': 'Pending',
       'syncRejected': 'Rejected',
@@ -364,6 +381,11 @@ class AppStrings {
       'receiptPrinted': 'رسید به پرینتر فرستاده شد.',
       'receiptPrinterConnectFailed': 'اتصال به پرینتر ممکن نشد.',
       'receiptPrintingHelp': 'چاپ از رسید ذخیره‌شده در دستگاه استفاده می‌کند و بدون اینترنت کار می‌کند. بلوتوث/BLE، USB و پرینتر شبکه تنظیم‌شده پشتیبانی می‌شود.',
+      'alertsTitle': 'هشدارهای عملیاتی',
+      'alertsRefresh': 'تازه‌سازی هشدارها',
+      'alertsEnableNotifications': 'فعال‌سازی اعلان‌های محلی',
+      'alertsNone': 'هشدار موجودی یا همگام‌سازی وجود ندارد.',
+      'alertsSummary': '{low} موجودی کم · {near} نزدیک انقضا · {expired} منقضی · {rejected} مشکل همگام‌سازی',
       'syncStatusTitle': 'وضعیت همگام‌سازی',
       'syncPending': 'در انتظار',
       'syncRejected': 'ردشده',
@@ -479,6 +501,11 @@ class AppStrings {
       'receiptPrinted': 'رسید پرینټر ته ولېږل شو.',
       'receiptPrinterConnectFailed': 'پرینټر سره نښلون ونه شو.',
       'receiptPrintingHelp': 'چاپ د وسیلې له ځايي خوندي شوي رسید څخه کار اخلي او انټرنېټ ته اړتیا نه لري. بلوتوث/BLE، USB او تنظیم شوي شبکوي پرینټرونه ملاتړ کېږي.',
+      'alertsTitle': 'عملیاتي خبرتیاوې',
+      'alertsRefresh': 'خبرتیاوې تازه کړئ',
+      'alertsEnableNotifications': 'ځايي خبرتیاوې فعالې کړئ',
+      'alertsNone': 'د ذخیرې یا همغږۍ کومه خبرتیا نشته.',
+      'alertsSummary': '{low} کمه ذخیره · {near} ژر ختمېږي · {expired} ختم شوي · {rejected} د همغږۍ ستونزې',
       'syncStatusTitle': 'د همغږۍ حالت',
       'syncPending': 'په تمه',
       'syncRejected': 'رد شوي',

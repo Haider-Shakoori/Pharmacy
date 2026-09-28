@@ -17,6 +17,7 @@ dependencies:
   drift: ^2.35.0
   drift_flutter: ^0.3.1
   esc_pos_utils_plus: ^2.0.4
+  flutter_local_notifications: ^22.3.1
   flutter_riverpod: ^3.4.3
   flutter_secure_storage: ^11.2.0
   flutter_thermal_printer: ^2.3.0
