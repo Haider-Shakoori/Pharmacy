@@ -185,11 +185,13 @@ class MobileAccessService
 
         return [
             'access_token' => $this->signer->sign($accessPayload),
+            'device_id' => $activation->device_id,
             'access_expires_at' => $leaseExpiresAt->toIso8601String(),
             'subscription_health' => $health->value,
             'offline_lease' => [
                 'token' => $this->signer->sign($leasePayload),
                 'expires_at' => $leaseExpiresAt->toIso8601String(),
+                'public_key' => (string) config('pharmacy.license.signing_public_key'),
             ],
             'user' => $context->user,
         ];

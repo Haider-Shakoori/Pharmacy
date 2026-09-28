@@ -1,8 +1,11 @@
 import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
 import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
+import 'package:businessos_pharmacy/core/auth/mobile_registration_repository.dart';
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/core/decimal/fixed_decimal.dart';
+import 'package:businessos_pharmacy/core/licensing/offline_lease_authorizer.dart';
+import 'package:businessos_pharmacy/core/licensing/offline_lease_verifier.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_catalog_repository.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_checkout_service.dart';
@@ -52,6 +55,9 @@ class OfflinePosPanel extends ConsumerWidget {
           data: (PharmacyDatabase pharmacyDatabase) => _OfflinePosBody(
             database: pharmacyDatabase,
             registration: mobileRegistration,
+            registrationRepository: ref.read(
+              mobileRegistrationRepositoryProvider,
+            ),
           ),
         );
       },
@@ -60,10 +66,15 @@ class OfflinePosPanel extends ConsumerWidget {
 }
 
 class _OfflinePosBody extends StatefulWidget {
-  const _OfflinePosBody({required this.database, required this.registration});
+  const _OfflinePosBody({
+    required this.database,
+    required this.registration,
+    required this.registrationRepository,
+  });
 
   final PharmacyDatabase database;
   final MobileRegistration registration;
+  final MobileRegistrationRepository registrationRepository;
 
   @override
   State<_OfflinePosBody> createState() => _OfflinePosBodyState();
@@ -87,8 +98,31 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   void initState() {
     super.initState();
     _catalog = OfflinePosCatalogRepository(widget.database);
-    _checkout = OfflinePosCheckoutService(widget.database);
+    final OfflineLeaseAuthorizer leaseAuthorizer = OfflineLeaseAuthorizer(
+      database: widget.database,
+      registrationRepository: widget.registrationRepository,
+    );
+    _checkout = OfflinePosCheckoutService(
+      widget.database,
+      authorizeTransaction: () async {
+        final AppStrings strings = AppStrings.of(context);
+        try {
+          await leaseAuthorizer.assertCanTransact();
+        } on OfflineLeaseException catch (error) {
+          throw OfflinePosException(_leaseMessage(error, strings));
+        }
+      },
+    );
     _load();
+  }
+
+  String _leaseMessage(OfflineLeaseException error, AppStrings strings) {
+    return switch (error.code) {
+      OfflineLeaseFailure.missing => strings.offlineLeaseMissing,
+      OfflineLeaseFailure.invalid => strings.offlineLeaseInvalid,
+      OfflineLeaseFailure.expired => strings.offlineLeaseExpired,
+      OfflineLeaseFailure.clockRollback => strings.offlineLeaseClockError,
+    };
   }
 
   @override

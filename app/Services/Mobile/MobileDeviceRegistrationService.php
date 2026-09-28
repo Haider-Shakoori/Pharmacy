@@ -118,12 +118,14 @@ class MobileDeviceRegistrationService
             'access_token' => $this->signer->sign($accessPayload),
             'access_expires_at' => $expiresAt->toIso8601String(),
             'activation_id' => $activated['activation_id'],
+            'device_id' => $deviceId,
             'tenant' => $activated['tenant'],
             'plan' => $activated['plan'],
             'subscription_health' => $activated['subscription_health'],
             'offline_lease' => [
                 'token' => $activated['lease_token'],
                 'expires_at' => $activated['lease_expires_at'],
+                'public_key' => (string) config('pharmacy.license.signing_public_key'),
             ],
             'user' => $user,
         ];

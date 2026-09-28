@@ -34,10 +34,12 @@ void main() {
         tenantId: 'tenant-01',
         tenantName: 'Kabul Pharmacy',
         activationId: 'activation-01',
+        deviceId: 'device-01',
         accessToken: 'signed-access',
         accessExpiresAt: DateTime.utc(2026, 10, 1),
         leaseToken: 'signed-lease',
         leaseExpiresAt: DateTime.utc(2026, 10, 1),
+        leasePublicKey: 'public-key',
         userId: '1',
         userName: 'Pharmacist',
         userEmail: 'pharmacist@example.test',
@@ -50,6 +52,8 @@ void main() {
 
       expect(restored?.tenantId, 'tenant-01');
       expect(restored?.userEmail, 'pharmacist@example.test');
+      expect(restored?.deviceId, 'device-01');
+      expect(restored?.leasePublicKey, 'public-key');
 
       final String raw = store.values.values.single;
       final Map<String, dynamic> json = jsonDecode(raw) as Map<String, dynamic>;

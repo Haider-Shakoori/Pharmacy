@@ -11,6 +11,8 @@ class MobileRegistration {
     required this.userName,
     required this.userEmail,
     required this.permissions,
+    this.deviceId,
+    this.leasePublicKey,
     this.cloudBaseUrl,
   });
 
@@ -29,10 +31,12 @@ class MobileRegistration {
       tenantId: tenant['id'].toString(),
       tenantName: tenant['name'].toString(),
       activationId: data['activation_id'].toString(),
+      deviceId: data['device_id']?.toString(),
       accessToken: data['access_token'].toString(),
       accessExpiresAt: DateTime.parse(data['access_expires_at'].toString()),
       leaseToken: lease['token'].toString(),
       leaseExpiresAt: DateTime.parse(lease['expires_at'].toString()),
+      leasePublicKey: lease['public_key']?.toString(),
       userId: user['id'].toString(),
       userName: user['name'].toString(),
       userEmail: user['email'].toString(),
@@ -48,10 +52,12 @@ class MobileRegistration {
       tenantId: json['tenant_id'].toString(),
       tenantName: json['tenant_name'].toString(),
       activationId: json['activation_id'].toString(),
+      deviceId: json['device_id']?.toString(),
       accessToken: json['access_token'].toString(),
       accessExpiresAt: DateTime.parse(json['access_expires_at'].toString()),
       leaseToken: json['lease_token'].toString(),
       leaseExpiresAt: DateTime.parse(json['lease_expires_at'].toString()),
+      leasePublicKey: json['lease_public_key']?.toString(),
       userId: json['user_id'].toString(),
       userName: json['user_name'].toString(),
       userEmail: json['user_email'].toString(),
@@ -74,10 +80,12 @@ class MobileRegistration {
       tenantId: tenantId,
       tenantName: tenantName,
       activationId: activationId,
+      deviceId: data['device_id']?.toString() ?? deviceId,
       accessToken: data['access_token'].toString(),
       accessExpiresAt: DateTime.parse(data['access_expires_at'].toString()),
       leaseToken: lease['token'].toString(),
       leaseExpiresAt: DateTime.parse(lease['expires_at'].toString()),
+      leasePublicKey: lease['public_key']?.toString() ?? leasePublicKey,
       userId: user?['id']?.toString() ?? userId,
       userName: user?['name']?.toString() ?? userName,
       userEmail: user?['email']?.toString() ?? userEmail,
@@ -93,10 +101,12 @@ class MobileRegistration {
   final String tenantId;
   final String tenantName;
   final String activationId;
+  final String? deviceId;
   final String accessToken;
   final DateTime accessExpiresAt;
   final String leaseToken;
   final DateTime leaseExpiresAt;
+  final String? leasePublicKey;
   final String userId;
   final String userName;
   final String userEmail;
@@ -110,10 +120,12 @@ class MobileRegistration {
       'tenant_id': tenantId,
       'tenant_name': tenantName,
       'activation_id': activationId,
+      'device_id': deviceId,
       'access_token': accessToken,
       'access_expires_at': accessExpiresAt.toUtc().toIso8601String(),
       'lease_token': leaseToken,
       'lease_expires_at': leaseExpiresAt.toUtc().toIso8601String(),
+      'lease_public_key': leasePublicKey,
       'user_id': userId,
       'user_name': userName,
       'user_email': userEmail,
