@@ -29,6 +29,12 @@ class AccountingTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+    }
+
     public function test_accounting_tables_and_chart_are_tenant_only(): void
     {
         $tenantA = $this->createTenant(['slug' => 'accounting-a']);
