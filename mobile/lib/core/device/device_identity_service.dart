@@ -8,12 +8,11 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:uuid/uuid.dart';
 
 class DeviceIdentityService {
-  DeviceIdentityService({
-    required SecureStore secureStore,
+  DeviceIdentityService(
+    this._secureStore, {
     DeviceInfoPlugin? deviceInfo,
     Uuid? uuid,
-  }) : _secureStore = secureStore,
-       _deviceInfo = deviceInfo ?? DeviceInfoPlugin(),
+  }) : _deviceInfo = deviceInfo ?? DeviceInfoPlugin(),
        _uuid = uuid ?? Uuid();
 
   static const String _installationIdKey = 'installation_id';
@@ -60,6 +59,5 @@ final Provider<SecureStore> secureStoreProvider = Provider<SecureStore>(
 
 final Provider<DeviceIdentityService> deviceIdentityServiceProvider =
     Provider<DeviceIdentityService>(
-      (Ref ref) =>
-          DeviceIdentityService(secureStore: ref.watch(secureStoreProvider)),
+      (Ref ref) => DeviceIdentityService(ref.watch(secureStoreProvider)),
     );
