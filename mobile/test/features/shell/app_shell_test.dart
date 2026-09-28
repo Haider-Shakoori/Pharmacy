@@ -1,3 +1,4 @@
+import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/network/connectivity_monitor.dart';
 import 'package:businessos_pharmacy/features/shell/presentation/app_shell.dart';
@@ -29,6 +30,7 @@ void main() {
       ProviderScope(
         overrides: [
           connectivityMonitorProvider.overrideWithValue(_OfflineMonitor()),
+          mobileRegistrationProvider.overrideWith((Ref ref) async => null),
         ],
         child: MaterialApp(
           locale: AppLocale.english.locale,
