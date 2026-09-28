@@ -1,0 +1,60 @@
+name: Flutter Mobile CI
+
+on:
+  push:
+    branches: [main, 'feat/**']
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-mobile.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-mobile.yml'
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Show toolchain
+        run: flutter --version
+
+      - name: Bootstrap Android host
+        run: bash tool/bootstrap_android.sh
+
+      - name: Resolve packages
+        run: flutter pub get
+
+      - name: Check Dart formatting
+        run: |
+          dart format lib test
+          git diff --exit-code -- lib test
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build debug APK
+        run: flutter build apk --debug
