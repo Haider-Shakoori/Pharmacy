@@ -1,0 +1,109 @@
+name: Release Candidate UAT
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: uat-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-uat:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sodium
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run golden-path UAT
+        run: php artisan test --group=uat
+
+      - name: Run complete Laravel regression suite
+        run: php artisan test
+
+      - name: Check PHP formatting
+        run: vendor/bin/pint --test
+
+      - name: Audit Composer dependencies
+        run: composer audit --no-interaction
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build production frontend
+        run: npm run build
+
+  android-uat:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Bootstrap Android host
+        run: bash tool/bootstrap_android.sh
+
+      - name: Resolve packages
+        run: flutter pub get
+
+      - name: Generate Drift database code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Check Dart formatting
+        run: |
+          dart format lib test
+          git diff --exit-code -- lib test
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run complete Flutter regression suite
+        run: flutter test
+
+      - name: Build UAT APK
+        run: flutter build apk --debug
+
+      - name: Upload UAT APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: businessos-pharmacy-uat-apk
+          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
