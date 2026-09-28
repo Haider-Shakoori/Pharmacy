@@ -26,6 +26,7 @@ class StorePosSaleRequest extends FormRequest
             'lines.*.medicine_id' => ['required', 'string', Rule::exists('medicines', 'id')->where('is_active', true)],
             'lines.*.quantity' => ['required', 'numeric', 'gt:0', 'max:99999999'],
             'lines.*.unit_price' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
+            'lines.*.override_price' => ['nullable', 'boolean'],
             'lines.*.discount_amount' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'payments' => ['required', 'array', 'min:1', 'max:10'],
             'payments.*.method' => ['required', Rule::in(['cash', 'bank', 'mobile', 'credit'])],

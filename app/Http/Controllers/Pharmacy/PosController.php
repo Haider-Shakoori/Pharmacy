@@ -25,6 +25,39 @@ class PosController extends Controller
         ]);
     }
 
+    public function invoices(Request $request): View
+    {
+        $search = trim((string) $request->query('search'));
+        $from = (string) $request->query('from', today()->subDays(30)->toDateString());
+        $to = (string) $request->query('to', today()->toDateString());
+        $paymentStatus = (string) $request->query('payment_status');
+
+        $query = Sale::query()
+            ->with(['customer:id,name,phone', 'cashier:id,name', 'location:id,name'])
+            ->where('status', 'completed')
+            ->whereDate('business_date', '>=', $from)
+            ->whereDate('business_date', '<=', $to)
+            ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
+                ->where('sale_number', 'like', "%{$search}%")
+                ->orWhereHas('customer', fn ($customer) => $customer
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%"))))
+            ->when($paymentStatus !== '', fn ($query) => $query->where('payment_status', $paymentStatus));
+
+        return view('pharmacy.pos.invoices', [
+            'sales' => $query->clone()->latest('completed_at')->paginate(config('pharmacy.performance.default_page_size'))->withQueryString(),
+            'summary' => [
+                'count' => $query->clone()->count(),
+                'total' => (string) ($query->clone()->sum('grand_total') ?? 0),
+                'due' => (string) ($query->clone()->sum('due_total') ?? 0),
+            ],
+            'search' => $search,
+            'from' => $from,
+            'to' => $to,
+            'paymentStatus' => $paymentStatus,
+        ]);
+    }
+
     public function search(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -68,6 +101,8 @@ class PosController extends Controller
                     BigDecimal::zero(),
                 );
 
+                $batchPrices = $medicine->batches->pluck('sale_price')->filter()->map(fn ($price) => (float) $price);
+
                 return [
                     'id' => $medicine->id,
                     'code' => $medicine->medicine_code,
@@ -77,8 +112,17 @@ class PosController extends Controller
                     'strength' => $medicine->strength,
                     'sale_unit' => $medicine->sale_unit,
                     'price' => $medicine->batches->first()?->sale_price,
+                    'price_min' => $batchPrices->min(),
+                    'price_max' => $batchPrices->max(),
                     'available' => (string) $stock,
                     'prescription_required' => $medicine->prescription_required,
+                    'batches' => $medicine->batches->map(fn ($batch) => [
+                        'id' => $batch->id,
+                        'batch_number' => $batch->batch_number,
+                        'available' => (string) $batch->available_quantity,
+                        'sale_price' => (string) $batch->sale_price,
+                        'expires_at' => $batch->expires_at?->toDateString(),
+                    ])->values(),
                 ];
             })->values(),
         ]);

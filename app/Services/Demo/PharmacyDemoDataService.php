@@ -198,6 +198,11 @@ class PharmacyDemoDataService
         $this->openingBatch($medicines['MED-DEMO-001'], $supplier, $location, $owner, 'EXPIRED', 12, 2.5, 5, today()->subDays(20));
         $count++;
 
+        // Same medicine, multiple sellable batches with different prices so FEFO price splitting can be tested easily.
+        $this->openingBatch($medicines['MED-DEMO-004'], $supplier, $location, $owner, 'PRICE-A', 2, 8, 12, today()->addMonths(3));
+        $this->openingBatch($medicines['MED-DEMO-004'], $supplier, $location, $owner, 'PRICE-B', 20, 9, 15, today()->addMonths(5));
+        $count += 2;
+
         return $count;
     }
 

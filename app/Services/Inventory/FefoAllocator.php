@@ -23,6 +23,7 @@ class FefoAllocator
         string $idempotencyPrefix,
         ?int $actorId,
         ?string $reason = null,
+        bool $requirePriced = false,
     ): array {
         return DB::transaction(function () use (
             $medicine,
@@ -33,6 +34,7 @@ class FefoAllocator
             $idempotencyPrefix,
             $actorId,
             $reason,
+            $requirePriced,
         ): array {
             $remaining = BigDecimal::of($quantity);
 
@@ -45,6 +47,7 @@ class FefoAllocator
                 ->where('stock_location_id', $location->id)
                 ->where('status', 'active')
                 ->where('available_quantity', '>', 0)
+                ->when($requirePriced, fn ($query) => $query->whereNotNull('sale_price'))
                 ->where(function ($query): void {
                     $query->whereNull('expires_at')
                         ->orWhereDate('expires_at', '>=', today());
@@ -83,6 +86,7 @@ class FefoAllocator
                     'quantity' => (string) $take->toScale(4, RoundingMode::HalfUp),
                     'stock_movement_id' => $movement->id,
                     'unit_cost' => $batch->purchase_cost,
+                    'unit_price' => $batch->sale_price,
                 ];
 
                 $remaining = $remaining->minus($take);

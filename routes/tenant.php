@@ -130,6 +130,7 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
             Route::middleware('permission:pos.sell')->group(function (): void {
                 Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
                 Route::get('/pos/search', [PosController::class, 'search'])->name('pos.search');
+                Route::get('/pos/invoices', [PosController::class, 'invoices'])->name('pos.invoices');
                 Route::post('/pos/sales', [PosController::class, 'store'])->name('pos.store');
                 Route::get('/pos/sales/{sale}/receipt', [PosController::class, 'receipt'])->name('pos.receipt');
             });
