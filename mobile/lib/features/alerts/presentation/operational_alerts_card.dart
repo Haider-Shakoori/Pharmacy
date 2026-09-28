@@ -124,10 +124,7 @@ class _OperationalAlertsCardState extends ConsumerState<OperationalAlertsCard> {
 
     if (_error != null) {
       return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text(_error!),
-        ),
+        child: Padding(padding: const EdgeInsets.all(20), child: Text(_error!)),
       );
     }
 
@@ -182,19 +179,21 @@ class _OperationalAlertsCardState extends ConsumerState<OperationalAlertsCard> {
               Text(strings.alertsNone),
             ] else ...<Widget>[
               const SizedBox(height: 12),
-              ...snapshot.alerts.take(8).map(
-                (LocalOperationalAlert alert) => ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    alert.severity == OperationalAlertSeverity.critical
-                        ? Icons.error_outline_rounded
-                        : Icons.warning_amber_rounded,
+              ...snapshot.alerts
+                  .take(8)
+                  .map(
+                    (LocalOperationalAlert alert) => ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        alert.severity == OperationalAlertSeverity.critical
+                            ? Icons.error_outline_rounded
+                            : Icons.warning_amber_rounded,
+                      ),
+                      title: Text(alert.title),
+                      subtitle: Text(alert.detail),
+                    ),
                   ),
-                  title: Text(alert.title),
-                  subtitle: Text(alert.detail),
-                ),
-              ),
             ],
           ],
         ),

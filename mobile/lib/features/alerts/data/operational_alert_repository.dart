@@ -23,23 +23,19 @@ class OperationalAlertRepository {
     final int todaySeconds = today.millisecondsSinceEpoch ~/ 1000;
     final int endSeconds = nearExpiryEnd.millisecondsSinceEpoch ~/ 1000;
 
-    final List<QueryRow> medicines = await _database.customSelect(
-      '''
+    final List<QueryRow> medicines = await _database.customSelect('''
       SELECT id, brand_name
       FROM local_medicines
       WHERE is_active = 1 AND is_deleted = 0
       ORDER BY brand_name
-      ''',
-    ).get();
+      ''').get();
 
-    final List<QueryRow> batches = await _database.customSelect(
-      '''
+    final List<QueryRow> batches = await _database.customSelect('''
       SELECT id, medicine_id, batch_number, available_quantity, expires_at
       FROM local_inventory_batches
       WHERE status = 'active' AND is_deleted = 0
       ORDER BY expires_at, id
-      ''',
-    ).get();
+      ''').get();
 
     final Map<String, FixedDecimal> sellable = <String, FixedDecimal>{
       for (final QueryRow medicine in medicines)
@@ -120,15 +116,13 @@ class OperationalAlertRepository {
       }
     }
 
-    final List<QueryRow> rejectedRows = await _database.customSelect(
-      '''
+    final List<QueryRow> rejectedRows = await _database.customSelect('''
       SELECT aggregate_id, last_error
       FROM sync_outbox_entries
       WHERE status = 'rejected'
       ORDER BY updated_at DESC
       LIMIT 20
-      ''',
-    ).get();
+      ''').get();
 
     final List<LocalOperationalAlert> rejected = rejectedRows
         .map(
@@ -168,10 +162,7 @@ class OperationalAlertRepository {
   }
 
   Future<void> setNotificationsEnabled(bool enabled) {
-    return _writeMetadata(
-      'alerts.notifications.enabled',
-      enabled ? '1' : '0',
-    );
+    return _writeMetadata('alerts.notifications.enabled', enabled ? '1' : '0');
   }
 
   Future<String?> lastNotifiedFingerprint() async {

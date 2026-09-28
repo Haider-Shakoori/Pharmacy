@@ -9,13 +9,11 @@ void main() {
 
   setUp(() async {
     database = PharmacyDatabase(NativeDatabase.memory());
-    await database.customStatement(
-      '''
+    await database.customStatement('''
       INSERT INTO local_medicines (
         id, medicine_code, brand_name, sale_unit, is_active, is_deleted
       ) VALUES ('med-1', 'MED-1', 'Paracetamol', 'box', 1, 0)
-      ''',
-    );
+      ''');
   });
 
   tearDown(() async {

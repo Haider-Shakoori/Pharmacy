@@ -3,9 +3,8 @@ import 'package:businessos_pharmacy/features/alerts/domain/operational_alert.dar
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class OperationalNotificationService {
-  OperationalNotificationService({
-    FlutterLocalNotificationsPlugin? plugin,
-  }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  OperationalNotificationService({FlutterLocalNotificationsPlugin? plugin})
+    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;

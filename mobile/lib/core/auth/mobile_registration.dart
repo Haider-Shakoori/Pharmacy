@@ -49,7 +49,9 @@ class MobileRegistration {
           .map((dynamic value) => value.toString())
           .toList(growable: false),
       lowStockThreshold:
-          int.tryParse(inventoryPolicy['low_stock_threshold']?.toString() ?? '') ??
+          int.tryParse(
+            inventoryPolicy['low_stock_threshold']?.toString() ?? '',
+          ) ??
           10,
       nearExpiryDays:
           int.tryParse(inventoryPolicy['near_expiry_days']?.toString() ?? '') ??
@@ -113,7 +115,9 @@ class MobileRegistration {
                 .map((dynamic value) => value.toString())
                 .toList(growable: false),
       lowStockThreshold:
-          int.tryParse(inventoryPolicy['low_stock_threshold']?.toString() ?? '') ??
+          int.tryParse(
+            inventoryPolicy['low_stock_threshold']?.toString() ?? '',
+          ) ??
           lowStockThreshold,
       nearExpiryDays:
           int.tryParse(inventoryPolicy['near_expiry_days']?.toString() ?? '') ??
