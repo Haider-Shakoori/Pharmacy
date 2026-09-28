@@ -22,6 +22,12 @@ return [
         'devices' => 'دستگاه‌ها و همگام‌سازی',
         'settings' => 'تنظیمات',
     ],
+    'actions' => [
+        'open_pos' => 'باز کردن POS',
+    ],
+    'labels' => [
+        'pharmacy_code' => 'کُد دواخانه',
+    ],
     'alerts' => [
         'title' => 'هشدارهای عملیاتی',
         'subtitle' => 'مرکز توجه موجودی',

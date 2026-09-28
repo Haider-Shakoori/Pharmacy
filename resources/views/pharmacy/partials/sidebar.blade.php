@@ -14,6 +14,9 @@
             <a href="{{ route('pharmacy.dashboard') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('pharmacy.dashboard') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.dashboard') }}</a>
             <a href="{{ route('pharmacy.alerts.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('pharmacy.alerts.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.alerts') }}</a>
         @endif
+        @if (auth()->user()->hasPermission('pos.sell'))
+            <a href="{{ route('pharmacy.pos.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-bold {{ request()->routeIs('pharmacy.pos.*') ? 'bg-emerald-50 text-emerald-800' : 'text-emerald-700 hover:bg-emerald-50' }}">{{ __('pharmacy.nav.pos') }}</a>
+        @endif
         @if (auth()->user()->hasPermission('users.manage'))
             <a href="{{ route('pharmacy.users.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.users.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.users') }}</a>
         @endif
@@ -36,9 +39,6 @@
         @endif
         @if (auth()->user()->hasPermission('inventory.manage'))
             <a href="{{ route('pharmacy.inventory.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.inventory.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.inventory') }}</a>
-        @endif
-        @if (auth()->user()->hasPermission('pos.sell'))
-            <a href="{{ route('pharmacy.pos.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.pos.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.pos') }}</a>
         @endif
         @if (auth()->user()->hasPermission('daily_closing.perform'))
             <a href="{{ route('pharmacy.daily-closing.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.daily-closing.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Daily Closing</a>

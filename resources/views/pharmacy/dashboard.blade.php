@@ -11,9 +11,16 @@
                 <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ $tenant->name }}</h1>
                 <p class="mt-2 text-sm text-slate-600">{{ __('pharmacy.dashboard') }} · {{ auth()->user()->name }}</p>
             </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pharmacy code</p>
-                <p class="mt-1 font-mono font-semibold text-slate-800">{{ $tenant->slug }}</p>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                @if (auth()->user()->hasPermission('pos.sell'))
+                    <a href="{{ route('pharmacy.pos.index') }}" class="rounded-xl bg-emerald-600 px-5 py-3 text-center text-sm font-black text-white shadow-sm hover:bg-emerald-700">
+                        {{ __('pharmacy.actions.open_pos') }}
+                    </a>
+                @endif
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('pharmacy.labels.pharmacy_code') }}</p>
+                    <p class="mt-1 font-mono font-semibold text-slate-800">{{ $tenant->slug }}</p>
+                </div>
             </div>
         </div>
     </section>
