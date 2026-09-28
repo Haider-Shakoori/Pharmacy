@@ -18,7 +18,7 @@ Route::middleware('api.payload')->group(function (): void {
 Route::prefix('/v1/mobile')
     ->middleware(['api.payload', 'throttle:mobile-api'])
     ->group(function (): void {
-    Route::post('/session/refresh', MobileSessionRefreshController::class);
-    Route::post('/sync/push', MobileSyncPushController::class);
-    Route::get('/sync/pull/{stream}', MobileSyncPullController::class);
-});
+        Route::post('/session/refresh', MobileSessionRefreshController::class);
+        Route::post('/sync/push', MobileSyncPushController::class);
+        Route::get('/sync/pull/{stream}', MobileSyncPullController::class);
+    });
