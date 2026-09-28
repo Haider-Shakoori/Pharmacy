@@ -11,7 +11,6 @@ use App\Services\Access\RbacProvisioner;
 use App\Services\Accounting\AccountingProvisioner;
 use App\Services\Inventory\InventoryProvisioner;
 use App\Services\Settings\PharmacySettings;
-use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -27,7 +26,6 @@ class TenantProvisioningService
         private readonly ProvisioningEventRecorder $events,
         private readonly RbacProvisioner $rbac,
         private readonly PharmacySettings $settings,
-        private readonly TrialProvisioner $trials,
         private readonly InventoryProvisioner $inventory,
         private readonly AccountingProvisioner $accounting,
     ) {}
@@ -104,16 +102,15 @@ class TenantProvisioningService
                 return [$tenant->fresh(['business', 'domains']), null];
             }
 
-            $licenseKey = $this->trials->provision($tenant);
             $tenant->forceFill([
                 'provisioning_status' => 'application_ready',
                 'provisioning_error' => null,
             ])->save();
-            $this->events->record($tenant, 'readiness', 'success', 'Tenant HTTPS application is reachable; trial may start.', [
+            $this->events->record($tenant, 'readiness', 'success', 'Tenant HTTPS application is reachable; hosted trial is eligible to start from the platform.', [
                 'domain' => $domain,
             ]);
 
-            return [$tenant->fresh(['business', 'domains']), $licenseKey];
+            return [$tenant->fresh(['business', 'domains']), null];
         } catch (Throwable $exception) {
             $tenant->forceFill([
                 'provisioning_status' => 'failed',

@@ -34,6 +34,10 @@ return [
         'default_license_grace_days' => 7,
     ],
 
+    'mobile' => [
+        'android_download_url' => env('PHARMACY_ANDROID_APK_URL', '/downloads/businessos-pharmacy.apk'),
+    ],
+
     'license' => [
         'key_prefix' => 'PHM',
         'signing_private_key' => env('LICENSE_SIGNING_PRIVATE_KEY_B64'),
