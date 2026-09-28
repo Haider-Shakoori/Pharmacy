@@ -91,9 +91,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                   children: <Widget>[
                     Text(
                       strings.foundation,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 8),
                     Text(strings.foundationBody),
@@ -149,9 +148,8 @@ class _FeaturePanel extends StatelessWidget {
             Text(
               destination.title,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(

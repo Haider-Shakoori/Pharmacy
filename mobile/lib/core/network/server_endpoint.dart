@@ -12,10 +12,7 @@ class ServerEndpoint {
     return ServerEndpoint.fromInput(uri.toString(), kind);
   }
 
-  factory ServerEndpoint.fromInput(
-    String input,
-    ServerEndpointKind kind,
-  ) {
+  factory ServerEndpoint.fromInput(String input, ServerEndpointKind kind) {
     final String raw = input.trim();
     if (raw.isEmpty) {
       throw const FormatException('Server address is required.');

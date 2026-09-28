@@ -77,16 +77,10 @@ class _ConnectionModeCardState extends State<ConnectionModeCard> {
 
       final ServerEndpoint? local = localValue.isEmpty
           ? null
-          : ServerEndpoint.fromInput(
-              localValue,
-              ServerEndpointKind.local,
-            );
+          : ServerEndpoint.fromInput(localValue, ServerEndpointKind.local);
       final ServerEndpoint? cloud = cloudValue.isEmpty
           ? null
-          : ServerEndpoint.fromInput(
-              cloudValue,
-              ServerEndpointKind.cloud,
-            );
+          : ServerEndpoint.fromInput(cloudValue, ServerEndpointKind.cloud);
 
       if (_mode == DeploymentMode.local && local == null) {
         throw const FormatException(
@@ -98,9 +92,7 @@ class _ConnectionModeCardState extends State<ConnectionModeCard> {
           'Cloud mode requires an HTTPS tenant server.',
         );
       }
-      if (_mode == DeploymentMode.automatic &&
-          local == null &&
-          cloud == null) {
+      if (_mode == DeploymentMode.automatic && local == null && cloud == null) {
         throw const FormatException(
           'Automatic mode requires a local or cloud server.',
         );
@@ -122,9 +114,8 @@ class _ConnectionModeCardState extends State<ConnectionModeCard> {
         _saving = false;
         _saved = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.connectionSaved)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(strings.connectionSaved)));
     } on FormatException catch (error) {
       if (!mounted) {
         return;
@@ -158,9 +149,8 @@ class _ConnectionModeCardState extends State<ConnectionModeCard> {
                 children: <Widget>[
                   Text(
                     strings.connectionModeTitle,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
                   Text(strings.connectionModeBody),

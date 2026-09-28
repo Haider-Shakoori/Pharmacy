@@ -6,10 +6,7 @@ import 'package:businessos_pharmacy/core/network/server_endpoint.dart';
 import 'package:businessos_pharmacy/core/storage/secure_store.dart';
 
 class ConnectionProfileRepository {
-  ConnectionProfileRepository(
-    this._store, {
-    this.defaultCloudUri,
-  });
+  ConnectionProfileRepository(this._store, {this.defaultCloudUri});
 
   static const String _storageKey = 'pharmacy.connection.profile';
 

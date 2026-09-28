@@ -7,10 +7,7 @@ typedef EndpointReachability = Future<bool> Function(ServerEndpoint endpoint);
 enum ConnectionRouteSource { local, cloud, offline }
 
 class ConnectionRoute {
-  const ConnectionRoute({
-    required this.source,
-    this.endpoint,
-  });
+  const ConnectionRoute({required this.source, this.endpoint});
 
   final ConnectionRouteSource source;
   final ServerEndpoint? endpoint;
@@ -26,20 +23,18 @@ class ConnectionRouteResolver {
   Future<ConnectionRoute> resolve(ConnectionProfile profile) async {
     return switch (profile.mode) {
       DeploymentMode.local => _resolveSingle(
-          profile.localEndpoint,
-          ConnectionRouteSource.local,
-        ),
+        profile.localEndpoint,
+        ConnectionRouteSource.local,
+      ),
       DeploymentMode.cloud => _resolveSingle(
-          profile.cloudEndpoint,
-          ConnectionRouteSource.cloud,
-        ),
+        profile.cloudEndpoint,
+        ConnectionRouteSource.cloud,
+      ),
       DeploymentMode.automatic => _resolveAutomatic(profile),
     };
   }
 
-  Future<ConnectionRoute> _resolveAutomatic(
-    ConnectionProfile profile,
-  ) async {
+  Future<ConnectionRoute> _resolveAutomatic(ConnectionProfile profile) async {
     final ServerEndpoint? local = profile.localEndpoint;
     if (local != null && await _isReachable(local)) {
       return ConnectionRoute(

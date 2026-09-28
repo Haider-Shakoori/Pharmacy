@@ -49,22 +49,25 @@ void main() {
     expect(route.endpoint, same(cloud));
   });
 
-  test('automatic becomes offline when neither endpoint is reachable', () async {
-    final ConnectionRouteResolver resolver = ConnectionRouteResolver(
-      (ServerEndpoint endpoint) async => false,
-    );
+  test(
+    'automatic becomes offline when neither endpoint is reachable',
+    () async {
+      final ConnectionRouteResolver resolver = ConnectionRouteResolver(
+        (ServerEndpoint endpoint) async => false,
+      );
 
-    final ConnectionRoute route = await resolver.resolve(
-      ConnectionProfile(
-        mode: DeploymentMode.automatic,
-        localEndpoint: local,
-        cloudEndpoint: cloud,
-      ),
-    );
+      final ConnectionRoute route = await resolver.resolve(
+        ConnectionProfile(
+          mode: DeploymentMode.automatic,
+          localEndpoint: local,
+          cloudEndpoint: cloud,
+        ),
+      );
 
-    expect(route.source, ConnectionRouteSource.offline);
-    expect(route.isOnline, isFalse);
-  });
+      expect(route.source, ConnectionRouteSource.offline);
+      expect(route.isOnline, isFalse);
+    },
+  );
 
   test('local and cloud modes never cross-fallback', () async {
     final ConnectionRouteResolver resolver = ConnectionRouteResolver(

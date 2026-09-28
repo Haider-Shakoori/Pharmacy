@@ -28,16 +28,10 @@ class ConnectionProfile {
       mode: DeploymentMode.fromStorage(json['mode'] as String?),
       localEndpoint: localUrl == null || localUrl.isEmpty
           ? null
-          : ServerEndpoint.fromInput(
-              localUrl,
-              ServerEndpointKind.local,
-            ),
+          : ServerEndpoint.fromInput(localUrl, ServerEndpointKind.local),
       cloudEndpoint: cloudUrl == null || cloudUrl.isEmpty
           ? null
-          : ServerEndpoint.fromInput(
-              cloudUrl,
-              ServerEndpointKind.cloud,
-            ),
+          : ServerEndpoint.fromInput(cloudUrl, ServerEndpointKind.cloud),
     );
   }
 
