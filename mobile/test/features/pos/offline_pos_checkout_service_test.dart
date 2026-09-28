@@ -16,6 +16,7 @@ void main() {
     int idCounter = 0;
     service = OfflinePosCheckoutService(
       database,
+      authorizeTransaction: () async {},
       idGenerator: () {
         idCounter += 1;
         return '00000000-0000-4000-8000-${idCounter.toString().padLeft(12, '0')}';
@@ -111,6 +112,44 @@ void main() {
     expect(outbox.read<String>('event_type'), 'sale.completed');
     expect(payload['cashier_user_id'], '7');
     expect(payload['total'], '24.0000');
+  });
+
+  test('failed lease authorization leaves no partial local transaction', () async {
+    final OfflinePosCheckoutService blocked = OfflinePosCheckoutService(
+      database,
+      authorizeTransaction: () async {
+        throw const OfflinePosException('Lease expired.');
+      },
+      idGenerator: () => 'blocked-id',
+      clock: () => DateTime(2026, 9, 28, 10, 30),
+    );
+
+    await expectLater(
+      blocked.checkout(
+        const OfflinePosCheckoutRequest(
+          stockLocationId: 'main-location',
+          cashierUserId: '7',
+          permissions: <String>{'pos.sell'},
+          lines: <OfflinePosLineInput>[
+            OfflinePosLineInput(
+              medicineId: 'medicine-1',
+              quantity: '1',
+              unitPrice: '12.5000',
+            ),
+          ],
+          payments: <OfflinePosPaymentInput>[
+            OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
+          ],
+        ),
+      ),
+      throwsA(isA<OfflinePosException>()),
+    );
+
+    final int count = await database
+        .customSelect('SELECT COUNT(*) AS c FROM local_sales')
+        .map((QueryRow row) => row.read<int>('c'))
+        .getSingle();
+    expect(count, 0);
   });
 
   test(

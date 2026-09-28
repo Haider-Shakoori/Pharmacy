@@ -209,7 +209,9 @@ class MobileSyncApiTest extends TestCase
         $response = $this->withToken($this->accessToken)
             ->postJson('/api/v1/mobile/session/refresh')
             ->assertOk()
-            ->assertJsonPath('data.user.email', 'mobile@sync.test');
+            ->assertJsonPath('data.user.email', 'mobile@sync.test')
+            ->assertJsonPath('data.device_id', $this->deviceId)
+            ->assertJsonPath('data.offline_lease.public_key', config('pharmacy.license.signing_public_key'));
 
         $this->assertStringStartsWith(
             'v1.',

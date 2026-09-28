@@ -232,3 +232,31 @@ interrupted pull can safely resume without claiming data it did not commit.
 The Sync screen shows pending/rejected counts, the last completed pull timestamp
 and a manual Sync Now action. Network availability alone never marks a sale
 synced.
+
+
+## Batch 21 — signed offline license lease enforcement
+
+Batch 21 turns the server-issued offline lease into a local transaction gate.
+The Android client verifies every lease with Ed25519 using the public signing
+key distributed by the authenticated registration/session-refresh response.
+The private signing key never leaves the server.
+
+A lease is accepted only when its signature is valid and its tenant,
+activation and device identifiers match the current encrypted registration.
+The signed subscription state must be active or trial and the lease timestamps
+must be structurally valid.
+
+Before every new local POS transaction, the app verifies the signed lease and
+checks its expiry. It also stores the greatest locally observed wall-clock time
+and rejects material backwards clock movement, reducing simple clock rollback
+attempts to extend an expired lease.
+
+When the lease expires or cannot be verified, new POS transactions are blocked.
+Local pharmacy data is never deleted or hidden. Registration, connection
+settings and Batch 20 synchronization remain available so an online device can
+refresh its entitlement and recover immediately.
+
+Existing Batch 20 installations remain upgradeable without forced re-entry of
+the license key: older encrypted registrations may initially lack the public
+key/device fields, in which case POS is blocked until the next successful
+session refresh populates them.

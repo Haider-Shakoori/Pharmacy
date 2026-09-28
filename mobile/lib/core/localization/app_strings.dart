@@ -88,6 +88,10 @@ class AppStrings {
   String get posMobile => _value('posMobile');
   String get posRemove => _value('posRemove');
   String get posInvalidValue => _value('posInvalidValue');
+  String get offlineLeaseMissing => _value('offlineLeaseMissing');
+  String get offlineLeaseInvalid => _value('offlineLeaseInvalid');
+  String get offlineLeaseExpired => _value('offlineLeaseExpired');
+  String get offlineLeaseClockError => _value('offlineLeaseClockError');
   String get syncStatusTitle => _value('syncStatusTitle');
   String get syncPending => _value('syncPending');
   String get syncRejected => _value('syncRejected');

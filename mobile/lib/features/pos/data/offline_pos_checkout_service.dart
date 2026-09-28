@@ -6,12 +6,16 @@ import 'package:businessos_pharmacy/features/pos/domain/offline_pos_models.dart'
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
+typedef PosTransactionAuthorizer = Future<void> Function();
+
 class OfflinePosCheckoutService {
   OfflinePosCheckoutService(
     this._database, {
+    required PosTransactionAuthorizer authorizeTransaction,
     String Function()? idGenerator,
     DateTime Function()? clock,
-  }) : _idGenerator = idGenerator ?? const Uuid().v4,
+  }) : _authorizeTransaction = authorizeTransaction,
+       _idGenerator = idGenerator ?? const Uuid().v4,
        _clock = clock ?? DateTime.now;
 
   static const Set<String> _offlinePaymentMethods = <String>{
@@ -21,12 +25,15 @@ class OfflinePosCheckoutService {
   };
 
   final PharmacyDatabase _database;
+  final PosTransactionAuthorizer _authorizeTransaction;
   final String Function() _idGenerator;
   final DateTime Function() _clock;
 
   Future<OfflinePosCheckoutResult> checkout(
     OfflinePosCheckoutRequest request,
   ) async {
+    await _authorizeTransaction();
+
     if (!request.permissions.contains('pos.sell')) {
       throw const OfflinePosException(
         'This pharmacy user does not have POS sale permission.',
