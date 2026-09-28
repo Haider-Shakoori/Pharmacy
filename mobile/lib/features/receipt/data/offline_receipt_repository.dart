@@ -105,9 +105,7 @@ class OfflineReceiptRepository {
       total: FixedDecimal.parse(sale.read<String>('total')),
       tenderedAmount: FixedDecimal.parse(sale.read<String>('tendered_amount')),
       changeAmount: FixedDecimal.parse(sale.read<String>('change_amount')),
-      completedAt: DateTime.fromMillisecondsSinceEpoch(
-        completedSeconds * 1000,
-      ),
+      completedAt: DateTime.fromMillisecondsSinceEpoch(completedSeconds * 1000),
       lines: lineRows
           .map(
             (QueryRow row) => OfflineReceiptLine(

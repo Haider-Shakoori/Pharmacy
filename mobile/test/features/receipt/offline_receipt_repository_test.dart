@@ -11,23 +11,18 @@ void main() {
   setUp(() async {
     database = PharmacyDatabase(NativeDatabase.memory());
     repository = OfflineReceiptRepository(database);
-    final int now =
-        DateTime(2026, 9, 28, 12).millisecondsSinceEpoch ~/ 1000;
+    final int now = DateTime(2026, 9, 28, 12).millisecondsSinceEpoch ~/ 1000;
 
-    await database.customStatement(
-      '''
+    await database.customStatement('''
       INSERT INTO local_medicines (
         id, medicine_code, brand_name, sale_unit, is_active, is_deleted
       ) VALUES ('med-1', 'MED-1', 'Paracetamol', 'box', 1, 0)
-      ''',
-    );
-    await database.customStatement(
-      '''
+      ''');
+    await database.customStatement('''
       INSERT INTO local_customers (
         id, name, balance, is_deleted
       ) VALUES ('customer-1', 'Walk Customer', '0.0000', 0)
-      ''',
-    );
+      ''');
     await database.customStatement(
       '''
       INSERT INTO local_sales (
@@ -42,8 +37,7 @@ void main() {
       ''',
       <Object?>[now, now, now],
     );
-    await database.customStatement(
-      '''
+    await database.customStatement('''
       INSERT INTO local_sale_lines (
         local_id, sale_local_id, medicine_id, quantity,
         unit_price, discount_amount, line_total
@@ -51,36 +45,30 @@ void main() {
         'line-1', 'sale-1', 'med-1', '2.0000',
         '12.5000', '1.0000', '24.0000'
       )
-      ''',
-    );
-    await database.customStatement(
-      '''
+      ''');
+    await database.customStatement('''
       INSERT INTO local_sale_payments (
         local_id, sale_local_id, method, amount, reference
       ) VALUES ('payment-1', 'sale-1', 'cash', '30.0000', NULL)
-      ''',
-    );
+      ''');
   });
 
   tearDown(() async {
     await database.close();
   });
 
-  test(
-    'loads a complete receipt locally without server access',
-    () async {
-      final OfflineReceipt? receipt = await repository.find('sale-1');
+  test('loads a complete receipt locally without server access', () async {
+    final OfflineReceipt? receipt = await repository.find('sale-1');
 
-      expect(receipt, isNotNull);
-      expect(receipt!.customerName, 'Walk Customer');
-      expect(receipt.lines.single.medicineName, 'Paracetamol');
-      expect(receipt.lines.single.quantity.toString(), '2.0000');
-      expect(receipt.payments.single.method, 'cash');
-      expect(receipt.total.toString(), '24.0000');
-      expect(receipt.changeAmount.toString(), '6.0000');
-      expect(receipt.isSynced, isFalse);
-    },
-  );
+    expect(receipt, isNotNull);
+    expect(receipt!.customerName, 'Walk Customer');
+    expect(receipt.lines.single.medicineName, 'Paracetamol');
+    expect(receipt.lines.single.quantity.toString(), '2.0000');
+    expect(receipt.payments.single.method, 'cash');
+    expect(receipt.total.toString(), '24.0000');
+    expect(receipt.changeAmount.toString(), '6.0000');
+    expect(receipt.isSynced, isFalse);
+  });
 
   test('recent receipts survive restart for reprinting', () async {
     final List<OfflineReceipt> receipts = await repository.recentCompleted();

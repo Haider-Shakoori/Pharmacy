@@ -133,9 +133,8 @@ class _ReceiptPrintSheetState extends State<ReceiptPrintSheet> {
       await _printer.disconnect(printer);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(strings.receiptPrinted)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(strings.receiptPrinted)));
       }
     } on Object catch (error) {
       if (mounted) {
@@ -174,9 +173,7 @@ class _ReceiptPrintSheetState extends State<ReceiptPrintSheet> {
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 4),
-              Text(
-                strings.receiptNumber + ': ' + widget.receipt.displayNumber,
-              ),
+              Text(strings.receiptNumber + ': ' + widget.receipt.displayNumber),
               const SizedBox(height: 16),
               SegmentedButton<ReceiptPaperWidth>(
                 segments: <ButtonSegment<ReceiptPaperWidth>>[
@@ -210,9 +207,7 @@ class _ReceiptPrintSheetState extends State<ReceiptPrintSheet> {
                 const SizedBox(height: 8),
                 Text(
                   _error!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],
               const SizedBox(height: 8),

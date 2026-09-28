@@ -362,11 +362,8 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           ],
         ),
       );
-      final OfflineReceipt? receipt = await _receipts.find(
-        result.saleLocalId,
-      );
+      final OfflineReceipt? receipt = await _receipts.find(result.saleLocalId);
       final List<OfflineReceipt> recent = await _receipts.recentCompleted();
-
 
       if (!mounted) {
         return;

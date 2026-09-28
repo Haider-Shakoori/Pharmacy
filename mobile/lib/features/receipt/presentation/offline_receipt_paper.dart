@@ -75,13 +75,10 @@ class OfflineReceiptPaper extends StatelessWidget {
                     receipt.customerName ?? strings.receiptWalkIn,
                     small,
                   ),
-                  _row(
-                    strings.receiptLocation,
-                    receipt.stockLocationId,
-                    small,
-                  ),
+                  _row(strings.receiptLocation, receipt.stockLocationId, small),
                   const Divider(color: Colors.black),
-                  for (final OfflineReceiptLine line in receipt.lines) ...<Widget>[
+                  for (final OfflineReceiptLine line
+                      in receipt.lines) ...<Widget>[
                     Text(line.medicineName, style: strong),
                     _row(
                       line.quantity.compact +
@@ -170,11 +167,7 @@ class OfflineReceiptPaper extends StatelessWidget {
           Expanded(child: Text(label, style: style)),
           const SizedBox(width: 12),
           Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: style,
-            ),
+            child: Text(value, textAlign: TextAlign.end, style: style),
           ),
         ],
       ),

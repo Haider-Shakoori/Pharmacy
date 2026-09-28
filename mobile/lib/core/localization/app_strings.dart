@@ -247,8 +247,7 @@ class AppStrings {
       'receiptUnnamedPrinter': 'Thermal printer',
       'receiptPrinted': 'Receipt sent to printer.',
       'receiptPrinterConnectFailed': 'Could not connect to the printer.',
-      'receiptPrintingHelp':
-          'Printing uses the locally stored receipt and works without Internet. Bluetooth/BLE, USB and configured network printers are supported.',
+      'receiptPrintingHelp': 'Printing uses the locally stored receipt and works without Internet. Bluetooth/BLE, USB and configured network printers are supported.',
       'syncStatusTitle': 'Synchronization status',
       'syncPending': 'Pending',
       'syncRejected': 'Rejected',
@@ -364,8 +363,7 @@ class AppStrings {
       'receiptUnnamedPrinter': 'پرینتر حرارتی',
       'receiptPrinted': 'رسید به پرینتر فرستاده شد.',
       'receiptPrinterConnectFailed': 'اتصال به پرینتر ممکن نشد.',
-      'receiptPrintingHelp':
-          'چاپ از رسید ذخیره‌شده در دستگاه استفاده می‌کند و بدون اینترنت کار می‌کند. بلوتوث/BLE، USB و پرینتر شبکه تنظیم‌شده پشتیبانی می‌شود.',
+      'receiptPrintingHelp': 'چاپ از رسید ذخیره‌شده در دستگاه استفاده می‌کند و بدون اینترنت کار می‌کند. بلوتوث/BLE، USB و پرینتر شبکه تنظیم‌شده پشتیبانی می‌شود.',
       'syncStatusTitle': 'وضعیت همگام‌سازی',
       'syncPending': 'در انتظار',
       'syncRejected': 'ردشده',
@@ -480,8 +478,7 @@ class AppStrings {
       'receiptUnnamedPrinter': 'حرارتي پرینټر',
       'receiptPrinted': 'رسید پرینټر ته ولېږل شو.',
       'receiptPrinterConnectFailed': 'پرینټر سره نښلون ونه شو.',
-      'receiptPrintingHelp':
-          'چاپ د وسیلې له ځايي خوندي شوي رسید څخه کار اخلي او انټرنېټ ته اړتیا نه لري. بلوتوث/BLE، USB او تنظیم شوي شبکوي پرینټرونه ملاتړ کېږي.',
+      'receiptPrintingHelp': 'چاپ د وسیلې له ځايي خوندي شوي رسید څخه کار اخلي او انټرنېټ ته اړتیا نه لري. بلوتوث/BLE، USB او تنظیم شوي شبکوي پرینټرونه ملاتړ کېږي.',
       'syncStatusTitle': 'د همغږۍ حالت',
       'syncPending': 'په تمه',
       'syncRejected': 'رد شوي',

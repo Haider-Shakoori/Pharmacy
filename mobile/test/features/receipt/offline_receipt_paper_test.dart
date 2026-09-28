@@ -32,10 +32,7 @@ void main() {
         ),
       ],
       payments: <OfflineReceiptPayment>[
-        OfflineReceiptPayment(
-          method: 'cash',
-          amount: FixedDecimal.parse('30'),
-        ),
+        OfflineReceiptPayment(method: 'cash', amount: FixedDecimal.parse('30')),
       ],
     );
 
