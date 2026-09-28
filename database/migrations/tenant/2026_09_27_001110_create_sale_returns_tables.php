@@ -49,7 +49,7 @@ return new class extends Migration
             $table->boolean('restocked')->default(false);
             $table->timestamps();
 
-            $table->index(['sale_batch_allocation_id', 'sale_return_line_id']);
+            $table->index(['sale_batch_allocation_id', 'sale_return_line_id'], 'sale_return_alloc_batch_line_idx');
         });
 
         Schema::create('sale_return_refunds', function (Blueprint $table) {
