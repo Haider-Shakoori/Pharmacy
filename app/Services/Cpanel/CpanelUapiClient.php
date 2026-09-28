@@ -19,11 +19,31 @@ class CpanelUapiClient
             ? $response['result']
             : $response;
 
-        if (! is_array($result) || (int) ($result['status'] ?? 0) !== 1) {
-            $errors = $result['errors'] ?? ['Unknown cPanel UAPI failure.'];
-            $message = is_array($errors) ? implode(' ', array_filter($errors)) : (string) $errors;
+        if (! is_array($result)) {
+            throw new RuntimeException('cPanel UAPI request failed: Unknown cPanel UAPI failure.');
+        }
+
+        $errors = $result['errors'] ?? null;
+        $hasErrors = is_array($errors)
+            ? array_filter($errors) !== []
+            : $errors !== null && $errors !== '';
+
+        $hasExplicitSuccess = array_key_exists('status', $result)
+            && (int) $result['status'] === 1;
+        $hasDirectDataSuccess = ! array_key_exists('status', $result)
+            && array_key_exists('data', $result)
+            && ! $hasErrors;
+
+        if (! $hasExplicitSuccess && ! $hasDirectDataSuccess) {
+            $message = is_array($errors)
+                ? implode(' ', array_filter($errors))
+                : (string) ($errors ?: 'Unknown cPanel UAPI failure.');
 
             throw new RuntimeException('cPanel UAPI request failed: '.$message);
+        }
+
+        if ($hasDirectDataSuccess) {
+            $result['status'] = 1;
         }
 
         return $result;

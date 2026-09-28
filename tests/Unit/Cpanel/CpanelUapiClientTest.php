@@ -38,6 +38,38 @@ class CpanelUapiClientTest extends TestCase
         $this->assertSame('businessos_pharmacy', $result['data'][0]['database']);
     }
 
+    public function test_accepts_namecheap_direct_response_without_status(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'errors' => null,
+                'data' => [
+                    ['database' => 'businessos_pharmacy'],
+                ],
+            ]),
+        ]);
+
+        $result = app(CpanelUapiClient::class)->call('Mysql', 'list_databases');
+
+        $this->assertSame(1, $result['status']);
+        $this->assertSame('businessos_pharmacy', $result['data'][0]['database']);
+    }
+
+    public function test_rejects_direct_response_without_status_when_errors_are_present(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'errors' => ['Authentication failed.'],
+                'data' => null,
+            ]),
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('cPanel UAPI request failed: Authentication failed.');
+
+        app(CpanelUapiClient::class)->call('Mysql', 'list_databases');
+    }
+
     public function test_accepts_wrapped_uapi_response_shape(): void
     {
         Http::fake([
