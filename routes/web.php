@@ -5,6 +5,7 @@ use App\Http\Controllers\Platform\DashboardController as PlatformDashboardContro
 use App\Http\Controllers\Platform\LicenseController;
 use App\Http\Controllers\Platform\PlanController;
 use App\Http\Controllers\Platform\SubscriptionController;
+use App\Http\Controllers\Platform\SubscriptionMonitoringController;
 use App\Http\Controllers\Platform\TenantController;
 use App\Http\Controllers\Platform\TenantProvisioningRetryController;
 use App\Http\Controllers\Platform\TenantStatusController;
@@ -36,6 +37,7 @@ Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
             Route::resource('plans', PlanController::class)->except(['show', 'destroy']);
 
             Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+            Route::get('/monitoring', SubscriptionMonitoringController::class)->name('monitoring.index');
             Route::get('/subscriptions/{tenant}/edit', [SubscriptionController::class, 'edit'])->name('subscriptions.edit');
             Route::put('/subscriptions/{tenant}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
 
