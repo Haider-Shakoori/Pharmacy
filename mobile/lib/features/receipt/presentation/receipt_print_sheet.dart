@@ -4,7 +4,6 @@ import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/receipt/domain/offline_receipt.dart';
 import 'package:businessos_pharmacy/features/receipt/presentation/offline_receipt_paper.dart';
-import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_thermal_printer/flutter_thermal_printer.dart';
 import 'package:flutter_thermal_printer/utils/printer.dart';
