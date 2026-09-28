@@ -53,10 +53,6 @@ class DeviceIdentityService {
   }
 }
 
-final Provider<SecureStore> secureStoreProvider = Provider<SecureStore>(
-  (Ref ref) => EncryptedSecureStore(),
-);
-
 final Provider<DeviceIdentityService> deviceIdentityServiceProvider =
     Provider<DeviceIdentityService>(
       (Ref ref) => DeviceIdentityService(ref.watch(secureStoreProvider)),

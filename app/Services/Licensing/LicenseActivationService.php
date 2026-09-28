@@ -24,6 +24,9 @@ class LicenseActivationService
         string $deviceId,
         ?string $deviceName,
         ?string $appVersion,
+        ?string $deviceModel = null,
+        ?string $osVersion = null,
+        ?string $buildNumber = null,
     ): array {
         $license = $this->keys->findByPlainText($licenseKey);
 
@@ -33,7 +36,7 @@ class LicenseActivationService
             ]);
         }
 
-        return DB::transaction(function () use ($license, $deviceId, $deviceName, $appVersion): array {
+        return DB::transaction(function () use ($license, $deviceId, $deviceName, $appVersion, $deviceModel, $osVersion, $buildNumber): array {
             /** @var License $license */
             $license = License::query()
                 ->with(['subscription.plan', 'subscription.business.tenant'])
@@ -88,6 +91,9 @@ class LicenseActivationService
                 'device_name' => $deviceName,
                 'platform' => 'android',
                 'app_version' => $appVersion,
+                'device_model' => $deviceModel,
+                'os_version' => $osVersion,
+                'build_number' => $buildNumber,
                 'last_seen_at' => $now,
             ]);
             $activation->save();
@@ -118,6 +124,7 @@ class LicenseActivationService
             ];
 
             return [
+                'activation_id' => $activation->id,
                 'lease_token' => $this->signer->sign($payload),
                 'lease_expires_at' => $leaseExpiresAt->toIso8601String(),
                 'subscription_health' => $this->health->forSubscription($subscription)->value,
@@ -125,6 +132,7 @@ class LicenseActivationService
                     'id' => $subscription->business->tenant->id,
                     'name' => $subscription->business->pharmacy_name,
                     'slug' => $subscription->business->slug,
+                    'cloud_base_url' => 'https://'.$subscription->business->slug.'.'.config('pharmacy.deployment_host'),
                     'timezone' => $subscription->business->default_timezone,
                     'currency' => $subscription->business->billing_currency,
                     'locale' => $subscription->business->default_locale,

@@ -141,3 +141,34 @@ isolates, preparing for later background synchronization. Batch 17 defines
 storage and durability only: Batch 18 binds tenant/device identity, Batch 19
 implements local-first sale transactions, Batch 20 implements network sync, and
 Batch 22 enforces offline stock allocation.
+
+
+## Batch 18 — mobile authentication and device registration
+
+Batch 18 binds an Android installation to a real pharmacy tenant and an active
+tenant user before transactional POS is enabled.
+
+Registration requires the subscription license key, the installation UUID and
+valid tenant-user credentials. The license and password are sent only for the
+registration request and are not persisted on the device. The server first
+resolves the license to its tenant, authenticates the user inside that tenant
+database, then activates the device. Invalid credentials therefore do not
+consume a device slot.
+
+A successful registration returns an Ed25519-signed mobile access token plus the
+existing signed offline lease. The access token is explicitly marked with
+`purpose=mobile_access`, is bound to tenant, activation, user and installation,
+and expires no later than the offline lease. Future API middleware must verify
+the token purpose and current activation status before accepting synchronized
+transactions.
+
+The encrypted mobile registration record contains only the tenant/device
+binding, signed tokens, expiry timestamps and display-safe user metadata. Drift
+database scope is derived from the registered tenant ID. Changing Local, Cloud
+or Automatic transport does not change that database scope.
+
+Automatic registration tries Local first and Cloud second only for retryable
+transport/server failures. Authentication or license validation failures do not
+fall through to another endpoint. When the server returns the canonical cloud
+tenant URL, the app stores it in the connection profile so later Automatic
+failover stays on the same pharmacy.

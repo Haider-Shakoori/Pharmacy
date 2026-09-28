@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 abstract interface class SecureStore {
@@ -10,7 +11,7 @@ abstract interface class SecureStore {
 
 class EncryptedSecureStore implements SecureStore {
   EncryptedSecureStore({FlutterSecureStorage? storage})
-    : _storage = storage ?? FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 
@@ -25,3 +26,7 @@ class EncryptedSecureStore implements SecureStore {
     return _storage.write(key: key, value: value);
   }
 }
+
+final Provider<SecureStore> secureStoreProvider = Provider<SecureStore>(
+  (Ref ref) => EncryptedSecureStore(),
+);
