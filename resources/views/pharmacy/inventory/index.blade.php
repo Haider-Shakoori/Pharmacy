@@ -54,7 +54,7 @@
                     @php
                         $expired = $batch->expires_at?->isBefore(today()) ?? false;
                         $near = $batch->expires_at && ! $expired && $batch->expires_at->lte(today()->addDays((int) $policy['near_expiry_days']));
-                        $low = BrickMathBigDecimal::of($batch->available_quantity)->isLessThanOrEqualTo(BrickMathBigDecimal::of((string) $policy['low_stock_threshold']));
+                        $low = \\Brick\\Math\\BigDecimal::of($batch->available_quantity)->isLessThanOrEqualTo(\\Brick\\Math\\BigDecimal::of((string) $policy['low_stock_threshold']));
                     @endphp
                     <tr>
                         <td class="px-4 py-3"><a href="{{ route('pharmacy.inventory.show', $batch) }}" class="font-semibold text-teal-700">{{ $batch->medicine->brand_name }}</a><p class="text-xs text-slate-500">{{ $batch->medicine->generic_name }} {{ $batch->medicine->strength }}</p></td>
