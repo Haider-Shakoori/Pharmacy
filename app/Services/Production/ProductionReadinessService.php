@@ -112,7 +112,7 @@ class ProductionReadinessService
         $this->add(
             $checks,
             'filesystem.storage',
-            is_writable(storage_path()) && is_writable(bootstrap_path('cache')),
+            is_writable(storage_path()) && is_writable(base_path('bootstrap/cache')),
             'Laravel storage and bootstrap cache directories are writable.',
             'Laravel storage/bootstrap cache directories must be writable.',
         );
