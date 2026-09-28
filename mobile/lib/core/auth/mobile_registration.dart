@@ -11,6 +11,8 @@ class MobileRegistration {
     required this.userName,
     required this.userEmail,
     required this.permissions,
+    this.lowStockThreshold = 10,
+    this.nearExpiryDays = 90,
     this.deviceId,
     this.leasePublicKey,
     this.cloudBaseUrl,
@@ -26,6 +28,9 @@ class MobileRegistration {
     final Map<String, dynamic> lease = Map<String, dynamic>.from(
       data['offline_lease'] as Map,
     );
+    final Map<String, dynamic> inventoryPolicy = data['inventory_policy'] is Map
+        ? Map<String, dynamic>.from(data['inventory_policy'] as Map)
+        : <String, dynamic>{};
 
     return MobileRegistration(
       tenantId: tenant['id'].toString(),
@@ -43,6 +48,14 @@ class MobileRegistration {
       permissions: (user['permissions'] as List<dynamic>? ?? <dynamic>[])
           .map((dynamic value) => value.toString())
           .toList(growable: false),
+      lowStockThreshold:
+          int.tryParse(
+            inventoryPolicy['low_stock_threshold']?.toString() ?? '',
+          ) ??
+          10,
+      nearExpiryDays:
+          int.tryParse(inventoryPolicy['near_expiry_days']?.toString() ?? '') ??
+          90,
       cloudBaseUrl: tenant['cloud_base_url']?.toString(),
     );
   }
@@ -64,6 +77,10 @@ class MobileRegistration {
       permissions: (json['permissions'] as List<dynamic>? ?? <dynamic>[])
           .map((dynamic value) => value.toString())
           .toList(growable: false),
+      lowStockThreshold:
+          int.tryParse(json['low_stock_threshold']?.toString() ?? '') ?? 10,
+      nearExpiryDays:
+          int.tryParse(json['near_expiry_days']?.toString() ?? '') ?? 90,
       cloudBaseUrl: json['cloud_base_url']?.toString(),
     );
   }
@@ -75,6 +92,9 @@ class MobileRegistration {
     final Map<String, dynamic>? user = data['user'] is Map
         ? Map<String, dynamic>.from(data['user'] as Map)
         : null;
+    final Map<String, dynamic> inventoryPolicy = data['inventory_policy'] is Map
+        ? Map<String, dynamic>.from(data['inventory_policy'] as Map)
+        : <String, dynamic>{};
 
     return MobileRegistration(
       tenantId: tenantId,
@@ -94,6 +114,14 @@ class MobileRegistration {
           : (user['permissions'] as List<dynamic>? ?? <dynamic>[])
                 .map((dynamic value) => value.toString())
                 .toList(growable: false),
+      lowStockThreshold:
+          int.tryParse(
+            inventoryPolicy['low_stock_threshold']?.toString() ?? '',
+          ) ??
+          lowStockThreshold,
+      nearExpiryDays:
+          int.tryParse(inventoryPolicy['near_expiry_days']?.toString() ?? '') ??
+          nearExpiryDays,
       cloudBaseUrl: cloudBaseUrl,
     );
   }
@@ -111,6 +139,8 @@ class MobileRegistration {
   final String userName;
   final String userEmail;
   final List<String> permissions;
+  final int lowStockThreshold;
+  final int nearExpiryDays;
   final String? cloudBaseUrl;
 
   bool get accessExpired => !DateTime.now().isBefore(accessExpiresAt);
@@ -130,6 +160,8 @@ class MobileRegistration {
       'user_name': userName,
       'user_email': userEmail,
       'permissions': permissions,
+      'low_stock_threshold': lowStockThreshold,
+      'near_expiry_days': nearExpiryDays,
       'cloud_base_url': cloudBaseUrl,
     };
   }

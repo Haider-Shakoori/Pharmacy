@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Licensing\OfflineLeaseSigner;
 use App\Services\Licensing\SignedTokenVerifier;
+use App\Services\Settings\PharmacySettings;
 use App\Services\Subscriptions\SubscriptionHealthService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\AuthenticationException;
@@ -19,6 +20,7 @@ class MobileAccessService
         private readonly SignedTokenVerifier $tokens,
         private readonly OfflineLeaseSigner $signer,
         private readonly SubscriptionHealthService $health,
+        private readonly PharmacySettings $settings,
     ) {}
 
     public function authenticate(
@@ -188,6 +190,7 @@ class MobileAccessService
             'device_id' => $activation->device_id,
             'access_expires_at' => $leaseExpiresAt->toIso8601String(),
             'subscription_health' => $health->value,
+            'inventory_policy' => $this->settings->inventory($context->tenant),
             'offline_lease' => [
                 'token' => $this->signer->sign($leasePayload),
                 'expires_at' => $leaseExpiresAt->toIso8601String(),

@@ -1,6 +1,7 @@
 import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
+import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
 import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
@@ -110,6 +111,10 @@ class _AppShellState extends ConsumerState<AppShell> {
               const OfflinePosPanel()
             else
               _FeaturePanel(destination: current),
+            if (_selectedIndex == 1) ...<Widget>[
+              const SizedBox(height: 16),
+              const OperationalAlertsCard(),
+            ],
             if (_selectedIndex == 3) ...<Widget>[
               const SizedBox(height: 16),
               const SyncStatusCard(),
