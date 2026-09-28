@@ -16,10 +16,10 @@ class LicenseController extends Controller
         $search = trim((string) $request->query('search'));
 
         $subscriptions = Subscription::query()
-            ->with(['tenant', 'plan', 'license'])
+            ->with(['business.tenant', 'plan', 'license'])
             ->when($search !== '', function ($query) use ($search): void {
-                $query->whereHas('tenant', function ($query) use ($search): void {
-                    $query->where('name', 'like', "%{$search}%")
+                $query->whereHas('business', function ($query) use ($search): void {
+                    $query->where('pharmacy_name', 'like', "%{$search}%")
                         ->orWhere('slug', 'like', "%{$search}%");
                 });
             })

@@ -26,7 +26,7 @@ class CpanelTenantDatabaseProvisioner implements TenantDatabaseProvisioner
         }
 
         if (! $this->databaseExists($fullName)) {
-            $this->cpanel->call('Mysql', 'create_database', ['name' => $shortName]);
+            $this->cpanel->call('Mysql', 'create_database', ['name' => $fullName]);
         }
 
         $this->cpanel->call('Mysql', 'set_privileges_on_database', [

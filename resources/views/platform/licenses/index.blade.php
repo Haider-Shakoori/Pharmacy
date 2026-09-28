@@ -31,8 +31,8 @@
                     @forelse ($subscriptions as $subscription)
                         <tr>
                             <td class="px-4 py-3">
-                                <p class="font-semibold">{{ $subscription->tenant->name }}</p>
-                                <p class="text-xs text-slate-500">{{ $subscription->tenant->slug }}</p>
+                                <p class="font-semibold">{{ $subscription->business->pharmacy_name }}</p>
+                                <p class="text-xs text-slate-500">{{ $subscription->business->slug }}</p>
                             </td>
                             <td class="px-4 py-3">{{ $subscription->plan->name }}</td>
                             <td class="px-4 py-3">

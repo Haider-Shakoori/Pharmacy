@@ -37,8 +37,8 @@
                     @forelse ($subscriptions as $subscription)
                         <tr>
                             <td class="px-4 py-3">
-                                <p class="font-semibold">{{ $subscription->tenant->name }}</p>
-                                <p class="text-xs text-slate-500">{{ $subscription->tenant->slug }}</p>
+                                <p class="font-semibold">{{ $subscription->business->pharmacy_name }}</p>
+                                <p class="text-xs text-slate-500">{{ $subscription->business->slug }}</p>
                             </td>
                             <td class="px-4 py-3">{{ $subscription->plan->name }}</td>
                             <td class="px-4 py-3"><span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold">{{ $subscription->status->value }}</span></td>
@@ -57,7 +57,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-end">
-                                <a href="{{ route('platform.subscriptions.edit', $subscription->tenant) }}" class="text-sm font-bold text-teal-700">Manage</a>
+                                <a href="{{ route('platform.subscriptions.edit', $subscription->business->tenant) }}" class="text-sm font-bold text-teal-700">Manage</a>
                             </td>
                         </tr>
                     @empty
