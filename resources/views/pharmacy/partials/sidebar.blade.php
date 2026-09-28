@@ -47,6 +47,9 @@
         @if (auth()->user()->hasPermission('daily_closing.perform'))
             <a href="{{ route('pharmacy.daily-closing.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.daily-closing.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Daily Closing</a>
         @endif
+        @if (auth()->user()->hasPermission('safe.view'))
+            <a href="{{ route('pharmacy.safe.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-bold {{ request()->routeIs('pharmacy.safe.*') ? 'bg-amber-50 text-amber-900' : 'text-amber-800 hover:bg-amber-50' }}">{{ __('safe.nav') }}</a>
+        @endif
         @if (auth()->user()->hasPermission('reports.view'))
             <a href="{{ route('pharmacy.reports.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.reports.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Reports</a>
         @endif

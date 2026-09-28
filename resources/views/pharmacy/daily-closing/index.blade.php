@@ -6,7 +6,10 @@
 <div class="mx-auto max-w-7xl space-y-5">
     <div class="flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
         <div><p class="text-sm font-semibold text-teal-700">Cash control</p><h1 class="mt-1 text-3xl font-bold tracking-tight">Daily Closing</h1><p class="mt-1 text-sm text-slate-500">Business date {{ $businessDate }} · shifts, collections and reconciliation.</p></div>
-        <form method="GET"><select name="location" onchange="this.form.submit()" class="rounded-xl border border-slate-300 bg-white px-3 py-2.5">@foreach ($locations as $item)<option value="{{ $item->id }}" @selected($location?->id === $item->id)>{{ $item->branch?->name }} · {{ $item->name }}</option>@endforeach</select></form>
+        <div class="flex flex-wrap items-center gap-2">
+            @if(auth()->user()->hasPermission('safe.view'))<a href="{{ route('pharmacy.safe.index') }}" class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-900">{{ __('safe.nav') }}</a>@endif
+            <form method="GET"><select name="location" onchange="this.form.submit()" class="rounded-xl border border-slate-300 bg-white px-3 py-2.5">@foreach ($locations as $item)<option value="{{ $item->id }}" @selected($location?->id === $item->id)>{{ $item->branch?->name }} · {{ $item->name }}</option>@endforeach</select></form>
+        </div>
     </div>
 
     @if (! $location)
