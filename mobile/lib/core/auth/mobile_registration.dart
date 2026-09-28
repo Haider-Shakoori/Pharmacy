@@ -43,6 +43,34 @@ class MobileRegistration {
     );
   }
 
+  MobileRegistration withRefreshedSession(Map<String, dynamic> data) {
+    final Map<String, dynamic> lease = Map<String, dynamic>.from(
+      data['offline_lease'] as Map,
+    );
+    final Map<String, dynamic>? user = data['user'] is Map
+        ? Map<String, dynamic>.from(data['user'] as Map)
+        : null;
+
+    return MobileRegistration(
+      tenantId: tenantId,
+      tenantName: tenantName,
+      activationId: activationId,
+      accessToken: data['access_token'].toString(),
+      accessExpiresAt: DateTime.parse(data['access_expires_at'].toString()),
+      leaseToken: lease['token'].toString(),
+      leaseExpiresAt: DateTime.parse(lease['expires_at'].toString()),
+      userId: user?['id']?.toString() ?? userId,
+      userName: user?['name']?.toString() ?? userName,
+      userEmail: user?['email']?.toString() ?? userEmail,
+      permissions: user == null
+          ? permissions
+          : (user['permissions'] as List<dynamic>? ?? <dynamic>[])
+              .map((dynamic value) => value.toString())
+              .toList(growable: false),
+      cloudBaseUrl: cloudBaseUrl,
+    );
+  }
+
   factory MobileRegistration.fromJson(Map<String, dynamic> json) {
     return MobileRegistration(
       tenantId: json['tenant_id'].toString(),

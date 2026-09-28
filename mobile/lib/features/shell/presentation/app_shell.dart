@@ -5,6 +5,7 @@ import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
+import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -110,6 +111,8 @@ class _AppShellState extends ConsumerState<AppShell> {
             else
               _FeaturePanel(destination: current),
             if (_selectedIndex == 3) ...<Widget>[
+              const SizedBox(height: 16),
+              const SyncStatusCard(),
               const SizedBox(height: 16),
               const MobileRegistrationCard(),
               const SizedBox(height: 16),

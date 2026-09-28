@@ -88,6 +88,16 @@ class AppStrings {
   String get posMobile => _value('posMobile');
   String get posRemove => _value('posRemove');
   String get posInvalidValue => _value('posInvalidValue');
+  String get syncStatusTitle => _value('syncStatusTitle');
+  String get syncPending => _value('syncPending');
+  String get syncRejected => _value('syncRejected');
+  String get syncLast => _value('syncLast');
+  String get syncNever => _value('syncNever');
+  String get syncNow => _value('syncNow');
+  String get syncing => _value('syncing');
+  String get syncCompleted => _value('syncCompleted');
+  String get syncPushed => _value('syncPushed');
+  String get syncPulled => _value('syncPulled');
 
   static const Map<AppLocale, Map<String, String>>
   _translations = <AppLocale, Map<String, String>>{
@@ -105,8 +115,8 @@ class AppStrings {
       'stockBody': 'Local batch and stock snapshots will be added with the SQLite/Drift data layer.',
       'customersTitle': 'Customer lookup foundation',
       'customersBody': 'Customer data will be cached locally only after the offline database and sync contracts are in place.',
-      'syncTitle': 'Synchronization foundation',
-      'syncBody': 'Connectivity is observed separately from server reachability. No transaction is marked synced without a server acknowledgement.',
+      'syncTitle': 'Synchronization',
+      'syncBody': 'Push offline sales only after server acknowledgement, then pull incremental catalog, inventory and customer updates.',
       'networkAvailable': 'Network link available',
       'networkUnavailable': 'No network link',
       'networkUnknown': 'Checking network link',
@@ -167,6 +177,16 @@ class AppStrings {
       'posMobile': 'Mobile payment',
       'posRemove': 'Remove',
       'posInvalidValue': 'Enter valid quantity, price and discount values.',
+      'syncStatusTitle': 'Synchronization status',
+      'syncPending': 'Pending',
+      'syncRejected': 'Rejected',
+      'syncLast': 'Last sync',
+      'syncNever': 'This device has not completed a sync yet.',
+      'syncNow': 'Sync now',
+      'syncing': 'Synchronizing…',
+      'syncCompleted': 'Synchronization completed',
+      'syncPushed': 'sales pushed',
+      'syncPulled': 'records pulled',
     },
     AppLocale.dari: <String, String>{
       'appName': 'فارمسی BusinessOS',
@@ -183,8 +203,8 @@ class AppStrings {
           'بچ‌ها و موجودی محلی با لایه دیتابیس SQLite/Drift اضافه می‌شوند.',
       'customersTitle': 'بنیاد جستجوی مشتری',
       'customersBody': 'اطلاعات مشتری پس از آماده‌شدن دیتابیس آفلاین و قراردادهای همگام‌سازی به‌صورت محلی ذخیره می‌شود.',
-      'syncTitle': 'بنیاد همگام‌سازی',
-      'syncBody': 'اتصال شبکه جدا از دسترسی واقعی به سرور بررسی می‌شود. هیچ معامله بدون تأیید سرور همگام‌شده حساب نمی‌شود.',
+      'syncTitle': 'همگام‌سازی',
+      'syncBody': 'فروش‌های آفلاین فقط پس از تأیید سرور ارسال می‌شوند و سپس دواها، موجودی و مشتریان به‌صورت افزایشی دریافت می‌شوند.',
       'networkAvailable': 'اتصال شبکه موجود است',
       'networkUnavailable': 'اتصال شبکه موجود نیست',
       'networkUnknown': 'در حال بررسی شبکه',
@@ -245,6 +265,16 @@ class AppStrings {
       'posMobile': 'پرداخت موبایلی',
       'posRemove': 'حذف',
       'posInvalidValue': 'تعداد، قیمت و تخفیف معتبر وارد کنید.',
+      'syncStatusTitle': 'وضعیت همگام‌سازی',
+      'syncPending': 'در انتظار',
+      'syncRejected': 'ردشده',
+      'syncLast': 'آخرین همگام‌سازی',
+      'syncNever': 'این دستگاه هنوز همگام‌سازی کامل انجام نداده است.',
+      'syncNow': 'همگام‌سازی اکنون',
+      'syncing': 'در حال همگام‌سازی…',
+      'syncCompleted': 'همگام‌سازی تکمیل شد',
+      'syncPushed': 'فروش ارسال شد',
+      'syncPulled': 'رکورد دریافت شد',
     },
     AppLocale.pashto: <String, String>{
       'appName': 'BusinessOS فارمسي',
@@ -261,8 +291,8 @@ class AppStrings {
           'ځايي بچونه او ذخیره به د SQLite/Drift ډیټابیس له طبقې سره اضافه شي.',
       'customersTitle': 'د پېرودونکي لټون بنسټ',
       'customersBody': 'د پېرودونکو معلومات به د آفلاین ډیټابیس او همغږۍ تړونونو له چمتو کېدو وروسته ځايي وساتل شي.',
-      'syncTitle': 'د همغږۍ بنسټ',
-      'syncBody': 'د شبکې اړیکه د سرور له لاسرسي جلا څارل کېږي. هېڅ معامله د سرور له تایید پرته همغږې شوې نه ګڼل کېږي.',
+      'syncTitle': 'همغږي',
+      'syncBody': 'آفلاین پلور یوازې د سرور له تایید وروسته لېږل کېږي، بیا درمل، ذخیره او پېرودونکي په تدریجي ډول راکښته کېږي.',
       'networkAvailable': 'د شبکې اړیکه شته',
       'networkUnavailable': 'د شبکې اړیکه نشته',
       'networkUnknown': 'شبکه کتل کېږي',
@@ -322,6 +352,16 @@ class AppStrings {
       'posMobile': 'موبایل تادیه',
       'posRemove': 'لرې کول',
       'posInvalidValue': 'سم مقدار، بیه او تخفیف داخل کړئ.',
+      'syncStatusTitle': 'د همغږۍ حالت',
+      'syncPending': 'په تمه',
+      'syncRejected': 'رد شوي',
+      'syncLast': 'وروستۍ همغږي',
+      'syncNever': 'دې وسیلې لا بشپړه همغږي نه ده کړې.',
+      'syncNow': 'اوس همغږي کړئ',
+      'syncing': 'همغږي کېږي…',
+      'syncCompleted': 'همغږي بشپړه شوه',
+      'syncPushed': 'پلور ولېږل شو',
+      'syncPulled': 'ریکارډ راکښته شو',
     },
   };
 }

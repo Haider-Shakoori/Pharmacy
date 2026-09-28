@@ -202,3 +202,33 @@ Batch 22.
 
 Connection mode has no effect on checkout durability. Local, Cloud and Automatic
 all write the sale locally first. Network delivery begins only in Batch 20.
+
+
+## Batch 20 — synchronization engine
+
+Batch 20 connects the tenant-scoped Android database to the registered pharmacy
+server without changing the local-first checkout rule.
+
+Every synchronization run first resolves the configured Local, Cloud or
+Automatic route and refreshes the signed mobile session. Session refresh
+validates the signed access token, central device activation, license,
+subscription health, tenant identity and active tenant user. It issues a new
+mobile access token and offline lease without transmitting or storing the
+plaintext license key.
+
+Pending outbox events are pushed in bounded batches. A local sale is marked
+synced and its outbox record is removed only after the server explicitly
+acknowledges that event. The server routes `sale.completed` through the same
+`PosSaleService` used by web POS, preserving FEFO allocation, daily-closing
+enforcement, accounting and server-side idempotency. Retryable transport/server
+failures stay queued with backoff. Non-retryable business rejections stay in
+local history with `rejected` state and the server reason.
+
+After push, the app incrementally pulls medicines, inventory batches and
+customers. Each stream has an opaque cursor ordered by server `updated_at` and
+ID. A page is applied transactionally before its checkpoint advances, so an
+interrupted pull can safely resume without claiming data it did not commit.
+
+The Sync screen shows pending/rejected counts, the last completed pull timestamp
+and a manual Sync Now action. Network availability alone never marks a sale
+synced.
