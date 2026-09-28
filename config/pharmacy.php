@@ -32,6 +32,7 @@ return [
     'offline' => [
         'mobile_first' => true,
         'default_license_grace_days' => 7,
+        'max_installations_per_license' => (int) env('OFFLINE_MAX_INSTALLATIONS_PER_LICENSE', 1),
     ],
 
     'mobile' => [
