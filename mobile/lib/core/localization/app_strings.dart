@@ -92,6 +92,45 @@ class AppStrings {
   String get offlineLeaseInvalid => _value('offlineLeaseInvalid');
   String get offlineLeaseExpired => _value('offlineLeaseExpired');
   String get offlineLeaseClockError => _value('offlineLeaseClockError');
+  String get receiptTitle => _value('receiptTitle');
+  String get receiptPrintTitle => _value('receiptPrintTitle');
+  String get receiptNumber => _value('receiptNumber');
+  String get receiptBusinessDate => _value('receiptBusinessDate');
+  String get receiptCompletedAt => _value('receiptCompletedAt');
+  String get receiptCashier => _value('receiptCashier');
+  String get receiptCustomer => _value('receiptCustomer');
+  String get receiptWalkIn => _value('receiptWalkIn');
+  String get receiptLocation => _value('receiptLocation');
+  String get receiptSubtotal => _value('receiptSubtotal');
+  String get receiptDiscount => _value('receiptDiscount');
+  String get receiptTotal => _value('receiptTotal');
+  String get receiptPaid => _value('receiptPaid');
+  String get receiptChange => _value('receiptChange');
+  String get receiptPendingSync => _value('receiptPendingSync');
+  String get receiptSynced => _value('receiptSynced');
+  String get receiptThankYou => _value('receiptThankYou');
+  String get receiptRecent => _value('receiptRecent');
+  String get receiptPrint => _value('receiptPrint');
+  String get receiptPaper58 => _value('receiptPaper58');
+  String get receiptPaper80 => _value('receiptPaper80');
+  String get receiptScanPrinters => _value('receiptScanPrinters');
+  String get receiptScanning => _value('receiptScanning');
+  String get receiptNoPrinters => _value('receiptNoPrinters');
+  String get receiptUnnamedPrinter => _value('receiptUnnamedPrinter');
+  String get receiptPrinted => _value('receiptPrinted');
+  String get receiptPrinterConnectFailed =>
+      _value('receiptPrinterConnectFailed');
+  String get receiptPrintingHelp => _value('receiptPrintingHelp');
+
+  String receiptPayment(String method) {
+    return switch (method) {
+      'cash' => posCash,
+      'bank' => posBank,
+      'mobile' => posMobile,
+      _ => method,
+    };
+  }
+
   String get syncStatusTitle => _value('syncStatusTitle');
   String get syncPending => _value('syncPending');
   String get syncRejected => _value('syncRejected');
@@ -181,6 +220,35 @@ class AppStrings {
       'posMobile': 'Mobile payment',
       'posRemove': 'Remove',
       'posInvalidValue': 'Enter valid quantity, price and discount values.',
+      'receiptTitle': 'Sales receipt',
+      'receiptPrintTitle': 'Print receipt',
+      'receiptNumber': 'Receipt',
+      'receiptBusinessDate': 'Business date',
+      'receiptCompletedAt': 'Completed',
+      'receiptCashier': 'Cashier',
+      'receiptCustomer': 'Customer',
+      'receiptWalkIn': 'Walk-in',
+      'receiptLocation': 'Stock location',
+      'receiptSubtotal': 'Subtotal',
+      'receiptDiscount': 'Discount',
+      'receiptTotal': 'Total',
+      'receiptPaid': 'Paid',
+      'receiptChange': 'Change',
+      'receiptPendingSync': 'Pending synchronization',
+      'receiptSynced': 'Synchronized',
+      'receiptThankYou': 'Thank you',
+      'receiptRecent': 'Recent receipts',
+      'receiptPrint': 'Print',
+      'receiptPaper58': '58 mm',
+      'receiptPaper80': '80 mm',
+      'receiptScanPrinters': 'Scan printers',
+      'receiptScanning': 'Scanning…',
+      'receiptNoPrinters': 'No Bluetooth/USB printer found.',
+      'receiptUnnamedPrinter': 'Thermal printer',
+      'receiptPrinted': 'Receipt sent to printer.',
+      'receiptPrinterConnectFailed': 'Could not connect to the printer.',
+      'receiptPrintingHelp':
+          'Printing uses the locally stored receipt and works without Internet. Bluetooth/BLE, USB and configured network printers are supported.',
       'syncStatusTitle': 'Synchronization status',
       'syncPending': 'Pending',
       'syncRejected': 'Rejected',
@@ -269,6 +337,35 @@ class AppStrings {
       'posMobile': 'پرداخت موبایلی',
       'posRemove': 'حذف',
       'posInvalidValue': 'تعداد، قیمت و تخفیف معتبر وارد کنید.',
+      'receiptTitle': 'رسید فروش',
+      'receiptPrintTitle': 'چاپ رسید',
+      'receiptNumber': 'رسید',
+      'receiptBusinessDate': 'تاریخ کاری',
+      'receiptCompletedAt': 'زمان تکمیل',
+      'receiptCashier': 'صندوقدار',
+      'receiptCustomer': 'مشتری',
+      'receiptWalkIn': 'مشتری حضوری',
+      'receiptLocation': 'محل موجودی',
+      'receiptSubtotal': 'جمع فرعی',
+      'receiptDiscount': 'تخفیف',
+      'receiptTotal': 'مجموع',
+      'receiptPaid': 'پرداخت‌شده',
+      'receiptChange': 'باقی',
+      'receiptPendingSync': 'در انتظار همگام‌سازی',
+      'receiptSynced': 'همگام‌شده',
+      'receiptThankYou': 'تشکر',
+      'receiptRecent': 'رسیدهای اخیر',
+      'receiptPrint': 'چاپ',
+      'receiptPaper58': '۵۸ میلی‌متر',
+      'receiptPaper80': '۸۰ میلی‌متر',
+      'receiptScanPrinters': 'جستجوی پرینتر',
+      'receiptScanning': 'در حال جستجو…',
+      'receiptNoPrinters': 'پرینتر بلوتوث/USB پیدا نشد.',
+      'receiptUnnamedPrinter': 'پرینتر حرارتی',
+      'receiptPrinted': 'رسید به پرینتر فرستاده شد.',
+      'receiptPrinterConnectFailed': 'اتصال به پرینتر ممکن نشد.',
+      'receiptPrintingHelp':
+          'چاپ از رسید ذخیره‌شده در دستگاه استفاده می‌کند و بدون اینترنت کار می‌کند. بلوتوث/BLE، USB و پرینتر شبکه تنظیم‌شده پشتیبانی می‌شود.',
       'syncStatusTitle': 'وضعیت همگام‌سازی',
       'syncPending': 'در انتظار',
       'syncRejected': 'ردشده',
@@ -356,6 +453,35 @@ class AppStrings {
       'posMobile': 'موبایل تادیه',
       'posRemove': 'لرې کول',
       'posInvalidValue': 'سم مقدار، بیه او تخفیف داخل کړئ.',
+      'receiptTitle': 'د پلور رسید',
+      'receiptPrintTitle': 'رسید چاپ کړئ',
+      'receiptNumber': 'رسید',
+      'receiptBusinessDate': 'کاري نېټه',
+      'receiptCompletedAt': 'بشپړ شوی',
+      'receiptCashier': 'کیشیر',
+      'receiptCustomer': 'پېرودونکی',
+      'receiptWalkIn': 'حضوري پېرودونکی',
+      'receiptLocation': 'د ذخیرې ځای',
+      'receiptSubtotal': 'فرعي ټول',
+      'receiptDiscount': 'تخفیف',
+      'receiptTotal': 'ټول',
+      'receiptPaid': 'ورکړل شوي',
+      'receiptChange': 'باقي',
+      'receiptPendingSync': 'همغږۍ ته په تمه',
+      'receiptSynced': 'همغږي شوی',
+      'receiptThankYou': 'مننه',
+      'receiptRecent': 'وروستي رسیدونه',
+      'receiptPrint': 'چاپ',
+      'receiptPaper58': '۵۸ ملي متر',
+      'receiptPaper80': '۸۰ ملي متر',
+      'receiptScanPrinters': 'پرینټرونه ولټوئ',
+      'receiptScanning': 'لټون روان دی…',
+      'receiptNoPrinters': 'بلوتوث/USB پرینټر ونه موندل شو.',
+      'receiptUnnamedPrinter': 'حرارتي پرینټر',
+      'receiptPrinted': 'رسید پرینټر ته ولېږل شو.',
+      'receiptPrinterConnectFailed': 'پرینټر سره نښلون ونه شو.',
+      'receiptPrintingHelp':
+          'چاپ د وسیلې له ځايي خوندي شوي رسید څخه کار اخلي او انټرنېټ ته اړتیا نه لري. بلوتوث/BLE، USB او تنظیم شوي شبکوي پرینټرونه ملاتړ کېږي.',
       'syncStatusTitle': 'د همغږۍ حالت',
       'syncPending': 'په تمه',
       'syncRejected': 'رد شوي',
