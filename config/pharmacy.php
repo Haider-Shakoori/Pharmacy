@@ -30,6 +30,22 @@ return [
         'signing_public_key' => env('LICENSE_SIGNING_PUBLIC_KEY_B64'),
     ],
 
+    'provisioning' => [
+        'driver' => env('TENANCY_DB_PROVISIONER', 'local'),
+        'readiness_timeout_seconds' => (int) env('TENANT_READINESS_TIMEOUT_SECONDS', 8),
+    ],
+
+    'cpanel' => [
+        'host' => env('CPANEL_API_HOST'),
+        'username' => env('CPANEL_USERNAME'),
+        'api_token' => env('CPANEL_API_TOKEN'),
+        'database_prefix' => env('CPANEL_DATABASE_PREFIX', env('CPANEL_USERNAME') ? env('CPANEL_USERNAME').'_' : ''),
+        'database_user' => env('CPANEL_DATABASE_USER'),
+        'timeout_seconds' => (int) env('CPANEL_API_TIMEOUT_SECONDS', 15),
+        'verify_tls' => (bool) env('CPANEL_VERIFY_TLS', true),
+        'tenant_domain_mode' => 'wildcard',
+    ],
+
     'platform' => [
         'bootstrap_admin' => [
             'name' => env('PLATFORM_ADMIN_NAME', 'Platform Administrator'),

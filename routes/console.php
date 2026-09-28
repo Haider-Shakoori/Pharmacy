@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('subscriptions:expire-trials')->hourly();
+
+Schedule::command('pharmacy:provisioning:retry --pending-only')->everyFiveMinutes()->withoutOverlapping();

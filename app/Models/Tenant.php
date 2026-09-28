@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TenantStatus;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
@@ -32,6 +33,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public function business(): HasOne
     {
         return $this->hasOne(Business::class);
+    }
+
+    public function provisioningEvents(): HasMany
+    {
+        return $this->hasMany(ProvisioningEvent::class)->latest('occurred_at');
     }
 
     public function subscription(): HasOneThrough

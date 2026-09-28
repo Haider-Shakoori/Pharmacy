@@ -6,6 +6,7 @@ use App\Http\Controllers\Platform\LicenseController;
 use App\Http\Controllers\Platform\PlanController;
 use App\Http\Controllers\Platform\SubscriptionController;
 use App\Http\Controllers\Platform\TenantController;
+use App\Http\Controllers\Platform\TenantProvisioningRetryController;
 use App\Http\Controllers\Platform\TenantStatusController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,9 @@ Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
             Route::put('/tenants/{tenant}/status/{status}', TenantStatusController::class)
                 ->whereIn('status', ['active', 'suspended', 'archived'])
                 ->name('tenants.status');
+
+            Route::post('/tenants/{tenant}/retry-provisioning', TenantProvisioningRetryController::class)
+                ->name('tenants.retry-provisioning');
 
             Route::resource('plans', PlanController::class)->except(['show', 'destroy']);
 

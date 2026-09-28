@@ -65,12 +65,14 @@ class RbacProvisioner
                 $this->ensurePermissions();
                 $roles = $this->ensureStandardRoles();
 
-                $user = User::query()->create([
-                    'name' => $name,
-                    'email' => Str::lower($email),
-                    'password' => $password,
-                    'is_active' => true,
-                ]);
+                $user = User::query()->firstOrCreate(
+                    ['email' => Str::lower($email)],
+                    [
+                        'name' => $name,
+                        'password' => $password,
+                        'is_active' => true,
+                    ],
+                );
 
                 $user->roles()->sync([$roles['owner']->id]);
 
