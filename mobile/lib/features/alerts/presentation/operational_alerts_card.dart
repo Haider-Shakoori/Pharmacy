@@ -35,9 +35,6 @@ class _OperationalAlertsCardState extends ConsumerState<OperationalAlertsCard> {
       final MobileRegistration? registration = await ref.read(
         mobileRegistrationProvider.future,
       );
-      final PharmacyDatabase database = await ref.read(
-        pharmacyDatabaseProvider.future,
-      );
 
       if (registration == null) {
         if (mounted) {
@@ -48,6 +45,9 @@ class _OperationalAlertsCardState extends ConsumerState<OperationalAlertsCard> {
         return;
       }
 
+      final PharmacyDatabase database = await ref.read(
+        pharmacyDatabaseProvider.future,
+      );
       final OperationalAlertRepository repository = OperationalAlertRepository(
         database,
         lowStockThreshold: registration.lowStockThreshold,
