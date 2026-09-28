@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\BackfillAccounting;
+use App\Console\Commands\CheckProductionReadiness;
 use App\Console\Commands\CreateBackup;
 use App\Console\Commands\PruneBackups;
 use App\Console\Commands\RestoreBackup;
@@ -20,6 +21,7 @@ use Illuminate\Http\Request;
 return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         BackfillAccounting::class,
+        CheckProductionReadiness::class,
         CreateBackup::class,
         PruneBackups::class,
         RestoreBackup::class,
