@@ -24,7 +24,6 @@ class LocalMedicines extends Table {
       boolean().withDefault(const Constant<bool>(true))();
   BoolColumn get isDeleted =>
       boolean().withDefault(const Constant<bool>(false))();
-  DateTimeColumn get serverCreatedAt => dateTime().nullable()();
   DateTimeColumn get serverUpdatedAt => dateTime().nullable()();
 
   @override
@@ -46,6 +45,7 @@ class LocalInventoryBatches extends Table {
       text().withDefault(const Constant<String>('active'))();
   BoolColumn get isDeleted =>
       boolean().withDefault(const Constant<bool>(false))();
+  DateTimeColumn get serverCreatedAt => dateTime().nullable()();
   DateTimeColumn get serverUpdatedAt => dateTime().nullable()();
 
   @override
