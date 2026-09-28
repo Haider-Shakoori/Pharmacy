@@ -34,7 +34,8 @@ neither endpoint is reachable. Offline is a runtime state, not a fourth mode.
 
 The Local and Cloud servers must expose the same versioned Pharmacy API. Future
 QR pairing or mDNS discovery will only populate the Local endpoint; they do not
-change the data model or sync protocol.
+change the data model or sync protocol. The selected connection profile is
+persisted in encrypted device storage.
 
 ## Android host bootstrap
 
