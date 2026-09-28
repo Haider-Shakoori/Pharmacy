@@ -65,8 +65,8 @@ class MobileRegistration {
       permissions: user == null
           ? permissions
           : (user['permissions'] as List<dynamic>? ?? <dynamic>[])
-              .map((dynamic value) => value.toString())
-              .toList(growable: false),
+                .map((dynamic value) => value.toString())
+                .toList(growable: false),
       cloudBaseUrl: cloudBaseUrl,
     );
   }

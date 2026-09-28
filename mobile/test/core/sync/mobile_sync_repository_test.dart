@@ -63,36 +63,39 @@ void main() {
     await database.close();
   });
 
-  test('server acknowledgement marks sale synced then removes outbox', () async {
-    final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
+  test(
+    'server acknowledgement marks sale synced then removes outbox',
+    () async {
+      final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
 
-    await repository.acknowledge(
-      event,
-      const SyncPushResult(
-        idempotencyKey: 'sale:sale-local-1:completed',
-        status: 'accepted',
-        serverId: 'server-sale-1',
-      ),
-    );
+      await repository.acknowledge(
+        event,
+        const SyncPushResult(
+          idempotencyKey: 'sale:sale-local-1:completed',
+          status: 'accepted',
+          serverId: 'server-sale-1',
+        ),
+      );
 
-    final QueryRow sale = await database
-        .customSelect(
-          'SELECT server_id, sync_state FROM local_sales WHERE local_id = ?',
-          variables: <Variable<Object>>[
-            const Variable<String>('sale-local-1'),
-          ],
-        )
-        .getSingle();
+      final QueryRow sale = await database
+          .customSelect(
+            'SELECT server_id, sync_state FROM local_sales WHERE local_id = ?',
+            variables: <Variable<Object>>[
+              const Variable<String>('sale-local-1'),
+            ],
+          )
+          .getSingle();
 
-    expect(sale.read<String>('server_id'), 'server-sale-1');
-    expect(sale.read<String>('sync_state'), 'synced');
+      expect(sale.read<String>('server_id'), 'server-sale-1');
+      expect(sale.read<String>('sync_state'), 'synced');
 
-    final int count = await database
-        .customSelect('SELECT COUNT(*) AS c FROM sync_outbox_entries')
-        .map((QueryRow row) => row.read<int>('c'))
-        .getSingle();
-    expect(count, 0);
-  });
+      final int count = await database
+          .customSelect('SELECT COUNT(*) AS c FROM sync_outbox_entries')
+          .map((QueryRow row) => row.read<int>('c'))
+          .getSingle();
+      expect(count, 0);
+    },
+  );
 
   test('non-retryable rejection preserves outbox and local sale', () async {
     final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
@@ -108,9 +111,7 @@ void main() {
     );
 
     final QueryRow outbox = await database
-        .customSelect(
-          'SELECT status, last_error FROM sync_outbox_entries',
-        )
+        .customSelect('SELECT status, last_error FROM sync_outbox_entries')
         .getSingle();
     final QueryRow sale = await database
         .customSelect('SELECT sync_state FROM local_sales')
@@ -143,10 +144,10 @@ void main() {
     );
 
     final QueryRow medicine = await database
-        .customSelect('SELECT brand_name FROM local_medicines WHERE id = ?',
-            variables: <Variable<Object>>[
-              const Variable<String>('med-1'),
-            ])
+        .customSelect(
+          'SELECT brand_name FROM local_medicines WHERE id = ?',
+          variables: <Variable<Object>>[const Variable<String>('med-1')],
+        )
         .getSingle();
 
     expect(medicine.read<String>('brand_name'), 'Synced Medicine');

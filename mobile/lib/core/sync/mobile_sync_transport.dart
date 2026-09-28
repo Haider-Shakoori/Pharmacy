@@ -67,8 +67,7 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
       },
     );
 
-    final List<dynamic> raw =
-        data['results'] as List<dynamic>? ?? <dynamic>[];
+    final List<dynamic> raw = data['results'] as List<dynamic>? ?? <dynamic>[];
 
     return raw
         .whereType<Map>()
@@ -119,17 +118,18 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
       };
 
       final http.Response response = switch (method) {
-        'POST' => await _client
-            .post(
-              uri,
-              headers: headers,
-              body: body == null ? null : jsonEncode(body),
-            )
-            .timeout(timeout),
+        'POST' =>
+          await _client
+              .post(
+                uri,
+                headers: headers,
+                body: body == null ? null : jsonEncode(body),
+              )
+              .timeout(timeout),
         'GET' => await _client.get(uri, headers: headers).timeout(timeout),
         _ => throw const MobileSyncException(
-            'Unsupported synchronization request.',
-          ),
+          'Unsupported synchronization request.',
+        ),
       };
 
       final Object? decoded = response.body.isEmpty

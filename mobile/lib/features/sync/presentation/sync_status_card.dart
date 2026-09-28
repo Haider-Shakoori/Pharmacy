@@ -41,8 +41,8 @@ class _SyncStatusCardState extends ConsumerState<SyncStatusCard> {
       final PharmacyDatabase database = await ref.read(
         pharmacyDatabaseProvider.future,
       );
-      final SyncStatusSnapshot status =
-          await MobileSyncRepository(database).status();
+      final SyncStatusSnapshot status = await MobileSyncRepository(database)
+          .status();
 
       if (!mounted) {
         return;
@@ -85,20 +85,18 @@ class _SyncStatusCardState extends ConsumerState<SyncStatusCard> {
             defaultCloudUri: AppEnvironment.current.apiBaseUri,
           );
 
-      final ConnectionRouteResolver resolver = ConnectionRouteResolver(
-        (endpoint) async {
-          final ServerReachability state = await ServerReachabilityProbe(
-            client,
-            endpoint.uri,
-          ).check();
-          return state == ServerReachability.reachable;
-        },
-      );
+      final ConnectionRouteResolver resolver = ConnectionRouteResolver((
+        endpoint,
+      ) async {
+        final ServerReachability state = await ServerReachabilityProbe(
+          client,
+          endpoint.uri,
+        ).check();
+        return state == ServerReachability.reachable;
+      });
 
       final MobileSyncEngine engine = MobileSyncEngine(
-        registrationRepository: ref.read(
-          mobileRegistrationRepositoryProvider,
-        ),
+        registrationRepository: ref.read(mobileRegistrationRepositoryProvider),
         profileRepository: profileRepository,
         routeResolver: resolver,
         transport: HttpMobileSyncTransport(client),
@@ -165,8 +163,7 @@ class _SyncStatusCardState extends ConsumerState<SyncStatusCard> {
             }
 
             final SyncStatusSnapshot status =
-                _status ??
-                const SyncStatusSnapshot(pending: 0, rejected: 0);
+                _status ?? const SyncStatusSnapshot(pending: 0, rejected: 0);
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,9 +202,7 @@ class _SyncStatusCardState extends ConsumerState<SyncStatusCard> {
                 FilledButton.icon(
                   onPressed: _syncing ? null : _syncNow,
                   icon: const Icon(Icons.sync_rounded),
-                  label: Text(
-                    _syncing ? strings.syncing : strings.syncNow,
-                  ),
+                  label: Text(_syncing ? strings.syncing : strings.syncNow),
                 ),
               ],
             );

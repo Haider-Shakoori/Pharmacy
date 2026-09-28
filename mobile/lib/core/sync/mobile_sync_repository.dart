@@ -11,8 +11,9 @@ class MobileSyncRepository {
 
   Future<List<SyncOutboxEvent>> pendingOutbox({int limit = 25}) async {
     final int now = _seconds(DateTime.now());
-    final List<QueryRow> rows = await _database.customSelect(
-      '''
+    final List<QueryRow> rows = await _database
+        .customSelect(
+          '''
       SELECT idempotency_key, aggregate_id, event_type, payload_json
       FROM sync_outbox_entries
       WHERE status IN ('pending', 'retry')
@@ -20,11 +21,12 @@ class MobileSyncRepository {
       ORDER BY created_at, idempotency_key
       LIMIT ?
       ''',
-      variables: <Variable<Object>>[
-        Variable<int>(now),
-        Variable<int>(limit),
-      ],
-    ).get();
+          variables: <Variable<Object>>[
+            Variable<int>(now),
+            Variable<int>(limit),
+          ],
+        )
+        .get();
 
     return rows
         .map(
@@ -62,10 +64,7 @@ class MobileSyncRepository {
     });
   }
 
-  Future<void> acknowledge(
-    SyncOutboxEvent event,
-    SyncPushResult result,
-  ) async {
+  Future<void> acknowledge(SyncOutboxEvent event, SyncPushResult result) async {
     await _database.transaction(() async {
       if (event.eventType == 'sale.completed' && result.serverId != null) {
         await _database.customStatement(
@@ -91,10 +90,7 @@ class MobileSyncRepository {
     });
   }
 
-  Future<void> reject(
-    SyncOutboxEvent event,
-    SyncPushResult result,
-  ) async {
+  Future<void> reject(SyncOutboxEvent event, SyncPushResult result) async {
     final DateTime now = DateTime.now();
     final int attempt = await _attemptCount(event.idempotencyKey);
     final int delaySeconds = _retryDelaySeconds(attempt);
@@ -203,18 +199,18 @@ class MobileSyncRepository {
   }
 
   Future<SyncStatusSnapshot> status() async {
-    final QueryRow counts = await _database.customSelect(
-      '''
+    final QueryRow counts = await _database.customSelect('''
       SELECT
         SUM(CASE WHEN status IN ('pending', 'retry', 'sending') THEN 1 ELSE 0 END) AS pending,
         SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected
       FROM sync_outbox_entries
-      ''',
-    ).getSingle();
+      ''').getSingle();
 
-    final QueryRow last = await _database.customSelect(
-      'SELECT MAX(last_synced_at) AS last_synced_at FROM sync_checkpoints',
-    ).getSingle();
+    final QueryRow last = await _database
+        .customSelect(
+          'SELECT MAX(last_synced_at) AS last_synced_at FROM sync_checkpoints',
+        )
+        .getSingle();
 
     final int? lastSeconds = last.readNullable<int>('last_synced_at');
 
@@ -239,9 +235,7 @@ class MobileSyncRepository {
           WHERE idempotency_key = ?
           LIMIT 1
           ''',
-          variables: <Variable<Object>>[
-            Variable<String>(idempotencyKey),
-          ],
+          variables: <Variable<Object>>[Variable<String>(idempotencyKey)],
         )
         .getSingleOrNull();
 
@@ -309,9 +303,7 @@ class MobileSyncRepository {
         item['medicine_id'].toString(),
         item['stock_location_id'].toString(),
         item['batch_number']?.toString() ?? '',
-        expiresAt == null
-            ? null
-            : _seconds(DateTime.parse(expiresAt).toUtc()),
+        expiresAt == null ? null : _seconds(DateTime.parse(expiresAt).toUtc()),
         item['available_quantity']?.toString() ?? '0',
         item['sale_price']?.toString() ?? '0',
         item['purchase_cost']?.toString() ?? '0',

@@ -88,8 +88,7 @@ class SyncPullPage {
       data: raw
           .whereType<Map>()
           .map(
-            (Map<dynamic, dynamic> value) =>
-                Map<String, dynamic>.from(value),
+            (Map<dynamic, dynamic> value) => Map<String, dynamic>.from(value),
           )
           .toList(growable: false),
       nextCursor: json['next_cursor']?.toString(),
