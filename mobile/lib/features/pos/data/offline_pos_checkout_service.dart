@@ -11,11 +11,10 @@ typedef PosTransactionAuthorizer = Future<void> Function();
 class OfflinePosCheckoutService {
   OfflinePosCheckoutService(
     this._database, {
-    required PosTransactionAuthorizer authorizeTransaction,
+    required this.authorizeTransaction,
     String Function()? idGenerator,
     DateTime Function()? clock,
-  }) : _authorizeTransaction = authorizeTransaction,
-       _idGenerator = idGenerator ?? const Uuid().v4,
+  }) : _idGenerator = idGenerator ?? const Uuid().v4,
        _clock = clock ?? DateTime.now;
 
   static const Set<String> _offlinePaymentMethods = <String>{
@@ -25,14 +24,14 @@ class OfflinePosCheckoutService {
   };
 
   final PharmacyDatabase _database;
-  final PosTransactionAuthorizer _authorizeTransaction;
+  final PosTransactionAuthorizer authorizeTransaction;
   final String Function() _idGenerator;
   final DateTime Function() _clock;
 
   Future<OfflinePosCheckoutResult> checkout(
     OfflinePosCheckoutRequest request,
   ) async {
-    await _authorizeTransaction();
+    await authorizeTransaction();
 
     if (!request.permissions.contains('pos.sell')) {
       throw const OfflinePosException(

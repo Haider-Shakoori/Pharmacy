@@ -105,12 +105,11 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
     _checkout = OfflinePosCheckoutService(
       widget.database,
       authorizeTransaction: () async {
+        final AppStrings strings = AppStrings.of(context);
         try {
           await leaseAuthorizer.assertCanTransact();
         } on OfflineLeaseException catch (error) {
-          throw OfflinePosException(
-            _leaseMessage(error, AppStrings.of(context)),
-          );
+          throw OfflinePosException(_leaseMessage(error, strings));
         }
       },
     );
