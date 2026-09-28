@@ -15,7 +15,9 @@ class CpanelUapiClient
             $query,
         )->throw()->json();
 
-        $result = $response['result'] ?? null;
+        $result = is_array($response) && isset($response['result'])
+            ? $response['result']
+            : $response;
 
         if (! is_array($result) || (int) ($result['status'] ?? 0) !== 1) {
             $errors = $result['errors'] ?? ['Unknown cPanel UAPI failure.'];
