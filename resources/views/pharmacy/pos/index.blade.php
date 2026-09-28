@@ -57,7 +57,7 @@
 
             <aside class="space-y-4">
                 <div class="rounded-2xl border border-slate-200 bg-white p-5">
-                    <h2 class="font-bold">Customer & totals</h2>
+                    <div class="flex items-center justify-between"><h2 class="font-bold">Customer & totals</h2><a href="{{ route('pharmacy.customers.create') }}" class="text-xs font-bold text-teal-700">+ New customer</a></div>
                     <select x-model="customerId" class="mt-4 w-full rounded-xl border border-slate-300 px-3 py-2.5">
                         <option value="">Walk-in customer</option>
                         @foreach ($customers as $customer)
@@ -69,6 +69,14 @@
                         <div class="flex justify-between"><span>Discount</span><strong x-text="money(discountTotal)+' AFN'"></strong></div>
                         <div class="flex justify-between border-t pt-3 text-xl"><span class="font-bold">Total</span><strong x-text="money(grandTotal)+' AFN'"></strong></div>
                     </div>
+                </div>
+
+                <div x-show="requiresPrescription" class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                    <h2 class="font-bold text-amber-950">Prescription details</h2>
+                    <p class="mt-1 text-xs text-amber-800">Required because the cart contains a prescription-only medicine.</p>
+                    <input x-model="prescriptionReference" placeholder="Prescription / Rx reference" class="mt-3 w-full rounded-xl border border-amber-300 bg-white px-3 py-2.5">
+                    <input x-model="prescriberName" placeholder="Prescriber / doctor name" class="mt-2 w-full rounded-xl border border-amber-300 bg-white px-3 py-2.5">
+                    <input x-model="prescriptionDate" type="date" class="mt-2 w-full rounded-xl border border-amber-300 bg-white px-3 py-2.5">
                 </div>
 
                 <div class="rounded-2xl border border-slate-200 bg-white p-5">
@@ -93,16 +101,17 @@
 function pharmacyPos() {
     return {
         location: @js((string) ($locations->first()?->id ?? '')), customerId:'', query:'', results:[], cart:[],
-        payments:[{method:'cash',amount:0,reference:''}], busy:false, error:'',
+        payments:[{method:'cash',amount:0,reference:''}], prescriptionReference:'', prescriberName:'', prescriptionDate:new Date().toISOString().slice(0,10), busy:false, error:'',
         get subtotal(){return this.cart.reduce((t,i)=>t+(Number(i.quantity)||0)*(Number(i.unit_price)||0),0)},
         get discountTotal(){return this.cart.reduce((t,i)=>t+(Number(i.discount_amount)||0),0)},
         get grandTotal(){return Math.max(0,this.subtotal-this.discountTotal)},
+        get requiresPrescription(){return this.cart.some(i=>i.prescription_required)},
         money(v){return Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})},
-        clearCart(){this.cart=[];this.results=[];this.query='';this.fillCash()},
+        clearCart(){this.cart=[];this.results=[];this.query='';this.prescriptionReference='';this.prescriberName='';this.fillCash()},
         async search(){this.error='';if(!this.query.trim()||!this.location)return;const url=@js(route('pharmacy.pos.search'))+'?'+new URLSearchParams({q:this.query,location:this.location});const r=await fetch(url,{headers:{Accept:'application/json'}});const j=await r.json();this.results=j.data||[];if(this.results.length===1&&(this.results[0].barcode===this.query||this.results[0].code===this.query))this.add(this.results[0])},
         add(item){const x=this.cart.find(v=>v.id===item.id);if(x)x.quantity=Number(x.quantity)+1;else this.cart.push({...item,quantity:1,unit_price:Number(item.price),discount_amount:0});this.query='';this.results=[];this.fillCash();this.$nextTick(()=>this.$refs.search?.focus())},
         fillCash(){if(this.payments.length===1&&this.payments[0].method==='cash')this.payments[0].amount=Number(this.grandTotal.toFixed(2))},
-        async checkout(){this.error='';this.busy=true;const payload={stock_location_id:this.location,customer_id:this.customerId||null,idempotency_key:crypto.randomUUID(),lines:this.cart.map(x=>({medicine_id:x.id,quantity:x.quantity,unit_price:x.unit_price,discount_amount:x.discount_amount||0})),payments:this.payments};try{const r=await fetch(@js(route('pharmacy.pos.store')),{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json','X-CSRF-TOKEN':@js(csrf_token())},body:JSON.stringify(payload)});const j=await r.json();if(!r.ok){this.error=Object.values(j.errors||{}).flat()[0]||j.message||'Sale could not be completed.';return}window.location=j.receipt_url}finally{this.busy=false}}
+        async checkout(){this.error='';if(this.requiresPrescription&&!this.prescriptionReference.trim()){this.error='Prescription reference is required for prescription-only medicines.';return}this.busy=true;const payload={stock_location_id:this.location,customer_id:this.customerId||null,prescription_reference:this.prescriptionReference||null,prescriber_name:this.prescriberName||null,prescription_date:this.requiresPrescription?this.prescriptionDate:null,idempotency_key:crypto.randomUUID(),lines:this.cart.map(x=>({medicine_id:x.id,quantity:x.quantity,unit_price:x.unit_price,discount_amount:x.discount_amount||0})),payments:this.payments};try{const r=await fetch(@js(route('pharmacy.pos.store')),{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json','X-CSRF-TOKEN':@js(csrf_token())},body:JSON.stringify(payload)});const j=await r.json();if(!r.ok){this.error=Object.values(j.errors||{}).flat()[0]||j.message||'Sale could not be completed.';return}window.location=j.receipt_url}finally{this.busy=false}}
     }
 }
 </script>

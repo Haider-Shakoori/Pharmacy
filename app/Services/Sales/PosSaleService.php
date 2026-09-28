@@ -54,10 +54,24 @@ class PosSaleService
                 ? Customer::query()->where('is_active', true)->findOrFail($data['customer_id'])
                 : null;
 
+            $hasPrescriptionItem = Medicine::query()
+                ->whereIn('id', collect($data['lines'])->pluck('medicine_id'))
+                ->where('prescription_required', true)
+                ->exists();
+
+            if ($hasPrescriptionItem && blank($data['prescription_reference'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'prescription_reference' => 'A prescription reference is required for prescription-only medicines.',
+                ]);
+            }
+
             $sale = Sale::query()->create([
                 'sale_number' => $this->saleNumber($businessDate),
                 'stock_location_id' => $location->id,
                 'customer_id' => $customer?->id,
+                'prescription_reference' => $data['prescription_reference'] ?? null,
+                'prescriber_name' => $data['prescriber_name'] ?? null,
+                'prescription_date' => $data['prescription_date'] ?? null,
                 'business_date' => $businessDate,
                 'status' => 'processing',
                 'currency' => 'AFN',

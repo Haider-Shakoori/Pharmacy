@@ -15,6 +15,7 @@ return [
         'inventory' => 'Inventory & Batches',
         'suppliers' => 'Suppliers & Purchasing',
         'pos' => 'Web POS',
+        'customers' => 'Customers',
         'returns' => 'Returns & Shifts',
         'reports' => 'Reports',
         'accounting' => 'Accounting',
@@ -53,5 +54,8 @@ return [
         'expiring' => 'Expiring Medicines',
         'alerts' => 'Operational Alerts',
         'pending_sync' => 'Pending Sync',
+        'credit_due' => 'Customer Credit Due',
+        'stock_value' => 'Stock Value',
+        'today_transactions' => 'Today Transactions',
     ],
 ];

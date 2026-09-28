@@ -15,6 +15,7 @@ return [
         'inventory' => 'موجودی و بچ‌ها',
         'suppliers' => 'تأمین‌کنندگان و خرید',
         'pos' => 'فروش',
+        'customers' => 'مشتریان',
         'returns' => 'برگشت و شیفت‌ها',
         'reports' => 'گزارش‌ها',
         'accounting' => 'حسابداری',
@@ -53,5 +54,8 @@ return [
         'expiring' => 'ادویه نزدیک به انقضا',
         'alerts' => 'هشدارهای عملیاتی',
         'pending_sync' => 'همگام‌سازی در انتظار',
+        'credit_due' => 'طلب از مشتریان',
+        'stock_value' => 'ارزش موجودی',
+        'today_transactions' => 'معاملات امروز',
     ],
 ];
