@@ -4,9 +4,15 @@ Production-oriented, multi-tenant SaaS pharmacy management platform designed for
 
 ## Current status
 
-**Batch 1 — Foundation and project architecture: in progress**
+**Batch 29 — Release Candidate regression/UAT: in progress**
 
-The repository now contains the Laravel 13 application foundation and the first tenant-facing pharmacy shell. The dashboard and navigation are intentionally data-light until tenant isolation and operational modules are introduced.
+Batches 1–28 are implemented, including the SaaS control plane, tenant pharmacy,
+purchasing/inventory, FEFO POS, Daily Closing, accounting/reporting, Android
+offline POS, authenticated synchronization, signed offline licensing, receipt
+printing, operational alerts, performance/security hardening and backup/recovery.
+
+Batch 29 is the release-candidate validation gate before Batch 30 production
+deployment and monitoring.
 
 ## Technology
 
@@ -23,7 +29,9 @@ The repository now contains the Laravel 13 application foundation and the first 
 
 The planned pharmacy web deployment target is pharmacy.businessos.af.
 
-Deployment is scheduled for **Batch 12**, when the Web POS is introduced.
+The production deployment target is **pharmacy.businessos.af**. Final production
+deployment and monitoring are scheduled for **Batch 30**, after the Batch 29
+release-candidate UAT gate is green.
 
 ## Architecture
 
