@@ -15,6 +15,7 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
     'platform',
     'app_version',
     'device_model',
+    'machine_fingerprint_hash',
     'os_version',
     'build_number',
     'activated_at',
