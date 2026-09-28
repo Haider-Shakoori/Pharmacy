@@ -57,14 +57,14 @@ class OfflinePosCheckoutService {
       final List<Map<String, Object?>> linePayload = <Map<String, Object?>>[];
 
       for (final OfflinePosLineInput input in request.lines) {
-        final medicine = await (_database.select(_database.localMedicines)
-              ..where(
-                (table) =>
-                    table.id.equals(input.medicineId) &
-                    table.isActive.equals(true) &
-                    table.isDeleted.equals(false),
-              ))
-            .getSingleOrNull();
+        final medicine =
+            await (_database.select(_database.localMedicines)..where(
+                  (table) =>
+                      table.id.equals(input.medicineId) &
+                      table.isActive.equals(true) &
+                      table.isDeleted.equals(false),
+                ))
+                .getSingleOrNull();
 
         if (medicine == null) {
           throw const OfflinePosException(
