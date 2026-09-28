@@ -81,18 +81,14 @@ class OfflineReceiptPaper extends StatelessWidget {
                       in receipt.lines) ...<Widget>[
                     Text(line.medicineName, style: strong),
                     _row(
-                      line.quantity.compact +
-                          ' ' +
-                          line.saleUnit +
-                          ' × ' +
-                          line.unitPrice.compact,
-                      line.lineTotal.compact + ' AFN',
+                      '${line.quantity.compact} ${line.saleUnit} × ${line.unitPrice.compact}',
+                      '${line.lineTotal.compact} AFN',
                       small,
                     ),
                     if (line.discountAmount.isPositive)
                       _row(
                         strings.receiptDiscount,
-                        '-' + line.discountAmount.compact + ' AFN',
+                        '-${line.discountAmount.compact} AFN',
                         small,
                       ),
                     const SizedBox(height: 4),
@@ -100,28 +96,28 @@ class OfflineReceiptPaper extends StatelessWidget {
                   const Divider(color: Colors.black),
                   _row(
                     strings.receiptSubtotal,
-                    receipt.subtotal.compact + ' AFN',
+                    '${receipt.subtotal.compact} AFN',
                     small,
                   ),
                   _row(
                     strings.receiptDiscount,
-                    receipt.discountAmount.compact + ' AFN',
+                    '${receipt.discountAmount.compact} AFN',
                     small,
                   ),
                   _row(
                     strings.receiptTotal,
-                    receipt.total.compact + ' AFN',
+                    '${receipt.total.compact} AFN',
                     strong,
                   ),
                   _row(
                     strings.receiptPaid,
-                    receipt.tenderedAmount.compact + ' AFN',
+                    '${receipt.tenderedAmount.compact} AFN',
                     small,
                   ),
                   if (receipt.changeAmount.isPositive)
                     _row(
                       strings.receiptChange,
-                      receipt.changeAmount.compact + ' AFN',
+                      '${receipt.changeAmount.compact} AFN',
                       small,
                     ),
                   if (receipt.payments.isNotEmpty) ...<Widget>[
@@ -130,7 +126,7 @@ class OfflineReceiptPaper extends StatelessWidget {
                         in receipt.payments)
                       _row(
                         strings.receiptPayment(payment.method),
-                        payment.amount.compact + ' AFN',
+                        '${payment.amount.compact} AFN',
                         small,
                       ),
                   ],

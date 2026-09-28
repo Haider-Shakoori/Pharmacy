@@ -510,7 +510,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                 leading: const Icon(Icons.receipt_long_rounded),
                 title: Text(receipt.displayNumber),
                 subtitle: Text(
-                  receipt.total.compact + ' AFN • ' + receipt.businessDate,
+                  '${receipt.total.compact} AFN • ${receipt.businessDate}',
                 ),
                 trailing: IconButton(
                   tooltip: strings.receiptPrint,

@@ -7,6 +7,7 @@ import 'package:businessos_pharmacy/features/receipt/presentation/offline_receip
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_thermal_printer/flutter_thermal_printer.dart';
+import 'package:flutter_thermal_printer/utils/printer.dart';
 
 class ReceiptPrintSheet extends StatefulWidget {
   const ReceiptPrintSheet({
@@ -173,7 +174,7 @@ class _ReceiptPrintSheetState extends State<ReceiptPrintSheet> {
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 4),
-              Text(strings.receiptNumber + ': ' + widget.receipt.displayNumber),
+              Text('${strings.receiptNumber}: ${widget.receipt.displayNumber}'),
               const SizedBox(height: 16),
               SegmentedButton<ReceiptPaperWidth>(
                 segments: <ButtonSegment<ReceiptPaperWidth>>[

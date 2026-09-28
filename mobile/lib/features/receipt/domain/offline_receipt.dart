@@ -69,7 +69,7 @@ class OfflineReceipt {
         ? compact
         : compact.substring(compact.length - 10);
 
-    return 'OFF-' + suffix.toUpperCase();
+    return 'OFF-${suffix.toUpperCase()}';
   }
 
   bool get isSynced => syncState == 'synced';
