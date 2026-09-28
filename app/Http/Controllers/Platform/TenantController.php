@@ -55,7 +55,7 @@ class TenantController extends Controller
                 'success',
                 $tenant->provisioning_status === 'application_ready'
                     ? 'Pharmacy application provisioned with isolated database, domain, and owner account. The hosted trial can now be started explicitly.'
-                    : 'Pharmacy database and owner are provisioned; trial will start only after domain/TLS readiness.',
+                    : 'Pharmacy database and owner are provisioned; the hosted trial becomes available after domain/TLS readiness.',
             );
 
         if ($licenseKey !== null) {
