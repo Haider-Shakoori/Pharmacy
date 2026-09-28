@@ -122,7 +122,7 @@ return new class extends Migration
             $table->string('reason', 500)->nullable();
             $table->timestamps();
 
-            $table->index(['inventory_adjustment_id', 'product_batch_id']);
+            $table->index(['inventory_adjustment_id', 'product_batch_id'], 'inv_adj_lines_adjustment_batch_idx');
         });
     }
 
