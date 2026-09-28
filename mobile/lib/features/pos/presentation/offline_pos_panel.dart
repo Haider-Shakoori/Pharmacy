@@ -60,10 +60,7 @@ class OfflinePosPanel extends ConsumerWidget {
 }
 
 class _OfflinePosBody extends StatefulWidget {
-  const _OfflinePosBody({
-    required this.database,
-    required this.registration,
-  });
+  const _OfflinePosBody({required this.database, required this.registration});
 
   final PharmacyDatabase database;
   final MobileRegistration registration;
@@ -167,8 +164,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
       if (index >= 0) {
         final _CartEntry existing = _cart[index];
         final FixedDecimal next =
-            FixedDecimal.parse(existing.quantity) +
-            FixedDecimal.parse('1');
+            FixedDecimal.parse(existing.quantity) + FixedDecimal.parse('1');
         existing.quantity = next.toString();
       } else {
         _cart.add(
