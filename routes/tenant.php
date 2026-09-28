@@ -7,6 +7,7 @@ use App\Http\Controllers\Pharmacy\AccountingController;
 use App\Http\Controllers\Pharmacy\AlertController;
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
 use App\Http\Controllers\Pharmacy\BatchStatusController;
+use App\Http\Controllers\Pharmacy\CustomerController;
 use App\Http\Controllers\Pharmacy\DailyClosingController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
 use App\Http\Controllers\Pharmacy\ExpenseController;
@@ -83,6 +84,10 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
             Route::resource('suppliers', SupplierController::class)
                 ->except(['show', 'destroy'])
                 ->middleware('permission:purchases.manage');
+
+            Route::resource('customers', CustomerController::class)
+                ->except(['destroy'])
+                ->middleware('permission:customers.manage');
 
             Route::middleware('permission:purchases.manage')->group(function (): void {
                 Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
