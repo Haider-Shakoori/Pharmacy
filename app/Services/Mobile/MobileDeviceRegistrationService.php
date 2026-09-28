@@ -48,7 +48,7 @@ class MobileDeviceRegistrationService
             ]);
         }
 
-        $user = $tenant->run(function () use ($email, $password): array {
+        $user = $tenant->run(function () use ($email, $password): ?array {
             $user = User::query()
                 ->with('roles.permissions')
                 ->whereRaw('LOWER(email) = ?', [Str::lower(trim($email))])
@@ -56,9 +56,7 @@ class MobileDeviceRegistrationService
                 ->first();
 
             if ($user === null || ! Hash::check($password, $user->password)) {
-                throw ValidationException::withMessages([
-                    'email' => 'The provided pharmacy credentials are invalid.',
-                ]);
+                return null;
             }
 
             $permissions = $user->roles
@@ -85,6 +83,12 @@ class MobileDeviceRegistrationService
                 'permissions' => $permissions,
             ];
         });
+
+        if ($user === null) {
+            throw ValidationException::withMessages([
+                'email' => 'The provided pharmacy credentials are invalid.',
+            ]);
+        }
 
         $activated = $this->activation->activate(
             $licenseKey,
