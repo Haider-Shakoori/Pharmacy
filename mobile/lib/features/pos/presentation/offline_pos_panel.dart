@@ -10,6 +10,9 @@ import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_catalog_repository.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_checkout_service.dart';
 import 'package:businessos_pharmacy/features/pos/domain/offline_pos_models.dart';
+import 'package:businessos_pharmacy/features/receipt/data/offline_receipt_repository.dart';
+import 'package:businessos_pharmacy/features/receipt/domain/offline_receipt.dart';
+import 'package:businessos_pharmacy/features/receipt/presentation/receipt_print_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -83,11 +86,13 @@ class _OfflinePosBody extends StatefulWidget {
 class _OfflinePosBodyState extends State<_OfflinePosBody> {
   late final OfflinePosCatalogRepository _catalog;
   late final OfflinePosCheckoutService _checkout;
+  late final OfflineReceiptRepository _receipts;
   final TextEditingController _searchController = TextEditingController();
 
   List<String> _locations = <String>[];
   List<OfflinePosCatalogItem> _results = <OfflinePosCatalogItem>[];
   final List<_CartEntry> _cart = <_CartEntry>[];
+  List<OfflineReceipt> _recentReceipts = <OfflineReceipt>[];
   String? _locationId;
   String _paymentMethod = 'cash';
   bool _loading = true;
@@ -98,6 +103,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   void initState() {
     super.initState();
     _catalog = OfflinePosCatalogRepository(widget.database);
+    _receipts = OfflineReceiptRepository(widget.database);
     final OfflineLeaseAuthorizer leaseAuthorizer = OfflineLeaseAuthorizer(
       database: widget.database,
       registrationRepository: widget.registrationRepository,
@@ -134,6 +140,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   Future<void> _load() async {
     try {
       final List<String> locations = await _catalog.stockLocationIds();
+      final List<OfflineReceipt> recent = await _receipts.recentCompleted();
       final String? selected = locations.isEmpty ? null : locations.first;
 
       if (!mounted) {
@@ -142,6 +149,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
 
       setState(() {
         _locations = locations;
+        _recentReceipts = recent;
         _locationId = selected;
         _loading = false;
       });
@@ -354,6 +362,11 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           ],
         ),
       );
+      final OfflineReceipt? receipt = await _receipts.find(
+        result.saleLocalId,
+      );
+      final List<OfflineReceipt> recent = await _receipts.recentCompleted();
+
 
       if (!mounted) {
         return;
@@ -362,6 +375,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
       setState(() {
         _checkingOut = false;
         _cart.clear();
+        _recentReceipts = recent;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -372,6 +386,10 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           ),
         ),
       );
+
+      if (receipt != null && mounted) {
+        await _showReceipt(receipt);
+      }
     } on OfflinePosException catch (error) {
       if (!mounted) {
         return;
@@ -389,6 +407,18 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         _error = strings.posInvalidValue;
       });
     }
+  }
+
+  Future<void> _showReceipt(OfflineReceipt receipt) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (BuildContext context) => ReceiptPrintSheet(
+        receipt: receipt,
+        registration: widget.registration,
+      ),
+    );
   }
 
   @override
@@ -470,6 +500,30 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
             ),
           ),
         ),
+        if (_recentReceipts.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 16),
+          Text(
+            strings.receiptRecent,
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          ..._recentReceipts.map(
+            (OfflineReceipt receipt) => Card(
+              child: ListTile(
+                leading: const Icon(Icons.receipt_long_rounded),
+                title: Text(receipt.displayNumber),
+                subtitle: Text(
+                  receipt.total.compact + ' AFN • ' + receipt.businessDate,
+                ),
+                trailing: IconButton(
+                  tooltip: strings.receiptPrint,
+                  onPressed: () => _showReceipt(receipt),
+                  icon: const Icon(Icons.print_rounded),
+                ),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         Text(
           strings.posCart,
