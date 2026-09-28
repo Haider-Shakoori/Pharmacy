@@ -22,6 +22,12 @@ return [
         'devices' => 'Devices & Sync',
         'settings' => 'Settings',
     ],
+    'actions' => [
+        'open_pos' => 'Open POS',
+    ],
+    'labels' => [
+        'pharmacy_code' => 'Pharmacy code',
+    ],
     'alerts' => [
         'title' => 'Operational Alerts',
         'subtitle' => 'Inventory attention center',
