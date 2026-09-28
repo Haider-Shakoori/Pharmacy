@@ -79,7 +79,7 @@ class OfflinePosCheckoutService {
         final FixedDecimal discount = FixedDecimal.parse(input.discountAmount);
 
         if (!quantity.isPositive) {
-          throw const OfflinePosException('Sale quantity must be greater than zero.');
+          throw const OfflinePosException(\n            'Sale quantity must be greater than zero.',\n          );
         }
         if (unitPrice.isNegative || discount.isNegative) {
           throw const OfflinePosException(
