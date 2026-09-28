@@ -23,9 +23,21 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-5">
                 <p class="text-sm font-medium text-slate-500">{{ $stat['label'] }}</p>
                 <p class="mt-3 text-2xl font-bold tracking-tight">{{ $stat['value'] }}</p>
-                <p class="mt-2 text-xs text-slate-400">Operational data activates in its scheduled batch.</p>
+                <p class="mt-2 text-xs text-slate-400">{{ __('pharmacy.alerts.live_note') }}</p>
             </article>
         @endforeach
     </section>
+
+    @if ($alerts['counts']['total'] > 0)
+        <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
+            <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div>
+                    <p class="text-sm font-bold text-amber-900">{{ __('pharmacy.alerts.attention') }}</p>
+                    <p class="mt-1 text-sm text-amber-800">{{ __('pharmacy.alerts.summary', ['low' => $alerts['counts']['low_stock'], 'near' => $alerts['counts']['near_expiry'], 'expired' => $alerts['counts']['expired']]) }}</p>
+                </div>
+                <a href="{{ route('pharmacy.alerts.index') }}" class="rounded-xl bg-amber-900 px-4 py-2.5 text-center text-sm font-bold text-white">{{ __('pharmacy.alerts.view_all') }}</a>
+            </div>
+        </section>
+    @endif
 </div>
 @endsection

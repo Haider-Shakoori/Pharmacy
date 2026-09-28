@@ -1,6 +1,7 @@
 <nav class="grid gap-1 px-4 py-3 text-sm">
     @if (auth()->user()->hasPermission('dashboard.view'))
         <a href="{{ route('pharmacy.dashboard') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">{{ __('pharmacy.nav.dashboard') }}</a>
+        <a href="{{ route('pharmacy.alerts.index') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">{{ __('pharmacy.nav.alerts') }}</a>
     @endif
     @if (auth()->user()->hasPermission('medicines.manage'))
         <a href="{{ route('pharmacy.medicines.index') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">{{ __('pharmacy.nav.medicines') }}</a>

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Licensing\LicenseActivationService;
 use App\Services\Licensing\LicenseKeyService;
 use App\Services\Licensing\OfflineLeaseSigner;
+use App\Services\Settings\PharmacySettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -18,6 +19,7 @@ class MobileDeviceRegistrationService
         private readonly LicenseKeyService $keys,
         private readonly LicenseActivationService $activation,
         private readonly OfflineLeaseSigner $signer,
+        private readonly PharmacySettings $settings,
     ) {}
 
     public function register(
@@ -122,6 +124,7 @@ class MobileDeviceRegistrationService
             'tenant' => $activated['tenant'],
             'plan' => $activated['plan'],
             'subscription_health' => $activated['subscription_health'],
+            'inventory_policy' => $this->settings->inventory($tenant),
             'offline_lease' => [
                 'token' => $activated['lease_token'],
                 'expires_at' => $activated['lease_expires_at'],
