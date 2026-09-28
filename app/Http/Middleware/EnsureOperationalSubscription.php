@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Offline\OfflineLicenseManager;
 use App\Services\Subscriptions\SubscriptionHealthService;
 use App\Support\Tenancy\TenantContext;
 use Closure;
@@ -13,10 +14,17 @@ class EnsureOperationalSubscription
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly SubscriptionHealthService $health,
+        private readonly OfflineLicenseManager $offlineLicenses,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
+        if (config('offline.enabled')) {
+            $this->offlineLicenses->assertValid();
+
+            return $next($request);
+        }
+
         $state = $this->health->forTenant($this->tenantContext->tenant());
 
         abort_unless(
