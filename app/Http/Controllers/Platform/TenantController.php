@@ -51,7 +51,12 @@ class TenantController extends Controller
 
         $response = redirect()
             ->route('platform.tenants.edit', $tenant)
-            ->with('success', 'Pharmacy application provisioned with isolated database, domain, trial, and owner account.');
+            ->with(
+                'success',
+                $tenant->provisioning_status === 'application_ready'
+                    ? 'Pharmacy application provisioned with isolated database, domain, trial, and owner account.'
+                    : 'Pharmacy database and owner are provisioned; trial will start only after domain/TLS readiness.',
+            );
 
         if ($licenseKey !== null) {
             $response->with('generated_license_key', $licenseKey);
@@ -62,7 +67,7 @@ class TenantController extends Controller
 
     public function edit(Tenant $tenant): View
     {
-        $tenant->load(['business', 'domains']);
+        $tenant->load(['business', 'domains', 'provisioningEvents']);
 
         return view('platform.tenants.edit', compact('tenant'));
     }

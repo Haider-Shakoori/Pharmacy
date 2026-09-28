@@ -19,5 +19,35 @@
     <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
         @include('platform.tenants._form')
     </div>
+
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+            <div>
+                <p class="text-sm font-semibold text-teal-700">Provisioning</p>
+                <h3 class="mt-1 text-lg font-bold">{{ str_replace('_', ' ', $tenant->provisioning_status) }}</h3>
+                @if ($tenant->provisioning_error)
+                    <p class="mt-2 text-sm text-red-700">{{ $tenant->provisioning_error }}</p>
+                @endif
+            </div>
+            @if (in_array($tenant->provisioning_status, ['failed', 'awaiting_domain_tls', 'provisioning'], true))
+                <form method="POST" action="{{ route('platform.tenants.retry-provisioning', $tenant) }}">
+                    @csrf
+                    <button class="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white">Retry provisioning</button>
+                </form>
+            @endif
+        </div>
+
+        <div class="mt-4 divide-y divide-slate-100">
+            @forelse ($tenant->provisioningEvents->take(10) as $event)
+                <div class="grid gap-1 py-3 text-sm sm:grid-cols-[160px_120px_1fr]">
+                    <span class="font-medium">{{ str_replace('_', ' ', $event->step) }}</span>
+                    <span class="text-slate-500">{{ $event->status }}</span>
+                    <span class="text-slate-600">{{ $event->message ?: '—' }}</span>
+                </div>
+            @empty
+                <p class="py-3 text-sm text-slate-500">No provisioning events recorded yet.</p>
+            @endforelse
+        </div>
+    </section>
 </div>
 @endsection
