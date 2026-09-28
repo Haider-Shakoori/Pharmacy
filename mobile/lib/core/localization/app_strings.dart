@@ -65,6 +65,29 @@ class AppStrings {
   String get unregisterDevice => _value('unregisterDevice');
   String get registrationRequired => _value('registrationRequired');
   String get noServerConfigured => _value('noServerConfigured');
+  String get posSearch => _value('posSearch');
+  String get posSearchHint => _value('posSearchHint');
+  String get posLocation => _value('posLocation');
+  String get posNoLocalStock => _value('posNoLocalStock');
+  String get posCart => _value('posCart');
+  String get posEmptyCart => _value('posEmptyCart');
+  String get posQuantity => _value('posQuantity');
+  String get posUnitPrice => _value('posUnitPrice');
+  String get posDiscount => _value('posDiscount');
+  String get posEdit => _value('posEdit');
+  String get posAdd => _value('posAdd');
+  String get posPaymentMethod => _value('posPaymentMethod');
+  String get posCompleteSale => _value('posCompleteSale');
+  String get posSaleSaved => _value('posSaleSaved');
+  String get posPermissionDenied => _value('posPermissionDenied');
+  String get posSyncPending => _value('posSyncPending');
+  String get posTotal => _value('posTotal');
+  String get posAvailable => _value('posAvailable');
+  String get posCash => _value('posCash');
+  String get posBank => _value('posBank');
+  String get posMobile => _value('posMobile');
+  String get posRemove => _value('posRemove');
+  String get posInvalidValue => _value('posInvalidValue');
 
   static const Map<AppLocale, Map<String, String>>
   _translations = <AppLocale, Map<String, String>>{
@@ -76,8 +99,8 @@ class AppStrings {
       'stock': 'Stock',
       'customers': 'Customers',
       'sync': 'Sync',
-      'posTitle': 'Point of Sale foundation',
-      'posBody': 'Offline sales are not enabled yet. Batch 17 adds local persistence and Batch 19 enables local-first sales.',
+      'posTitle': 'Offline-first Point of Sale',
+      'posBody': 'Sales are committed to this device first and queued safely for synchronization.',
       'stockTitle': 'Stock lookup foundation',
       'stockBody': 'Local batch and stock snapshots will be added with the SQLite/Drift data layer.',
       'customersTitle': 'Customer lookup foundation',
@@ -120,6 +143,30 @@ class AppStrings {
       'registrationRequired': 'Device registration is required before transactional POS is enabled.',
       'noServerConfigured':
           'No reachable server is configured for the selected connection mode.',
+      'posSearch': 'Search medicine',
+      'posSearchHint': 'Brand, generic name or medicine code',
+      'posLocation': 'Stock location',
+      'posNoLocalStock': 'No local stock snapshot is available yet. Complete the first synchronization before offline selling.',
+      'posCart': 'Cart',
+      'posEmptyCart': 'Add medicines from the local catalog to start a sale.',
+      'posQuantity': 'Quantity',
+      'posUnitPrice': 'Unit price',
+      'posDiscount': 'Discount',
+      'posEdit': 'Apply',
+      'posAdd': 'Add',
+      'posPaymentMethod': 'Payment method',
+      'posCompleteSale': 'Complete offline sale',
+      'posSaleSaved': 'Sale saved locally.',
+      'posPermissionDenied':
+          'Your pharmacy account does not have POS sale permission.',
+      'posSyncPending': 'Pending synchronization',
+      'posTotal': 'Total',
+      'posAvailable': 'Available',
+      'posCash': 'Cash',
+      'posBank': 'Bank',
+      'posMobile': 'Mobile payment',
+      'posRemove': 'Remove',
+      'posInvalidValue': 'Enter valid quantity, price and discount values.',
     },
     AppLocale.dari: <String, String>{
       'appName': 'فارمسی BusinessOS',
@@ -129,8 +176,8 @@ class AppStrings {
       'stock': 'موجودی',
       'customers': 'مشتریان',
       'sync': 'همگام‌سازی',
-      'posTitle': 'بنیاد نقطه فروش',
-      'posBody': 'فروش آفلاین هنوز فعال نیست. مرحله ۱۷ ذخیره‌سازی محلی و مرحله ۱۹ فروش محلی را فعال می‌کند.',
+      'posTitle': 'نقطه فروش آفلاین',
+      'posBody': 'فروش ابتدا در همین دستگاه ثبت می‌شود و سپس برای همگام‌سازی در صف امن قرار می‌گیرد.',
       'stockTitle': 'بنیاد جستجوی موجودی',
       'stockBody':
           'بچ‌ها و موجودی محلی با لایه دیتابیس SQLite/Drift اضافه می‌شوند.',
@@ -175,6 +222,29 @@ class AppStrings {
           'پیش از فعال‌شدن فروش تراکنشی، ثبت دستگاه الزامی است.',
       'noServerConfigured':
           'برای حالت اتصال انتخاب‌شده هیچ سرور قابل دسترس تنظیم نشده است.',
+      'posSearch': 'جستجوی دوا',
+      'posSearchHint': 'نام تجارتی، نام جنریک یا کود دوا',
+      'posLocation': 'محل موجودی',
+      'posNoLocalStock': 'هنوز موجودی محلی دریافت نشده است. پیش از فروش آفلاین اولین همگام‌سازی را انجام دهید.',
+      'posCart': 'سبد فروش',
+      'posEmptyCart': 'برای آغاز فروش دوا را از فهرست محلی اضافه کنید.',
+      'posQuantity': 'تعداد',
+      'posUnitPrice': 'قیمت واحد',
+      'posDiscount': 'تخفیف',
+      'posEdit': 'اعمال',
+      'posAdd': 'افزودن',
+      'posPaymentMethod': 'روش پرداخت',
+      'posCompleteSale': 'تکمیل فروش آفلاین',
+      'posSaleSaved': 'فروش در دستگاه ذخیره شد.',
+      'posPermissionDenied': 'حساب شما اجازه فروش POS را ندارد.',
+      'posSyncPending': 'در انتظار همگام‌سازی',
+      'posTotal': 'مجموع',
+      'posAvailable': 'موجود',
+      'posCash': 'نقد',
+      'posBank': 'بانک',
+      'posMobile': 'پرداخت موبایلی',
+      'posRemove': 'حذف',
+      'posInvalidValue': 'تعداد، قیمت و تخفیف معتبر وارد کنید.',
     },
     AppLocale.pashto: <String, String>{
       'appName': 'BusinessOS فارمسي',
@@ -184,8 +254,8 @@ class AppStrings {
       'stock': 'ذخیره',
       'customers': 'پېرودونکي',
       'sync': 'همغږي',
-      'posTitle': 'د پلور بنسټ',
-      'posBody': 'آفلاین پلور لا فعال نه دی. ۱۷م پړاو ځايي ذخیره او ۱۹م پړاو ځايي-لومړی پلور فعالوي.',
+      'posTitle': 'آفلاین-لومړی پلور',
+      'posBody': 'پلور لومړی په همدې وسیله خوندي کېږي او وروسته د خوندي همغږۍ لپاره په کتار کې ساتل کېږي.',
       'stockTitle': 'د ذخیرې لټون بنسټ',
       'stockBody':
           'ځايي بچونه او ذخیره به د SQLite/Drift ډیټابیس له طبقې سره اضافه شي.',
@@ -229,6 +299,29 @@ class AppStrings {
           'د معاملاتي پلور له فعالېدو مخکې د وسیلې ثبت اړین دی.',
       'noServerConfigured':
           'د ټاکل شوي نښلون حالت لپاره د لاسرسي وړ سرور نه دی تنظیم شوی.',
+      'posSearch': 'د درملو لټون',
+      'posSearchHint': 'برانډ، جنریک نوم یا د درملو کوډ',
+      'posLocation': 'د ذخیرې ځای',
+      'posNoLocalStock': 'لا تر اوسه ځايي ذخیره نشته. د آفلاین پلور مخکې لومړۍ همغږي بشپړه کړئ.',
+      'posCart': 'د پلور ټوکرۍ',
+      'posEmptyCart': 'د پلور د پیل لپاره له ځايي کتلاګ څخه درمل ورزیات کړئ.',
+      'posQuantity': 'مقدار',
+      'posUnitPrice': 'د واحد بیه',
+      'posDiscount': 'تخفیف',
+      'posEdit': 'تطبیق',
+      'posAdd': 'زیاتول',
+      'posPaymentMethod': 'د تادیې طریقه',
+      'posCompleteSale': 'آفلاین پلور بشپړ کړئ',
+      'posSaleSaved': 'پلور په وسیله کې خوندي شو.',
+      'posPermissionDenied': 'ستاسو د فارمسي حساب د POS پلور اجازه نه لري.',
+      'posSyncPending': 'همغږۍ ته په تمه',
+      'posTotal': 'ټول',
+      'posAvailable': 'شته',
+      'posCash': 'نغدې',
+      'posBank': 'بانک',
+      'posMobile': 'موبایل تادیه',
+      'posRemove': 'لرې کول',
+      'posInvalidValue': 'سم مقدار، بیه او تخفیف داخل کړئ.',
     },
   };
 }

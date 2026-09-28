@@ -42,6 +42,9 @@ void main() {
     );
     await tester.pump();
 
+    await tester.tap(find.text('Stock').last);
+    await tester.pumpAndSettle();
+
     expect(find.text('Offline-ready mobile foundation'), findsOneWidget);
     expect(find.textContaining('No network link'), findsOneWidget);
     expect(find.text('POS'), findsWidgets);

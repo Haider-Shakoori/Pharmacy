@@ -1,6 +1,7 @@
 import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
+import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
@@ -84,25 +85,30 @@ class _AppShellState extends ConsumerState<AppShell> {
           children: <Widget>[
             const ConnectivityBanner(),
             const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      strings.foundation,
-                      style: Theme.of(context).textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(strings.foundationBody),
-                  ],
+            if (_selectedIndex != 0) ...<Widget>[
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        strings.foundation,
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(strings.foundationBody),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _FeaturePanel(destination: current),
+              const SizedBox(height: 16),
+            ],
+            if (_selectedIndex == 0)
+              const OfflinePosPanel()
+            else
+              _FeaturePanel(destination: current),
             if (_selectedIndex == 3) ...<Widget>[
               const SizedBox(height: 16),
               const MobileRegistrationCard(),
