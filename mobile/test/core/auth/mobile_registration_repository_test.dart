@@ -23,36 +23,38 @@ class _MemorySecureStore implements SecureStore {
 }
 
 void main() {
-  test('registration persists tenant binding without license or password', () async {
-    final _MemorySecureStore store = _MemorySecureStore();
-    final MobileRegistrationRepository repository =
-        MobileRegistrationRepository(store);
+  test(
+    'registration persists tenant binding without license or password',
+    () async {
+      final _MemorySecureStore store = _MemorySecureStore();
+      final MobileRegistrationRepository repository =
+          MobileRegistrationRepository(store);
 
-    final MobileRegistration registration = MobileRegistration(
-      tenantId: 'tenant-01',
-      tenantName: 'Kabul Pharmacy',
-      activationId: 'activation-01',
-      accessToken: 'signed-access',
-      accessExpiresAt: DateTime.utc(2026, 10, 1),
-      leaseToken: 'signed-lease',
-      leaseExpiresAt: DateTime.utc(2026, 10, 1),
-      userId: '1',
-      userName: 'Pharmacist',
-      userEmail: 'pharmacist@example.test',
-      permissions: const <String>['pos.sell'],
-      cloudBaseUrl: 'https://kabul.pharmacy.businessos.af',
-    );
+      final MobileRegistration registration = MobileRegistration(
+        tenantId: 'tenant-01',
+        tenantName: 'Kabul Pharmacy',
+        activationId: 'activation-01',
+        accessToken: 'signed-access',
+        accessExpiresAt: DateTime.utc(2026, 10, 1),
+        leaseToken: 'signed-lease',
+        leaseExpiresAt: DateTime.utc(2026, 10, 1),
+        userId: '1',
+        userName: 'Pharmacist',
+        userEmail: 'pharmacist@example.test',
+        permissions: const <String>['pos.sell'],
+        cloudBaseUrl: 'https://kabul.pharmacy.businessos.af',
+      );
 
-    await repository.save(registration);
-    final MobileRegistration? restored = await repository.load();
+      await repository.save(registration);
+      final MobileRegistration? restored = await repository.load();
 
-    expect(restored?.tenantId, 'tenant-01');
-    expect(restored?.userEmail, 'pharmacist@example.test');
+      expect(restored?.tenantId, 'tenant-01');
+      expect(restored?.userEmail, 'pharmacist@example.test');
 
-    final String raw = store.values.values.single;
-    final Map<String, dynamic> json =
-        jsonDecode(raw) as Map<String, dynamic>;
-    expect(json.containsKey('license_key'), isFalse);
-    expect(json.containsKey('password'), isFalse);
-  });
+      final String raw = store.values.values.single;
+      final Map<String, dynamic> json = jsonDecode(raw) as Map<String, dynamic>;
+      expect(json.containsKey('license_key'), isFalse);
+      expect(json.containsKey('password'), isFalse);
+    },
+  );
 }

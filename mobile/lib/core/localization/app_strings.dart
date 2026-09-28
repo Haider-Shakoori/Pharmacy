@@ -118,7 +118,8 @@ class AppStrings {
       'registeredDevice': 'Registered device',
       'unregisterDevice': 'Change pharmacy / unregister',
       'registrationRequired': 'Device registration is required before transactional POS is enabled.',
-      'noServerConfigured': 'No reachable server is configured for the selected connection mode.',
+      'noServerConfigured':
+          'No reachable server is configured for the selected connection mode.',
     },
     AppLocale.dari: <String, String>{
       'appName': 'فارمسی BusinessOS',
@@ -170,8 +171,10 @@ class AppStrings {
       'registering': 'در حال ثبت…',
       'registeredDevice': 'دستگاه ثبت‌شده',
       'unregisterDevice': 'تغییر فارمسی / لغو ثبت',
-      'registrationRequired': 'پیش از فعال‌شدن فروش تراکنشی، ثبت دستگاه الزامی است.',
-      'noServerConfigured': 'برای حالت اتصال انتخاب‌شده هیچ سرور قابل دسترس تنظیم نشده است.',
+      'registrationRequired':
+          'پیش از فعال‌شدن فروش تراکنشی، ثبت دستگاه الزامی است.',
+      'noServerConfigured':
+          'برای حالت اتصال انتخاب‌شده هیچ سرور قابل دسترس تنظیم نشده است.',
     },
     AppLocale.pashto: <String, String>{
       'appName': 'BusinessOS فارمسي',
@@ -222,8 +225,10 @@ class AppStrings {
       'registering': 'ثبتېږي…',
       'registeredDevice': 'ثبت شوې وسیله',
       'unregisterDevice': 'فارمسي بدلول / ثبت لغوه کول',
-      'registrationRequired': 'د معاملاتي پلور له فعالېدو مخکې د وسیلې ثبت اړین دی.',
-      'noServerConfigured': 'د ټاکل شوي نښلون حالت لپاره د لاسرسي وړ سرور نه دی تنظیم شوی.',
+      'registrationRequired':
+          'د معاملاتي پلور له فعالېدو مخکې د وسیلې ثبت اړین دی.',
+      'noServerConfigured':
+          'د ټاکل شوي نښلون حالت لپاره د لاسرسي وړ سرور نه دی تنظیم شوی.',
     },
   };
 }

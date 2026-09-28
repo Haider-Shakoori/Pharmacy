@@ -72,8 +72,11 @@ class MobileRegistrationClient {
         return MobileRegistration.fromApi(data);
       }
 
-      final String message = _errorMessage(payload) ??
-          'Registration failed with status ' + response.statusCode.toString() + '.';
+      final String message =
+          _errorMessage(payload) ??
+          'Registration failed with status ' +
+              response.statusCode.toString() +
+              '.';
 
       throw MobileRegistrationException(
         message,

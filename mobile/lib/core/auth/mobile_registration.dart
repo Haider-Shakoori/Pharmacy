@@ -15,12 +15,15 @@ class MobileRegistration {
   });
 
   factory MobileRegistration.fromApi(Map<String, dynamic> data) {
-    final Map<String, dynamic> tenant =
-        Map<String, dynamic>.from(data['tenant'] as Map);
-    final Map<String, dynamic> user =
-        Map<String, dynamic>.from(data['user'] as Map);
-    final Map<String, dynamic> lease =
-        Map<String, dynamic>.from(data['offline_lease'] as Map);
+    final Map<String, dynamic> tenant = Map<String, dynamic>.from(
+      data['tenant'] as Map,
+    );
+    final Map<String, dynamic> user = Map<String, dynamic>.from(
+      data['user'] as Map,
+    );
+    final Map<String, dynamic> lease = Map<String, dynamic>.from(
+      data['offline_lease'] as Map,
+    );
 
     return MobileRegistration(
       tenantId: tenant['id'].toString(),

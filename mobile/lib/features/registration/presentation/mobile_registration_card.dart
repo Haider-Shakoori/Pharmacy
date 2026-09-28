@@ -92,9 +92,7 @@ class _MobileRegistrationCardState
             MobileRegistrationException(strings.noServerConfigured);
       }
 
-      await ref
-          .read(mobileRegistrationRepositoryProvider)
-          .save(registration);
+      await ref.read(mobileRegistrationRepositoryProvider).save(registration);
 
       final String? cloudBaseUrl = registration.cloudBaseUrl;
       if (cloudBaseUrl != null && cloudBaseUrl.isNotEmpty) {
@@ -162,15 +160,15 @@ class _MobileRegistrationCardState
   List<ServerEndpoint> _candidates(ConnectionProfile profile) {
     return switch (profile.mode) {
       DeploymentMode.local => <ServerEndpoint>[
-          if (profile.localEndpoint != null) profile.localEndpoint!,
-        ],
+        if (profile.localEndpoint != null) profile.localEndpoint!,
+      ],
       DeploymentMode.cloud => <ServerEndpoint>[
-          if (profile.cloudEndpoint != null) profile.cloudEndpoint!,
-        ],
+        if (profile.cloudEndpoint != null) profile.cloudEndpoint!,
+      ],
       DeploymentMode.automatic => <ServerEndpoint>[
-          if (profile.localEndpoint != null) profile.localEndpoint!,
-          if (profile.cloudEndpoint != null) profile.cloudEndpoint!,
-        ],
+        if (profile.localEndpoint != null) profile.localEndpoint!,
+        if (profile.cloudEndpoint != null) profile.cloudEndpoint!,
+      ],
     };
   }
 
@@ -186,7 +184,8 @@ class _MobileRegistrationCardState
         padding: const EdgeInsets.all(20),
         child: registration.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (Object error, StackTrace stackTrace) => Text(error.toString()),
+          error: (Object error, StackTrace stackTrace) =>
+              Text(error.toString()),
           data: (MobileRegistration? current) {
             if (current != null) {
               return Column(
@@ -272,9 +271,7 @@ class _MobileRegistrationCardState
                   onPressed: _registering ? null : _register,
                   icon: const Icon(Icons.verified_user_outlined),
                   label: Text(
-                    _registering
-                        ? strings.registering
-                        : strings.registerDevice,
+                    _registering ? strings.registering : strings.registerDevice,
                   ),
                 ),
               ],
