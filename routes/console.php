@@ -11,3 +11,13 @@ Artisan::command('inspire', function () {
 Schedule::command('subscriptions:expire-trials')->hourly();
 
 Schedule::command('pharmacy:provisioning:retry --pending-only')->everyFiveMinutes()->withoutOverlapping();
+
+if ((bool) config('backup.schedule_enabled', false)) {
+    Schedule::command('pharmacy:backup:create')
+        ->dailyAt((string) config('backup.schedule_time', '02:15'))
+        ->withoutOverlapping();
+
+    Schedule::command('pharmacy:backup:prune')
+        ->dailyAt((string) config('backup.prune_time', '03:15'))
+        ->withoutOverlapping();
+}

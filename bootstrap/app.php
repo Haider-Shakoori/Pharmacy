@@ -1,7 +1,11 @@
 <?php
 
 use App\Console\Commands\BackfillAccounting;
+use App\Console\Commands\CreateBackup;
+use App\Console\Commands\PruneBackups;
+use App\Console\Commands\RestoreBackup;
 use App\Console\Commands\RetryTenantProvisioning;
+use App\Console\Commands\VerifyBackup;
 use App\Http\Middleware\ApplyTenantPreferences;
 use App\Http\Middleware\EnsureOperationalSubscription;
 use App\Http\Middleware\RejectOversizedApiPayload;
@@ -14,7 +18,14 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
-    ->withCommands([BackfillAccounting::class, RetryTenantProvisioning::class])
+    ->withCommands([
+        BackfillAccounting::class,
+        CreateBackup::class,
+        PruneBackups::class,
+        RestoreBackup::class,
+        RetryTenantProvisioning::class,
+        VerifyBackup::class,
+    ])
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
