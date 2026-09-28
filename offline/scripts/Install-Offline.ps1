@@ -5,6 +5,7 @@ param(
     [Parameter(Mandatory = $true)][string]$OwnerName,
     [Parameter(Mandatory = $true)][string]$OwnerEmail,
     [Parameter(Mandatory = $true)][string]$OwnerPassword,
+    [string]$AppVersion = 'dev',
     [int]$HttpPort = 8090
 )
 
@@ -186,7 +187,7 @@ OFFLINE_ACTIVATION_URL=https://pharmacy.businessos.af/api/v1/offline/license/act
 OFFLINE_ACTIVATION_TIMEOUT_SECONDS=20
 OFFLINE_CLOCK_ROLLBACK_TOLERANCE_SECONDS=300
 OFFLINE_MAX_INSTALLATIONS_PER_LICENSE=1
-OFFLINE_APP_VERSION=__APP_VERSION__
+OFFLINE_APP_VERSION=$AppVersion
 OFFLINE_HTTP_PORT=$HttpPort
 
 BACKUP_ROOT=$((Join-Path $DataRoot 'backups').Replace('\','/'))
