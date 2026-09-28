@@ -41,7 +41,6 @@ class Subscription extends Model
         return $this->hasOne(License::class);
     }
 
-
     protected function casts(): array
     {
         return [
