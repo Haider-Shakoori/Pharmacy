@@ -3,6 +3,9 @@
         <a href="{{ route('pharmacy.dashboard') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">{{ __('pharmacy.nav.dashboard') }}</a>
         <a href="{{ route('pharmacy.alerts.index') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">{{ __('pharmacy.nav.alerts') }}</a>
     @endif
+    @if (auth()->user()->hasPermission('pos.sell'))
+        <a href="{{ route('pharmacy.pos.index') }}" class="rounded-lg bg-emerald-50 px-3 py-2 font-bold text-emerald-800">{{ __('pharmacy.nav.pos') }}</a>
+    @endif
     @if (auth()->user()->hasPermission('medicines.manage'))
         <a href="{{ route('pharmacy.medicines.index') }}" class="rounded-lg px-3 py-2 font-semibold text-slate-700">{{ __('pharmacy.nav.medicines') }}</a>
     @endif
