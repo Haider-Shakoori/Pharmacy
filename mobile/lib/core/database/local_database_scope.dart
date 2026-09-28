@@ -1,5 +1,3 @@
-[Reading 26 lines from start (total: 26 lines, 0 remaining)]
-
 class LocalDatabaseScope {
   const LocalDatabaseScope._(this.storageKey);
 
@@ -26,5 +24,3 @@ class LocalDatabaseScope {
 
   String get databaseName => 'businessos_pharmacy_$storageKey';
 }
-
-[executed on device: ubuntu-6gb-dal-x8mx (7a7959a3-59c9-4f84-acec-6fd985dc6d01)]
