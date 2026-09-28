@@ -294,3 +294,19 @@ This prevents same-device offline overselling. No offline architecture can
 guarantee global oversell prevention across multiple disconnected devices
 without pre-allocated stock quotas; cross-device conflicts are therefore
 detected and surfaced during synchronization rather than hidden.
+
+
+## Batch 23 — offline mobile receipt printing
+
+Batch 23 prints from the tenant-scoped Android database. Completing a sale is
+independent from printing: printer discovery, connection or print failure can
+never roll back or modify the committed sale, FEFO allocation or sync outbox.
+
+Completed local sales are reconstructed with their medicine lines, customer,
+payments and totals without contacting the server. Recent receipts are loaded
+from SQLite so they remain available for reprinting after an app restart.
+
+Android thermal printing uses flutter_thermal_printer. Receipt UI is rasterized
+from a Flutter widget instead of trusting the printer's text code page, allowing
+the same English, Dari and Pashto glyph rendering used by the app to reach
+ESC/POS printers that may not include Arabic-script fonts.
