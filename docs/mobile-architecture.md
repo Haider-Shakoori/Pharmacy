@@ -172,3 +172,33 @@ transport/server failures. Authentication or license validation failures do not
 fall through to another endpoint. When the server returns the canonical cloud
 tenant URL, the app stores it in the connection profile so later Automatic
 failover stays on the same pharmacy.
+
+
+## Batch 19 — local-first mobile POS
+
+Batch 19 enables real mobile POS transactions without requiring a reachable
+server at checkout time. The registered tenant database is the source of local
+durability.
+
+A completed offline sale is written in one SQLite transaction containing the
+sale header, lines, payments and a unique `sale.completed` outbox event. The
+outbox idempotency key is derived from the client-generated sale UUID, so Batch
+20 can retry delivery without creating duplicate server sales.
+
+Quantities, prices, discounts, totals, tender and change use a fixed four-decimal
+representation backed by integer arithmetic in Dart. Binary floating-point
+values are not used for transaction calculations.
+
+Batch 19 enforces `pos.sell`, `pos.discount` and `pos.price_override`
+permissions from the signed registration snapshot. Cash, bank and mobile
+payments can be recorded offline. Credit sales remain server/sync dependent
+until customer credit snapshots and conflict rules are defined.
+
+The mobile catalog reads only tenant-scoped medicine and batch snapshots.
+Expired, depleted and non-active cached batches are excluded when choosing the
+local base sale price. Batch 19 intentionally does not decrement cached batch
+stock; offline FEFO allocation and oversell prevention are the responsibility of
+Batch 22.
+
+Connection mode has no effect on checkout durability. Local, Cloud and Automatic
+all write the sale locally first. Network delivery begins only in Batch 20.
