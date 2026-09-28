@@ -50,8 +50,8 @@ void main() {
 
       expect(restored?.tenantId, 'tenant-01');
       expect(restored?.userEmail, 'pharmacist@example.test');
-    expect(restored?.deviceId, 'device-01');
-    expect(restored?.leasePublicKey, 'public-key');
+      expect(restored?.deviceId, 'device-01');
+      expect(restored?.leasePublicKey, 'public-key');
 
       final String raw = store.values.values.single;
       final Map<String, dynamic> json = jsonDecode(raw) as Map<String, dynamic>;

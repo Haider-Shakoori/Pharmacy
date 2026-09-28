@@ -65,9 +65,7 @@ class OfflineLeaseAuthorizer {
     final QueryRow? row = await database
         .customSelect(
           'SELECT value FROM app_metadata WHERE key = ? LIMIT 1',
-          variables: <Variable<Object>>[
-            const Variable<String>(_lastSeenKey),
-          ],
+          variables: <Variable<Object>>[const Variable<String>(_lastSeenKey)],
         )
         .getSingleOrNull();
 

@@ -16,10 +16,7 @@ class OfflineLeaseException implements Exception {
 }
 
 class OfflineLeaseClaims {
-  const OfflineLeaseClaims({
-    required this.issuedAt,
-    required this.expiresAt,
-  });
+  const OfflineLeaseClaims({required this.issuedAt, required this.expiresAt});
 
   final DateTime issuedAt;
   final DateTime expiresAt;

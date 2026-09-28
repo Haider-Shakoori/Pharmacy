@@ -66,8 +66,7 @@ Future<MobileRegistration> _registration({
     deviceId: deviceId,
     accessToken: 'access',
     accessExpiresAt: expiresAt,
-    leaseToken:
-        'v1.${urlEncode(payloadBytes)}.${urlEncode(signature.bytes)}',
+    leaseToken: 'v1.${urlEncode(payloadBytes)}.${urlEncode(signature.bytes)}',
     leaseExpiresAt: expiresAt,
     leasePublicKey: base64Encode(publicKey.bytes),
     userId: '1',
@@ -112,53 +111,58 @@ void main() {
     );
   });
 
-  test('expired lease blocks transactions without deleting local data', () async {
-    final DateTime now = DateTime.utc(2026, 9, 28, 10);
-    final MobileRegistration registration = await _registration(
-      issuedAt: now.subtract(const Duration(days: 2)),
-      expiresAt: now.subtract(const Duration(minutes: 1)),
-    );
-    final _MemorySecureStore store = _MemorySecureStore();
-    final MobileRegistrationRepository repository =
-        MobileRegistrationRepository(store);
-    final PharmacyDatabase database = PharmacyDatabase(NativeDatabase.memory());
-    await repository.save(registration);
+  test(
+    'expired lease blocks transactions without deleting local data',
+    () async {
+      final DateTime now = DateTime.utc(2026, 9, 28, 10);
+      final MobileRegistration registration = await _registration(
+        issuedAt: now.subtract(const Duration(days: 2)),
+        expiresAt: now.subtract(const Duration(minutes: 1)),
+      );
+      final _MemorySecureStore store = _MemorySecureStore();
+      final MobileRegistrationRepository repository =
+          MobileRegistrationRepository(store);
+      final PharmacyDatabase database = PharmacyDatabase(
+        NativeDatabase.memory(),
+      );
+      await repository.save(registration);
 
-    await expectLater(
-      OfflineLeaseAuthorizer(
-        database: database,
-        registrationRepository: repository,
-        clock: () => now,
-      ).assertCanTransact(),
-      throwsA(
-        isA<OfflineLeaseException>().having(
-          (OfflineLeaseException error) => error.code,
-          'code',
-          OfflineLeaseFailure.expired,
+      await expectLater(
+        OfflineLeaseAuthorizer(
+          database: database,
+          registrationRepository: repository,
+          clock: () => now,
+        ).assertCanTransact(),
+        throwsA(
+          isA<OfflineLeaseException>().having(
+            (OfflineLeaseException error) => error.code,
+            'code',
+            OfflineLeaseFailure.expired,
+          ),
         ),
-      ),
-    );
+      );
 
-    await database.customStatement(
-      '''
+      await database.customStatement(
+        '''
       INSERT INTO app_metadata (key, value, updated_at)
       VALUES ('existing-data', 'preserved', ?)
       ''',
-      <Object?>[now.millisecondsSinceEpoch ~/ 1000],
-    );
+        <Object?>[now.millisecondsSinceEpoch ~/ 1000],
+      );
 
-    expect(
-      await database
-          .customSelect(
-            "SELECT value FROM app_metadata WHERE key = 'existing-data'",
-          )
-          .map((row) => row.read<String>('value'))
-          .getSingle(),
-      'preserved',
-    );
+      expect(
+        await database
+            .customSelect(
+              "SELECT value FROM app_metadata WHERE key = 'existing-data'",
+            )
+            .map((row) => row.read<String>('value'))
+            .getSingle(),
+        'preserved',
+      );
 
-    await database.close();
-  });
+      await database.close();
+    },
+  );
 
   test('clock rollback after prior use blocks new transactions', () async {
     final DateTime now = DateTime.utc(2026, 9, 28, 10);
