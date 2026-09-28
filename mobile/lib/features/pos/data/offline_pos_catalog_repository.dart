@@ -78,7 +78,11 @@ class OfflinePosCatalogRepository {
       FixedDecimal available = FixedDecimal.zero;
       FixedDecimal? salePrice;
       final DateTime today = DateTime.now();
-      final DateTime startOfToday = DateTime(\n        today.year,\n        today.month,\n        today.day,\n      );
+      final DateTime startOfToday = DateTime(
+        today.year,
+        today.month,
+        today.day,
+      );
 
       for (final batch in batches) {
         final FixedDecimal quantity = FixedDecimal.parse(

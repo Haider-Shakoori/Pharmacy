@@ -157,7 +157,8 @@ class AppStrings {
       'posPaymentMethod': 'Payment method',
       'posCompleteSale': 'Complete offline sale',
       'posSaleSaved': 'Sale saved locally.',
-      'posPermissionDenied':\n          'Your pharmacy account does not have POS sale permission.',
+      'posPermissionDenied':
+          'Your pharmacy account does not have POS sale permission.',
       'posSyncPending': 'Pending synchronization',
       'posTotal': 'Total',
       'posAvailable': 'Available',
