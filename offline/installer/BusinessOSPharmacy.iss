@@ -43,7 +43,7 @@ Name: "{group}\BusinessOS Pharmacy License"; Filename: "http://{code:GetComputer
 Name: "{autodesktop}\BusinessOS Pharmacy"; Filename: "{app}\manager\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\installer\Install-Offline.ps1"" -AppRoot ""{app}"" -DataRoot ""{commonappdata}\BusinessOS\Pharmacy"" -PharmacyName ""{code:GetPharmacyName}"" -OwnerName ""{code:GetOwnerName}"" -OwnerEmail ""{code:GetOwnerEmail}"" -OwnerPassword ""{code:GetOwnerPassword}"" -HttpPort 8090"; StatusMsg: "Configuring BusinessOS Pharmacy Offline..."; Flags: runhidden waituntilterminated
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\installer\Install-Offline.ps1"" -AppRoot ""{app}"" -DataRoot ""{commonappdata}\BusinessOS\Pharmacy"" -PharmacyName ""{code:GetPharmacyName}"" -OwnerName ""{code:GetOwnerName}"" -OwnerEmail ""{code:GetOwnerEmail}"" -OwnerPassword ""{code:GetOwnerPassword}"" -AppVersion ""{#MyAppVersion}"" -HttpPort 8090"; StatusMsg: "Configuring BusinessOS Pharmacy Offline..."; Flags: runhidden waituntilterminated
 Filename: "{app}\manager\{#MyAppExeName}"; Description: "Open BusinessOS Pharmacy Server Manager"; Flags: postinstall nowait skipifsilent
 
 [UninstallRun]
