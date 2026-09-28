@@ -4,15 +4,16 @@ Production-oriented, multi-tenant SaaS pharmacy management platform designed for
 
 ## Current status
 
-**Batch 29 — Release Candidate regression/UAT: in progress**
+**Batch 30 — Production deployment and monitoring: in progress**
 
-Batches 1–28 are implemented, including the SaaS control plane, tenant pharmacy,
-purchasing/inventory, FEFO POS, Daily Closing, accounting/reporting, Android
-offline POS, authenticated synchronization, signed offline licensing, receipt
-printing, operational alerts, performance/security hardening and backup/recovery.
+Batches 1–29 are implemented and the Release Candidate UAT gate is green,
+including the SaaS control plane, tenant pharmacy, purchasing/inventory, FEFO
+POS, Daily Closing, accounting/reporting, Android offline POS, authenticated
+synchronization, signed offline licensing, receipt printing, operational
+alerts, performance/security hardening, backup/recovery and cross-module UAT.
 
-Batch 29 is the release-candidate validation gate before Batch 30 production
-deployment and monitoring.
+Batch 30 adds the final production-readiness gate, health monitoring contract
+and controlled deployment to pharmacy.businessos.af.
 
 ## Technology
 

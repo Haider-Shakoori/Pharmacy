@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Health\ReadinessController;
 use App\Http\Controllers\Platform\Auth\LoginController as PlatformLoginController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\Platform\LicenseController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Platform\TenantStatusController;
 use Illuminate\Support\Facades\Route;
 
 Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
+    Route::get('/ready', ReadinessController::class)->name('health.ready');
     Route::redirect('/', '/platform');
 
     Route::prefix('platform')->name('platform.')->group(function (): void {
