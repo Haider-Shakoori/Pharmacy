@@ -196,8 +196,7 @@ class BackupManager
         $this->verify($backup);
 
         $entry = collect($manifest['entries'])->first(
-            fn (array $entry): bool =>
-                ($entry['scope'] ?? null) === 'tenant'
+            fn (array $entry): bool => ($entry['scope'] ?? null) === 'tenant'
                 && (string) ($entry['tenant_id'] ?? '') === $tenantId,
         );
 
@@ -252,11 +251,10 @@ class BackupManager
 
         usort(
             $backups,
-            fn (array $left, array $right): int =>
-                strcmp(
-                    (string) $right['created_at'],
-                    (string) $left['created_at'],
-                ),
+            fn (array $left, array $right): int => strcmp(
+                (string) $right['created_at'],
+                (string) $left['created_at'],
+            ),
         );
 
         return $backups;

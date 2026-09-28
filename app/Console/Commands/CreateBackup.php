@@ -28,8 +28,7 @@ class CreateBackup extends Command
         $selected = array_values(
             array_filter(
                 (array) $this->option('tenant'),
-                fn ($value): bool =>
-                    is_string($value) && $value !== '',
+                fn ($value): bool => is_string($value) && $value !== '',
             ),
         );
 

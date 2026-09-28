@@ -77,9 +77,10 @@ php artisan pharmacy:backup:prune
 
 ## Scheduling on shared hosting / cPanel
 
-Production enables the backup schedule by default unless
-`BACKUP_SCHEDULE_ENABLED=false`. The default run times are 02:15 for backup
-and 03:15 for pruning in the server scheduler context.
+For production, set `BACKUP_SCHEDULE_ENABLED=true` explicitly after choosing
+and testing the backup destination. The default run times are 02:15 for backup
+and 03:15 for pruning in the server scheduler context. The example environment
+keeps scheduling disabled until deployment configuration is complete.
 
 cPanel must invoke Laravel's scheduler every minute, for example:
 
