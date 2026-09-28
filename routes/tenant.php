@@ -34,12 +34,18 @@ use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
-Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
+$tenantRoutes = Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
     SetTenantRouteDefaults::class,
-])->name('pharmacy.')->group(function (): void {
+]);
+
+if (! config('offline.enabled')) {
+    $tenantRoutes->domain('{pharmacy}.'.config('pharmacy.deployment_host'));
+}
+
+$tenantRoutes->name('pharmacy.')->group(function (): void {
     Route::get('/login', [PharmacyLoginController::class, 'create'])->name('login');
     Route::post('/login', [PharmacyLoginController::class, 'store'])
         ->middleware('throttle:pharmacy-login')
