@@ -8,7 +8,6 @@ use App\Services\Licensing\LicenseActivationService;
 use App\Services\Licensing\LicenseKeyService;
 use App\Services\Licensing\OfflineLeaseSigner;
 use App\Services\Settings\PharmacySettings;
-use App\Services\Settings\PharmacySettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;

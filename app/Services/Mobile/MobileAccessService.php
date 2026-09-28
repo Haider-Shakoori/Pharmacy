@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Services\Licensing\OfflineLeaseSigner;
 use App\Services\Licensing\SignedTokenVerifier;
 use App\Services\Settings\PharmacySettings;
-use App\Services\Settings\PharmacySettings;
 use App\Services\Subscriptions\SubscriptionHealthService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\AuthenticationException;

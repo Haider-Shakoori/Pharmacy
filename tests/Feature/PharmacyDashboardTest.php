@@ -7,6 +7,7 @@ use App\Models\ProductBatch;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Inventory\InventoryProvisioner;
 use App\Services\Subscriptions\TrialProvisioner;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -57,9 +58,9 @@ class PharmacyDashboardTest extends TestCase
             'password123',
         );
 
-        $tenant->run(function () use ($tenant): void {
-            $location = app(InventoryProvisioner::class)->ensureDefaults($tenant);
+        $location = app(InventoryProvisioner::class)->ensureDefaults($tenant);
 
+        app(TenantContext::class)->run($tenant, function () use ($location): void {
             $medicine = Medicine::query()->create([
                 'medicine_code' => 'ALERT-001',
                 'brand_name' => 'Alert Medicine',

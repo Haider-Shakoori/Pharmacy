@@ -13,7 +13,6 @@
         @if (auth()->user()->hasPermission('dashboard.view'))
             <a href="{{ route('pharmacy.dashboard') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('pharmacy.dashboard') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.dashboard') }}</a>
             <a href="{{ route('pharmacy.alerts.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('pharmacy.alerts.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.alerts') }}</a>
-            <a href="{{ route('pharmacy.alerts.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('pharmacy.alerts.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.alerts') }}</a>
         @endif
         @if (auth()->user()->hasPermission('users.manage'))
             <a href="{{ route('pharmacy.users.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.users.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.users') }}</a>
