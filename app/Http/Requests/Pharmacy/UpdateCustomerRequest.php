@@ -1,1 +1,5 @@
-²¥–)βµκλΆΊή¶ΈΎ)ΰrκλz{]·¶ςλ\ΑΧz-iΗ²ΚZ­ινv*ήrΪ+‰λΆΛ…ψ¥zέ·¶ς
+<?php
+
+namespace App\Http\Requests\Pharmacy;
+
+class UpdateCustomerRequest extends StoreCustomerRequest {}
