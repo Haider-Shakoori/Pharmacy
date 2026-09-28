@@ -1,0 +1,37 @@
+name: Mobile Format Once
+
+on:
+  push:
+    branches:
+      - feat/batch-16-flutter-foundation
+    paths:
+      - '.github/workflows/mobile-format-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/batch-16-flutter-foundation
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - name: Format mobile Dart source
+        run: dart format mobile/lib mobile/test
+      - name: Commit formatter output
+        run: |
+          if git diff --quiet -- mobile/lib mobile/test; then
+            echo "No formatter changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/lib mobile/test
+          git commit -m "style: apply Dart formatter"
+          git push origin HEAD:feat/batch-16-flutter-foundation
