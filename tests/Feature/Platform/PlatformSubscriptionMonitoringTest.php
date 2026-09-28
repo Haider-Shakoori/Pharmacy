@@ -10,6 +10,7 @@ use App\Models\Plan;
 use App\Models\PlatformAdmin;
 use App\Models\Subscription;
 use App\Services\Licensing\LicenseKeyService;
+use App\Services\Subscriptions\PlatformSubscriptionMonitoringService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -107,8 +108,7 @@ class PlatformSubscriptionMonitoringTest extends TestCase
         $connection->enableQueryLog();
         $connection->flushQueryLog();
 
-        app(\App\Services\Subscriptions\PlatformSubscriptionMonitoringService::class)
-            ->snapshot();
+        app(PlatformSubscriptionMonitoringService::class)->snapshot();
 
         $this->assertLessThanOrEqual(8, count($connection->getQueryLog()));
         $connection->disableQueryLog();

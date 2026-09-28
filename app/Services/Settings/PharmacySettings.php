@@ -10,6 +10,7 @@ class PharmacySettings
 {
     /** @var array<string, PharmacySetting> */
     private array $records = [];
+
     public const DAILY_CLOSING_DEFAULTS = [
         'business_day_rollover_time' => '00:00',
         'opening_cash_mode' => 'carry_forward',
