@@ -198,11 +198,10 @@ class _MobileRegistrationCardState
                   ),
                   const SizedBox(height: 8),
                   Text(current.tenantName),
-                  Text(current.userName + ' • ' + current.userEmail),
+                  Text('${current.userName} • ${current.userEmail}'),
                   const SizedBox(height: 8),
                   Text(
-                    'Access expires: ' +
-                        current.accessExpiresAt.toLocal().toString(),
+                    'Access expires: ${current.accessExpiresAt.toLocal()}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 16),

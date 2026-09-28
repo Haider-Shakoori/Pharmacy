@@ -74,9 +74,7 @@ class MobileRegistrationClient {
 
       final String message =
           _errorMessage(payload) ??
-          'Registration failed with status ' +
-              response.statusCode.toString() +
-              '.';
+          'Registration failed with status ${response.statusCode}.';
 
       throw MobileRegistrationException(
         message,
@@ -116,7 +114,6 @@ class MobileRegistrationClient {
       }
     }
 
-    final Object? message = payload['message'];
-    return message == null ? null : message.toString();
+    return payload['message']?.toString();
   }
 }
