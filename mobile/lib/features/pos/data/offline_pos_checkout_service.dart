@@ -9,9 +9,9 @@ import 'package:uuid/uuid.dart';
 class OfflinePosCheckoutService {
   OfflinePosCheckoutService(
     this._database, {
-    Uuid? uuid,
+    String Function()? idGenerator,
     DateTime Function()? clock,
-  }) : _uuid = uuid ?? const Uuid(),
+  }) : _idGenerator = idGenerator ?? const Uuid().v4,
        _clock = clock ?? DateTime.now;
 
   static const Set<String> _offlinePaymentMethods = <String>{
@@ -21,7 +21,7 @@ class OfflinePosCheckoutService {
   };
 
   final PharmacyDatabase _database;
-  final Uuid _uuid;
+  final String Function() _idGenerator;
   final DateTime Function() _clock;
 
   Future<OfflinePosCheckoutResult> checkout(
@@ -49,7 +49,7 @@ class OfflinePosCheckoutService {
     final DateTime now = _clock();
     final String businessDate =
         request.businessDate ?? _businessDate(now);
-    final String saleId = _uuid.v4();
+    final String saleId = _idGenerator();
     final String idempotencyKey = 'sale:$saleId:completed';
 
     return _database.transaction(() async {
@@ -115,7 +115,7 @@ class OfflinePosCheckoutService {
         }
 
         final FixedDecimal lineTotal = lineSubtotal - discount;
-        final String lineId = _uuid.v4();
+        final String lineId = _idGenerator();
 
         await _database.customStatement(
           '''
@@ -171,7 +171,7 @@ class OfflinePosCheckoutService {
 
         tendered += amount;
         hasCash = hasCash || input.method == 'cash';
-        final String paymentId = _uuid.v4();
+        final String paymentId = _idGenerator();
 
         await _database.customStatement(
           '''
