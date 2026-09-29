@@ -40,6 +40,7 @@ class LicenseActivationApiTest extends TestCase
             'price' => 1000,
             'billing_period' => 'monthly',
             'max_android_devices' => 1,
+            'max_windows_devices' => 1,
             'max_branches' => 1,
             'offline_grace_days' => 7,
             'is_active' => true,
@@ -87,6 +88,38 @@ class LicenseActivationApiTest extends TestCase
         $this->postJson('/api/v1/license/activate', [
             'license_key' => $this->plainTextKey,
             'device_id' => '22222222-2222-4222-8222-222222222222',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('device_id');
+    }
+
+    public function test_windows_device_has_separate_limit_from_android(): void
+    {
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $this->plainTextKey,
+            'device_id' => '11111111-1111-4111-8111-111111111111',
+            'platform' => 'android',
+        ])->assertOk();
+
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $this->plainTextKey,
+            'device_id' => '33333333-3333-4333-8333-333333333333',
+            'platform' => 'windows',
+            'device_name' => 'Pharmacy Counter PC',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.plan.max_windows_devices', 1);
+
+        $this->assertDatabaseHas('license_activations', [
+            'device_id' => '33333333-3333-4333-8333-333333333333',
+            'platform' => 'windows',
+            'revoked_at' => null,
+        ]);
+
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $this->plainTextKey,
+            'device_id' => '44444444-4444-4444-8444-444444444444',
+            'platform' => 'windows',
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('device_id');
