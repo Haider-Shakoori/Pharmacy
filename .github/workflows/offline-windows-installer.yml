@@ -139,10 +139,12 @@ jobs:
           $installer = Get-ChildItem offline/dist/installer -Filter '*.exe' | Select-Object -First 1
           if (-not $installer) { throw 'Installer EXE was not created.' }
 
+          $setupLog = Join-Path $env:RUNNER_TEMP 'businessos-pharmacy-setup.log'
           $arguments = @(
             '/VERYSILENT',
             '/SUPPRESSMSGBOXES',
             '/NORESTART',
+            "/LOG=$setupLog",
             '/LOG=D:\a\_temp\businessos-pharmacy-setup.log',
             '"/PHARMACYNAME=BusinessOS Smoke Pharmacy"',
             '"/OWNERNAME=Smoke Administrator"',
