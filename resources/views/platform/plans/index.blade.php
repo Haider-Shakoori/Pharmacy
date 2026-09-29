@@ -39,6 +39,7 @@
                 <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div><dt class="text-slate-500">Users</dt><dd class="font-semibold">{{ $plan->max_users ?? 'Unlimited' }}</dd></div>
                     <div><dt class="text-slate-500">Android devices</dt><dd class="font-semibold">{{ $plan->max_android_devices ?? 'Unlimited' }}</dd></div>
+                    <div><dt class="text-slate-500">Windows PCs</dt><dd class="font-semibold">{{ $plan->max_windows_devices ?? 'Unlimited' }}</dd></div>
                     <div><dt class="text-slate-500">Branches</dt><dd class="font-semibold">{{ $plan->max_branches }}</dd></div>
                     <div><dt class="text-slate-500">Offline grace</dt><dd class="font-semibold">{{ $plan->offline_grace_days }} days</dd></div>
                 </dl>
