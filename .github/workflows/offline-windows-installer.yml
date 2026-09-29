@@ -112,7 +112,7 @@ jobs:
               throw 'LICENSE_SIGNING_PUBLIC_KEY_B64 must be configured for a protected customer installer.'
             }
 
-            $key = php -r "$kp=sodium_crypto_sign_keypair(); echo base64_encode(sodium_crypto_sign_publickey($kp));"
+            $key = php -r '$kp=sodium_crypto_sign_keypair(); echo base64_encode(sodium_crypto_sign_publickey($kp));'
             Write-Warning 'Using an ephemeral public key. This internal installer cannot activate against production.'
           }
 
