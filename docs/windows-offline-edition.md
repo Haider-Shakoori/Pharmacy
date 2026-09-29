@@ -8,6 +8,8 @@ The production Windows build is compiled with `https://pharmacy.businessos.af` a
 
 A valid subscription or one-time seven-day trial receives an Ed25519-signed offline lease. Trial expiry is server-owned and is capped at the subscription's `trial_ends_at`; the Windows clock never determines when the trial started or when it ends.
 
+For a first-time trial, the pharmacy must already be provisioned in BusinessOS. The Windows app asks for the pharmacy code and the owner credentials, authenticates those credentials with the central licensing service, then starts the one-time trial server-side and registers that PC. The plaintext license key is not required for this first trial registration. Invalid credentials do not consume the trial, an expired trial cannot be restarted, and a pharmacy with an existing paid subscription must register with its normal license key.
+
 The trial plan permits one Windows PC by default. Paid plans have a separate `max_windows_devices` allowance from Android devices.
 
 ## Clock rollback resistance
