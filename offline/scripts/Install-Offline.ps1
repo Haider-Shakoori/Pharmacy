@@ -1,15 +1,51 @@
 param(
     [Parameter(Mandatory = $true)][string]$AppRoot,
     [Parameter(Mandatory = $true)][string]$DataRoot,
-    [Parameter(Mandatory = $true)][string]$PharmacyName,
-    [Parameter(Mandatory = $true)][string]$OwnerName,
-    [Parameter(Mandatory = $true)][string]$OwnerEmail,
-    [Parameter(Mandatory = $true)][string]$OwnerPassword,
+    [string]$ConfigPath = '',
+    [string]$PharmacyName = '',
+    [string]$OwnerName = '',
+    [string]$OwnerEmail = '',
+    [string]$OwnerPassword = '',
     [string]$AppVersion = 'dev',
     [int]$HttpPort = 8090
 )
 
 $ErrorActionPreference = 'Stop'
+
+
+if ($ConfigPath -ne '') {
+    if (-not (Test-Path $ConfigPath)) {
+        throw 'The installer configuration file could not be found.'
+    }
+
+    $settings = @{}
+    foreach ($line in Get-Content $ConfigPath) {
+        $separator = $line.IndexOf('=')
+        if ($separator -gt 0) {
+            $key = $line.Substring(0, $separator)
+            $value = $line.Substring($separator + 1)
+            $settings[$key] = $value
+        }
+    }
+
+    $PharmacyName = [string]$settings['PharmacyName']
+    $OwnerName = [string]$settings['OwnerName']
+    $OwnerEmail = [string]$settings['OwnerEmail']
+    $OwnerPassword = [string]$settings['OwnerPassword']
+
+    Remove-Item $ConfigPath -Force -ErrorAction SilentlyContinue
+}
+
+if ([string]::IsNullOrWhiteSpace($PharmacyName) -or
+    [string]::IsNullOrWhiteSpace($OwnerName) -or
+    [string]::IsNullOrWhiteSpace($OwnerEmail) -or
+    [string]::IsNullOrWhiteSpace($OwnerPassword)) {
+    throw 'Pharmacy and owner information is incomplete.'
+}
+
+if ($OwnerPassword.Length -lt 8) {
+    throw 'The initial owner password must contain at least 8 characters.'
+}
 
 function New-RandomSecret([int]$Bytes = 32) {
     $buffer = New-Object byte[] $Bytes
@@ -95,14 +131,13 @@ if (-not $DbService) {
             "--datadir=$DbData",
             "--basedir=$MariaRoot",
             "--password=$DbRootPassword",
-            '--default-user',
             '--skip-test-db'
         )
     }
 
     Invoke-Checked $MariaServer @(
-        '--install=BusinessOSPharmacyDB',
-        "--defaults-file=$MyIni"
+        "--defaults-file=$MyIni",
+        '--install=BusinessOSPharmacyDB'
     )
 }
 
@@ -198,16 +233,50 @@ BACKUP_PRUNE_TIME=03:15
 "@
 Set-Content -Path $EnvPath -Value $envContent -Encoding UTF8
 
-$PhpIniProduction = Join-Path $PhpRoot 'php.ini-production'
 $PhpIni = Join-Path $PhpRoot 'php.ini'
-if ((Test-Path $PhpIniProduction) -and -not (Test-Path $PhpIni)) {
-    Copy-Item $PhpIniProduction $PhpIni
-}
+$PhpExt = Join-Path $PhpRoot 'ext'
+$phpIniContent = @"
+[PHP]
+engine=On
+short_open_tag=Off
+precision=14
+output_buffering=4096
+expose_php=Off
+max_execution_time=120
+max_input_time=120
+memory_limit=512M
+post_max_size=64M
+upload_max_filesize=64M
+max_file_uploads=20
+default_charset="UTF-8"
+date.timezone=Asia/Kabul
+cgi.force_redirect=0
+extension_dir="$PhpExt"
+
+extension=php_curl.dll
+extension=php_fileinfo.dll
+extension=php_gd.dll
+extension=php_intl.dll
+extension=php_mbstring.dll
+extension=php_mysqli.dll
+extension=php_openssl.dll
+extension=php_pdo_mysql.dll
+extension=php_sodium.dll
+extension=php_zip.dll
+
+[Session]
+session.use_strict_mode=1
+session.use_only_cookies=1
+session.cookie_httponly=1
+"@
+Set-Content -Path $PhpIni -Value $phpIniContent -Encoding ASCII
 
 $IonCubeLoader = Get-ChildItem -Path (Join-Path $Runtime 'ioncube') -Filter 'ioncube_loader_win_8.4.dll' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($IonCubeLoader) {
     Add-Content -Path $PhpIni -Value ([Environment]::NewLine + 'zend_extension="' + $IonCubeLoader.FullName + '"')
 }
+
+Invoke-Checked $Php @('-c', $PhpIni, '-r', 'if (!extension_loaded("pdo_mysql") || !extension_loaded("sodium") || !extension_loaded("mbstring")) { fwrite(STDERR, "Required PHP extensions are missing."); exit(1); }')
 
 Push-Location $Application
 try {
