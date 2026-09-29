@@ -7,6 +7,7 @@
         'api_access' => 'API access',
         'priority_support' => 'Priority support',
         'advanced_analytics' => 'Advanced analytics',
+        'offline_windows' => 'Offline Windows installation',
     ];
 @endphp
 
