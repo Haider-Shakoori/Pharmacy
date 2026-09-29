@@ -32,6 +32,7 @@ class MobileDeviceRegistrationService
         ?string $deviceModel,
         ?string $osVersion,
         ?string $buildNumber,
+        string $platform = 'android',
     ): array {
         $license = $this->keys->findByPlainText($licenseKey);
 
@@ -100,6 +101,7 @@ class MobileDeviceRegistrationService
             $deviceModel,
             $osVersion,
             $buildNumber,
+            $platform,
         );
 
         $now = CarbonImmutable::now();
