@@ -39,6 +39,7 @@ class UpdatePlanRequest extends FormRequest
             'billing_period' => ['required', Rule::enum(BillingPeriod::class)],
             'max_users' => ['nullable', 'integer', 'min:1', 'max:1000000'],
             'max_android_devices' => ['nullable', 'integer', 'min:1', 'max:1000000'],
+            'max_windows_devices' => ['nullable', 'integer', 'min:1', 'max:1000000'],
             'max_branches' => ['required', 'integer', 'min:1', 'max:1000000'],
             'offline_grace_days' => ['required', 'integer', 'min:0', 'max:365'],
             'features' => ['nullable', 'array'],
