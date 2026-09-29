@@ -14,7 +14,7 @@ class TenantTrialController extends Controller
         $licenseKey = $trials->provision($tenant);
 
         return back()
-            ->with('success', 'Seven-day hosted trial started. Tenant access and Android licensing are active for the trial period.')
+            ->with('success', 'Seven-day hosted trial started. Tenant access plus Android and Windows licensing are active for the trial period.')
             ->with('generated_license_key', $licenseKey);
     }
 }
