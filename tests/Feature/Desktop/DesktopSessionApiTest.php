@@ -19,7 +19,9 @@ class DesktopSessionApiTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private Subscription $subscription;
+
     private string $licenseKey;
 
     protected function setUp(): void
