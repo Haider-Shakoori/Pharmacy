@@ -43,7 +43,6 @@ Name: "{group}\BusinessOS Pharmacy License"; Filename: "http://{code:GetComputer
 Name: "{autodesktop}\BusinessOS Pharmacy"; Filename: "{app}\manager\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\installer\Install-Offline.ps1"" -AppRoot ""{app}"" -DataRoot ""{commonappdata}\BusinessOS\Pharmacy"" -ConfigPath ""{code:GetInstallConfigPath}"" -AppVersion ""{#MyAppVersion}"" -HttpPort 8090"; StatusMsg: "Configuring BusinessOS Pharmacy Offline..."; Flags: runhidden waituntilterminated
 Filename: "{app}\manager\{#MyAppExeName}"; Description: "Open BusinessOS Pharmacy Server Manager"; Flags: postinstall nowait skipifsilent
 
 [UninstallRun]
@@ -152,4 +151,35 @@ end;
 function GetInstallConfigPath(Param: String): String;
 begin
   Result := InstallConfigPath;
+end;
+
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+  PowerShellExe: String;
+  Parameters: String;
+begin
+  if CurStep = ssPostInstall then
+  begin
+    PowerShellExe := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
+    Parameters :=
+      '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' +
+      ExpandConstant('{app}\installer\Install-Offline.ps1') +
+      '" -AppRoot "' + ExpandConstant('{app}') +
+      '" -DataRoot "' + ExpandConstant('{commonappdata}\BusinessOS\Pharmacy') +
+      '" -ConfigPath "' + InstallConfigPath +
+      '" -AppVersion "{#MyAppVersion}" -HttpPort 8090';
+
+    WizardForm.StatusLabel.Caption := 'Configuring BusinessOS Pharmacy Offline...';
+
+    if not Exec(PowerShellExe, Parameters, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      RaiseException('BusinessOS Pharmacy setup could not start the local configuration process.');
+
+    if ResultCode <> 0 then
+      RaiseException(Format(
+        'BusinessOS Pharmacy local configuration failed (exit code %d). See C:\ProgramData\BusinessOS\Pharmacy\logs\install.log.',
+        [ResultCode]
+      ));
+  end;
 end;

@@ -49,7 +49,12 @@ if ($OwnerPassword.Length -lt 8) {
 
 function New-RandomSecret([int]$Bytes = 32) {
     $buffer = New-Object byte[] $Bytes
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($buffer)
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        $rng.GetBytes($buffer)
+    } finally {
+        $rng.Dispose()
+    }
     return [Convert]::ToBase64String($buffer)
 }
 
@@ -59,6 +64,30 @@ function Invoke-Checked([string]$File, [string[]]$Arguments) {
         throw "$File failed with exit code $($process.ExitCode)."
     }
 }
+
+$InstallLogDir = Join-Path $DataRoot 'logs'
+New-Item -ItemType Directory -Force -Path $InstallLogDir | Out-Null
+$InstallLog = Join-Path $InstallLogDir 'install.log'
+
+try {
+    Start-Transcript -Path $InstallLog -Append -Force | Out-Null
+} catch {
+    # Installation must not fail only because transcript capture is unavailable.
+}
+
+trap {
+    $details = ($_ | Out-String)
+    try {
+        Add-Content -Path $InstallLog -Value $details -ErrorAction SilentlyContinue
+        Stop-Transcript | Out-Null
+    } catch {
+    }
+    exit 1
+}
+
+Write-Host "Starting BusinessOS Pharmacy Offline installation."
+Write-Host "App root: $AppRoot"
+Write-Host "Data root: $DataRoot"
 
 $Application = Join-Path $AppRoot 'application'
 $Runtime = Join-Path $AppRoot 'runtime'
@@ -330,6 +359,12 @@ schtasks.exe /Create /F /SC MINUTE /MO 5 /TN 'BusinessOS Pharmacy Network Sync' 
 
 if (-not (Get-NetFirewallRule -DisplayName 'BusinessOS Pharmacy LAN' -ErrorAction SilentlyContinue)) {
     New-NetFirewallRule -DisplayName 'BusinessOS Pharmacy LAN' -Direction Inbound -Action Allow -Protocol TCP -LocalPort $HttpPort -Profile Private | Out-Null
+}
+
+Write-Host 'BusinessOS Pharmacy Offline installation completed successfully.'
+try {
+    Stop-Transcript | Out-Null
+} catch {
 }
 
 Start-Process ('http://{0}:{1}/offline/license' -f $env:COMPUTERNAME, $HttpPort)

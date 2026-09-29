@@ -143,14 +143,21 @@ jobs:
             '/VERYSILENT',
             '/SUPPRESSMSGBOXES',
             '/NORESTART',
-            '/PHARMACYNAME=BusinessOS Smoke Pharmacy',
-            '/OWNERNAME=Smoke Administrator',
+            '/LOG=D:\a\_temp\businessos-pharmacy-setup.log',
+            '"/PHARMACYNAME=BusinessOS Smoke Pharmacy"',
+            '"/OWNERNAME=Smoke Administrator"',
             '/OWNEREMAIL=smoke@businessos.local',
             '/OWNERPASSWORD=SmokePassword123!'
           )
 
           $process = Start-Process -FilePath $installer.FullName -ArgumentList $arguments -Wait -PassThru
           if ($process.ExitCode -ne 0) {
+            if (Test-Path 'D:\a\_temp\businessos-pharmacy-setup.log') {
+              Get-Content 'D:\a\_temp\businessos-pharmacy-setup.log' -Tail 200
+            }
+            if (Test-Path 'C:\ProgramData\BusinessOS\Pharmacy\logs\install.log') {
+              Get-Content 'C:\ProgramData\BusinessOS\Pharmacy\logs\install.log' -Tail 250
+            }
             throw "Installer smoke test failed with exit code $($process.ExitCode)."
           }
 
@@ -162,7 +169,13 @@ jobs:
           )
 
           foreach ($serviceName in $requiredServices) {
-            $service = Get-Service -Name $serviceName -ErrorAction Stop
+            $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+            if (-not $service) {
+              if (Test-Path 'C:\ProgramData\BusinessOS\Pharmacy\logs\install.log') {
+                Get-Content 'C:\ProgramData\BusinessOS\Pharmacy\logs\install.log' -Tail 250
+              }
+              throw "$serviceName was not installed."
+            }
             if ($service.Status -ne 'Running') {
               throw "$serviceName is not running after installation."
             }
