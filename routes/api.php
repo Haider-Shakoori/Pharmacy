@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\LicenseActivationController;
 use App\Http\Controllers\Api\MobileDeviceRegistrationController;
+use App\Http\Controllers\Api\TrialDeviceRegistrationController;
 use App\Http\Controllers\Api\MobileSessionRefreshController;
 use App\Http\Controllers\Api\MobileSyncPullController;
 use App\Http\Controllers\Api\MobileSyncPushController;
@@ -13,6 +14,8 @@ Route::middleware('api.payload')->group(function (): void {
 
     Route::post('/v1/mobile/register', MobileDeviceRegistrationController::class)
         ->middleware('throttle:mobile-register');
+    Route::post('/v1/mobile/trial/register', TrialDeviceRegistrationController::class)
+        ->middleware('throttle:trial-register');
 });
 
 Route::prefix('/v1/mobile')
