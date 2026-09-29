@@ -2,10 +2,10 @@
 
 use App\Http\Controllers\Api\LicenseActivationController;
 use App\Http\Controllers\Api\MobileDeviceRegistrationController;
-use App\Http\Controllers\Api\TrialDeviceRegistrationController;
 use App\Http\Controllers\Api\MobileSessionRefreshController;
 use App\Http\Controllers\Api\MobileSyncPullController;
 use App\Http\Controllers\Api\MobileSyncPushController;
+use App\Http\Controllers\Api\TrialDeviceRegistrationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('api.payload')->group(function (): void {
