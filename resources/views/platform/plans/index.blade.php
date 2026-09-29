@@ -35,7 +35,7 @@
 
                 <p class="mt-4 text-2xl font-bold">{{ $plan->currency }} {{ number_format((float) $plan->price, 2) }}</p>
                 <p class="text-sm text-slate-500">{{ ucfirst($plan->billing_period->value) }}</p>
-                @if ((bool) data_get($plan->features ?? [], 'offline_windows', false))
+                @if (in_array('offline_windows', $plan->features ?? [], true))
                     <span class="mt-2 inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">Offline Windows enabled</span>
                 @endif
 
