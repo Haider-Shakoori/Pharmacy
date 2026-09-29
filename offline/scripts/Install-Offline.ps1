@@ -132,9 +132,6 @@ if (Test-Path $DbAppPasswordFile) {
 
 $MyIniContent = @"
 [mysqld]
-basedir=$($MariaRoot.Replace('\','/'))
-datadir=$($DbData.Replace('\','/'))
-port=3307
 bind-address=127.0.0.1
 character-set-server=utf8mb4
 collation-server=utf8mb4_unicode_ci
@@ -142,31 +139,47 @@ skip-name-resolve=1
 max_connections=150
 
 [client]
-port=3307
 host=127.0.0.1
 default-character-set=utf8mb4
 "@
 Set-Content -Path $MyIni -Value $MyIniContent -Encoding ASCII
 
 $DbService = Get-Service -Name 'BusinessOSPharmacyDB' -ErrorAction SilentlyContinue
+$DbConfig = Join-Path $DbData 'my.ini'
+
 if (-not $DbService) {
     if (-not (Test-Path (Join-Path $DbData 'mysql'))) {
         if (-not (Test-Path $MariaInstall)) {
             throw 'MariaDB initialization tool was not packaged.'
         }
 
+        # Windows mariadb-install-db.exe has its own option set. It initializes
+        # the system tables, writes my.ini into the data directory, and creates
+        # the Windows service in one supported operation.
         Invoke-Checked $MariaInstall @(
             "--datadir=$DbData",
-            "--basedir=$MariaRoot",
+            '--service=BusinessOSPharmacyDB',
             "--password=$DbRootPassword",
-            '--skip-test-db'
+            '--port=3307',
+            "--config=$MyIni"
+        )
+    } else {
+        if (-not (Test-Path $DbConfig)) {
+            Copy-Item $MyIni $DbConfig -Force
+            Add-Content -Path $DbConfig -Value @"
+
+[mysqld]
+basedir=$($MariaRoot.Replace('\','/'))
+datadir=$($DbData.Replace('\','/'))
+port=3307
+"@
+        }
+
+        Invoke-Checked $MariaServer @(
+            "--defaults-file=$DbConfig",
+            '--install=BusinessOSPharmacyDB'
         )
     }
-
-    Invoke-Checked $MariaServer @(
-        "--defaults-file=$MyIni",
-        '--install=BusinessOSPharmacyDB'
-    )
 }
 
 Start-Service -Name 'BusinessOSPharmacyDB'
