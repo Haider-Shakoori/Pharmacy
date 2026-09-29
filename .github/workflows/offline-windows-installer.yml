@@ -133,6 +133,61 @@ jobs:
           if (-not $installer) { throw 'Installer EXE was not created.' }
           Get-FileHash $installer.FullName -Algorithm SHA256
 
+      - name: Smoke-install generated EXE
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem offline/dist/installer -Filter '*.exe' | Select-Object -First 1
+          if (-not $installer) { throw 'Installer EXE was not created.' }
+
+          $arguments = @(
+            '/VERYSILENT',
+            '/SUPPRESSMSGBOXES',
+            '/NORESTART',
+            '/PHARMACYNAME=BusinessOS Smoke Pharmacy',
+            '/OWNERNAME=Smoke Administrator',
+            '/OWNEREMAIL=smoke@businessos.local',
+            '/OWNERPASSWORD=SmokePassword123!'
+          )
+
+          $process = Start-Process -FilePath $installer.FullName -ArgumentList $arguments -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "Installer smoke test failed with exit code $($process.ExitCode)."
+          }
+
+          $requiredServices = @(
+            'BusinessOSPharmacyDB',
+            'BusinessOSPharmacyPHP',
+            'BusinessOSPharmacyWeb',
+            'BusinessOSPharmacyQueue'
+          )
+
+          foreach ($serviceName in $requiredServices) {
+            $service = Get-Service -Name $serviceName -ErrorAction Stop
+            if ($service.Status -ne 'Running') {
+              throw "$serviceName is not running after installation."
+            }
+          }
+
+          $ready = $false
+          for ($attempt = 1; $attempt -le 20; $attempt++) {
+            try {
+              $response = Invoke-WebRequest -Uri 'http://127.0.0.1:8090/offline/license' -UseBasicParsing -TimeoutSec 5
+              if ($response.StatusCode -eq 200 -and $response.Content -match 'License activation') {
+                $ready = $true
+                break
+              }
+            } catch {
+              Start-Sleep -Seconds 2
+            }
+          }
+
+          if (-not $ready) {
+            Get-Service -Name 'BusinessOSPharmacy*' | Format-Table -AutoSize
+            throw 'Installed BusinessOS Pharmacy did not serve the local license page.'
+          }
+
+          Write-Host 'Generated EXE installed successfully and local Pharmacy services are healthy.'
+
       - name: Upload Windows installer
         uses: actions/upload-artifact@v6
         with:
