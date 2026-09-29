@@ -12,13 +12,6 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$bootstrapLogRoot = Join-Path $env:ProgramData 'BusinessOS\Pharmacy'
-New-Item -ItemType Directory -Force -Path $bootstrapLogRoot | Out-Null
-$bootstrapLog = Join-Path $bootstrapLogRoot 'install-bootstrap.log'
-Start-Transcript -Path $bootstrapLog -Append | Out-Null
-Write-Host "BusinessOS offline bootstrap started at $(Get-Date -Format o)."
-
-
 if ($ConfigPath -ne '') {
     if (-not (Test-Path $ConfigPath)) {
         throw 'The installer configuration file could not be found.'
@@ -373,6 +366,4 @@ try {
 } catch {
 }
 
-Write-Host 'BusinessOS offline bootstrap completed successfully.'
-Stop-Transcript | Out-Null
 Start-Process ('http://{0}:{1}/offline/license' -f $env:COMPUTERNAME, $HttpPort)
