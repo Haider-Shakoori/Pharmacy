@@ -66,6 +66,15 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        RateLimiter::for('trial-register', function (Request $request): Limit {
+            $email = Str::lower((string) $request->input('email'));
+            $pharmacy = Str::lower((string) $request->input('pharmacy_code'));
+
+            return Limit::perMinute(5)->by(
+                'trial-register|'.$request->ip().'|'.$pharmacy.'|'.$email,
+            );
+        });
+
         RateLimiter::for('mobile-api', function (Request $request): Limit {
             $identity = $request->bearerToken();
 
