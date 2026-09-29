@@ -204,15 +204,24 @@ FLUSH PRIVILEGES;
 "@
 $sqlFile = Join-Path $DataRoot 'bootstrap.sql'
 Set-Content -Path $sqlFile -Value $sql -Encoding ASCII
-Invoke-Checked $MariaDb @(
-    '--protocol=TCP',
-    '--host=127.0.0.1',
-    '--port=3307',
-    '--user=root',
-    "--password=$DbRootPassword",
-    "--execute=source $($sqlFile.Replace('\','/'))"
-)
-Remove-Item $sqlFile -Force
+$env:MYSQL_PWD = $DbRootPassword
+try {
+    $clientArgs = @(
+        '--protocol=TCP',
+        '--host=127.0.0.1',
+        '--port=3307',
+        '--user=root'
+    )
+
+    Get-Content $sqlFile -Raw | & $MariaDb @clientArgs
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "MariaDB bootstrap SQL failed with exit code $LASTEXITCODE."
+    }
+} finally {
+    Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+    Remove-Item $sqlFile -Force -ErrorAction SilentlyContinue
+}
 
 if (-not (Test-Path $PublicKeyFile)) {
     throw 'The BusinessOS license verification public key is missing from the installer.'
