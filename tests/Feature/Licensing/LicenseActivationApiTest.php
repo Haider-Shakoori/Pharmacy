@@ -166,4 +166,55 @@ class LicenseActivationApiTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('license_key');
     }
+
+    public function test_windows_activation_can_refresh_lease_without_resending_license_key(): void
+    {
+        $activation = $this->postJson('/api/v1/license/activate', [
+            'license_key' => $this->plainTextKey,
+            'device_id' => '55555555-5555-4555-8555-555555555555',
+            'platform' => 'windows',
+            'device_name' => 'Front Counter',
+            'app_version' => '1.0.0',
+        ])->assertOk();
+
+        $leaseToken = $activation->json('data.lease_token');
+
+        $refresh = $this->withToken($leaseToken)
+            ->postJson('/api/v1/desktop/license/refresh', [
+                'device_id' => '55555555-5555-4555-8555-555555555555',
+                'device_name' => 'Front Counter',
+                'app_version' => '1.0.1',
+                'os_version' => 'Windows 11',
+                'build_number' => '26100',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.subscription_health', 'healthy')
+            ->assertJsonPath('data.plan.code', 'STANDARD');
+
+        $refreshedPayload = app(SignedTokenVerifier::class)->verify(
+            $refresh->json('data.lease_token'),
+            purpose: 'offline_lease',
+        );
+
+        $this->assertSame('windows', $refreshedPayload['platform']);
+        $this->assertSame(
+            ['advanced_reports', 'api_access'],
+            $refreshedPayload['entitlements'],
+        );
+
+        $this->assertDatabaseHas('license_activations', [
+            'device_id' => '55555555-5555-4555-8555-555555555555',
+            'app_version' => '1.0.1',
+            'os_version' => 'Windows 11',
+            'build_number' => '26100',
+            'revoked_at' => null,
+        ]);
+
+        $this->withToken($leaseToken)
+            ->postJson('/api/v1/desktop/license/refresh', [
+                'device_id' => '66666666-6666-4666-8666-666666666666',
+            ])
+            ->assertUnauthorized();
+    }
+
 }
