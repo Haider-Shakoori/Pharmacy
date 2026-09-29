@@ -4,6 +4,7 @@ namespace Tests\Feature\Licensing;
 
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Licensing\LicenseKeyService;
@@ -157,7 +158,7 @@ class TrialLicenseActivationTest extends TestCase
         ]);
     }
 
-    private function createOwner($tenant, string $email, string $password): void
+    private function createOwner(Tenant $tenant, string $email, string $password): void
     {
         $tenant->run(function () use ($tenant, $email, $password): void {
             $roles = app(RbacProvisioner::class)->ensureForTenant($tenant);
