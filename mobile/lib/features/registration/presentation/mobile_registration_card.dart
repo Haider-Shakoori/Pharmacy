@@ -326,26 +326,6 @@ class _MobileRegistrationCardState
                   ),
                 ),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _registering ? null : _startTrial,
-                  icon: const Icon(Icons.schedule_rounded),
-                  label: const Text('Start 7-Day Trial'),
-                ),
-                const SizedBox(height: 20),
-                const Divider(),
-                const SizedBox(height: 12),
-                Text(
-                  'Already licensed? Register this device with your license key.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _licenseController,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  decoration: InputDecoration(labelText: strings.licenseKey),
-                ),
-                const SizedBox(height: 12),
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -360,10 +340,38 @@ class _MobileRegistrationCardState
                   autocorrect: false,
                   decoration: InputDecoration(labelText: strings.password),
                   onSubmitted: (_) {
-                    if (!_registering) {
+                    if (_registering) {
+                      return;
+                    }
+                    if (_pharmacyCodeController.text.trim().isNotEmpty &&
+                        _licenseController.text.trim().isEmpty) {
+                      _startTrial();
+                    } else {
                       _register();
                     }
                   },
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _registering ? null : _startTrial,
+                  icon: const Icon(Icons.schedule_rounded),
+                  label: Text(
+                    _registering ? strings.registering : 'Start 7-Day Trial',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                Text(
+                  'Already licensed? Register this device with your license key.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _licenseController,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  decoration: InputDecoration(labelText: strings.licenseKey),
                 ),
                 if (_error != null) ...<Widget>[
                   const SizedBox(height: 12),
