@@ -58,9 +58,19 @@ function New-RandomSecret([int]$Bytes = 32) {
 }
 
 function Invoke-Checked([string]$File, [string[]]$Arguments) {
-    $process = Start-Process -FilePath $File -ArgumentList $Arguments -Wait -PassThru -NoNewWindow
-    if ($process.ExitCode -ne 0) {
-        throw "$File failed with exit code $($process.ExitCode)."
+    # Use PowerShell's native argument splatting instead of Start-Process.
+    # Start-Process joins ArgumentList values into one command line and can
+    # split values such as pharmacy names, owner names, and SQL commands that
+    # contain spaces.
+    $output = & $File @Arguments 2>&1
+    $exitCode = $LASTEXITCODE
+
+    if ($output) {
+        $output | ForEach-Object { Write-Host $_ }
+    }
+
+    if ($exitCode -ne 0) {
+        throw "$File failed with exit code $exitCode."
     }
 }
 
@@ -193,7 +203,7 @@ GRANT ALL PRIVILEGES ON *.* TO 'businessos'@'127.0.0.1';
 FLUSH PRIVILEGES;
 "@
 $sqlFile = Join-Path $DataRoot 'bootstrap.sql'
-Set-Content -Path $sqlFile -Value $sql -Encoding UTF8
+Set-Content -Path $sqlFile -Value $sql -Encoding ASCII
 Invoke-Checked $MariaDb @(
     '--protocol=TCP',
     '--host=127.0.0.1',
