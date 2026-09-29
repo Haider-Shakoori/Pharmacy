@@ -1,0 +1,77 @@
+name: Flutter Windows Offline EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'feat/**']
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-windows.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-windows.yml'
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Bootstrap Windows host
+        shell: pwsh
+        run: .\tool\bootstrap_windows.ps1
+
+      - name: Resolve packages
+        run: flutter pub get
+
+      - name: Generate Drift database code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Check Dart formatting
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build Windows release
+        run: flutter build windows --release --dart-define=API_BASE_URL=https://pharmacy.businessos.af
+
+      - name: Create portable ZIP
+        shell: pwsh
+        run: Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath build\windows\BusinessOS-Pharmacy-Portable.zip -Force
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build Windows installer EXE
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([^\+]+)' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" windows_installer\BusinessOSPharmacy.iss
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v6
+        with:
+          name: businessos-pharmacy-windows
+          path: |
+            mobile/build/windows/installer/BusinessOS-Pharmacy-Setup.exe
+            mobile/build/windows/BusinessOS-Pharmacy-Portable.zip
+          retention-days: 30
