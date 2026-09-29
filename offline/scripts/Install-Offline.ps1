@@ -135,7 +135,6 @@ $MyIniContent = @"
 bind-address=127.0.0.1
 character-set-server=utf8mb4
 collation-server=utf8mb4_unicode_ci
-skip-name-resolve=1
 max_connections=150
 
 [client]
@@ -161,6 +160,7 @@ if (-not $DbService) {
             '--service=BusinessOSPharmacyDB',
             "--password=$DbRootPassword",
             '--port=3307',
+            '--allow-remote-root-access',
             "--config=$MyIni"
         )
     } else {
@@ -195,6 +195,7 @@ FLUSH PRIVILEGES;
 $sqlFile = Join-Path $DataRoot 'bootstrap.sql'
 Set-Content -Path $sqlFile -Value $sql -Encoding UTF8
 Invoke-Checked $MariaDb @(
+    '--protocol=TCP',
     '--host=127.0.0.1',
     '--port=3307',
     '--user=root',
