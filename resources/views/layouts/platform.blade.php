@@ -15,10 +15,16 @@
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">BusinessOS Pharmacy</p>
                 <h1 class="mt-1 text-lg font-bold">Platform Control Plane</h1>
             </div>
-            <form method="POST" action="{{ route('platform.logout') }}">
-                @csrf
-                <button class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900">Sign out</button>
-            </form>
+            <div class="flex items-center gap-2 lg:mt-4">
+                <a href="{{ route('platform.account.password.edit') }}"
+                   class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold {{ request()->routeIs('platform.account.*') ? 'border-teal-500 bg-teal-500/10 text-teal-200' : 'text-slate-200 hover:bg-slate-900' }}">
+                    Change password
+                </a>
+                <form method="POST" action="{{ route('platform.logout') }}">
+                    @csrf
+                    <button class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900">Sign out</button>
+                </form>
+            </div>
         </div>
 
         <nav class="flex gap-2 overflow-x-auto px-4 pb-4 text-sm lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
