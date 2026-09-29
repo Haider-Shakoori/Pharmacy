@@ -1,6 +1,24 @@
 name: Offline Windows Installer
 
 on:
+  push:
+    branches:
+      - feat/offline-windows-installer
+    paths:
+      - 'offline/**'
+      - 'app/Services/Offline/**'
+      - 'app/Services/Licensing/**'
+      - 'app/Http/Controllers/Offline/**'
+      - 'app/Http/Controllers/Api/OfflineLicenseActivationController.php'
+      - 'app/Http/Middleware/EnsureOfflineLicense.php'
+      - 'app/Http/Middleware/EnsureOperationalSubscription.php'
+      - 'app/Console/Commands/Offline*.php'
+      - 'app/Console/Commands/InstallOfflinePharmacy.php'
+      - 'app/Console/Commands/SyncOfflineNetworkDomains.php'
+      - 'config/offline.php'
+      - 'routes/**'
+      - 'bootstrap/app.php'
+      - '.github/workflows/offline-windows-installer.yml'
   workflow_dispatch:
     inputs:
       version:
@@ -21,13 +39,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: offline-installer-${{ github.ref }}-${{ inputs.source_protection }}
+  group: offline-installer-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.source_protection || 'none' }}
   cancel-in-progress: false
 
 jobs:
   build:
     name: Build Windows EXE
-    runs-on: ${{ inputs.source_protection == 'ioncube' && 'businessos-ioncube' || 'windows-latest' }}
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.source_protection == 'ioncube') && 'businessos-ioncube' || 'windows-latest' }}
 
     steps:
       - name: Checkout
@@ -85,7 +103,7 @@ jobs:
         shell: pwsh
         env:
           CONFIGURED_PUBLIC_KEY: ${{ secrets.LICENSE_SIGNING_PUBLIC_KEY_B64 }}
-          PROTECTION_MODE: ${{ inputs.source_protection }}
+          PROTECTION_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.source_protection || 'none' }}
         run: |
           $key = $env:CONFIGURED_PUBLIC_KEY
           if ([string]::IsNullOrWhiteSpace($key)) {
@@ -104,7 +122,9 @@ jobs:
         env:
           IONCUBE_ENCODER_EXE: ${{ secrets.IONCUBE_ENCODER_EXE }}
         run: |
-          ./offline/scripts/Build-OfflineInstaller.ps1 -RepositoryRoot "${{ github.workspace }}" -Version "${{ inputs.version }}" -LicensePublicKey "${{ steps.license_key.outputs.public_key }}" -SourceProtection "${{ inputs.source_protection }}" -IonCubeEncoderPath "$env:IONCUBE_ENCODER_EXE"
+          $version = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.version }}' } else { '0.1.0-dev' }
+          $protection = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.source_protection }}' } else { 'none' }
+          ./offline/scripts/Build-OfflineInstaller.ps1 -RepositoryRoot "${{ github.workspace }}" -Version "$version" -LicensePublicKey "${{ steps.license_key.outputs.public_key }}" -SourceProtection "$protection" -IonCubeEncoderPath "$env:IONCUBE_ENCODER_EXE"
 
       - name: Verify installer exists
         shell: pwsh
@@ -116,7 +136,7 @@ jobs:
       - name: Upload Windows installer
         uses: actions/upload-artifact@v6
         with:
-          name: businessos-pharmacy-offline-${{ inputs.source_protection }}-${{ inputs.version }}
+          name: businessos-pharmacy-offline-${{ github.event_name == 'workflow_dispatch' && inputs.source_protection || 'none' }}-${{ github.event_name == 'workflow_dispatch' && inputs.version || '0.1.0-dev' }}
           path: |
             offline/dist/installer/*.exe
             offline/dist/installer/*.sha256
