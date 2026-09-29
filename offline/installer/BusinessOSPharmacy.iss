@@ -177,9 +177,10 @@ begin
       RaiseException('BusinessOS Pharmacy setup could not start the local configuration process.');
 
     if ResultCode <> 0 then
-      RaiseException(Format(
-        'BusinessOS Pharmacy local configuration failed (exit code %d). See C:\ProgramData\BusinessOS\Pharmacy\logs\install.log.',
-        [ResultCode]
-      ));
+      RaiseException(
+        'BusinessOS Pharmacy local configuration failed (exit code ' +
+        IntToStr(ResultCode) +
+        '). See C:\ProgramData\BusinessOS\Pharmacy\logs\install.log.'
+      );
   end;
 end;
