@@ -2,12 +2,14 @@
 
 namespace App\Services\Mobile;
 
+use App\Models\License;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Licensing\LicenseActivationService;
 use App\Services\Licensing\LicenseKeyService;
 use App\Services\Licensing\OfflineLeaseSigner;
 use App\Services\Settings\PharmacySettings;
+use App\Services\Subscriptions\TrialProvisioner;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -20,6 +22,7 @@ class MobileDeviceRegistrationService
         private readonly LicenseActivationService $activation,
         private readonly OfflineLeaseSigner $signer,
         private readonly PharmacySettings $settings,
+        private readonly TrialProvisioner $trials,
     ) {}
 
     public function register(
@@ -51,7 +54,109 @@ class MobileDeviceRegistrationService
             ]);
         }
 
-        $user = $tenant->run(function () use ($email, $password): ?array {
+        $user = $this->authenticate($tenant, $email, $password);
+
+        if ($user === null) {
+            throw ValidationException::withMessages([
+                'email' => 'The provided pharmacy credentials are invalid.',
+            ]);
+        }
+
+        return $this->completeRegistration(
+            $license,
+            $tenant,
+            $user,
+            $deviceId,
+            $deviceName,
+            $appVersion,
+            $deviceModel,
+            $osVersion,
+            $buildNumber,
+            $platform,
+        );
+    }
+
+    public function registerTrial(
+        Tenant $tenant,
+        string $deviceId,
+        string $email,
+        string $password,
+        ?string $deviceName,
+        ?string $appVersion,
+        ?string $deviceModel,
+        ?string $osVersion,
+        ?string $buildNumber,
+        string $platform = 'android',
+    ): array {
+        $tenant->refresh()->loadMissing('business.subscription.license');
+
+        if (
+            $tenant->business === null
+            || Str::lower((string) $tenant->business->owner_email) !== Str::lower(trim($email))
+        ) {
+            throw ValidationException::withMessages([
+                'email' => 'The provided pharmacy credentials are invalid.',
+            ]);
+        }
+
+        $user = $this->authenticate($tenant, $email, $password);
+
+        if ($user === null) {
+            throw ValidationException::withMessages([
+                'email' => 'The provided pharmacy credentials are invalid.',
+            ]);
+        }
+
+        $subscription = $tenant->business->subscription;
+
+        if ($subscription === null) {
+            $this->trials->provision($tenant);
+            $tenant->refresh()->load('business.subscription.license');
+            $subscription = $tenant->business?->subscription;
+        }
+
+        if ($subscription === null || $subscription->status->value !== 'trial') {
+            throw ValidationException::withMessages([
+                'trial' => 'This pharmacy already has a subscription. Register with its license key instead.',
+            ]);
+        }
+
+        if ($subscription->trial_ends_at === null || ! $subscription->trial_ends_at->isFuture()) {
+            throw ValidationException::withMessages([
+                'trial' => 'The seven-day trial has expired and cannot be restarted.',
+            ]);
+        }
+
+        if ($subscription->license === null) {
+            $this->keys->ensureForSubscription($subscription);
+            $subscription->refresh()->load('license');
+        }
+
+        $license = $subscription->license;
+
+        if (! $license instanceof License) {
+            throw ValidationException::withMessages([
+                'trial' => 'The trial license could not be issued.',
+            ]);
+        }
+
+        return $this->completeRegistration(
+            $license,
+            $tenant,
+            $user,
+            $deviceId,
+            $deviceName,
+            $appVersion,
+            $deviceModel,
+            $osVersion,
+            $buildNumber,
+            $platform,
+        );
+    }
+
+    private function authenticate(Tenant $tenant, string $email, string $password): ?array
+    {
+        return $tenant->run(function () use ($email, $password): ?array {
             $user = User::query()
                 ->with('roles.permissions')
                 ->whereRaw('LOWER(email) = ?', [Str::lower(trim($email))])
@@ -86,15 +191,22 @@ class MobileDeviceRegistrationService
                 'permissions' => $permissions,
             ];
         });
+    }
 
-        if ($user === null) {
-            throw ValidationException::withMessages([
-                'email' => 'The provided pharmacy credentials are invalid.',
-            ]);
-        }
-
-        $activated = $this->activation->activate(
-            $licenseKey,
+    private function completeRegistration(
+        License $license,
+        Tenant $tenant,
+        array $user,
+        string $deviceId,
+        ?string $deviceName,
+        ?string $appVersion,
+        ?string $deviceModel,
+        ?string $osVersion,
+        ?string $buildNumber,
+        string $platform,
+    ): array {
+        $activated = $this->activation->activateLicense(
+            $license,
             $deviceId,
             $deviceName,
             $appVersion,
