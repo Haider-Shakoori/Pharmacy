@@ -75,9 +75,10 @@ begin
   OwnerPage.Add('Owner email:', False);
   OwnerPage.Add('Owner password:', True);
 
-  PharmacyPage.Values[0] := 'My Pharmacy';
-  OwnerPage.Values[0] := 'Administrator';
-  OwnerPage.Values[1] := 'admin@businessos.local';
+  PharmacyPage.Values[0] := ExpandConstant('{param:PHARMACYNAME|My Pharmacy}');
+  OwnerPage.Values[0] := ExpandConstant('{param:OWNERNAME|Administrator}');
+  OwnerPage.Values[1] := ExpandConstant('{param:OWNEREMAIL|admin@businessos.local}');
+  OwnerPage.Values[2] := ExpandConstant('{param:OWNERPASSWORD|}');
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
