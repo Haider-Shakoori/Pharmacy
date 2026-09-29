@@ -190,6 +190,7 @@ void main() {
       OfflineLeaseAuthorizer(
         database: database,
         registrationRepository: repository,
+        secureStore: store,
         clock: () => now.subtract(const Duration(hours: 1)),
       ).assertCanTransact(),
       throwsA(
