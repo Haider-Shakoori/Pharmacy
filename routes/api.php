@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\DesktopLicenseRefreshController;
 use App\Http\Controllers\Api\LicenseActivationController;
 use App\Http\Controllers\Api\MobileDeviceRegistrationController;
 use App\Http\Controllers\Api\MobileSessionRefreshController;
@@ -10,6 +11,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('api.payload')->group(function (): void {
     Route::post('/v1/license/activate', LicenseActivationController::class)
+        ->middleware('throttle:license-activation');
+
+    Route::post('/v1/desktop/license/refresh', DesktopLicenseRefreshController::class)
         ->middleware('throttle:license-activation');
 
     Route::post('/v1/mobile/register', MobileDeviceRegistrationController::class)

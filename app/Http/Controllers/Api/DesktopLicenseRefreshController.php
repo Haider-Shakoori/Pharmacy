@@ -3,25 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\ActivateLicenseRequest;
+use App\Http\Requests\Api\RefreshDesktopLicenseRequest;
 use App\Services\Licensing\LicenseActivationService;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 
-class LicenseActivationController extends Controller
+class DesktopLicenseRefreshController extends Controller
 {
     public function __invoke(
-        ActivateLicenseRequest $request,
+        RefreshDesktopLicenseRequest $request,
         LicenseActivationService $activationService,
     ): JsonResponse {
-        $result = $activationService->activate(
-            $request->string('license_key')->toString(),
+        $leaseToken = $request->bearerToken();
+
+        if (! is_string($leaseToken) || $leaseToken === '') {
+            throw new AuthenticationException('A desktop activation lease is required.');
+        }
+
+        $result = $activationService->refreshWindowsLease(
+            $leaseToken,
             $request->string('device_id')->toString(),
             $request->input('device_name'),
             $request->input('app_version'),
             $request->input('device_model'),
             $request->input('os_version'),
             $request->input('build_number'),
-            $request->input('platform', 'android'),
         );
 
         return response()->json([
