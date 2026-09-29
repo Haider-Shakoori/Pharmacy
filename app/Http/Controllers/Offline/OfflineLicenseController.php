@@ -1,1 +1,44 @@
-Ž†ð¢¹"žb­ç-¢¼ž®º+­ëk‰ëâž.®·§µØ«yËh¯(µÌq©ç¢Öœqë,¥ªÞž×b­ç-¢¸ž°Ú,¹È_ŠW¨­Ø«yËh¯
+<?php
+
+namespace App\Http\Controllers\Offline;
+
+use App\Http\Controllers\Controller;
+use App\Services\Offline\OfflineInstallationIdentity;
+use App\Services\Offline\OfflineLicenseActivator;
+use App\Services\Offline\OfflineLicenseManager;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class OfflineLicenseController extends Controller
+{
+    public function show(
+        OfflineLicenseManager $licenses,
+        OfflineInstallationIdentity $identity,
+    ): View {
+        abort_unless(config('offline.enabled'), 404);
+
+        return view('offline.license', [
+            'status' => $licenses->status(),
+            'installationId' => $identity->installationId(),
+            'fingerprint' => $identity->machineFingerprintHash(),
+        ]);
+    }
+
+    public function activate(
+        Request $request,
+        OfflineLicenseActivator $activator,
+    ): RedirectResponse {
+        abort_unless(config('offline.enabled'), 404);
+
+        $validated = $request->validate([
+            'license_key' => ['required', 'string', 'max:120'],
+        ]);
+
+        $payload = $activator->activate($validated['license_key']);
+
+        return redirect()
+            ->route('offline.license.show')
+            ->with('success', 'BusinessOS Pharmacy was activated until '.date('Y-m-d H:i', (int) $payload['expires_at']).'.');
+    }
+}
