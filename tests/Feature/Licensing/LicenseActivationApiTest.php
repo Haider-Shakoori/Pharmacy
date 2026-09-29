@@ -6,6 +6,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Services\Licensing\LicenseKeyService;
+use App\Services\Licensing\SignedTokenVerifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -43,6 +44,7 @@ class LicenseActivationApiTest extends TestCase
             'max_windows_devices' => 1,
             'max_branches' => 1,
             'offline_grace_days' => 7,
+            'features' => ['advanced_reports', 'api_access'],
             'is_active' => true,
             'sort_order' => 1,
         ]);
@@ -72,6 +74,18 @@ class LicenseActivationApiTest extends TestCase
             ->assertJsonPath('data.plan.code', 'STANDARD');
 
         $this->assertStringStartsWith('v1.', $response->json('data.lease_token'));
+
+        $payload = app(SignedTokenVerifier::class)->verify(
+            $response->json('data.lease_token'),
+        );
+
+        $this->assertSame(1, $payload['entitlement_version']);
+        $this->assertSame('android', $payload['platform']);
+        $this->assertSame(['advanced_reports', 'api_access'], $payload['entitlements']);
+        $this->assertSame($payload['expires_at'], $payload['offline_valid_until']);
+        $this->assertArrayHasKey('server_time', $payload);
+        $this->assertArrayHasKey('subscription_expires_at', $payload);
+
         $this->assertDatabaseHas('license_activations', [
             'device_id' => '11111111-1111-4111-8111-111111111111',
             'revoked_at' => null,
@@ -93,7 +107,7 @@ class LicenseActivationApiTest extends TestCase
             ->assertJsonValidationErrors('device_id');
     }
 
-    public function test_windows_device_has_separate_limit_from_android(): void
+    public function test_windows_device_has_separate_limit_and_records_desktop_metadata(): void
     {
         $this->postJson('/api/v1/license/activate', [
             'license_key' => $this->plainTextKey,
@@ -101,18 +115,34 @@ class LicenseActivationApiTest extends TestCase
             'platform' => 'android',
         ])->assertOk();
 
-        $this->postJson('/api/v1/license/activate', [
+        $response = $this->postJson('/api/v1/license/activate', [
             'license_key' => $this->plainTextKey,
             'device_id' => '33333333-3333-4333-8333-333333333333',
             'platform' => 'windows',
             'device_name' => 'Pharmacy Counter PC',
+            'app_version' => '1.0.0',
+            'device_model' => 'Dell OptiPlex',
+            'os_version' => 'Windows 11 24H2',
+            'build_number' => '26100',
         ])
             ->assertOk()
             ->assertJsonPath('data.plan.max_windows_devices', 1);
 
+        $payload = app(SignedTokenVerifier::class)->verify(
+            $response->json('data.lease_token'),
+        );
+
+        $this->assertSame('windows', $payload['platform']);
+        $this->assertSame(['advanced_reports', 'api_access'], $payload['entitlements']);
+
         $this->assertDatabaseHas('license_activations', [
             'device_id' => '33333333-3333-4333-8333-333333333333',
             'platform' => 'windows',
+            'device_name' => 'Pharmacy Counter PC',
+            'app_version' => '1.0.0',
+            'device_model' => 'Dell OptiPlex',
+            'os_version' => 'Windows 11 24H2',
+            'build_number' => '26100',
             'revoked_at' => null,
         ]);
 
