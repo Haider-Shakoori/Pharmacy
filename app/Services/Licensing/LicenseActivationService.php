@@ -29,10 +29,6 @@ class LicenseActivationService
         ?string $buildNumber = null,
         string $platform = 'android',
     ): array {
-        $platform = in_array($platform, ['android', 'windows'], true)
-            ? $platform
-            : 'android';
-
         $license = $this->keys->findByPlainText($licenseKey);
 
         if ($license === null) {
@@ -40,6 +36,32 @@ class LicenseActivationService
                 'license_key' => 'The license key is invalid.',
             ]);
         }
+
+        return $this->activateLicense(
+            $license,
+            $deviceId,
+            $deviceName,
+            $appVersion,
+            $deviceModel,
+            $osVersion,
+            $buildNumber,
+            $platform,
+        );
+    }
+
+    public function activateLicense(
+        License $license,
+        string $deviceId,
+        ?string $deviceName,
+        ?string $appVersion,
+        ?string $deviceModel = null,
+        ?string $osVersion = null,
+        ?string $buildNumber = null,
+        string $platform = 'android',
+    ): array {
+        $platform = in_array($platform, ['android', 'windows'], true)
+            ? $platform
+            : 'android';
 
         return DB::transaction(function () use ($license, $deviceId, $deviceName, $appVersion, $deviceModel, $osVersion, $buildNumber, $platform): array {
             /** @var License $license */
