@@ -26,7 +26,8 @@ class OfflineLeaseAuthorizer {
   final DateTime Function() clock;
 
   Future<void> assertCanTransact() async {
-    final MobileRegistration? registration = await registrationRepository.load();
+    final MobileRegistration? registration = await registrationRepository
+        .load();
 
     if (registration == null) {
       throw const OfflineLeaseException(
