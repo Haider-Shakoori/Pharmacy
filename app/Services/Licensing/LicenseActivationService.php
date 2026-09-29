@@ -143,25 +143,48 @@ class LicenseActivationService
                 $leaseExpiresAt = CarbonImmutable::instance($effectiveEnd);
             }
 
+            $entitlements = array_values(array_unique(array_filter(
+                array_map(
+                    static fn (mixed $feature): string => is_string($feature)
+                        ? trim($feature)
+                        : '',
+                    $plan->features ?? [],
+                ),
+                static fn (string $feature): bool => $feature !== '',
+            )));
+
+            $subscriptionHealth = $this->health
+                ->forSubscription($subscription)
+                ->value;
+
             $payload = [
                 'v' => 1,
+                'entitlement_version' => 1,
                 'tenant_id' => $subscription->business->tenant_id,
                 'subscription_id' => $subscription->id,
                 'license_id' => $license->id,
                 'license_version' => $license->version,
                 'activation_id' => $activation->id,
                 'device_id' => $deviceId,
+                'platform' => $platform,
                 'plan_code' => $plan->code,
                 'subscription_status' => $subscription->status->value,
+                'subscription_health' => $subscriptionHealth,
+                'trial_started_at' => $subscription->trial_started_at?->getTimestamp(),
+                'trial_expires_at' => $subscription->trial_ends_at?->getTimestamp(),
+                'subscription_expires_at' => $subscription->ends_at?->getTimestamp(),
                 'issued_at' => $now->getTimestamp(),
+                'server_time' => $now->getTimestamp(),
                 'expires_at' => $leaseExpiresAt->getTimestamp(),
+                'offline_valid_until' => $leaseExpiresAt->getTimestamp(),
+                'entitlements' => $entitlements,
             ];
 
             return [
                 'activation_id' => $activation->id,
                 'lease_token' => $this->signer->sign($payload),
                 'lease_expires_at' => $leaseExpiresAt->toIso8601String(),
-                'subscription_health' => $this->health->forSubscription($subscription)->value,
+                'subscription_health' => $subscriptionHealth,
                 'tenant' => [
                     'id' => $subscription->business->tenant->id,
                     'name' => $subscription->business->pharmacy_name,
