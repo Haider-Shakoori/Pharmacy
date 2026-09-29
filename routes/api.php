@@ -1,12 +1,18 @@
 <?php
 
 use App\Http\Controllers\Api\LicenseActivationController;
+use App\Http\Controllers\Api\LocalNodeBootstrapController;
 use App\Http\Controllers\Api\MobileDeviceRegistrationController;
 use App\Http\Controllers\Api\MobileSessionRefreshController;
 use App\Http\Controllers\Api\MobileSyncPullController;
 use App\Http\Controllers\Api\MobileSyncPushController;
 use App\Http\Controllers\Api\TrialDeviceRegistrationController;
 use Illuminate\Support\Facades\Route;
+
+if ((bool) config('pharmacy.local_node.enabled')) {
+    Route::post('/v1/local-node/bootstrap', LocalNodeBootstrapController::class)
+        ->middleware(['api.payload', 'throttle:5,1']);
+}
 
 Route::middleware('api.payload')->group(function (): void {
     Route::post('/v1/license/activate', LicenseActivationController::class)

@@ -1,9 +1,14 @@
 class AppEnvironment {
-  const AppEnvironment({required this.flavor, required this.apiBaseUri});
+  const AppEnvironment({
+    required this.flavor,
+    required this.apiBaseUri,
+    required this.bundledLocalNode,
+  });
 
   factory AppEnvironment.fromValues({
     String flavor = 'production',
     String apiBaseUrl = '',
+    bool bundledLocalNode = false,
   }) {
     final String normalizedFlavor = flavor.trim().isEmpty
         ? 'production'
@@ -11,7 +16,11 @@ class AppEnvironment {
     final String normalizedUrl = apiBaseUrl.trim();
 
     if (normalizedUrl.isEmpty) {
-      return AppEnvironment(flavor: normalizedFlavor, apiBaseUri: null);
+      return AppEnvironment(
+        flavor: normalizedFlavor,
+        apiBaseUri: null,
+        bundledLocalNode: bundledLocalNode,
+      );
     }
 
     final Uri? uri = Uri.tryParse(normalizedUrl);
@@ -29,7 +38,11 @@ class AppEnvironment {
       );
     }
 
-    return AppEnvironment(flavor: normalizedFlavor, apiBaseUri: uri);
+    return AppEnvironment(
+      flavor: normalizedFlavor,
+      apiBaseUri: uri,
+      bundledLocalNode: bundledLocalNode,
+    );
   }
 
   static AppEnvironment get current => AppEnvironment.fromValues(
@@ -38,10 +51,15 @@ class AppEnvironment {
       defaultValue: 'production',
     ),
     apiBaseUrl: const String.fromEnvironment('API_BASE_URL'),
+    bundledLocalNode: const bool.fromEnvironment(
+      'BUNDLED_LOCAL_NODE',
+      defaultValue: false,
+    ),
   );
 
   final String flavor;
   final Uri? apiBaseUri;
+  final bool bundledLocalNode;
 
   bool get isApiConfigured => apiBaseUri != null;
 }

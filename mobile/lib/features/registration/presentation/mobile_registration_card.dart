@@ -1,3 +1,4 @@
+import 'package:businessos_pharmacy/core/auth/local_node_bootstrap_client.dart';
 import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
 import 'package:businessos_pharmacy/core/auth/mobile_registration_client.dart';
 import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
@@ -94,10 +95,17 @@ class _MobileRegistrationCardState
             MobileRegistrationException(strings.noServerConfigured);
       }
 
+      await _bootstrapBundledLocalNode(
+        registration,
+        password: _passwordController.text,
+        profileRepository: profileRepository,
+        profile: profile,
+      );
+
       await _persistRegistration(
         registration,
         profileRepository: profileRepository,
-        profile: profile,
+        profile: await profileRepository.load(),
       );
 
       _licenseController.clear();
@@ -166,10 +174,17 @@ class _MobileRegistrationCardState
             password: _passwordController.text,
           );
 
+      await _bootstrapBundledLocalNode(
+        registration,
+        password: _passwordController.text,
+        profileRepository: profileRepository,
+        profile: profile,
+      );
+
       await _persistRegistration(
         registration,
         profileRepository: profileRepository,
-        profile: profile,
+        profile: await profileRepository.load(),
       );
 
       _pharmacyCodeController.clear();
@@ -199,6 +214,39 @@ class _MobileRegistrationCardState
         _registering = false;
         _error = error.message.toString();
       });
+    }
+  }
+
+
+  Future<void> _bootstrapBundledLocalNode(
+    MobileRegistration registration, {
+    required String password,
+    required ConnectionProfileRepository profileRepository,
+    required ConnectionProfile profile,
+  }) async {
+    if (!AppEnvironment.current.bundledLocalNode) {
+      return;
+    }
+
+    try {
+      final Uri localUri = await LocalNodeBootstrapClient().bootstrap(
+        registration: registration,
+        password: password,
+      );
+      final ServerEndpoint local = ServerEndpoint.fromUri(
+        localUri,
+        ServerEndpointKind.local,
+      );
+
+      await profileRepository.save(
+        ConnectionProfile(
+          mode: DeploymentMode.automatic,
+          localEndpoint: local,
+          cloudEndpoint: profile.cloudEndpoint,
+        ),
+      );
+    } on LocalNodeBootstrapException catch (error) {
+      throw MobileRegistrationException(error.message);
     }
   }
 

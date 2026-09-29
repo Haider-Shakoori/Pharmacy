@@ -29,17 +29,13 @@ use App\Http\Controllers\Pharmacy\SettingsController as PharmacySettingsControll
 use App\Http\Controllers\Pharmacy\SupplierController;
 use App\Http\Controllers\Pharmacy\SupplierPaymentController;
 use App\Http\Controllers\Pharmacy\UserController as PharmacyUserController;
+use App\Http\Middleware\InitializeLocalTenant;
 use App\Http\Middleware\SetTenantRouteDefaults;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
-Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-    SetTenantRouteDefaults::class,
-])->name('pharmacy.')->group(function (): void {
+$tenantRoutes = function (): void {
     Route::get('/login', [PharmacyLoginController::class, 'create'])->name('login');
     Route::post('/login', [PharmacyLoginController::class, 'store'])
         ->middleware('throttle:pharmacy-login')
@@ -199,4 +195,18 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
                 ->name('settings.update');
         });
     });
-});
+};
+
+if ((bool) config('pharmacy.local_node.enabled')) {
+    Route::middleware([
+        'web',
+        InitializeLocalTenant::class,
+    ])->name('pharmacy.')->group($tenantRoutes);
+} else {
+    Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
+        'web',
+        InitializeTenancyByDomain::class,
+        PreventAccessFromCentralDomains::class,
+        SetTenantRouteDefaults::class,
+    ])->name('pharmacy.')->group($tenantRoutes);
+}

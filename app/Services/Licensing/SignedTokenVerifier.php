@@ -12,6 +12,20 @@ class SignedTokenVerifier
         ?string $purpose = null,
         bool $allowExpired = false,
     ): array {
+        return $this->verifyWithPublicKey(
+            $token,
+            (string) config('pharmacy.license.signing_public_key'),
+            $purpose,
+            $allowExpired,
+        );
+    }
+
+    public function verifyWithPublicKey(
+        string $token,
+        string $encodedPublicKey,
+        ?string $purpose = null,
+        bool $allowExpired = false,
+    ): array {
         $maxBytes = (int) config('pharmacy.security.max_signed_token_bytes', 8192);
 
         if (strlen($token) > $maxBytes) {
@@ -30,10 +44,7 @@ class SignedTokenVerifier
         $json = $this->base64UrlDecode($parts[1]);
         $signature = $this->base64UrlDecode($parts[2]);
 
-        $publicKey = base64_decode(
-            (string) config('pharmacy.license.signing_public_key'),
-            true,
-        );
+        $publicKey = base64_decode($encodedPublicKey, true);
 
         if ($publicKey === false ||
             strlen($publicKey) !== SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ||

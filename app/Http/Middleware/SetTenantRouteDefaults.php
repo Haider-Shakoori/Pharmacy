@@ -12,6 +12,11 @@ class SetTenantRouteDefaults
     public function handle(Request $request, Closure $next): Response
     {
         $route = $request->route();
+
+        if ($route === null || ! $route->hasParameter('pharmacy')) {
+            return $next($request);
+        }
+
         $pharmacy = (string) $route->parameter('pharmacy');
 
         URL::defaults(['pharmacy' => $pharmacy]);

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\Tenancy\TenantDatabaseProvisioner;
 use App\Contracts\Tenancy\TenantDomainProvisioner;
+use App\Models\LocalNodeState;
 use App\Services\Tenancy\CpanelTenantDatabaseProvisioner;
 use App\Services\Tenancy\CpanelWildcardDomainProvisioner;
 use App\Services\Tenancy\LocalTenantDatabaseProvisioner;
@@ -12,6 +13,7 @@ use App\Support\Tenancy\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -36,6 +38,19 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ((bool) config('pharmacy.local_node.enabled')) {
+            try {
+                if (Schema::connection('central')->hasTable('local_node_states')) {
+                    $publicKey = LocalNodeState::query()->value('lease_public_key');
+                    if (is_string($publicKey) && $publicKey !== '') {
+                        config(['pharmacy.license.signing_public_key' => $publicKey]);
+                    }
+                }
+            } catch (\Throwable) {
+                // First boot can occur before the local SQLite database is migrated.
+            }
+        }
+
         RateLimiter::for('platform-login', function (Request $request): Limit {
             $email = Str::lower((string) $request->input('email'));
 

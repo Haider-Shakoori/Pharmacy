@@ -11,6 +11,7 @@ class MobileRegistration {
     required this.userName,
     required this.userEmail,
     required this.permissions,
+    this.roles = const <String>[],
     this.lowStockThreshold = 10,
     this.nearExpiryDays = 90,
     this.deviceId,
@@ -48,6 +49,9 @@ class MobileRegistration {
       permissions: (user['permissions'] as List<dynamic>? ?? <dynamic>[])
           .map((dynamic value) => value.toString())
           .toList(growable: false),
+      roles: (user['roles'] as List<dynamic>? ?? <dynamic>[])
+          .map((dynamic value) => value.toString())
+          .toList(growable: false),
       lowStockThreshold:
           int.tryParse(
             inventoryPolicy['low_stock_threshold']?.toString() ?? '',
@@ -75,6 +79,9 @@ class MobileRegistration {
       userName: json['user_name'].toString(),
       userEmail: json['user_email'].toString(),
       permissions: (json['permissions'] as List<dynamic>? ?? <dynamic>[])
+          .map((dynamic value) => value.toString())
+          .toList(growable: false),
+      roles: (json['roles'] as List<dynamic>? ?? <dynamic>[])
           .map((dynamic value) => value.toString())
           .toList(growable: false),
       lowStockThreshold:
@@ -114,6 +121,11 @@ class MobileRegistration {
           : (user['permissions'] as List<dynamic>? ?? <dynamic>[])
                 .map((dynamic value) => value.toString())
                 .toList(growable: false),
+      roles: user == null
+          ? roles
+          : (user['roles'] as List<dynamic>? ?? <dynamic>[])
+                .map((dynamic value) => value.toString())
+                .toList(growable: false),
       lowStockThreshold:
           int.tryParse(
             inventoryPolicy['low_stock_threshold']?.toString() ?? '',
@@ -139,6 +151,7 @@ class MobileRegistration {
   final String userName;
   final String userEmail;
   final List<String> permissions;
+  final List<String> roles;
   final int lowStockThreshold;
   final int nearExpiryDays;
   final String? cloudBaseUrl;
@@ -160,6 +173,7 @@ class MobileRegistration {
       'user_name': userName,
       'user_email': userEmail,
       'permissions': permissions,
+      'roles': roles,
       'low_stock_threshold': lowStockThreshold,
       'near_expiry_days': nearExpiryDays,
       'cloud_base_url': cloudBaseUrl,

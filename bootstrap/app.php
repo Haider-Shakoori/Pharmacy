@@ -18,7 +18,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 
-return Application::configure(basePath: dirname(__DIR__))
+$application = Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         BackfillAccounting::class,
         CheckProductionReadiness::class,
@@ -65,3 +65,13 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
     })->create();
+
+if (($storagePath = getenv('PHARMACY_STORAGE_PATH')) !== false && $storagePath !== '') {
+    $application->useStoragePath($storagePath);
+}
+
+if (($databasePath = getenv('PHARMACY_DATABASE_PATH')) !== false && $databasePath !== '') {
+    $application->useDatabasePath($databasePath);
+}
+
+return $application;

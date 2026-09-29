@@ -34,6 +34,14 @@ return [
         'default_license_grace_days' => 7,
     ],
 
+    'local_node' => [
+        'enabled' => (bool) env('PHARMACY_LOCAL_NODE', false),
+        'base_url' => env('PHARMACY_LOCAL_BASE_URL', 'http://127.0.0.1:8787'),
+        'licensing_url' => env('PHARMACY_LICENSING_URL', 'https://pharmacy.businessos.af'),
+        'listen_port' => (int) env('PHARMACY_LOCAL_PORT', 8787),
+        'clock_state_file' => env('PHARMACY_LOCAL_CLOCK_STATE_FILE', ''),
+    ],
+
     'mobile' => [
         'android_download_url' => env('PHARMACY_ANDROID_APK_URL', '/downloads/businessos-pharmacy.apk'),
     ],

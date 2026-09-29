@@ -1,4 +1,4 @@
-name: Flutter Windows Offline EXE
+name: Flutter Windows All-in-One EXE
 
 on:
   workflow_dispatch:
@@ -6,11 +6,33 @@ on:
     branches: [main, 'feat/**']
     paths:
       - 'mobile/**'
+      - 'app/**'
+      - 'bootstrap/**'
+      - 'config/**'
+      - 'database/**'
+      - 'lang/**'
+      - 'resources/**'
+      - 'routes/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
       - '.github/workflows/flutter-windows.yml'
   pull_request:
     branches: [main]
     paths:
       - 'mobile/**'
+      - 'app/**'
+      - 'bootstrap/**'
+      - 'config/**'
+      - 'database/**'
+      - 'lang/**'
+      - 'resources/**'
+      - 'routes/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
       - '.github/workflows/flutter-windows.yml'
 
 jobs:
@@ -35,7 +57,7 @@ jobs:
         shell: pwsh
         run: .\tool\bootstrap_windows.ps1
 
-      - name: Resolve packages
+      - name: Resolve Flutter packages
         run: flutter pub get
 
       - name: Generate Drift database code
@@ -44,34 +66,112 @@ jobs:
       - name: Check Dart formatting
         run: dart format --output=none --set-exit-if-changed lib test
 
-      - name: Analyze
+      - name: Analyze Flutter app
         run: flutter analyze
 
-      - name: Test
+      - name: Test Flutter app
         run: flutter test
 
-      - name: Build Windows release
-        run: flutter build windows --release --dart-define=API_BASE_URL=https://pharmacy.businessos.af
+      - name: Build Windows desktop release
+        run: flutter build windows --release --dart-define=API_BASE_URL=https://pharmacy.businessos.af --dart-define=BUNDLED_LOCAL_NODE=true
 
-      - name: Create portable ZIP
-        shell: pwsh
-        run: Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath build\windows\BusinessOS-Pharmacy-Portable.zip -Force
+      - name: Setup PHP runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl, fileinfo, mbstring, openssl, pdo_sqlite, sqlite3, sodium
+          coverage: none
 
-      - name: Install Inno Setup
-        shell: pwsh
-        run: choco install innosetup --yes --no-progress
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
 
-      - name: Build Windows installer EXE
+      - name: Build Laravel production application
         shell: pwsh
+        working-directory: .
+        run: |
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Install Windows packaging tools
+        shell: pwsh
+        working-directory: .
+        run: choco install caddy nssm innosetup --yes --no-progress
+
+      - name: Assemble local Pharmacy server
+        shell: pwsh
+        working-directory: .
+        run: |
+          $bundle = Join-Path $PWD 'mobile\build\windows\local-server'
+          $serverApp = Join-Path $bundle 'app'
+          $runtime = Join-Path $bundle 'runtime'
+          Remove-Item $bundle -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $serverApp -Force | Out-Null
+          New-Item -ItemType Directory -Path $runtime -Force | Out-Null
+
+          Copy-Item 'mobile\windows_installer\local_server\*' $bundle -Recurse -Force
+
+          foreach ($dir in @('app','bootstrap','config','database','lang','public','resources','routes','vendor')) {
+            Copy-Item $dir (Join-Path $serverApp $dir) -Recurse -Force
+          }
+          foreach ($file in @('artisan','composer.json','composer.lock')) {
+            Copy-Item $file (Join-Path $serverApp $file) -Force
+          }
+
+          $phpExe = (Get-Command php.exe).Source
+          $phpRoot = Split-Path $phpExe -Parent
+          Copy-Item $phpRoot (Join-Path $runtime 'php') -Recurse -Force
+
+          $chocoLib = Join-Path $env:ChocolateyInstall 'lib'
+          $caddy = Get-ChildItem $chocoLib -Filter 'caddy.exe' -Recurse -File |
+            Where-Object { $_.FullName -notmatch '\\.chocolateyPending' } |
+            Select-Object -First 1
+          if ($null -eq $caddy) {
+            throw 'Unable to locate the Caddy executable installed by Chocolatey.'
+          }
+          Copy-Item $caddy.FullName (Join-Path $runtime 'caddy.exe') -Force
+
+          $nssm = Get-ChildItem $chocoLib -Filter 'nssm.exe' -Recurse -File |
+            Where-Object { $_.FullName -match 'win64|tools' } |
+            Select-Object -First 1
+          if ($null -eq $nssm) {
+            throw 'Unable to locate the NSSM executable installed by Chocolatey.'
+          }
+          Copy-Item $nssm.FullName (Join-Path $runtime 'nssm.exe') -Force
+
+          if (-not (Test-Path (Join-Path $runtime 'php\php-cgi.exe'))) {
+            throw 'The packaged PHP runtime does not contain php-cgi.exe.'
+          }
+
+          & (Join-Path $runtime 'caddy.exe') version
+          & (Join-Path $runtime 'php\php.exe') --version
+
+      - name: Create all-in-one portable ZIP
+        shell: pwsh
+        working-directory: mobile
+        run: |
+          $stage = 'build\windows\portable\BusinessOS-Pharmacy'
+          Remove-Item 'build\windows\portable' -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+          Copy-Item 'build\windows\x64\runner\Release\*' $stage -Recurse -Force
+          Copy-Item 'build\windows\local-server' (Join-Path $stage 'local-server') -Recurse -Force
+          Compress-Archive -Path "$stage\*" -DestinationPath 'build\windows\BusinessOS-Pharmacy-AllInOne-Portable.zip' -Force
+
+      - name: Build Windows all-in-one installer
+        shell: pwsh
+        working-directory: mobile
         run: |
           $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([^\+]+)' | ForEach-Object { $_.Matches[0].Groups[1].Value })
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" windows_installer\BusinessOSPharmacy.iss
 
-      - name: Upload Windows installer
+      - name: Upload Windows all-in-one package
         uses: actions/upload-artifact@v6
         with:
-          name: businessos-pharmacy-windows
+          name: businessos-pharmacy-windows-all-in-one
           path: |
-            mobile/build/windows/installer/BusinessOS-Pharmacy-Setup.exe
-            mobile/build/windows/BusinessOS-Pharmacy-Portable.zip
+            mobile/build/windows/installer/BusinessOS-Pharmacy-AllInOne-Setup.exe
+            mobile/build/windows/BusinessOS-Pharmacy-AllInOne-Portable.zip
           retention-days: 30
