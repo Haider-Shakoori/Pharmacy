@@ -43,7 +43,7 @@ Name: "{group}\BusinessOS Pharmacy License"; Filename: "http://{code:GetComputer
 Name: "{autodesktop}\BusinessOS Pharmacy"; Filename: "{app}\manager\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\installer\Install-Offline.ps1"" -AppRoot ""{app}"" -DataRoot ""{commonappdata}\BusinessOS\Pharmacy"" -PharmacyName ""{code:GetPharmacyName}"" -OwnerName ""{code:GetOwnerName}"" -OwnerEmail ""{code:GetOwnerEmail}"" -OwnerPassword ""{code:GetOwnerPassword}"" -AppVersion ""{#MyAppVersion}"" -HttpPort 8090"; StatusMsg: "Configuring BusinessOS Pharmacy Offline..."; Flags: runhidden waituntilterminated
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\installer\Install-Offline.ps1"" -AppRoot ""{app}"" -DataRoot ""{commonappdata}\BusinessOS\Pharmacy"" -ConfigPath ""{code:GetInstallConfigPath}"" -AppVersion ""{#MyAppVersion}"" -HttpPort 8090"; StatusMsg: "Configuring BusinessOS Pharmacy Offline..."; Flags: runhidden waituntilterminated
 Filename: "{app}\manager\{#MyAppExeName}"; Description: "Open BusinessOS Pharmacy Server Manager"; Flags: postinstall nowait skipifsilent
 
 [UninstallRun]
@@ -53,6 +53,7 @@ Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Fil
 var
   PharmacyPage: TInputQueryWizardPage;
   OwnerPage: TInputQueryWizardPage;
+  InstallConfigPath: String;
 
 procedure InitializeWizard;
 begin
@@ -127,4 +128,27 @@ end;
 function GetComputerName(Param: String): String;
 begin
   Result := GetEnv('COMPUTERNAME');
+end;
+
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ConfigText: String;
+begin
+  Result := '';
+  InstallConfigPath := ExpandConstant('{tmp}\BusinessOSPharmacy.install');
+
+  ConfigText :=
+    'PharmacyName=' + PharmacyPage.Values[0] + #13#10 +
+    'OwnerName=' + OwnerPage.Values[0] + #13#10 +
+    'OwnerEmail=' + OwnerPage.Values[1] + #13#10 +
+    'OwnerPassword=' + OwnerPage.Values[2] + #13#10;
+
+  if not SaveStringToFile(InstallConfigPath, ConfigText, False) then
+    Result := 'BusinessOS could not prepare the secure installation configuration.';
+end;
+
+function GetInstallConfigPath(Param: String): String;
+begin
+  Result := InstallConfigPath;
 end;
