@@ -143,8 +143,14 @@ class _MobileRegistrationCardState
             defaultCloudUri: AppEnvironment.current.apiBaseUri,
           );
       final ConnectionProfile profile = await profileRepository.load();
+      final Uri? apiBaseUri = AppEnvironment.current.apiBaseUri;
+      if (apiBaseUri == null) {
+        throw const MobileRegistrationException(
+          'The BusinessOS licensing server is not configured.',
+        );
+      }
       final ServerEndpoint licensingEndpoint = ServerEndpoint.fromUri(
-        AppEnvironment.current.apiBaseUri,
+        apiBaseUri,
         ServerEndpointKind.cloud,
       );
       final DeviceIdentity device = await ref
