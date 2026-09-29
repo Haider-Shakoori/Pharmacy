@@ -27,6 +27,7 @@ class LicenseActivationService
         ?string $deviceModel = null,
         ?string $osVersion = null,
         ?string $buildNumber = null,
+        string $platform = 'android',
     ): array {
         $license = $this->keys->findByPlainText($licenseKey);
 
@@ -36,7 +37,33 @@ class LicenseActivationService
             ]);
         }
 
-        return DB::transaction(function () use ($license, $deviceId, $deviceName, $appVersion, $deviceModel, $osVersion, $buildNumber): array {
+        return $this->activateLicense(
+            $license,
+            $deviceId,
+            $deviceName,
+            $appVersion,
+            $deviceModel,
+            $osVersion,
+            $buildNumber,
+            $platform,
+        );
+    }
+
+    public function activateLicense(
+        License $license,
+        string $deviceId,
+        ?string $deviceName,
+        ?string $appVersion,
+        ?string $deviceModel = null,
+        ?string $osVersion = null,
+        ?string $buildNumber = null,
+        string $platform = 'android',
+    ): array {
+        $platform = in_array($platform, ['android', 'windows'], true)
+            ? $platform
+            : 'android';
+
+        return DB::transaction(function () use ($license, $deviceId, $deviceName, $appVersion, $deviceModel, $osVersion, $buildNumber, $platform): array {
             /** @var License $license */
             $license = License::query()
                 ->with(['subscription.plan', 'subscription.business.tenant'])
@@ -54,15 +81,21 @@ class LicenseActivationService
                 ->where('device_id', $deviceId)
                 ->first();
 
+            $deviceLimit = $platform === 'windows'
+                ? $plan->max_windows_devices
+                : $plan->max_android_devices;
+            $platformLabel = $platform === 'windows' ? 'Windows PC' : 'Android device';
+
             if ($activation === null) {
                 $activeDeviceCount = LicenseActivation::query()
                     ->where('license_id', $license->id)
+                    ->where('platform', $platform)
                     ->whereNull('revoked_at')
                     ->count();
 
-                if ($plan->max_android_devices !== null && $activeDeviceCount >= $plan->max_android_devices) {
+                if ($deviceLimit !== null && $activeDeviceCount >= $deviceLimit) {
                     throw ValidationException::withMessages([
-                        'device_id' => 'The Android device limit for this subscription has been reached.',
+                        'device_id' => "The {$platformLabel} limit for this subscription has been reached.",
                     ]);
                 }
 
@@ -74,12 +107,13 @@ class LicenseActivationService
             } elseif ($activation->revoked_at !== null) {
                 $activeDeviceCount = LicenseActivation::query()
                     ->where('license_id', $license->id)
+                    ->where('platform', $platform)
                     ->whereNull('revoked_at')
                     ->count();
 
-                if ($plan->max_android_devices !== null && $activeDeviceCount >= $plan->max_android_devices) {
+                if ($deviceLimit !== null && $activeDeviceCount >= $deviceLimit) {
                     throw ValidationException::withMessages([
-                        'device_id' => 'The Android device limit for this subscription has been reached.',
+                        'device_id' => "The {$platformLabel} limit for this subscription has been reached.",
                     ]);
                 }
 
@@ -89,7 +123,7 @@ class LicenseActivationService
 
             $activation->fill([
                 'device_name' => $deviceName,
-                'platform' => 'android',
+                'platform' => $platform,
                 'app_version' => $appVersion,
                 'device_model' => $deviceModel,
                 'os_version' => $osVersion,
@@ -140,6 +174,7 @@ class LicenseActivationService
                 'plan' => [
                     'code' => $plan->code,
                     'max_android_devices' => $plan->max_android_devices,
+                    'max_windows_devices' => $plan->max_windows_devices,
                     'offline_grace_days' => $plan->offline_grace_days,
                     'features' => $plan->features ?? [],
                 ],

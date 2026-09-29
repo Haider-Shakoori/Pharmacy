@@ -18,6 +18,10 @@ class LicenseActivationController extends Controller
             $request->string('device_id')->toString(),
             $request->input('device_name'),
             $request->input('app_version'),
+            null,
+            null,
+            null,
+            $request->input('platform', 'android'),
         );
 
         return response()->json([

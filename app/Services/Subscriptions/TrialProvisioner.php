@@ -52,6 +52,7 @@ class TrialProvisioner
                     'billing_period' => 'monthly',
                     'max_users' => 5,
                     'max_android_devices' => 2,
+                    'max_windows_devices' => 1,
                     'max_branches' => 1,
                     'offline_grace_days' => (int) config('pharmacy.trial.days', 7),
                     'features' => [],

@@ -45,9 +45,10 @@ class MobileRegistrationClient {
             body: jsonEncode(<String, Object?>{
               'license_key': licenseKey.trim(),
               'device_id': device.installationId,
+              'platform': device.platform,
               'device_name': device.deviceName,
               'device_model': device.model,
-              'os_version': device.androidVersion,
+              'os_version': device.osVersion,
               'app_version': device.appVersion,
               'build_number': device.buildNumber,
               'email': email.trim(),
@@ -99,6 +100,85 @@ class MobileRegistrationClient {
     } on Object {
       throw const MobileRegistrationException(
         'The pharmacy server could not be reached.',
+        retryable: true,
+      );
+    }
+  }
+
+  Future<MobileRegistration> startTrial({
+    required ServerEndpoint endpoint,
+    required DeviceIdentity device,
+    required String pharmacyCode,
+    required String email,
+    required String password,
+  }) async {
+    final Uri uri = endpoint.uri.resolve('/api/v1/mobile/trial/register');
+
+    try {
+      final http.Response response = await _client
+          .post(
+            uri,
+            headers: const <String, String>{
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(<String, Object?>{
+              'pharmacy_code': pharmacyCode.trim().toLowerCase(),
+              'device_id': device.installationId,
+              'platform': device.platform,
+              'device_name': device.deviceName,
+              'device_model': device.model,
+              'os_version': device.osVersion,
+              'app_version': device.appVersion,
+              'build_number': device.buildNumber,
+              'email': email.trim(),
+              'password': password,
+            }),
+          )
+          .timeout(timeout);
+
+      final Object? decoded = jsonDecode(response.body);
+      final Map<String, dynamic> payload = decoded is Map<String, dynamic>
+          ? decoded
+          : <String, dynamic>{};
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final Object? data = payload['data'];
+        if (data is! Map<String, dynamic>) {
+          throw const MobileRegistrationException(
+            'The server returned an invalid trial response.',
+          );
+        }
+
+        return MobileRegistration.fromApi(data);
+      }
+
+      final String message =
+          _errorMessage(payload) ??
+          'Trial activation failed with status ${response.statusCode}.';
+
+      throw MobileRegistrationException(
+        message,
+        retryable:
+            response.statusCode == 408 ||
+            response.statusCode == 429 ||
+            response.statusCode >= 500,
+      );
+    } on MobileRegistrationException {
+      rethrow;
+    } on TimeoutException {
+      throw const MobileRegistrationException(
+        'The BusinessOS licensing server did not respond in time.',
+        retryable: true,
+      );
+    } on FormatException {
+      throw const MobileRegistrationException(
+        'The BusinessOS licensing server returned an invalid response.',
+        retryable: true,
+      );
+    } on Object {
+      throw const MobileRegistrationException(
+        'The BusinessOS licensing server could not be reached.',
         retryable: true,
       );
     }

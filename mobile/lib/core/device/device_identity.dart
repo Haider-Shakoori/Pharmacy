@@ -1,17 +1,19 @@
 class DeviceIdentity {
   const DeviceIdentity({
     required this.installationId,
+    required this.platform,
     required this.deviceName,
     required this.model,
-    required this.androidVersion,
+    required this.osVersion,
     required this.appVersion,
     required this.buildNumber,
   });
 
   final String installationId;
+  final String platform;
   final String deviceName;
   final String model;
-  final String androidVersion;
+  final String osVersion;
   final String appVersion;
   final String buildNumber;
 }

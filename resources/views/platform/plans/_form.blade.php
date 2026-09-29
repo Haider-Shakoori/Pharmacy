@@ -77,6 +77,12 @@
         </label>
 
         <label class="block">
+            <span class="text-sm font-semibold">Maximum Windows PCs</span>
+            <input type="number" min="1" name="max_windows_devices" value="{{ old('max_windows_devices', $plan->max_windows_devices ?? '') }}" placeholder="Unlimited"
+                   class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
+        </label>
+
+        <label class="block">
             <span class="text-sm font-semibold">Maximum branches</span>
             <input type="number" min="1" name="max_branches" value="{{ old('max_branches', $plan->max_branches ?? 1) }}" required
                    class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">

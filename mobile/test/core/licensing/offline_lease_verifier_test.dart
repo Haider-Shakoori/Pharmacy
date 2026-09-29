@@ -132,6 +132,7 @@ void main() {
         OfflineLeaseAuthorizer(
           database: database,
           registrationRepository: repository,
+          secureStore: store,
           clock: () => now,
         ).assertCanTransact(),
         throwsA(
@@ -180,6 +181,7 @@ void main() {
     final OfflineLeaseAuthorizer first = OfflineLeaseAuthorizer(
       database: database,
       registrationRepository: repository,
+      secureStore: store,
       clock: () => now,
     );
     await first.assertCanTransact();
@@ -188,7 +190,50 @@ void main() {
       OfflineLeaseAuthorizer(
         database: database,
         registrationRepository: repository,
+        secureStore: store,
         clock: () => now.subtract(const Duration(hours: 1)),
+      ).assertCanTransact(),
+      throwsA(
+        isA<OfflineLeaseException>().having(
+          (OfflineLeaseException error) => error.code,
+          'code',
+          OfflineLeaseFailure.clockRollback,
+        ),
+      ),
+    );
+
+    await database.close();
+  });
+
+  test('secure clock anchor survives local database tampering', () async {
+    final DateTime now = DateTime.utc(2026, 9, 29, 6);
+    final MobileRegistration registration = await _registration(
+      issuedAt: now.subtract(const Duration(minutes: 1)),
+      expiresAt: now.add(const Duration(days: 7)),
+    );
+    final _MemorySecureStore store = _MemorySecureStore();
+    final MobileRegistrationRepository repository =
+        MobileRegistrationRepository(store);
+    final PharmacyDatabase database = PharmacyDatabase(NativeDatabase.memory());
+    await repository.save(registration);
+
+    await OfflineLeaseAuthorizer(
+      database: database,
+      registrationRepository: repository,
+      secureStore: store,
+      clock: () => now,
+    ).assertCanTransact();
+
+    await database.customStatement(
+      "DELETE FROM app_metadata WHERE key LIKE 'offline_lease.max_seen_epoch.v2.%'",
+    );
+
+    await expectLater(
+      OfflineLeaseAuthorizer(
+        database: database,
+        registrationRepository: repository,
+        secureStore: store,
+        clock: () => now.subtract(const Duration(hours: 2)),
       ).assertCanTransact(),
       throwsA(
         isA<OfflineLeaseException>().having(

@@ -23,6 +23,7 @@ class MobileDeviceRegistrationController extends Controller
             $request->input('device_model'),
             $request->input('os_version'),
             $request->input('build_number'),
+            $request->input('platform', 'android'),
         );
 
         return response()->json([

@@ -24,6 +24,7 @@ class MobileRegistrationCard extends ConsumerStatefulWidget {
 
 class _MobileRegistrationCardState
     extends ConsumerState<MobileRegistrationCard> {
+  final TextEditingController _pharmacyCodeController = TextEditingController();
   final TextEditingController _licenseController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -33,6 +34,7 @@ class _MobileRegistrationCardState
 
   @override
   void dispose() {
+    _pharmacyCodeController.dispose();
     _licenseController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -92,29 +94,14 @@ class _MobileRegistrationCardState
             MobileRegistrationException(strings.noServerConfigured);
       }
 
-      await ref.read(mobileRegistrationRepositoryProvider).save(registration);
-
-      final String? cloudBaseUrl = registration.cloudBaseUrl;
-      if (cloudBaseUrl != null && cloudBaseUrl.isNotEmpty) {
-        final ServerEndpoint cloud = ServerEndpoint.fromInput(
-          cloudBaseUrl,
-          ServerEndpointKind.cloud,
-        );
-        await profileRepository.save(
-          ConnectionProfile(
-            mode: profile.mode,
-            localEndpoint: profile.localEndpoint,
-            cloudEndpoint: cloud,
-          ),
-        );
-      }
+      await _persistRegistration(
+        registration,
+        profileRepository: profileRepository,
+        profile: profile,
+      );
 
       _licenseController.clear();
       _passwordController.clear();
-
-      ref.invalidate(mobileRegistrationProvider);
-      ref.invalidate(localDatabaseScopeProvider);
-      ref.invalidate(pharmacyDatabaseProvider);
 
       if (!mounted) {
         return;
@@ -140,6 +127,106 @@ class _MobileRegistrationCardState
         _error = error.message.toString();
       });
     }
+  }
+
+  Future<void> _startTrial() async {
+    setState(() {
+      _registering = true;
+      _error = null;
+    });
+
+    try {
+      final SecureStore store = ref.read(secureStoreProvider);
+      final ConnectionProfileRepository profileRepository =
+          ConnectionProfileRepository(
+            store,
+            defaultCloudUri: AppEnvironment.current.apiBaseUri,
+          );
+      final ConnectionProfile profile = await profileRepository.load();
+      final Uri? apiBaseUri = AppEnvironment.current.apiBaseUri;
+      if (apiBaseUri == null) {
+        throw const MobileRegistrationException(
+          'The BusinessOS licensing server is not configured.',
+        );
+      }
+      final ServerEndpoint licensingEndpoint = ServerEndpoint.fromUri(
+        apiBaseUri,
+        ServerEndpointKind.cloud,
+      );
+      final DeviceIdentity device = await ref
+          .read(deviceIdentityServiceProvider)
+          .load();
+
+      final MobileRegistration registration = await MobileRegistrationClient()
+          .startTrial(
+            endpoint: licensingEndpoint,
+            device: device,
+            pharmacyCode: _pharmacyCodeController.text,
+            email: _emailController.text,
+            password: _passwordController.text,
+          );
+
+      await _persistRegistration(
+        registration,
+        profileRepository: profileRepository,
+        profile: profile,
+      );
+
+      _pharmacyCodeController.clear();
+      _licenseController.clear();
+      _passwordController.clear();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _registering = false;
+      });
+    } on MobileRegistrationException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _registering = false;
+        _error = error.message;
+      });
+    } on FormatException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _registering = false;
+        _error = error.message.toString();
+      });
+    }
+  }
+
+  Future<void> _persistRegistration(
+    MobileRegistration registration, {
+    required ConnectionProfileRepository profileRepository,
+    required ConnectionProfile profile,
+  }) async {
+    await ref.read(mobileRegistrationRepositoryProvider).save(registration);
+
+    final String? cloudBaseUrl = registration.cloudBaseUrl;
+    if (cloudBaseUrl != null && cloudBaseUrl.isNotEmpty) {
+      final ServerEndpoint cloud = ServerEndpoint.fromInput(
+        cloudBaseUrl,
+        ServerEndpointKind.cloud,
+      );
+      await profileRepository.save(
+        ConnectionProfile(
+          mode: profile.mode,
+          localEndpoint: profile.localEndpoint,
+          cloudEndpoint: cloud,
+        ),
+      );
+    }
+
+    ref.invalidate(mobileRegistrationProvider);
+    ref.invalidate(localDatabaseScopeProvider);
+    ref.invalidate(pharmacyDatabaseProvider);
   }
 
   Future<void> _unregister() async {
@@ -230,11 +317,19 @@ class _MobileRegistrationCardState
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 16),
+                Text(
+                  'First time here? Start a one-time 7-day trial for an already provisioned BusinessOS pharmacy.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
                 TextField(
-                  controller: _licenseController,
+                  controller: _pharmacyCodeController,
                   autocorrect: false,
                   enableSuggestions: false,
-                  decoration: InputDecoration(labelText: strings.licenseKey),
+                  decoration: const InputDecoration(
+                    labelText: 'Pharmacy code',
+                    hintText: 'e.g. kabul-central',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -251,10 +346,38 @@ class _MobileRegistrationCardState
                   autocorrect: false,
                   decoration: InputDecoration(labelText: strings.password),
                   onSubmitted: (_) {
-                    if (!_registering) {
+                    if (_registering) {
+                      return;
+                    }
+                    if (_pharmacyCodeController.text.trim().isNotEmpty &&
+                        _licenseController.text.trim().isEmpty) {
+                      _startTrial();
+                    } else {
                       _register();
                     }
                   },
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _registering ? null : _startTrial,
+                  icon: const Icon(Icons.schedule_rounded),
+                  label: Text(
+                    _registering ? strings.registering : 'Start 7-Day Trial',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                Text(
+                  'Already licensed? Register this device with your license key.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _licenseController,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  decoration: InputDecoration(labelText: strings.licenseKey),
                 ),
                 if (_error != null) ...<Widget>[
                   const SizedBox(height: 12),
