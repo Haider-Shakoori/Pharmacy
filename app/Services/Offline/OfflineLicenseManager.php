@@ -2,6 +2,7 @@
 
 namespace App\Services\Offline;
 
+use App\Enums\SubscriptionHealth;
 use App\Services\Licensing\SignedTokenVerifier;
 use RuntimeException;
 use Throwable;
@@ -48,6 +49,21 @@ class OfflineLicenseManager
         $this->clock->assertCurrentTime($issuedAt);
 
         return $payload;
+    }
+
+    public function subscriptionHealth(): SubscriptionHealth
+    {
+        $payload = $this->assertValid();
+
+        if (($payload['subscription_status'] ?? null) === 'trial') {
+            return SubscriptionHealth::Trial;
+        }
+
+        $expiresAt = (int) ($payload['expires_at'] ?? 0);
+
+        return $expiresAt <= now()->addDays(7)->getTimestamp()
+            ? SubscriptionHealth::Expiring
+            : SubscriptionHealth::Healthy;
     }
 
     public function status(): array

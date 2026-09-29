@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\ProductBatch;
 use App\Models\Sale;
 use App\Services\Alerts\OperationalAlertService;
+use App\Services\Offline\OfflineLicenseManager;
 use App\Services\Subscriptions\SubscriptionHealthService;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Contracts\View\View;
@@ -16,6 +17,7 @@ class DashboardController extends Controller
     public function __invoke(
         TenantContext $tenantContext,
         SubscriptionHealthService $health,
+        OfflineLicenseManager $offlineLicenses,
         OperationalAlertService $alerts,
     ): View {
         $tenant = $tenantContext->tenant();
@@ -29,7 +31,9 @@ class DashboardController extends Controller
 
         return view('pharmacy.dashboard', [
             'tenant' => $tenant,
-            'subscriptionHealth' => $health->forTenant($tenant),
+            'subscriptionHealth' => config('offline.enabled')
+                ? $offlineLicenses->subscriptionHealth()
+                : $health->forTenant($tenant),
             'alerts' => $snapshot,
             'stats' => [
                 ['label' => __('pharmacy.stats.today_sales'), 'value' => 'AFN '.number_format((float) $snapshot['today_sales'], 2)],

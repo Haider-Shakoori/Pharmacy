@@ -148,6 +148,7 @@ class OfflineInstallationActivationService
                 'machine_fingerprint_hash' => $machineFingerprintHash,
                 'pharmacy_name' => $subscription->business->pharmacy_name,
                 'plan_code' => $plan->code,
+                'subscription_status' => $subscription->status->value,
                 'features' => $plan->features ?? [],
                 'issued_at' => $now->getTimestamp(),
                 'expires_at' => $expiresAt->getTimestamp(),

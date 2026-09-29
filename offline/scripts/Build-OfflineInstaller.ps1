@@ -104,11 +104,16 @@ if ($robocopyExit -gt 7) {
     throw "MariaDB runtime copy failed with robocopy exit code $robocopyExit."
 }
 
-$ionCubeZip = Join-Path $env:RUNNER_TEMP 'ioncube-loaders.zip'
-$ionCubeExtract = Join-Path $env:RUNNER_TEMP 'ioncube-loaders'
-Invoke-WebRequest -Uri 'https://downloads.ioncube.com/loader_downloads/ioncube_loaders_win_x86-64.zip' -OutFile $ionCubeZip -UseBasicParsing
-Expand-Archive $ionCubeZip -DestinationPath $ionCubeExtract -Force
-Copy-Item $ionCubeExtract (Join-Path $RuntimeDist 'ioncube') -Recurse -Force
+if ($SourceProtection -eq 'ioncube') {
+    Write-Host 'Downloading ionCube Loader for protected customer build...'
+    $ionCubeZip = Join-Path $env:RUNNER_TEMP 'ioncube-loaders.zip'
+    $ionCubeExtract = Join-Path $env:RUNNER_TEMP 'ioncube-loaders'
+    Invoke-WebRequest -Uri 'https://downloads.ioncube.com/loader_downloads/ioncube_loaders_win_x86-64.zip' -OutFile $ionCubeZip -UseBasicParsing
+    Expand-Archive $ionCubeZip -DestinationPath $ionCubeExtract -Force
+    Copy-Item $ionCubeExtract (Join-Path $RuntimeDist 'ioncube') -Recurse -Force
+} else {
+    Write-Host 'Skipping ionCube Loader for unprotected internal validation build.'
+}
 
 Set-Content -Path (Join-Path $Dist 'license-public-key.txt') -Value $LicensePublicKey -NoNewline
 
