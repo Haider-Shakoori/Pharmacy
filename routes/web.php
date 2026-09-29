@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Health\ReadinessController;
+use App\Http\Controllers\Platform\Account\PasswordController as PlatformPasswordController;
 use App\Http\Controllers\Platform\Auth\LoginController as PlatformLoginController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\Platform\LicenseController;
@@ -33,6 +34,11 @@ Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
         Route::middleware('auth:platform')->group(function (): void {
             Route::get('/', PlatformDashboardController::class)->name('dashboard');
             Route::post('/logout', [PlatformLoginController::class, 'destroy'])->name('logout');
+
+            Route::get('/account/password', [PlatformPasswordController::class, 'edit'])
+                ->name('account.password.edit');
+            Route::put('/account/password', [PlatformPasswordController::class, 'update'])
+                ->name('account.password.update');
 
             Route::resource('tenants', TenantController::class)->except(['show', 'destroy']);
             Route::put('/tenants/{tenant}/status/{status}', TenantStatusController::class)
