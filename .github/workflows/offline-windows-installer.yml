@@ -107,13 +107,12 @@ jobs:
           PROTECTION_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.source_protection || 'none' }}
         run: |
           $key = $env:CONFIGURED_PUBLIC_KEY
-          if ([string]::IsNullOrWhiteSpace($key)) {
-            if ($env:PROTECTION_MODE -eq 'ioncube') {
-              throw 'LICENSE_SIGNING_PUBLIC_KEY_B64 must be configured for a protected customer installer.'
-            }
+          if ([string]::IsNullOrWhiteSpace($key) -and (Test-Path 'offline/license-public-key.txt')) {
+            $key = (Get-Content 'offline/license-public-key.txt' -Raw).Trim()
+          }
 
-            $key = php -r '$kp=sodium_crypto_sign_keypair(); echo base64_encode(sodium_crypto_sign_publickey($kp));'
-            Write-Warning 'Using an ephemeral public key. This internal installer cannot activate against production.'
+          if ([string]::IsNullOrWhiteSpace($key)) {
+            throw 'No BusinessOS license verification public key is configured.'
           }
 
           "public_key=$key" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
