@@ -45,9 +45,10 @@ class MobileRegistrationClient {
             body: jsonEncode(<String, Object?>{
               'license_key': licenseKey.trim(),
               'device_id': device.installationId,
+              'platform': device.platform,
               'device_name': device.deviceName,
               'device_model': device.model,
-              'os_version': device.androidVersion,
+              'os_version': device.osVersion,
               'app_version': device.appVersion,
               'build_number': device.buildNumber,
               'email': email.trim(),
