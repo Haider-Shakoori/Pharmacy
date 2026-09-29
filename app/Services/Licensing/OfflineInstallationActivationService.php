@@ -52,6 +52,13 @@ class OfflineInstallationActivationService
 
             $subscription = $license->subscription;
             $plan = $subscription->plan;
+
+            if (! (bool) data_get($plan->features ?? [], 'offline_windows', false)) {
+                throw ValidationException::withMessages([
+                    'license_key' => 'This subscription is not licensed for BusinessOS Pharmacy Offline.',
+                ]);
+            }
+
             $now = CarbonImmutable::now();
             $expiresAt = $subscription->status === SubscriptionStatus::Trial
                 ? $subscription->trial_ends_at
