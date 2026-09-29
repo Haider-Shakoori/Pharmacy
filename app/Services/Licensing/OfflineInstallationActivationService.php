@@ -53,7 +53,7 @@ class OfflineInstallationActivationService
             $subscription = $license->subscription;
             $plan = $subscription->plan;
 
-            if (! (bool) data_get($plan->features ?? [], 'offline_windows', false)) {
+            if (! in_array('offline_windows', $plan->features ?? [], true)) {
                 throw ValidationException::withMessages([
                     'license_key' => 'This subscription is not licensed for BusinessOS Pharmacy Offline.',
                 ]);
