@@ -1,3 +1,4 @@
+# Internal branch pushes produce an unprotected validation installer; customer releases require ionCube.
 name: Offline Windows Installer
 
 on:
