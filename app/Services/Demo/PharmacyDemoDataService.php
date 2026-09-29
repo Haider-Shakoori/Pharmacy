@@ -20,6 +20,7 @@ use App\Services\Access\RbacProvisioner;
 use App\Services\Accounting\AccountingProvisioner;
 use App\Services\Accounting\ExpenseService;
 use App\Services\Inventory\InventoryProvisioner;
+use App\Services\Safe\SafeService;
 use App\Services\Sales\PosSaleService;
 use Illuminate\Support\Collection;
 
@@ -31,6 +32,7 @@ class PharmacyDemoDataService
         private readonly AccountingProvisioner $accounting,
         private readonly PosSaleService $sales,
         private readonly ExpenseService $expenses,
+        private readonly SafeService $safe,
     ) {}
 
     public function seed(Tenant $tenant): array
@@ -52,6 +54,7 @@ class PharmacyDemoDataService
             $orders = $this->purchaseOrders($medicines, $suppliers, $owner);
             $sales = $this->sales($medicines, $customers, $location, $owner);
             $expenses = $this->expenses($location, $owner);
+            $safeMovements = $this->safe($owner);
             $this->cashierShift($location, $owner);
             $this->settings($tenant);
 
@@ -65,6 +68,7 @@ class PharmacyDemoDataService
                 'purchase_orders' => $orders,
                 'sales' => $sales,
                 'expenses' => $expenses,
+                'safe_movements' => $safeMovements,
             ];
         });
     }
@@ -336,6 +340,20 @@ class PharmacyDemoDataService
         }
 
         return count($definitions);
+    }
+
+    private function safe(User $owner): int
+    {
+        $safe = $this->safe->ensureDefaultSafe();
+        $this->safe->postManual($safe, $owner, [
+            'movement_type' => 'owner_deposit',
+            'amount' => 25000,
+            'reference' => 'DEMO-SAFE-OPENING',
+            'reason' => 'DEMO opening cash for Safe and Safe Closing testing.',
+            'idempotency_key' => 'demo:safe:opening',
+        ]);
+
+        return $safe->movements()->count();
     }
 
     private function cashierShift(StockLocation $location, User $owner): void

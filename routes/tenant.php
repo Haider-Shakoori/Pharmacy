@@ -141,6 +141,28 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
                 Route::post('/pos/sales/{sale}/returns', [SaleReturnController::class, 'store'])->name('returns.store');
             });
 
+            Route::get('/safe', [SafeController::class, 'index'])
+                ->middleware('permission:safe.view')
+                ->name('safe.index');
+            Route::post('/safe/safes', [SafeController::class, 'storeSafe'])
+                ->middleware('permission:safe.manage')
+                ->name('safe.safes.store');
+            Route::post('/safe/{cashSafe}/movements', [SafeController::class, 'movement'])
+                ->middleware('permission:safe.manage')
+                ->name('safe.movements.store');
+            Route::post('/safe/{cashSafe}/pos-transfers/{cashierShift}', [SafeController::class, 'receiveShift'])
+                ->middleware('permission:safe.transfer_pos')
+                ->name('safe.pos-transfers.store');
+            Route::post('/safe/{cashSafe}/closing/finalize', [SafeController::class, 'finalize'])
+                ->middleware('permission:safe.close')
+                ->name('safe.closing.finalize');
+            Route::post('/safe/closings/{safeClosing}/approve', [SafeController::class, 'approve'])
+                ->middleware('permission:safe.approve')
+                ->name('safe.closing.approve');
+            Route::post('/safe/closings/{safeClosing}/reopen', [SafeController::class, 'reopen'])
+                ->middleware('permission:safe.reopen')
+                ->name('safe.closing.reopen');
+
             Route::middleware('permission:daily_closing.perform')->group(function (): void {
                 Route::get('/daily-closing', [DailyClosingController::class, 'index'])->name('daily-closing.index');
                 Route::post('/daily-closing/shifts/open', [DailyClosingController::class, 'openShift'])->name('daily-closing.shifts.open');
@@ -154,28 +176,6 @@ Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
             Route::post('/daily-closing/{dailyClosing}/reopen', [DailyClosingController::class, 'reopen'])
                 ->middleware('permission:daily_closing.reopen')
                 ->name('daily-closing.reopen');
-
-            Route::get('/safe', [SafeController::class, 'index'])
-                ->middleware('permission:safe.view')
-                ->name('safe.index');
-            Route::post('/safe', [SafeController::class, 'storeSafe'])
-                ->middleware('permission:safe.manage')
-                ->name('safe.store');
-            Route::post('/safe/{cashSafe}/movements', [SafeController::class, 'movement'])
-                ->middleware('permission:safe.manage')
-                ->name('safe.movements.store');
-            Route::post('/safe/{cashSafe}/shifts/{cashierShift}/receive', [SafeController::class, 'receiveShift'])
-                ->middleware('permission:safe.transfer_pos')
-                ->name('safe.shifts.receive');
-            Route::post('/safe/{cashSafe}/finalize', [SafeController::class, 'finalize'])
-                ->middleware('permission:safe.close')
-                ->name('safe.finalize');
-            Route::post('/safe-closings/{safeClosing}/approve', [SafeController::class, 'approve'])
-                ->middleware('permission:safe.approve')
-                ->name('safe.approve');
-            Route::post('/safe-closings/{safeClosing}/reopen', [SafeController::class, 'reopen'])
-                ->middleware('permission:safe.reopen')
-                ->name('safe.reopen');
 
             Route::middleware('permission:reports.view')->group(function (): void {
                 Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');

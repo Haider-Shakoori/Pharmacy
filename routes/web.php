@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Health\ReadinessController;
+use App\Http\Controllers\Platform\Account\PasswordController as PlatformPasswordController;
 use App\Http\Controllers\Platform\Auth\LoginController as PlatformLoginController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\Platform\LicenseController;
@@ -11,11 +12,16 @@ use App\Http\Controllers\Platform\TenantController;
 use App\Http\Controllers\Platform\TenantProvisioningRetryController;
 use App\Http\Controllers\Platform\TenantStatusController;
 use App\Http\Controllers\Platform\TenantTrialController;
+use App\Http\Controllers\Platform\TrialRequestController;
+use App\Http\Controllers\PublicTrialRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
     Route::get('/ready', ReadinessController::class)->name('health.ready');
-    Route::redirect('/', '/platform');
+    Route::get('/', [PublicTrialRequestController::class, 'create'])->name('trial.request');
+    Route::post('/trial-request', [PublicTrialRequestController::class, 'store'])
+        ->middleware('throttle:5,10')
+        ->name('trial.request.store');
 
     Route::prefix('platform')->name('platform.')->group(function (): void {
         Route::middleware('guest:platform')->group(function (): void {
@@ -29,6 +35,11 @@ Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
             Route::get('/', PlatformDashboardController::class)->name('dashboard');
             Route::post('/logout', [PlatformLoginController::class, 'destroy'])->name('logout');
 
+            Route::get('/account/password', [PlatformPasswordController::class, 'edit'])
+                ->name('account.password.edit');
+            Route::put('/account/password', [PlatformPasswordController::class, 'update'])
+                ->name('account.password.update');
+
             Route::resource('tenants', TenantController::class)->except(['show', 'destroy']);
             Route::put('/tenants/{tenant}/status/{status}', TenantStatusController::class)
                 ->whereIn('status', ['active', 'suspended', 'archived'])
@@ -39,6 +50,13 @@ Route::domain(config('pharmacy.deployment_host'))->group(function (): void {
 
             Route::post('/tenants/{tenant}/trial/start', TenantTrialController::class)
                 ->name('tenants.trial.start');
+
+            Route::get('/trial-requests', [TrialRequestController::class, 'index'])
+                ->name('trial-requests.index');
+            Route::post('/trial-requests/{trialRequest}/approve', [TrialRequestController::class, 'approve'])
+                ->name('trial-requests.approve');
+            Route::post('/trial-requests/{trialRequest}/reject', [TrialRequestController::class, 'reject'])
+                ->name('trial-requests.reject');
 
             Route::resource('plans', PlanController::class)->except(['show', 'destroy']);
 
