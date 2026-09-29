@@ -24,6 +24,13 @@
         <nav class="flex gap-2 overflow-x-auto px-4 pb-4 text-sm lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
             <a href="{{ route('platform.dashboard') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.dashboard') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Dashboard</a>
             <a href="{{ route('platform.tenants.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.tenants.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Pharmacies</a>
+            <a href="{{ route('platform.trial-requests.index') }}" class="flex items-center justify-between gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.trial-requests.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">
+                <span>Trial Requests</span>
+                @php($pendingTrialRequests = \App\Models\TrialRequest::query()->where('status', 'pending')->count())
+                @if ($pendingTrialRequests > 0)
+                    <span class="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black text-slate-950">{{ $pendingTrialRequests }}</span>
+                @endif
+            </a>
             <a href="{{ route('platform.plans.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.plans.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Plans</a>
             <a href="{{ route('platform.subscriptions.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.subscriptions.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Subscriptions</a>
             <a href="{{ route('platform.monitoring.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.monitoring.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Monitoring</a>
@@ -34,6 +41,14 @@
     <main class="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
         @if (session('success'))
             <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">{{ session('success') }}</div>
+        @endif
+        @if (session('error'))
+            <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{{ session('error') }}</div>
+        @endif
+        @if ($errors->any())
+            <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                {{ $errors->first() }}
+            </div>
         @endif
         @if (session('generated_license_key'))
             <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">

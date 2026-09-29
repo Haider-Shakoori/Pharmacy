@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Platform;
 use App\Enums\TenantStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
+use App\Models\TrialRequest;
 use App\Services\Subscriptions\PlatformSubscriptionMonitoringService;
 use Illuminate\Contracts\View\View;
 
@@ -28,6 +29,7 @@ class DashboardController extends Controller
                 'provisioning_failures' => Tenant::query()->where('provisioning_status', 'failed')->count(),
                 'subscription_attention' => $subscriptionSnapshot['metrics']['attention'],
                 'stale_devices' => $subscriptionSnapshot['metrics']['stale_devices'],
+                'pending_trial_requests' => TrialRequest::query()->where('status', 'pending')->count(),
             ],
             'subscriptionAttention' => $subscriptionSnapshot['rows']
                 ->where('needs_attention', true)
