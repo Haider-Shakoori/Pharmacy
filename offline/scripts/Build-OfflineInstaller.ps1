@@ -55,21 +55,54 @@ if (-not (Get-Command choco.exe -ErrorAction SilentlyContinue)) {
     throw 'Chocolatey is required on the Windows build runner.'
 }
 
-choco install nssm mariadb innosetup -y --no-progress
+Write-Host 'Installing Windows packaging dependencies...'
+& choco.exe install nssm mariadb innosetup -y --no-progress
+if ($LASTEXITCODE -notin @(0, 1641, 3010)) {
+    throw "Chocolatey dependency installation failed with exit code $LASTEXITCODE."
+}
 
-$nssmExe = (Get-Command nssm.exe -ErrorAction Stop).Source
+Write-Host 'Locating NSSM runtime...'
+$nssmCandidates = @(
+    'C:\ProgramData\chocolatey\bin\nssm.exe',
+    'C:\ProgramData\chocolatey\lib\nssm\tools\nssm.exe',
+    'C:\ProgramData\chocolatey\lib\nssm\tools\win64\nssm.exe'
+)
+
+$nssmExe = $nssmCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+if (-not $nssmExe) {
+    $nssmExe = Get-ChildItem 'C:\ProgramData\chocolatey\lib\nssm' -Filter 'nssm.exe' -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -match 'win64|tools' } |
+        Select-Object -ExpandProperty FullName -First 1
+}
+
+if (-not $nssmExe) {
+    throw 'NSSM runtime could not be located after Chocolatey installation.'
+}
+
 $nssmDir = Join-Path $RuntimeDist 'nssm'
 New-Item -ItemType Directory -Force -Path $nssmDir | Out-Null
 Copy-Item $nssmExe (Join-Path $nssmDir 'nssm.exe') -Force
 
-$mariaServer = Get-ChildItem 'C:\Program Files\MariaDB*\bin\mariadbd.exe' -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1
+Write-Host 'Locating MariaDB runtime...'
+$mariaServer = Get-ChildItem 'C:\Program Files\MariaDB*\bin\mariadbd.exe' -ErrorAction SilentlyContinue |
+    Sort-Object FullName -Descending |
+    Select-Object -First 1
 
 if (-not $mariaServer) {
     throw 'MariaDB runtime could not be located after Chocolatey installation.'
 }
 
 $mariaRoot = Split-Path (Split-Path $mariaServer.FullName -Parent) -Parent
-Copy-Item $mariaRoot (Join-Path $RuntimeDist 'mariadb') -Recurse -Force
+$mariaTarget = Join-Path $RuntimeDist 'mariadb'
+New-Item -ItemType Directory -Force -Path $mariaTarget | Out-Null
+
+Write-Host "Copying MariaDB runtime from $mariaRoot ..."
+& robocopy.exe $mariaRoot $mariaTarget /E /XD data /NFL /NDL /NJH /NJS /NP
+$robocopyExit = $LASTEXITCODE
+if ($robocopyExit -gt 7) {
+    throw "MariaDB runtime copy failed with robocopy exit code $robocopyExit."
+}
 
 $ionCubeZip = Join-Path $env:RUNNER_TEMP 'ioncube-loaders.zip'
 $ionCubeExtract = Join-Path $env:RUNNER_TEMP 'ioncube-loaders'
@@ -81,8 +114,12 @@ Set-Content -Path (Join-Path $Dist 'license-public-key.txt') -Value $LicensePubl
 
 $iss = Join-Path $OfflineRoot 'installer\BusinessOSPharmacy.iss'
 $programFilesX86 = [Environment]::GetFolderPath('ProgramFilesX86')
-$iscc = Join-Path $programFilesX86 'Inno Setup 6\ISCC.exe'
-if (-not (Test-Path $iscc)) {
+$isccCandidates = @(
+    (Join-Path $programFilesX86 'Inno Setup 6\ISCC.exe'),
+    (Join-Path $env:ProgramFiles 'Inno Setup 6\ISCC.exe')
+)
+$iscc = $isccCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $iscc) {
     throw 'Inno Setup compiler was not found.'
 }
 
