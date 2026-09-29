@@ -15,9 +15,13 @@ class PharmacyDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_central_root_redirects_to_platform(): void
+    public function test_central_root_shows_public_trial_request_page(): void
     {
-        $this->get('/')->assertRedirect('/platform');
+        $this->withoutVite();
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Request 7-day trial');
     }
 
     public function test_tenant_dashboard_requires_login(): void

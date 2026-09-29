@@ -14,7 +14,7 @@
         </a>
     </div>
 
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-7">
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         @foreach ([
             ['Total pharmacies', $metrics['total_pharmacies']],
             ['Active', $metrics['active_pharmacies']],
@@ -23,6 +23,7 @@
             ['Provisioning failures', $metrics['provisioning_failures']],
             ['Subscription attention', $metrics['subscription_attention']],
             ['Stale devices', $metrics['stale_devices']],
+            ['Pending trial requests', $metrics['pending_trial_requests']],
         ] as [$label, $value])
             <article class="rounded-2xl border border-slate-200 bg-white p-5">
                 <p class="text-sm font-medium text-slate-500">{{ $label }}</p>
@@ -30,6 +31,16 @@
             </article>
         @endforeach
     </section>
+
+    @if ($metrics['pending_trial_requests'] > 0)
+        <section class="flex flex-col justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:flex-row sm:items-center">
+            <div>
+                <h3 class="font-bold text-amber-950">New pharmacy trial requests are waiting</h3>
+                <p class="mt-1 text-sm text-amber-800">{{ $metrics['pending_trial_requests'] }} request(s) need platform review before an account is provisioned.</p>
+            </div>
+            <a href="{{ route('platform.trial-requests.index', ['status' => 'pending']) }}" class="rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-black text-slate-950">Review requests</a>
+        </section>
+    @endif
 
     <section class="rounded-2xl border border-slate-200 bg-white">
         <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
