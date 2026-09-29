@@ -76,7 +76,6 @@ class DesktopAccessService
         $payload = $this->tokens->verify(
             $accessToken,
             purpose: 'desktop_access',
-            allowExpired: true,
         );
 
         foreach (['activation_id', 'tenant_id', 'device_id', 'user_id'] as $field) {
