@@ -76,6 +76,22 @@ class OfflineInstallationLicenseTest extends TestCase
         $this->assertSame($identity->machineFingerprintHash(), $activation->machine_fingerprint_hash);
     }
 
+    public function test_cloud_only_plan_cannot_activate_offline_installation(): void
+    {
+        [$licenseKey, $subscription] = $this->licensedSubscription();
+        $subscription->plan()->update(['features' => ['advanced_reports']]);
+        $identity = app(OfflineInstallationIdentity::class);
+
+        $this->postJson('/api/v1/offline/license/activate', [
+            'license_key' => $licenseKey,
+            'installation_id' => $identity->installationId(),
+            'machine_fingerprint_hash' => $identity->machineFingerprintHash(),
+            'device_name' => 'Cloud Only PC',
+            'app_version' => '1.0.0',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('license_key');
+    }
+
     public function test_local_installation_verifies_signature_machine_and_license_file_without_internet(): void
     {
         [$licenseKey] = $this->licensedSubscription();
@@ -132,7 +148,7 @@ class OfflineInstallationLicenseTest extends TestCase
             'max_android_devices' => 5,
             'max_branches' => 1,
             'offline_grace_days' => 7,
-            'features' => ['offline_windows' => true],
+            'features' => ['offline_windows'],
             'is_active' => true,
             'sort_order' => 10,
         ]);
