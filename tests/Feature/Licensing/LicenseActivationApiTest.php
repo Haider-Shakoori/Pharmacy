@@ -216,5 +216,4 @@ class LicenseActivationApiTest extends TestCase
             ])
             ->assertUnauthorized();
     }
-
 }
