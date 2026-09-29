@@ -32,9 +32,10 @@ class DeviceIdentityService {
     if (!Platform.isAndroid) {
       return DeviceIdentity(
         installationId: installationId,
-        deviceName: Platform.operatingSystem,
-        model: Platform.operatingSystem,
-        androidVersion: 'n/a',
+        platform: Platform.isWindows ? 'windows' : Platform.operatingSystem,
+        deviceName: Platform.localHostname,
+        model: Platform.isWindows ? 'Windows PC' : Platform.operatingSystem,
+        osVersion: Platform.operatingSystemVersion,
         appVersion: package.version,
         buildNumber: package.buildNumber,
       );
@@ -44,9 +45,10 @@ class DeviceIdentityService {
 
     return DeviceIdentity(
       installationId: installationId,
+      platform: 'android',
       deviceName: android.device,
       model: '${android.manufacturer} ${android.model}'.trim(),
-      androidVersion: android.version.release,
+      osVersion: android.version.release,
       appVersion: package.version,
       buildNumber: package.buildNumber,
     );
