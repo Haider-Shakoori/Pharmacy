@@ -237,6 +237,8 @@ class DesktopAccessService
             'activation_id' => $activation->id,
             'device_id' => $activation->device_id,
             'user_id' => $user['id'],
+            'user_name' => $user['name'],
+            'user_email' => $user['email'],
             'roles' => $user['roles'],
             'permissions' => $user['permissions'],
             'issued_at' => $now->getTimestamp(),
