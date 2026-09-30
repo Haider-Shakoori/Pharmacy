@@ -2,6 +2,7 @@
 
 namespace App\Services\Mobile;
 
+use App\Services\Sync\SyncAccessContext;
 use App\Models\Customer;
 use App\Models\Medicine;
 use App\Models\ProductBatch;
@@ -16,7 +17,7 @@ class MobileSyncPullService
     ) {}
 
     public function pull(
-        MobileAccessContext $context,
+        SyncAccessContext $context,
         string $stream,
         ?string $cursor,
         int $limit,
