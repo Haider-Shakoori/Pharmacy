@@ -2,16 +2,8 @@
 
 namespace App\Services\Mobile;
 
-use App\Models\LicenseActivation;
-use App\Models\Tenant;
+use App\Services\Sync\SyncAccessContext;
 
-final readonly class MobileAccessContext
+final readonly class MobileAccessContext extends SyncAccessContext
 {
-    public function __construct(
-        public Tenant $tenant,
-        public LicenseActivation $activation,
-        public int $userId,
-        public array $user,
-        public array $permissions,
-    ) {}
 }
