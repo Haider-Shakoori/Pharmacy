@@ -2,6 +2,7 @@
 
 namespace App\Services\Mobile;
 
+use App\Services\Sync\SyncAccessContext;
 use App\Models\User;
 use App\Services\Sales\PosSaleService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -18,7 +19,7 @@ class MobileSyncPushService
     ) {}
 
     public function push(
-        MobileAccessContext $context,
+        SyncAccessContext $context,
         array $events,
     ): array {
         $results = [];
@@ -31,7 +32,7 @@ class MobileSyncPushService
     }
 
     private function pushEvent(
-        MobileAccessContext $context,
+        SyncAccessContext $context,
         array $event,
     ): array {
         $idempotencyKey = (string) ($event['idempotency_key'] ?? '');
@@ -80,7 +81,7 @@ class MobileSyncPushService
                     'stock_location_id' => $payload['stock_location_id'] ?? null,
                     'customer_id' => $payload['customer_id'] ?? null,
                     'idempotency_key' => $idempotencyKey,
-                    'notes' => 'Synced from Android offline POS.',
+                    'notes' => 'Synced from an offline pharmacy client.',
                     'lines' => $payload['lines'] ?? [],
                     'payments' => $payload['payments'] ?? [],
                 ];
