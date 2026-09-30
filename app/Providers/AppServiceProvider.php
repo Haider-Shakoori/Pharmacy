@@ -75,6 +75,18 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        RateLimiter::for('desktop-api', function (Request $request): Limit {
+            $identity = $request->bearerToken();
+
+            if (! is_string($identity) || $identity === '') {
+                $identity = $request->ip();
+            }
+
+            return Limit::perMinute(120)->by(
+                'desktop-api|'.hash('sha256', $identity),
+            );
+        });
+
         RateLimiter::for('mobile-api', function (Request $request): Limit {
             $identity = $request->bearerToken();
 
