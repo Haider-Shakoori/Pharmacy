@@ -34,6 +34,14 @@ return [
         'default_license_grace_days' => 7,
     ],
 
+
+    'desktop_updates' => [
+        'manifest_directory' => env(
+            'DESKTOP_UPDATE_MANIFEST_DIR',
+            storage_path('app/private/desktop-updates'),
+        ),
+    ],
+
     'mobile' => [
         'android_download_url' => env('PHARMACY_ANDROID_APK_URL', '/downloads/businessos-pharmacy.apk'),
     ],
