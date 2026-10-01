@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\DesktopLicenseRefreshController;
 use App\Http\Controllers\Api\DesktopSessionLoginController;
 use App\Http\Controllers\Api\DesktopSessionRefreshController;
+use App\Http\Controllers\Api\DesktopSyncPullController;
+use App\Http\Controllers\Api\DesktopSyncPushController;
 use App\Http\Controllers\Api\LicenseActivationController;
 use App\Http\Controllers\Api\MobileDeviceRegistrationController;
 use App\Http\Controllers\Api\MobileSessionRefreshController;
@@ -29,6 +31,13 @@ Route::middleware('api.payload')->group(function (): void {
     Route::post('/v1/mobile/trial/register', TrialDeviceRegistrationController::class)
         ->middleware('throttle:trial-register');
 });
+
+Route::prefix('/v1/desktop')
+    ->middleware(['api.payload', 'throttle:mobile-api'])
+    ->group(function (): void {
+        Route::post('/sync/push', DesktopSyncPushController::class);
+        Route::get('/sync/pull/{stream}', DesktopSyncPullController::class);
+    });
 
 Route::prefix('/v1/mobile')
     ->middleware(['api.payload', 'throttle:mobile-api'])
