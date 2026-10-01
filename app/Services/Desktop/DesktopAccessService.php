@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Licensing\OfflineLeaseSigner;
 use App\Services\Licensing\SignedTokenVerifier;
+use App\Services\Mobile\MobileAccessContext;
 use App\Services\Subscriptions\SubscriptionHealthService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\AuthenticationException;
@@ -69,6 +70,42 @@ class DesktopAccessService
         }
 
         return $this->issueSession($activation, $tenant, $user);
+    }
+
+    public function syncContext(string $accessToken): MobileAccessContext
+    {
+        $payload = $this->tokens->verify(
+            $accessToken,
+            purpose: 'desktop_access',
+        );
+
+        foreach (['activation_id', 'tenant_id', 'device_id', 'user_id'] as $field) {
+            if (! isset($payload[$field]) || $payload[$field] === '') {
+                throw new AuthenticationException('The desktop synchronization session is incomplete.');
+            }
+        }
+
+        [$activation, $tenant] = $this->resolveActivation(
+            activationId: $payload['activation_id'],
+            tenantId: $payload['tenant_id'],
+            deviceId: (string) $payload['device_id'],
+        );
+
+        $user = $this->findActiveUser($tenant, (int) $payload['user_id']);
+
+        if ($user === null) {
+            throw new AuthenticationException('The pharmacy user is no longer active.');
+        }
+
+        $activation->forceFill(['last_seen_at' => now()])->save();
+
+        return new MobileAccessContext(
+            tenant: $tenant,
+            activation: $activation,
+            userId: (int) $user['id'],
+            user: $user,
+            permissions: $user['permissions'],
+        );
     }
 
     public function refresh(string $accessToken, string $deviceId): array
