@@ -40,7 +40,7 @@ class PlatformAuthTest extends TestCase
         $this->assertAuthenticatedAs($admin, 'platform');
 
         $this->post('/platform/logout')
-            ->assertRedirect('/platform/login');
+            ->assertRedirect(route('platform.login'));
 
         $this->assertGuest('platform');
     }
@@ -67,7 +67,7 @@ class PlatformAuthTest extends TestCase
     public function test_platform_password_page_requires_platform_authentication(): void
     {
         $this->get('/platform/account/password')
-            ->assertRedirect('/platform/login');
+            ->assertRedirect(route('platform.login'));
     }
 
     public function test_platform_admin_can_change_own_password(): void
