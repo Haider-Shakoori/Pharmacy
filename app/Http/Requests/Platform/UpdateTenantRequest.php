@@ -12,13 +12,29 @@ class UpdateTenantRequest extends FormRequest
         return $this->user('platform') !== null;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('slug')) {
+            $this->merge([
+                'slug' => strtolower(trim((string) $this->input('slug'))),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         $businessId = $this->route('tenant')?->business?->id;
 
         return [
             'name' => ['required', 'string', 'max:160'],
-            'slug' => ['required', 'alpha_dash:ascii', 'max:100', Rule::unique('businesses', 'slug')->ignore($businessId)],
+            'slug' => [
+                'required',
+                'string',
+                'max:63',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+                Rule::notIn(config('pharmacy.reserved_subdomains', [])),
+                Rule::unique('businesses', 'slug')->ignore($businessId),
+            ],
             'contact_person' => ['required', 'string', 'max:160'],
             'phone_whatsapp' => ['required', 'string', 'max:64'],
             'location' => ['required', 'string', 'max:255'],
