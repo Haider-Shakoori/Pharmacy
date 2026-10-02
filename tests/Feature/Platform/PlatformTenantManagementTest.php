@@ -121,5 +121,4 @@ class PlatformTenantManagementTest extends TestCase
 
         $this->assertDatabaseCount('tenants', 0);
     }
-
 }
