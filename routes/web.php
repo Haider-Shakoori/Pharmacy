@@ -64,6 +64,11 @@ $platformRoutes = static function (): void {
     });
 };
 
+// Canonical central health surface.
+Route::domain(config('pharmacy.api_domain'))->group(function (): void {
+    Route::get('/ready', ReadinessController::class)->name('api.ready');
+});
+
 // Canonical public trial/registration surface.
 Route::domain(config('pharmacy.registration_domain'))->group(function (): void {
     Route::get('/ready', ReadinessController::class)->name('health.ready');
