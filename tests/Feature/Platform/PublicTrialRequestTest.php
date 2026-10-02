@@ -131,4 +131,28 @@ class PublicTrialRequestTest extends TestCase
         $this->assertNull($trialRequest->getRawOriginal('owner_password_ciphertext'));
         $this->assertSame('Please contact sales for verification.', $trialRequest->decision_notes);
     }
+
+    public function test_trial_request_never_claims_a_reserved_system_subdomain(): void
+    {
+        $this->post('/trial-request', [
+            'pharmacy_name' => 'Platform',
+            'owner_name' => 'Reserved Name Owner',
+            'owner_email' => 'reserved-name@example.test',
+            'phone_whatsapp' => '+93700123457',
+            'location' => 'Kabul, Afghanistan',
+            'preferred_locale' => 'en',
+            'notes' => null,
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'website' => '',
+        ])->assertRedirect(route('trial.request'));
+
+        $trialRequest = TrialRequest::query()->firstOrFail();
+
+        $this->assertSame('platform-2', $trialRequest->requested_slug);
+        $this->assertNotContains(
+            $trialRequest->requested_slug,
+            config('pharmacy.reserved_subdomains'),
+        );
+    }
 }

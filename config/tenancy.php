@@ -25,7 +25,11 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     'central_domains' => array_values(array_filter(array_unique([
-        env('PHARMACY_PLATFORM_DOMAIN', 'pharmacy.businessos.af'),
+        env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af'),
+        env('PHARMACY_PLATFORM_DOMAIN', 'platform.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
+        env('PHARMACY_REGISTRATION_DOMAIN', 'register.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
+        env('PHARMACY_API_DOMAIN', 'api.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
+        env('PHARMACY_DOWNLOADS_DOMAIN', 'downloads.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
         '127.0.0.1',
         'localhost',
     ]))),

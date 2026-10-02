@@ -58,15 +58,20 @@ class PublicTrialRequestController extends Controller
     private function availableSlug(string $pharmacyName): string
     {
         $base = Str::slug($pharmacyName);
-        $base = $base !== '' ? Str::limit($base, 82, '') : 'pharmacy';
+        $base = $base !== '' ? Str::limit($base, 63, '') : 'pharmacy';
         $candidate = $base;
         $suffix = 2;
+        $reserved = array_map(
+            static fn (mixed $slug): string => Str::lower((string) $slug),
+            config('pharmacy.reserved_subdomains', []),
+        );
 
         while (
-            Business::query()->where('slug', $candidate)->exists()
+            in_array(Str::lower($candidate), $reserved, true)
+            || Business::query()->where('slug', $candidate)->exists()
             || TrialRequest::query()->where('requested_slug', $candidate)->exists()
         ) {
-            $candidate = Str::limit($base, 88, '').'-'.$suffix;
+            $candidate = Str::limit($base, 58, '').'-'.$suffix;
             $suffix++;
         }
 

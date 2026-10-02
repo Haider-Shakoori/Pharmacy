@@ -2,6 +2,17 @@
 
 return [
     'deployment_host' => env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af'),
+    'platform_domain' => env('PHARMACY_PLATFORM_DOMAIN', 'platform.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
+    'registration_domain' => env('PHARMACY_REGISTRATION_DOMAIN', 'register.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
+    'api_domain' => env('PHARMACY_API_DOMAIN', 'api.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
+    'downloads_domain' => env('PHARMACY_DOWNLOADS_DOMAIN', 'downloads.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
+    'reserved_subdomains' => [
+        'www', 'platform', 'register', 'signup', 'api', 'downloads',
+        'admin', 'account', 'billing', 'status', 'support', 'docs',
+        'assets', 'cdn', 'static', 'app', 'system', 'demo', 'test',
+        'mail', 'webmail', 'cpanel', 'whm', 'ftp', 'webdisk',
+        'autodiscover', 'autoconfig', 'smtp', 'imap', 'pop', 'mx', 'ns1', 'ns2',
+    ],
     'currency' => env('PHARMACY_CURRENCY', 'AFN'),
     'timezone' => env('APP_TIMEZONE', 'Asia/Kabul'),
     'locales' => ['en', 'fa', 'ps'],
