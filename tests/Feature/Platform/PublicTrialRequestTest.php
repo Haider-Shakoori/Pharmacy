@@ -155,5 +155,4 @@ class PublicTrialRequestTest extends TestCase
             config('pharmacy.reserved_subdomains'),
         );
     }
-
 }
