@@ -93,4 +93,33 @@ class PlatformTenantManagementTest extends TestCase
             ->assertSee('Herat Pharmacy')
             ->assertDontSee('Kabul Pharmacy');
     }
+
+    public function test_reserved_or_dns_invalid_subdomain_cannot_be_assigned_to_a_pharmacy(): void
+    {
+        $payload = [
+            'name' => 'Reserved Pharmacy',
+            'slug' => 'platform',
+            'contact_person' => 'Reserved Contact',
+            'phone_whatsapp' => '+93700000001',
+            'location' => 'Kabul',
+            'timezone' => 'Asia/Kabul',
+            'currency' => 'AFN',
+            'locale' => 'en',
+            'owner_name' => 'Reserved Owner',
+            'owner_email' => 'reserved@example.test',
+            'owner_password' => 'password123',
+        ];
+
+        $this->post('/platform/tenants', $payload)
+            ->assertSessionHasErrors('slug');
+
+        $payload['slug'] = 'invalid_slug';
+        $payload['owner_email'] = 'invalid@example.test';
+
+        $this->post('/platform/tenants', $payload)
+            ->assertSessionHasErrors('slug');
+
+        $this->assertDatabaseCount('tenants', 0);
+    }
+
 }
