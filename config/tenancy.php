@@ -29,6 +29,7 @@ return [
         env('PHARMACY_PLATFORM_DOMAIN', 'platform.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
         env('PHARMACY_REGISTRATION_DOMAIN', 'register.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
         env('PHARMACY_API_DOMAIN', 'api.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
+        env('PHARMACY_DOWNLOADS_DOMAIN', 'downloads.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
         '127.0.0.1',
         'localhost',
     ]))),
