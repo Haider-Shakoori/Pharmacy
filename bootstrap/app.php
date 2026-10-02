@@ -48,8 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.payload' => RejectOversizedApiPayload::class,
         ]);
 
-        $isPlatformRequest = static fn (Request $request): bool =>
-            $request->getHost() === config('pharmacy.platform_domain')
+        $isPlatformRequest = static fn (Request $request): bool => $request->getHost() === config('pharmacy.platform_domain')
             || $request->is('platform*');
 
         $middleware->redirectGuestsTo(
