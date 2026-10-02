@@ -12,11 +12,27 @@ class StoreTenantRequest extends FormRequest
         return $this->user('platform') !== null;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('slug')) {
+            $this->merge([
+                'slug' => strtolower(trim((string) $this->input('slug'))),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:160'],
-            'slug' => ['required', 'alpha_dash:ascii', 'max:100', 'unique:businesses,slug'],
+            'slug' => [
+                'required',
+                'string',
+                'max:63',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+                Rule::notIn(config('pharmacy.reserved_subdomains', [])),
+                'unique:businesses,slug',
+            ],
             'contact_person' => ['required', 'string', 'max:160'],
             'phone_whatsapp' => ['required', 'string', 'max:64'],
             'location' => ['required', 'string', 'max:255'],
