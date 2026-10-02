@@ -67,7 +67,7 @@ class ProductionReadinessTest extends TestCase
 
     public function test_central_readiness_endpoint_reports_database_availability(): void
     {
-        $this->get('https://pharmacy.businessos.af/ready')
+        $this->get('https://'.config('pharmacy.api_domain').'/ready')
             ->assertOk()
             ->assertExactJson(['status' => 'ready']);
     }
