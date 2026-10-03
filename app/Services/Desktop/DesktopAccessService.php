@@ -9,8 +9,10 @@ use App\Models\User;
 use App\Services\Licensing\OfflineLeaseSigner;
 use App\Services\Licensing\SignedTokenVerifier;
 use App\Services\Subscriptions\SubscriptionHealthService;
+use App\Services\Sync\SyncAccessContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -69,6 +71,48 @@ class DesktopAccessService
         }
 
         return $this->issueSession($activation, $tenant, $user);
+    }
+
+    public function authenticate(Request $request): SyncAccessContext
+    {
+        $accessToken = $request->bearerToken();
+
+        if (! is_string($accessToken) || $accessToken === '') {
+            throw new AuthenticationException('A desktop user session is required.');
+        }
+
+        $payload = $this->tokens->verify(
+            $accessToken,
+            purpose: 'desktop_access',
+        );
+
+        foreach (['activation_id', 'tenant_id', 'device_id', 'user_id'] as $field) {
+            if (! isset($payload[$field]) || $payload[$field] === '') {
+                throw new AuthenticationException('The desktop user session is incomplete.');
+            }
+        }
+
+        [$activation, $tenant] = $this->resolveActivation(
+            activationId: $payload['activation_id'],
+            tenantId: $payload['tenant_id'],
+            deviceId: (string) $payload['device_id'],
+        );
+
+        $user = $this->findActiveUser($tenant, (int) $payload['user_id']);
+
+        if ($user === null) {
+            throw new AuthenticationException('The pharmacy user is no longer active.');
+        }
+
+        $activation->forceFill(['last_seen_at' => now()])->save();
+
+        return new SyncAccessContext(
+            tenant: $tenant,
+            activation: $activation,
+            userId: (int) $user['id'],
+            user: $user,
+            permissions: $user['permissions'],
+        );
     }
 
     public function refresh(string $accessToken, string $deviceId): array
