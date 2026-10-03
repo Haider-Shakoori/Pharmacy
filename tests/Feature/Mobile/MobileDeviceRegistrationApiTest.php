@@ -74,7 +74,7 @@ class MobileDeviceRegistrationApiTest extends TestCase
         $response
             ->assertJsonPath('data.tenant.id', $tenant->id)
             ->assertJsonPath('data.user.email', 'pharmacist@example.test')
-            ->assertJsonPath('data.tenant.cloud_base_url', 'https://kabul.'.config('pharmacy.deployment_host'))
+            ->assertJsonPath('data.tenant.cloud_base_url', 'https://kabul.'.config('pharmacy.tenant_domain'))
             ->assertJsonPath('data.device_id', '11111111-1111-4111-8111-111111111111')
             ->assertJsonPath('data.offline_lease.public_key', config('pharmacy.license.signing_public_key'));
 
