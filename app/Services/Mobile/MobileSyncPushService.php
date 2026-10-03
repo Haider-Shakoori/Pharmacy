@@ -173,7 +173,6 @@ class MobileSyncPushService
             $locationCode = trim((string) ($payload['stock_location_code'] ?? ''));
             if ($locationCode !== '') {
                 $location = StockLocation::query()
-                    ->where('is_active', true)
                     ->where('code', $locationCode)
                     ->first();
             }
@@ -200,15 +199,13 @@ class MobileSyncPushService
 
                 if ($email !== '') {
                     $customer = Customer::query()
-                        ->where('is_active', true)
-                        ->whereRaw('LOWER(email) = ?', [Str::lower($email)])
+                            ->whereRaw('LOWER(email) = ?', [Str::lower($email)])
                         ->first();
                 }
 
                 if ($customer === null && $phone !== '') {
                     $matches = Customer::query()
-                        ->where('is_active', true)
-                        ->where('phone', $phone)
+                            ->where('phone', $phone)
                         ->limit(2)
                         ->get();
 
@@ -238,7 +235,6 @@ class MobileSyncPushService
             $medicine = $medicineId === ''
                 ? null
                 : Medicine::query()
-                    ->where('is_active', true)
                     ->whereKey($medicineId)
                     ->first();
 
@@ -246,8 +242,7 @@ class MobileSyncPushService
                 $medicineCode = trim((string) ($line['medicine_code'] ?? ''));
                 if ($medicineCode !== '') {
                     $medicine = Medicine::query()
-                        ->where('is_active', true)
-                        ->where('medicine_code', $medicineCode)
+                            ->where('medicine_code', $medicineCode)
                         ->first();
                 }
             }
