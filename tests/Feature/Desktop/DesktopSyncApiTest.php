@@ -255,6 +255,58 @@ class DesktopSyncApiTest extends TestCase
         });
     }
 
+    public function test_desktop_historical_sale_can_sync_when_medicine_is_now_inactive(): void
+    {
+        $this->tenant->run(function (): void {
+            Medicine::query()
+                ->where('medicine_code', 'DESKTOP-SYNC-001')
+                ->update(['is_active' => false]);
+        });
+
+        $event = [
+            'idempotency_key' => 'sale:desktop-inactive-reference:completed',
+            'event_type' => 'sale.completed',
+            'payload' => [
+                'v' => 1,
+                'local_id' => 'desktop-inactive-reference',
+                'idempotency_key' => 'sale:desktop-inactive-reference:completed',
+                'stock_location_id' => 'local-location-uuid',
+                'stock_location_code' => 'MAIN',
+                'customer_id' => null,
+                'cashier_user_id' => (string) $this->userId,
+                'business_date' => today()->toDateString(),
+                'currency' => 'AFN',
+                'lines' => [[
+                    'medicine_id' => 'local-inactive-medicine-uuid',
+                    'medicine_code' => 'DESKTOP-SYNC-001',
+                    'quantity' => '1.0000',
+                    'unit_price' => '10.0000',
+                    'discount_amount' => '0.0000',
+                ]],
+                'payments' => [[
+                    'method' => 'cash',
+                    'amount' => '10.0000',
+                ]],
+            ],
+        ];
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', [
+                'events' => [$event],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.status', 'accepted');
+
+        $this->tenant->run(function (): void {
+            $this->assertSame(
+                1,
+                Sale::query()
+                    ->where('idempotency_key', 'sale:desktop-inactive-reference:completed')
+                    ->count(),
+            );
+        });
+    }
+
     private function seedInventory(): void
     {
         $userId = $this->userId;
