@@ -199,13 +199,13 @@ class MobileSyncPushService
 
                 if ($email !== '') {
                     $customer = Customer::query()
-                            ->whereRaw('LOWER(email) = ?', [Str::lower($email)])
+                        ->whereRaw('LOWER(email) = ?', [Str::lower($email)])
                         ->first();
                 }
 
                 if ($customer === null && $phone !== '') {
                     $matches = Customer::query()
-                            ->where('phone', $phone)
+                        ->where('phone', $phone)
                         ->limit(2)
                         ->get();
 
@@ -242,7 +242,7 @@ class MobileSyncPushService
                 $medicineCode = trim((string) ($line['medicine_code'] ?? ''));
                 if ($medicineCode !== '') {
                     $medicine = Medicine::query()
-                            ->where('medicine_code', $medicineCode)
+                        ->where('medicine_code', $medicineCode)
                         ->first();
                 }
             }
