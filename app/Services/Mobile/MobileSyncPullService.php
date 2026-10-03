@@ -21,7 +21,8 @@ class MobileSyncPullService
         string $stream,
         ?string $cursor,
         int $limit,
-    ): array {
+    ): array
+    {
         $decoded = $this->cursors->decode($cursor);
         $maxPageSize = (int) config('pharmacy.performance.sync_max_page_size', 250);
         $limit = max(1, min($limit, $maxPageSize));
@@ -98,7 +99,8 @@ class MobileSyncPullService
         Builder $query,
         object $updatedAt,
         string $id,
-    ): void {
+    ): void
+    {
         $query->where(function (Builder $query) use ($updatedAt, $id): void {
             $query
                 ->where('updated_at', '>', $updatedAt)
@@ -143,7 +145,7 @@ class MobileSyncPullService
                     'name' => $row->name,
                     'phone' => $row->phone,
                     'balance' => '0.0000',
-                    'is_deleted' => !(bool) $row->is_active,
+                    'is_deleted' => ! (bool) $row->is_active,
                     'server_updated_at' => $row->updated_at->toISOString(),
                 ],
             })
