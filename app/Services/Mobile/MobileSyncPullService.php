@@ -2,10 +2,10 @@
 
 namespace App\Services\Mobile;
 
-use App\Services\Sync\SyncAccessContext;
 use App\Models\Customer;
 use App\Models\Medicine;
 use App\Models\ProductBatch;
+use App\Services\Sync\SyncAccessContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -143,7 +143,7 @@ class MobileSyncPullService
                     'name' => $row->name,
                     'phone' => $row->phone,
                     'balance' => '0.0000',
-                    'is_deleted' => ! (bool) $row->is_active,
+                    'is_deleted' => !(bool) $row->is_active,
                     'server_updated_at' => $row->updated_at->toISOString(),
                 ],
             })
