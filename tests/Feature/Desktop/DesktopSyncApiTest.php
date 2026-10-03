@@ -255,7 +255,6 @@ class DesktopSyncApiTest extends TestCase
         });
     }
 
-
     public function test_desktop_historical_sale_can_sync_when_medicine_is_now_inactive(): void
     {
         $this->tenant->run(function (): void {
