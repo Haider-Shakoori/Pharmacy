@@ -2,6 +2,10 @@
 
 namespace App\Services\Mobile;
 
+use App\Services\Sync\SyncAccessContext;
+use App\Models\Customer;
+use App\Models\Medicine;
+use App\Models\StockLocation;
 use App\Models\User;
 use App\Services\Sales\PosSaleService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -18,7 +22,7 @@ class MobileSyncPushService
     ) {}
 
     public function push(
-        MobileAccessContext $context,
+        SyncAccessContext $context,
         array $events,
     ): array {
         $results = [];
@@ -31,7 +35,7 @@ class MobileSyncPushService
     }
 
     private function pushEvent(
-        MobileAccessContext $context,
+        SyncAccessContext $context,
         array $event,
     ): array {
         $idempotencyKey = (string) ($event['idempotency_key'] ?? '');
@@ -76,12 +80,17 @@ class MobileSyncPushService
                     ->where('is_active', true)
                     ->firstOrFail();
 
+                $resolved = $this->resolveReferences($payload);
+
                 $data = [
-                    'stock_location_id' => $payload['stock_location_id'] ?? null,
-                    'customer_id' => $payload['customer_id'] ?? null,
+                    'stock_location_id' => $resolved['stock_location_id'],
+                    'customer_id' => $resolved['customer_id'],
                     'idempotency_key' => $idempotencyKey,
-                    'notes' => 'Synced from Android offline POS.',
-                    'lines' => $payload['lines'] ?? [],
+                    'notes' => 'Synced from an offline pharmacy client.',
+                    'prescription_reference' => $payload['prescription_reference'] ?? null,
+                    'prescriber_name' => $payload['prescriber_name'] ?? null,
+                    'prescription_date' => $payload['prescription_date'] ?? null,
+                    'lines' => $resolved['lines'],
                     'payments' => $payload['payments'] ?? [],
                 ];
 
@@ -141,6 +150,119 @@ class MobileSyncPushService
                 retryable: true,
             );
         }
+    }
+
+
+    private function resolveReferences(array $payload): array
+    {
+        $locationId = trim((string) ($payload['stock_location_id'] ?? ''));
+        $location = $locationId === ''
+            ? null
+            : StockLocation::query()
+                ->where('is_active', true)
+                ->whereKey($locationId)
+                ->first();
+
+        if ($location === null) {
+            $locationCode = trim((string) ($payload['stock_location_code'] ?? ''));
+            if ($locationCode !== '') {
+                $location = StockLocation::query()
+                    ->where('is_active', true)
+                    ->where('code', $locationCode)
+                    ->first();
+            }
+        }
+
+        if ($location === null) {
+            throw (new ModelNotFoundException)->setModel(
+                StockLocation::class,
+                [$locationId],
+            );
+        }
+
+        $customerId = trim((string) ($payload['customer_id'] ?? ''));
+        $customer = null;
+
+        if ($customerId !== '') {
+            $customer = Customer::query()
+                ->where('is_active', true)
+                ->whereKey($customerId)
+                ->first();
+
+            if ($customer === null) {
+                $email = trim((string) ($payload['customer_email'] ?? ''));
+                $phone = trim((string) ($payload['customer_phone'] ?? ''));
+
+                if ($email !== '') {
+                    $customer = Customer::query()
+                        ->where('is_active', true)
+                        ->whereRaw('LOWER(email) = ?', [Str::lower($email)])
+                        ->first();
+                }
+
+                if ($customer === null && $phone !== '') {
+                    $matches = Customer::query()
+                        ->where('is_active', true)
+                        ->where('phone', $phone)
+                        ->limit(2)
+                        ->get();
+
+                    if ($matches->count() === 1) {
+                        $customer = $matches->first();
+                    }
+                }
+
+                if ($customer === null) {
+                    throw (new ModelNotFoundException)->setModel(
+                        Customer::class,
+                        [$customerId],
+                    );
+                }
+            }
+        }
+
+        $lines = [];
+        foreach (($payload['lines'] ?? []) as $line) {
+            if (! is_array($line)) {
+                $lines[] = $line;
+
+                continue;
+            }
+
+            $medicineId = trim((string) ($line['medicine_id'] ?? ''));
+            $medicine = $medicineId === ''
+                ? null
+                : Medicine::query()
+                    ->where('is_active', true)
+                    ->whereKey($medicineId)
+                    ->first();
+
+            if ($medicine === null) {
+                $medicineCode = trim((string) ($line['medicine_code'] ?? ''));
+                if ($medicineCode !== '') {
+                    $medicine = Medicine::query()
+                        ->where('is_active', true)
+                        ->where('medicine_code', $medicineCode)
+                        ->first();
+                }
+            }
+
+            if ($medicine === null) {
+                throw (new ModelNotFoundException)->setModel(
+                    Medicine::class,
+                    [$medicineId],
+                );
+            }
+
+            $line['medicine_id'] = (string) $medicine->id;
+            $lines[] = $line;
+        }
+
+        return [
+            'stock_location_id' => (string) $location->id,
+            'customer_id' => $customer?->id,
+            'lines' => $lines,
+        ];
     }
 
     private function validationConflict(array $errors): array
