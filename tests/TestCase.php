@@ -50,7 +50,7 @@ abstract class TestCase extends BaseTestCase
 
         $this->tenantDatabaseFiles[] = database_path($tenant->database()->getName());
         $tenant->domains()->create([
-            'domain' => $slug.'.'.config('pharmacy.deployment_host'),
+            'domain' => $slug.'.'.config('pharmacy.tenant_domain'),
         ]);
 
         return $tenant->fresh(['business', 'domains']);
