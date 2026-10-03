@@ -2,12 +2,12 @@
 
 namespace App\Services\Mobile;
 
-use App\Services\Sync\SyncAccessContext;
 use App\Models\Customer;
 use App\Models\Medicine;
 use App\Models\StockLocation;
 use App\Models\User;
 use App\Services\Sales\PosSaleService;
+use App\Services\Sync\SyncAccessContext;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -151,7 +151,6 @@ class MobileSyncPushService
             );
         }
     }
-
 
     private function resolveReferences(array $payload): array
     {
