@@ -85,6 +85,7 @@ class MobileSyncPushService
                 $data = [
                     'stock_location_id' => $resolved['stock_location_id'],
                     'customer_id' => $resolved['customer_id'],
+                    '_allow_inactive_references' => true,
                     'idempotency_key' => $idempotencyKey,
                     'notes' => 'Synced from an offline pharmacy client.',
                     'prescription_reference' => $payload['prescription_reference'] ?? null,
@@ -134,11 +135,18 @@ class MobileSyncPushService
                 $code,
                 $message,
             );
-        } catch (ModelNotFoundException) {
+        } catch (ModelNotFoundException $exception) {
+            $model = class_basename($exception->getModel());
+            $ids = implode(', ', array_map(
+                static fn (mixed $id): string => (string) $id,
+                $exception->getIds(),
+            ));
+            $reference = $ids !== '' ? " ({$ids})" : '';
+
             return $this->rejected(
                 $idempotencyKey,
                 'reference_missing',
-                'A referenced pharmacy record no longer exists.',
+                "{$model} reference{$reference} could not be resolved for this historical sale.",
             );
         } catch (Throwable $exception) {
             report($exception);
@@ -158,7 +166,6 @@ class MobileSyncPushService
         $location = $locationId === ''
             ? null
             : StockLocation::query()
-                ->where('is_active', true)
                 ->whereKey($locationId)
                 ->first();
 
@@ -184,7 +191,6 @@ class MobileSyncPushService
 
         if ($customerId !== '') {
             $customer = Customer::query()
-                ->where('is_active', true)
                 ->whereKey($customerId)
                 ->first();
 
