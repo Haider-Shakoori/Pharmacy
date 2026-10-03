@@ -307,6 +307,7 @@ class DesktopSyncApiTest extends TestCase
         });
     }
 
+
     private function seedInventory(): void
     {
         $userId = $this->userId;
