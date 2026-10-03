@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
-Route::domain('{pharmacy}.'.config('pharmacy.deployment_host'))->middleware([
+Route::domain('{pharmacy}.'.config('pharmacy.tenant_domain'))->middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,

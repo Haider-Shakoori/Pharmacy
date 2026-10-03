@@ -48,7 +48,7 @@ class PlatformTenantManagementTest extends TestCase
         $tenant = Tenant::query()->whereHas('business', fn ($query) => $query->where('slug', 'kabul-central'))->firstOrFail();
 
         $this->assertSame('application_ready', $tenant->provisioning_status);
-        $this->assertSame('kabul-central.'.config('pharmacy.deployment_host'), $tenant->domains()->value('domain'));
+        $this->assertSame('kabul-central.'.config('pharmacy.tenant_domain'), $tenant->domains()->value('domain'));
         app(TenantContext::class)->run($tenant, function (): void {
             $this->assertTrue(User::query()->where('email', 'owner@kabul.test')->exists());
         });

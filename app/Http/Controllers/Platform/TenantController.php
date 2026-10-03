@@ -88,7 +88,7 @@ class TenantController extends Controller
                 'default_locale' => $validated['locale'],
             ]);
 
-            $domain = $validated['slug'].'.'.config('pharmacy.deployment_host');
+            $domain = $validated['slug'].'.'.config('pharmacy.tenant_domain');
             $tenant->domains()->first()?->update(['domain' => $domain]);
         });
 

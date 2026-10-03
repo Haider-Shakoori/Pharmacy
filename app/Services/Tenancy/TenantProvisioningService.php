@@ -85,7 +85,7 @@ class TenantProvisioningService
                 $this->events->record($tenant, 'baseline', 'success', 'Settings, inventory/accounting defaults, RBAC, and owner are ready.');
             }
 
-            $domain = $tenant->business->slug.'.'.config('pharmacy.deployment_host');
+            $domain = $tenant->business->slug.'.'.config('pharmacy.tenant_domain');
             $tenant->domains()->firstOrCreate(['domain' => $domain]);
             $this->domains->ensureTlsRequested($domain);
             $this->events->record($tenant, 'domain_tls', 'requested', 'Tenant domain registered and TLS readiness requested.', [

@@ -24,7 +24,7 @@ class ResolveTenantMiddlewareTest extends TestCase
 
     public function test_unknown_tenant_domain_is_rejected(): void
     {
-        $this->get('https://unknown.'.config('pharmacy.deployment_host').'/login')
+        $this->get('https://unknown.'.config('pharmacy.tenant_domain').'/login')
             ->assertNotFound();
     }
 
