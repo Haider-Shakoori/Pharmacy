@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\DesktopAccessManagementController;
 use App\Http\Controllers\Api\DesktopLicenseRefreshController;
 use App\Http\Controllers\Api\DesktopSessionLoginController;
 use App\Http\Controllers\Api\DesktopSessionRefreshController;
@@ -37,6 +38,11 @@ Route::prefix('/v1/desktop')
     ->group(function (): void {
         Route::post('/sync/push', DesktopSyncPushController::class);
         Route::get('/sync/pull/{stream}', DesktopSyncPullController::class);
+        Route::get('/access', [DesktopAccessManagementController::class, 'index']);
+        Route::post('/access/users', [DesktopAccessManagementController::class, 'storeUser']);
+        Route::put('/access/users/{userId}', [DesktopAccessManagementController::class, 'updateUser']);
+        Route::post('/access/roles', [DesktopAccessManagementController::class, 'storeRole']);
+        Route::put('/access/roles/{roleId}', [DesktopAccessManagementController::class, 'updateRole']);
     });
 
 Route::prefix('/v1/mobile')
