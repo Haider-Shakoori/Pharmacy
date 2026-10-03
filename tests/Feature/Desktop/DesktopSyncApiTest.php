@@ -209,7 +209,6 @@ class DesktopSyncApiTest extends TestCase
         });
     }
 
-
     public function test_desktop_sale_push_resolves_local_reference_ids_by_stable_codes(): void
     {
         $event = [
