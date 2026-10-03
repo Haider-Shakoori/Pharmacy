@@ -33,7 +33,9 @@ class PosSaleService
 
     public function checkout(User $user, array $data): Sale
     {
-        return DB::transaction(function () use ($user, $data): Sale {
+        $allowInactiveReferences = (bool) ($data['_allow_inactive_references'] ?? false);
+
+        return DB::transaction(function () use ($user, $data, $allowInactiveReferences): Sale {
             $existing = Sale::query()->where('idempotency_key', $data['idempotency_key'])->first();
 
             if ($existing) {
@@ -42,16 +44,25 @@ class PosSaleService
 
             $tenant = $this->tenantContext->tenant();
             $businessDate = $this->businessDates->resolve($tenant);
-            $location = StockLocation::query()->where('is_active', true)->findOrFail($data['stock_location_id']);
+            $locationQuery = StockLocation::query();
+            if (! $allowInactiveReferences) {
+                $locationQuery->where('is_active', true);
+            }
+            $location = $locationQuery->findOrFail($data['stock_location_id']);
             if ($this->dailyClosing->salesBlocked($location, $businessDate)) {
                 throw ValidationException::withMessages([
                     'closing' => 'Sales are blocked because this business day is finalized. Reopen Daily Closing before posting another sale.',
                 ]);
             }
 
-            $customer = isset($data['customer_id'])
-                ? Customer::query()->where('is_active', true)->findOrFail($data['customer_id'])
-                : null;
+            $customer = null;
+            if (isset($data['customer_id'])) {
+                $customerQuery = Customer::query();
+                if (! $allowInactiveReferences) {
+                    $customerQuery->where('is_active', true);
+                }
+                $customer = $customerQuery->findOrFail($data['customer_id']);
+            }
 
             $hasPrescriptionItem = Medicine::query()
                 ->whereIn('id', collect($data['lines'])->pluck('medicine_id'))
@@ -91,7 +102,11 @@ class PosSaleService
             $discountTotal = BigDecimal::zero();
 
             foreach ($data['lines'] as $index => $input) {
-                $medicine = Medicine::query()->where('is_active', true)->findOrFail($input['medicine_id']);
+                $medicineQuery = Medicine::query();
+                if (! $allowInactiveReferences) {
+                    $medicineQuery->where('is_active', true);
+                }
+                $medicine = $medicineQuery->findOrFail($input['medicine_id']);
                 $quantity = BigDecimal::of((string) $input['quantity']);
                 $discount = BigDecimal::of((string) ($input['discount_amount'] ?? '0'));
                 $overridePrice = (bool) ($input['override_price'] ?? false);
