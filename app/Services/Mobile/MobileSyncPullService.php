@@ -5,7 +5,6 @@ namespace App\Services\Mobile;
 use App\Models\Customer;
 use App\Models\Medicine;
 use App\Models\ProductBatch;
-use App\Services\Sync\SyncAccessContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -17,12 +16,11 @@ class MobileSyncPullService
     ) {}
 
     public function pull(
-        SyncAccessContext $context,
+        MobileAccessContext $context,
         string $stream,
         ?string $cursor,
         int $limit,
-    ): array
-    {
+    ): array {
         $decoded = $this->cursors->decode($cursor);
         $maxPageSize = (int) config('pharmacy.performance.sync_max_page_size', 250);
         $limit = max(1, min($limit, $maxPageSize));
@@ -99,8 +97,7 @@ class MobileSyncPullService
         Builder $query,
         object $updatedAt,
         string $id,
-    ): void
-    {
+    ): void {
         $query->where(function (Builder $query) use ($updatedAt, $id): void {
             $query
                 ->where('updated_at', '>', $updatedAt)
