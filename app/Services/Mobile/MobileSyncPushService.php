@@ -163,14 +163,17 @@ class MobileSyncPushService
     private function resolveReferences(array $payload): array
     {
         $locationId = trim((string) ($payload['stock_location_id'] ?? ''));
-        $location = $locationId === ''
-            ? null
-            : StockLocation::query()
+        $location = null;
+
+        if ($locationId !== '') {
+            $location = StockLocation::query()
                 ->whereKey($locationId)
                 ->first();
+        }
 
         if ($location === null) {
             $locationCode = trim((string) ($payload['stock_location_code'] ?? ''));
+
             if ($locationCode !== '') {
                 $location = StockLocation::query()
                     ->where('code', $locationCode)
@@ -224,6 +227,7 @@ class MobileSyncPushService
         }
 
         $lines = [];
+
         foreach (($payload['lines'] ?? []) as $line) {
             if (! is_array($line)) {
                 $lines[] = $line;
@@ -232,14 +236,17 @@ class MobileSyncPushService
             }
 
             $medicineId = trim((string) ($line['medicine_id'] ?? ''));
-            $medicine = $medicineId === ''
-                ? null
-                : Medicine::query()
+            $medicine = null;
+
+            if ($medicineId !== '') {
+                $medicine = Medicine::query()
                     ->whereKey($medicineId)
                     ->first();
+            }
 
             if ($medicine === null) {
                 $medicineCode = trim((string) ($line['medicine_code'] ?? ''));
+
                 if ($medicineCode !== '') {
                     $medicine = Medicine::query()
                         ->where('medicine_code', $medicineCode)
