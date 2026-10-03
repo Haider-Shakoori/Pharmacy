@@ -2,7 +2,7 @@
 
 return [
     'deployment_host' => env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af'),
-    'tenant_domain' => env('PHARMACY_TENANT_DOMAIN', env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
+    'tenant_domain' => env('PHARMACY_TENANT_DOMAIN', 'darmaltoon.com'),
     'platform_domain' => env('PHARMACY_PLATFORM_DOMAIN', 'platform.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
     'registration_domain' => env('PHARMACY_REGISTRATION_DOMAIN', 'register.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
     'api_domain' => env('PHARMACY_API_DOMAIN', 'api.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
