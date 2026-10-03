@@ -296,7 +296,7 @@ class LicenseActivationService
                 'id' => $subscription->business->tenant->id,
                 'name' => $subscription->business->pharmacy_name,
                 'slug' => $subscription->business->slug,
-                'cloud_base_url' => 'https://'.$subscription->business->slug.'.'.config('pharmacy.deployment_host'),
+                'cloud_base_url' => 'https://'.$subscription->business->slug.'.'.config('pharmacy.tenant_domain'),
                 'timezone' => $subscription->business->default_timezone,
                 'currency' => $subscription->business->billing_currency,
                 'locale' => $subscription->business->default_locale,
