@@ -2,6 +2,7 @@
 
 return [
     'deployment_host' => env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af'),
+    'tenant_domain' => env('PHARMACY_TENANT_DOMAIN', env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
     'platform_domain' => env('PHARMACY_PLATFORM_DOMAIN', 'platform.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
     'registration_domain' => env('PHARMACY_REGISTRATION_DOMAIN', 'register.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
     'api_domain' => env('PHARMACY_API_DOMAIN', 'api.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
@@ -68,7 +69,8 @@ return [
         'database_user' => env('CPANEL_DATABASE_USER'),
         'timeout_seconds' => (int) env('CPANEL_API_TIMEOUT_SECONDS', 15),
         'verify_tls' => (bool) env('CPANEL_VERIFY_TLS', true),
-        'tenant_domain_mode' => 'wildcard',
+        'tenant_document_root' => env('CPANEL_TENANT_DOCUMENT_ROOT', public_path()),
+        'tenant_domain_mode' => 'subdomain',
     ],
 
     'platform' => [
