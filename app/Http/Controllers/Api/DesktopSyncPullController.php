@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\Desktop\DesktopAccessService;
+use App\Services\Mobile\MobileAccessContext;
 use App\Services\Mobile\MobileSyncPullService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,15 @@ class DesktopSyncPullController extends Controller
             'limit' => ['nullable', 'integer', 'min:1', 'max:'.$maxPageSize],
         ]);
 
-        $context = $access->authenticate($request);
+        $desktopContext = $access->authenticate($request);
+        $context = new MobileAccessContext(
+            $desktopContext->tenant,
+            $desktopContext->activation,
+            $desktopContext->userId,
+            $desktopContext->user,
+            $desktopContext->permissions,
+        );
+
         $page = $sync->pull(
             $context,
             $stream,
