@@ -25,7 +25,7 @@ class DesktopUpdateManifestService
             .DIRECTORY_SEPARATOR.$channel
             .DIRECTORY_SEPARATOR.$mode.'.json';
 
-        if (! File::isFile($path)) {
+        if (!File::isFile($path)) {
             return null;
         }
 
@@ -42,7 +42,7 @@ class DesktopUpdateManifestService
             'published_at',
             'signature',
         ] as $field) {
-            if (! array_key_exists($field, $manifest)) {
+            if (!array_key_exists($field, $manifest)) {
                 throw new RuntimeException("Desktop update manifest is missing {$field}.");
             }
         }
@@ -50,10 +50,10 @@ class DesktopUpdateManifestService
         if ((int) $manifest['schema_version'] !== 1
             || strtolower((string) $manifest['channel']) !== $channel
             || strtolower((string) $manifest['api_version']) !== 'v1'
-            || ! filter_var($manifest['package_url'], FILTER_VALIDATE_URL)
+            || !filter_var($manifest['package_url'], FILTER_VALIDATE_URL)
             || parse_url($manifest['package_url'], PHP_URL_SCHEME) !== 'https'
-            || ! preg_match('/^[A-Fa-f0-9]{64}$/', (string) $manifest['package_sha256'])
-            || ! is_string($manifest['signature'])
+            || !preg_match('/^[A-Fa-f0-9]{64}$/', (string) $manifest['package_sha256'])
+            || !is_string($manifest['signature'])
             || trim($manifest['signature']) === '') {
             throw new RuntimeException('Desktop update manifest failed server-side validation.');
         }
