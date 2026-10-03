@@ -18,7 +18,9 @@ class DesktopAccessManagementApiTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private string $accessToken;
+
     private string $deviceId = '88888888-8888-4888-8888-888888888888';
 
     protected function setUp(): void
