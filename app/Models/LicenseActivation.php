@@ -17,6 +17,16 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
     'device_model',
     'os_version',
     'build_number',
+    'current_user_id',
+    'current_user_name',
+    'current_user_email',
+    'session_version',
+    'session_started_at',
+    'session_last_seen_at',
+    'session_expires_at',
+    'session_signed_out_at',
+    'last_ip_address',
+    'last_user_agent',
     'activated_at',
     'last_seen_at',
     'revoked_at',
@@ -33,6 +43,11 @@ class LicenseActivation extends Model
     protected function casts(): array
     {
         return [
+            'session_version' => 'integer',
+            'session_started_at' => 'datetime',
+            'session_last_seen_at' => 'datetime',
+            'session_expires_at' => 'datetime',
+            'session_signed_out_at' => 'datetime',
             'activated_at' => 'datetime',
             'last_seen_at' => 'datetime',
             'revoked_at' => 'datetime',
