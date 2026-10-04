@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -45,6 +46,7 @@ class LoginController extends Controller
 
         $dashboardRoute = $request->getHost() === config('pharmacy.deployment_host')
             && $request->is('platform*')
+            && Route::has('legacy.platform.dashboard')
                 ? 'legacy.platform.dashboard'
                 : 'platform.dashboard';
 
@@ -60,6 +62,7 @@ class LoginController extends Controller
 
         $loginRoute = $request->getHost() === config('pharmacy.deployment_host')
             && $request->is('platform*')
+            && Route::has('legacy.platform.login')
                 ? 'legacy.platform.login'
                 : 'platform.login';
 

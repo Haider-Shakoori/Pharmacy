@@ -30,6 +30,8 @@ class DesktopAccessService
         string $deviceId,
         string $email,
         string $password,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
     ): array {
         $lease = $this->tokens->verify(
             $leaseToken,
@@ -70,7 +72,13 @@ class DesktopAccessService
             ]);
         }
 
-        return $this->issueSession($activation, $tenant, $user);
+        return $this->issueSession(
+            $activation,
+            $tenant,
+            $user,
+            $ipAddress,
+            $userAgent,
+        );
     }
 
     public function authenticate(Request $request): SyncAccessContext
@@ -104,7 +112,23 @@ class DesktopAccessService
             throw new AuthenticationException('The pharmacy user is no longer active.');
         }
 
-        $activation->forceFill(['last_seen_at' => now()])->save();
+        $tokenSessionVersion = max(
+            1,
+            (int) ($payload['session_version'] ?? 1),
+        );
+
+        if ((int) $activation->session_version !== $tokenSessionVersion) {
+            throw new AuthenticationException(
+                'This desktop session was signed out by platform support.',
+            );
+        }
+
+        $activation->forceFill([
+            'last_seen_at' => now(),
+            'last_session_activity_at' => now(),
+            'last_ip_address' => $request->ip(),
+            'last_user_agent' => $request->userAgent(),
+        ])->save();
 
         return new SyncAccessContext(
             tenant: $tenant,
@@ -115,8 +139,12 @@ class DesktopAccessService
         );
     }
 
-    public function refresh(string $accessToken, string $deviceId): array
-    {
+    public function refresh(
+        string $accessToken,
+        string $deviceId,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+    ): array {
         $payload = $this->tokens->verify(
             $accessToken,
             purpose: 'desktop_access',
@@ -144,7 +172,24 @@ class DesktopAccessService
             throw new AuthenticationException('The pharmacy user is no longer active.');
         }
 
-        return $this->issueSession($activation, $tenant, $user);
+        $tokenSessionVersion = max(
+            1,
+            (int) ($payload['session_version'] ?? 1),
+        );
+
+        if ((int) $activation->session_version !== $tokenSessionVersion) {
+            throw new AuthenticationException(
+                'This desktop session was signed out by platform support.',
+            );
+        }
+
+        return $this->issueSession(
+            $activation,
+            $tenant,
+            $user,
+            $ipAddress,
+            $userAgent,
+        );
     }
 
     private function resolveActivation(
@@ -255,6 +300,8 @@ class DesktopAccessService
         LicenseActivation $activation,
         Tenant $tenant,
         array $user,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
     ): array {
         $subscription = $activation->license->subscription;
         $plan = $subscription->plan;
@@ -282,13 +329,24 @@ class DesktopAccessService
             'user_id' => $user['id'],
             'user_name' => $user['name'],
             'user_email' => $user['email'],
+            'session_version' => max(1, (int) $activation->session_version),
             'roles' => $user['roles'],
             'permissions' => $user['permissions'],
             'issued_at' => $now->getTimestamp(),
             'expires_at' => $expiresAt->getTimestamp(),
         ];
 
-        $activation->forceFill(['last_seen_at' => $now])->save();
+        $activation->forceFill([
+            'current_user_id' => $user['id'],
+            'current_user_name' => $user['name'],
+            'current_user_email' => $user['email'],
+            'session_issued_at' => $now,
+            'session_expires_at' => $expiresAt,
+            'last_session_activity_at' => $now,
+            'last_ip_address' => $ipAddress,
+            'last_user_agent' => $userAgent,
+            'last_seen_at' => $now,
+        ])->save();
 
         return [
             'access_token' => $this->signer->sign($payload),

@@ -64,6 +64,17 @@
             </div>
         @endif
 
+        @if (session('generated_windows_activation_key'))
+            <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+                <p class="text-sm font-bold">One-time Windows activation key — copy it now</p>
+                <p class="mt-1 text-xs leading-5">
+                    This key is shown only once and is consumed by the next successful Windows activation.
+                    If that PC is lost, reinstalled, replaced, or its activation data is damaged, the customer must contact platform support for another reassignment.
+                </p>
+                <code class="mt-3 block break-all rounded-lg bg-white px-3 py-2 text-sm font-bold">{{ session('generated_windows_activation_key') }}</code>
+            </div>
+        @endif
+
         @yield('content')
     </main>
 </div>
