@@ -86,6 +86,7 @@ class TenantController extends Controller
                 'billing_currency' => strtoupper($validated['currency']),
                 'default_timezone' => $validated['timezone'],
                 'default_locale' => $validated['locale'],
+                'desktop_cloud_sync_enabled' => $validated['desktop_cloud_sync_enabled'],
             ]);
 
             $domain = $validated['slug'].'.'.config('pharmacy.tenant_domain');
