@@ -86,7 +86,7 @@ class PlatformAuthTest extends TestCase
     public function test_platform_password_page_requires_platform_authentication(): void
     {
         $this->get('/platform/account/password')
-            ->assertRedirect(route('platform.login'));
+            ->assertRedirect(route('legacy.platform.login'));
     }
 
     public function test_platform_admin_can_change_own_password(): void
