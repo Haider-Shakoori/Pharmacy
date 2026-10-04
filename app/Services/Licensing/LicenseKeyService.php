@@ -35,6 +35,8 @@ class LicenseKeyService
                 'status' => LicenseStatus::Active,
                 'version' => $license->exists ? $license->version + 1 : 1,
                 'generated_at' => now(),
+                'windows_consumed_at' => null,
+                'windows_consumed_activation_id' => null,
                 'revoked_at' => null,
             ]);
             $license->save();
