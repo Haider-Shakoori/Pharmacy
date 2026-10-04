@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
+    'desktop_source_id',
     'medicine_category_id',
     'manufacturer_id',
     'medicine_code',
