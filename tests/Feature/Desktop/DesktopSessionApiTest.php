@@ -100,6 +100,14 @@ class DesktopSessionApiTest extends TestCase
         $this->assertSame((string) $this->tenant->id, (string) $payload['tenant_id']);
         $this->assertContains('owner', $payload['roles']);
         $this->assertContains('daily_closing.reopen', $payload['permissions']);
+        $this->assertSame(1, $payload['session_version']);
+
+        $this->assertDatabaseHas('license_activations', [
+            'device_id' => $deviceId,
+            'current_user_email' => 'owner@example.test',
+            'current_user_name' => 'Owner',
+            'session_version' => 1,
+        ]);
     }
 
     public function test_invalid_password_is_rejected_without_changing_activation(): void
