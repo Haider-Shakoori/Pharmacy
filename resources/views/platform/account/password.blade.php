@@ -19,7 +19,7 @@
             <p class="text-sm text-slate-500">{{ $admin->email }}</p>
         </div>
 
-        <form method="POST" action="{{ route('platform.account.password.update') }}" class="space-y-5">
+        <form method="POST" action="{{ \App\Support\PlatformRoute::url('account.password.update') }}" class="space-y-5">
             @csrf
             @method('PUT')
 
