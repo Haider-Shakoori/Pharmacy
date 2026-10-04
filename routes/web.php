@@ -78,20 +78,37 @@ Route::domain(config('pharmacy.registration_domain'))->group(function (): void {
         ->name('trial.request.store');
 });
 
-// Canonical platform surface: https://platform.<deployment-host>/...
-Route::domain(config('pharmacy.platform_domain'))
-    ->name('platform.')
-    ->group($platformRoutes);
+$platformDomain = (string) config('pharmacy.platform_domain');
+$deploymentHost = (string) config('pharmacy.deployment_host');
 
-// Compatibility routes for the legacy central host while existing clients/bookmarks are migrated.
-Route::domain(config('pharmacy.deployment_host'))->group(function () use ($platformRoutes): void {
+if ($platformDomain === $deploymentHost) {
+    // Single-host deployment: keep the canonical platform route names under /platform.
+    Route::domain($deploymentHost)
+        ->prefix('platform')
+        ->name('platform.')
+        ->group($platformRoutes);
+} else {
+    // Dedicated platform host: canonical routes have no /platform prefix.
+    Route::domain($platformDomain)
+        ->name('platform.')
+        ->group($platformRoutes);
+}
+
+// Public central-host routes and, when needed, compatibility platform routes.
+Route::domain($deploymentHost)->group(function () use (
+    $platformRoutes,
+    $platformDomain,
+    $deploymentHost,
+): void {
     Route::get('/ready', ReadinessController::class)->name('legacy.health.ready');
     Route::get('/', [PublicTrialRequestController::class, 'create'])->name('legacy.trial.request');
     Route::post('/trial-request', [PublicTrialRequestController::class, 'store'])
         ->middleware('throttle:5,10')
         ->name('legacy.trial.request.store');
 
-    Route::prefix('platform')
-        ->name('legacy.platform.')
-        ->group($platformRoutes);
+    if ($platformDomain !== $deploymentHost) {
+        Route::prefix('platform')
+            ->name('legacy.platform.')
+            ->group($platformRoutes);
+    }
 });
