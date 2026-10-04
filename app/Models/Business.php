@@ -20,6 +20,7 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
     'billing_currency',
     'default_timezone',
     'default_locale',
+    'desktop_cloud_sync_enabled',
     'trial_used_at',
 ])]
 class Business extends Model
@@ -29,6 +30,7 @@ class Business extends Model
     protected function casts(): array
     {
         return [
+            'desktop_cloud_sync_enabled' => 'boolean',
             'trial_used_at' => 'datetime',
         ];
     }

@@ -108,6 +108,51 @@ class DesktopSyncApiTest extends TestCase
         $this->accessToken = (string) $login->json('data.access_token');
     }
 
+    public function test_platform_can_disable_desktop_cloud_sync_without_disabling_local_session(): void
+    {
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/desktop/sync/status')
+            ->assertOk()
+            ->assertJsonPath('data.enabled', true)
+            ->assertJsonPath('data.managed_by', 'platform');
+
+        $this->tenant->business->forceFill([
+            'desktop_cloud_sync_enabled' => false,
+        ])->save();
+
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/desktop/sync/status')
+            ->assertOk()
+            ->assertJsonPath('data.enabled', false)
+            ->assertJsonPath('data.managed_by', 'platform');
+
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/desktop/sync/pull/medicines?limit=1')
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'desktop_sync_disabled');
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', [
+                'events' => [[
+                    'idempotency_key' => 'sync-disabled:test',
+                    'event_type' => 'customer.upsert',
+                    'payload' => [
+                        'v' => 1,
+                        'local_id' => 'disabled-sync-customer',
+                        'idempotency_key' => 'sync-disabled:test',
+                        'name' => 'Queued Offline Customer',
+                        'phone' => null,
+                        'email' => null,
+                        'credit_limit' => '0.0000',
+                        'is_active' => true,
+                        'notes' => null,
+                    ],
+                ]],
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'desktop_sync_disabled');
+    }
+
     public function test_desktop_session_can_pull_incremental_medicine_stream(): void
     {
         $response = $this->withToken($this->accessToken)
