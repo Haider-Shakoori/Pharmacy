@@ -14,6 +14,12 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
     'subscription_id',
     'key_hash',
     'key_hint',
+    'windows_activation_key_hash',
+    'windows_activation_key_hint',
+    'windows_activation_key_version',
+    'windows_activation_key_generated_at',
+    'windows_activation_key_consumed_at',
+    'windows_activation_id',
     'status',
     'version',
     'generated_at',
@@ -33,12 +39,20 @@ class License extends Model
         return $this->hasMany(LicenseActivation::class);
     }
 
+    public function supportActions(): HasMany
+    {
+        return $this->hasMany(LicenseSupportAction::class);
+    }
+
     protected function casts(): array
     {
         return [
             'status' => LicenseStatus::class,
             'version' => 'integer',
+            'windows_activation_key_version' => 'integer',
             'generated_at' => 'datetime',
+            'windows_activation_key_generated_at' => 'datetime',
+            'windows_activation_key_consumed_at' => 'datetime',
             'revoked_at' => 'datetime',
         ];
     }
