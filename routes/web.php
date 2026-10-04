@@ -59,8 +59,15 @@ $platformRoutes = static function (): void {
         Route::put('/subscriptions/{tenant}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
 
         Route::get('/licenses', [LicenseController::class, 'index'])->name('licenses.index');
+        Route::get('/licenses/{subscription}', [LicenseController::class, 'show'])->name('licenses.show');
         Route::post('/licenses/{subscription}/regenerate', [LicenseController::class, 'regenerate'])->name('licenses.regenerate');
         Route::post('/licenses/{subscription}/revoke', [LicenseController::class, 'revoke'])->name('licenses.revoke');
+        Route::post('/licenses/{subscription}/windows/reassign', [LicenseController::class, 'reassignWindows'])
+            ->name('licenses.windows.reassign');
+        Route::post('/licenses/{subscription}/activations/{activation}/force-sign-out', [LicenseController::class, 'forceSignOut'])
+            ->name('licenses.activations.force-sign-out');
+        Route::post('/licenses/{subscription}/activations/{activation}/revoke', [LicenseController::class, 'revokeActivation'])
+            ->name('licenses.activations.revoke');
     });
 };
 
