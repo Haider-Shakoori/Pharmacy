@@ -17,4 +17,10 @@ class PlatformRoute
     {
         return route(self::name($suffix), $parameters, $absolute);
     }
+
+    public static function is(string $pattern): bool
+    {
+        return request()->routeIs('platform.'.$pattern)
+            || request()->routeIs('legacy.platform.'.$pattern);
+    }
 }
