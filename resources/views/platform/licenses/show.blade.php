@@ -9,12 +9,12 @@
 <div class="mx-auto max-w-7xl space-y-5">
     <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-            <a href="{{ AppSupportPlatformRoute::url('licenses.index') }}" class="text-sm font-semibold text-teal-700">← Licenses</a>
+            <a href="{{ \App\Support\PlatformRoute::url('licenses.index') }}" class="text-sm font-semibold text-teal-700">← Licenses</a>
             <h2 class="mt-2 text-3xl font-bold tracking-tight">{{ $subscription->business->pharmacy_name }}</h2>
             <p class="mt-1 text-sm text-slate-500">{{ $subscription->business->slug }} · {{ $subscription->plan->name }}</p>
         </div>
         @if($license?->status?->value === 'active')
-            <form method="POST" action="{{ AppSupportPlatformRoute::url('licenses.windows-key', $subscription) }}">
+            <form method="POST" action="{{ \App\Support\PlatformRoute::url('licenses.windows-key', $subscription) }}">
                 @csrf
                 <button class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">Issue one-time Windows key</button>
             </form>
@@ -96,18 +96,18 @@
                         <td class="px-4 py-3">
                             <div class="flex flex-wrap justify-end gap-2">
                                 @if($session)
-                                    <form method="POST" action="{{ AppSupportPlatformRoute::url('licenses.sessions.sign-out', [$subscription, $session]) }}">
+                                    <form method="POST" action="{{ \App\Support\PlatformRoute::url('licenses.sessions.sign-out', [$subscription, $session]) }}">
                                         @csrf
                                         <button class="rounded-lg border border-amber-200 px-2.5 py-1.5 text-xs font-semibold text-amber-800">Force sign out</button>
                                     </form>
                                 @endif
                                 @if(!$activation->revoked_at)
-                                    <form method="POST" action="{{ AppSupportPlatformRoute::url('licenses.devices.revoke', [$subscription, $activation]) }}">
+                                    <form method="POST" action="{{ \App\Support\PlatformRoute::url('licenses.devices.revoke', [$subscription, $activation]) }}">
                                         @csrf
                                         <button class="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-700">Revoke device</button>
                                     </form>
                                     @if($activation->platform === 'windows')
-                                        <form method="POST" action="{{ AppSupportPlatformRoute::url('licenses.devices.replace', [$subscription, $activation]) }}">
+                                        <form method="POST" action="{{ \App\Support\PlatformRoute::url('licenses.devices.replace', [$subscription, $activation]) }}">
                                             @csrf
                                             <button class="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-bold text-white">Replace PC + new key</button>
                                         </form>
