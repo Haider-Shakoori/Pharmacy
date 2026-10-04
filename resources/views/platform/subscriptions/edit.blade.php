@@ -24,12 +24,12 @@
                     <p class="mt-1 font-mono text-sm font-bold">{{ $subscription->license->key_hint }}</p>
                     <p class="mt-1 text-xs text-slate-500">Version {{ $subscription->license->version }} · {{ $subscription->license->status->value }} · {{ $subscription->license->activations->whereNull('revoked_at')->count() }} active devices</p>
                 </div>
-                <a href="{{ route('platform.licenses.index', ['search' => $tenant->slug]) }}" class="text-sm font-bold text-teal-700">Manage license</a>
+                <a href="{{ \App\Support\PlatformRoute::url('licenses.index', ['search' => $tenant->slug]) }}" class="text-sm font-bold text-teal-700">Manage license</a>
             </div>
         </section>
     @endif
 
-    <form method="POST" action="{{ route('platform.subscriptions.update', $tenant) }}" class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+    <form method="POST" action="{{ \App\Support\PlatformRoute::url('subscriptions.update', $tenant) }}" class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
         @csrf
         @method('PUT')
 

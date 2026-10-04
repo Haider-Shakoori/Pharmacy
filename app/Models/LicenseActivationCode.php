@@ -6,23 +6,20 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 #[Fillable([
     'license_id',
-    'device_id',
-    'device_name',
+    'key_hash',
+    'key_hint',
     'platform',
-    'app_version',
-    'device_model',
-    'os_version',
-    'build_number',
-    'activated_at',
-    'last_seen_at',
+    'issued_by_platform_admin_id',
+    'consumed_activation_id',
+    'generated_at',
+    'consumed_at',
     'revoked_at',
 ])]
-class LicenseActivation extends Model
+class LicenseActivationCode extends Model
 {
     use CentralConnection, HasUlids;
 
@@ -31,16 +28,21 @@ class LicenseActivation extends Model
         return $this->belongsTo(License::class);
     }
 
-    public function desktopSessions(): HasMany
+    public function issuedBy(): BelongsTo
     {
-        return $this->hasMany(DesktopUserSession::class, 'license_activation_id');
+        return $this->belongsTo(PlatformAdmin::class, 'issued_by_platform_admin_id');
+    }
+
+    public function consumedActivation(): BelongsTo
+    {
+        return $this->belongsTo(LicenseActivation::class, 'consumed_activation_id');
     }
 
     protected function casts(): array
     {
         return [
-            'activated_at' => 'datetime',
-            'last_seen_at' => 'datetime',
+            'generated_at' => 'datetime',
+            'consumed_at' => 'datetime',
             'revoked_at' => 'datetime',
         ];
     }

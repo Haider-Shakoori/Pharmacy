@@ -10,7 +10,7 @@
             <h2 class="mt-1 text-3xl font-bold tracking-tight">Edit {{ $tenant->name }}</h2>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('platform.subscriptions.edit', $tenant) }}" class="rounded-xl border border-teal-700 px-3 py-2 text-xs font-bold text-teal-700">
+            <a href="{{ \App\Support\PlatformRoute::url('subscriptions.edit', $tenant) }}" class="rounded-xl border border-teal-700 px-3 py-2 text-xs font-bold text-teal-700">
                 Manage subscription
             </a>
             <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold">{{ $tenant->status->value }}</span>
@@ -52,7 +52,7 @@
                     <p class="mt-3 text-sm font-semibold text-red-700">{{ $message }}</p>
                 @enderror
             </div>
-            <form method="POST" action="{{ route('platform.tenants.trial.start', $tenant) }}">
+            <form method="POST" action="{{ \App\Support\PlatformRoute::url('tenants.trial.start', $tenant) }}">
                 @csrf
                 <button @disabled(! $trialEligible)
                         class="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-40">
@@ -75,7 +75,7 @@
                 @endif
             </div>
             @if (in_array($tenant->provisioning_status, ['failed', 'awaiting_domain_tls', 'provisioning'], true))
-                <form method="POST" action="{{ route('platform.tenants.retry-provisioning', $tenant) }}">
+                <form method="POST" action="{{ \App\Support\PlatformRoute::url('tenants.retry-provisioning', $tenant) }}">
                     @csrf
                     <button class="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white">Retry provisioning</button>
                 </form>

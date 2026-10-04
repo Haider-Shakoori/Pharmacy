@@ -6,6 +6,7 @@ use App\Enums\LicenseStatus;
 use App\Enums\SubscriptionHealth;
 use App\Models\License;
 use App\Models\LicenseActivation;
+use App\Models\LicenseActivationCode;
 use App\Services\Subscriptions\SubscriptionHealthService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\AuthenticationException;
@@ -31,24 +32,109 @@ class LicenseActivationService
         ?string $buildNumber = null,
         string $platform = 'android',
     ): array {
-        $license = $this->keys->findByPlainText($licenseKey);
+        $platform = in_array($platform, ['android', 'windows'], true)
+            ? $platform
+            : 'android';
 
-        if ($license === null) {
-            throw ValidationException::withMessages([
-                'license_key' => 'The license key is invalid.',
-            ]);
+        if ($platform !== 'windows') {
+            $license = $this->keys->findByPlainText($licenseKey);
+
+            if ($license === null) {
+                throw ValidationException::withMessages([
+                    'license_key' => 'The license key is invalid.',
+                ]);
+            }
+
+            return $this->activateLicense(
+                $license,
+                $deviceId,
+                $deviceName,
+                $appVersion,
+                $deviceModel,
+                $osVersion,
+                $buildNumber,
+                $platform,
+            );
         }
 
-        return $this->activateLicense(
-            $license,
+        return DB::connection('central')->transaction(function () use (
+            $licenseKey,
             $deviceId,
             $deviceName,
             $appVersion,
             $deviceModel,
             $osVersion,
             $buildNumber,
-            $platform,
-        );
+        ): array {
+            $hash = hash('sha256', trim($licenseKey));
+
+            $activationCode = LicenseActivationCode::query()
+                ->where('key_hash', $hash)
+                ->lockForUpdate()
+                ->first();
+
+            if ($activationCode !== null) {
+                if ($activationCode->consumed_at !== null || $activationCode->revoked_at !== null) {
+                    throw ValidationException::withMessages([
+                        'license_key' => 'This Windows activation key has already been used or revoked. Contact support to reset or reassign the license.',
+                    ]);
+                }
+
+                $license = License::query()
+                    ->lockForUpdate()
+                    ->findOrFail($activationCode->license_id);
+
+                $result = $this->activateLicense(
+                    $license,
+                    $deviceId,
+                    $deviceName,
+                    $appVersion,
+                    $deviceModel,
+                    $osVersion,
+                    $buildNumber,
+                    'windows',
+                );
+
+                $activationCode->forceFill([
+                    'consumed_activation_id' => $result['activation_id'],
+                    'consumed_at' => now(),
+                ])->save();
+
+                return $result;
+            }
+
+            $license = License::query()
+                ->where('key_hash', $hash)
+                ->lockForUpdate()
+                ->first();
+
+            if ($license === null) {
+                throw ValidationException::withMessages([
+                    'license_key' => 'The Windows activation key is invalid.',
+                ]);
+            }
+
+            $alreadyConsumed = $license->activations()
+                ->where('platform', 'windows')
+                ->exists();
+
+            if ($alreadyConsumed) {
+                throw ValidationException::withMessages([
+                    'license_key' => 'This Windows activation key has already been used. Contact support to reset or reassign the license.',
+                ]);
+            }
+
+            return $this->activateLicense(
+                $license,
+                $deviceId,
+                $deviceName,
+                $appVersion,
+                $deviceModel,
+                $osVersion,
+                $buildNumber,
+                'windows',
+            );
+        });
     }
 
     public function activateLicense(

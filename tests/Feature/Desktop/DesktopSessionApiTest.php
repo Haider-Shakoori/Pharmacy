@@ -2,12 +2,15 @@
 
 namespace Tests\Feature\Desktop;
 
+use App\Models\DesktopUserSession;
 use App\Models\Plan;
+use App\Models\PlatformAdmin;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Licensing\LicenseKeyService;
+use App\Services\Licensing\LicenseSupportService;
 use App\Services\Licensing\SignedTokenVerifier;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -127,6 +130,64 @@ class DesktopSessionApiTest extends TestCase
             'device_id' => $deviceId,
             'platform' => 'windows',
             'revoked_at' => null,
+        ]);
+    }
+
+    public function test_desktop_login_is_persisted_and_support_can_force_sign_out(): void
+    {
+        app(RbacProvisioner::class)->provisionOwner(
+            $this->tenant,
+            'Owner',
+            'owner@example.test',
+            'secret-password',
+        );
+
+        $deviceId = 'abababab-abab-4bab-8bab-abababababab';
+        $lease = $this->activateWindows($deviceId);
+
+        $login = $this->withServerVariables([
+            'REMOTE_ADDR' => '203.0.113.10',
+            'HTTP_USER_AGENT' => 'Darmaltoon Desktop Test',
+        ])->withToken($lease)
+            ->postJson('/api/v1/desktop/session/login', [
+                'device_id' => $deviceId,
+                'email' => 'owner@example.test',
+                'password' => 'secret-password',
+            ])
+            ->assertOk();
+
+        $payload = app(SignedTokenVerifier::class)->verify(
+            $login->json('data.access_token'),
+            purpose: 'desktop_access',
+        );
+
+        $this->assertArrayHasKey('session_id', $payload);
+
+        $session = DesktopUserSession::query()->findOrFail($payload['session_id']);
+
+        $this->assertSame('owner@example.test', $session->user_email);
+        $this->assertSame('203.0.113.10', $session->login_ip);
+        $this->assertNull($session->revoked_at);
+
+        $admin = PlatformAdmin::query()->create([
+            'name' => 'Support Admin',
+            'email' => 'support-signout@example.test',
+            'password' => 'secret-password',
+            'is_active' => true,
+        ]);
+
+        app(LicenseSupportService::class)->forceSignOut($session, $admin);
+
+        $this->withToken($login->json('data.access_token'))
+            ->postJson('/api/v1/desktop/session/refresh', [
+                'device_id' => $deviceId,
+            ])
+            ->assertUnauthorized();
+
+        $this->assertDatabaseHas('license_support_actions', [
+            'desktop_user_session_id' => $session->id,
+            'action' => 'desktop_session_force_signed_out',
+            'platform_admin_id' => $admin->id,
         ]);
     }
 

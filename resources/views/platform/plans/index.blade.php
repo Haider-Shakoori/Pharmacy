@@ -9,7 +9,7 @@
             <p class="text-sm font-semibold text-teal-700">Commercial configuration</p>
             <h2 class="mt-1 text-3xl font-bold tracking-tight">Subscription plans</h2>
         </div>
-        <a href="{{ route('platform.plans.create') }}" class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">
+        <a href="{{ \App\Support\PlatformRoute::url('plans.create') }}" class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">
             Add plan
         </a>
     </div>
@@ -46,7 +46,7 @@
 
                 <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
                     <span class="text-xs text-slate-500">{{ $plan->subscriptions_count }} subscriptions</span>
-                    <a href="{{ route('platform.plans.edit', $plan) }}" class="text-sm font-bold text-teal-700">Edit plan</a>
+                    <a href="{{ \App\Support\PlatformRoute::url('plans.edit', $plan) }}" class="text-sm font-bold text-teal-700">Edit plan</a>
                 </div>
             </article>
         @empty

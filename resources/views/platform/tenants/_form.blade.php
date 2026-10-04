@@ -1,6 +1,6 @@
 @php($editing = isset($tenant))
 
-<form method="POST" action="{{ $editing ? route('platform.tenants.update', $tenant) : route('platform.tenants.store') }}" class="space-y-5">
+<form method="POST" action="{{ $editing ? \App\Support\PlatformRoute::url('tenants.update', $tenant) : \App\Support\PlatformRoute::url('tenants.store') }}" class="space-y-5">
     @csrf
     @if ($editing) @method('PUT') @endif
 
@@ -49,5 +49,5 @@
         </fieldset>
     @endunless
 
-    <div class="flex items-center gap-3"><button class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">{{ $editing ? 'Save pharmacy' : 'Create pharmacy + owner' }}</button><a href="{{ route('platform.tenants.index') }}" class="text-sm font-semibold text-slate-600">Cancel</a></div>
+    <div class="flex items-center gap-3"><button class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">{{ $editing ? 'Save pharmacy' : 'Create pharmacy + owner' }}</button><a href="{{ \App\Support\PlatformRoute::url('tenants.index') }}" class="text-sm font-semibold text-slate-600">Cancel</a></div>
 </form>

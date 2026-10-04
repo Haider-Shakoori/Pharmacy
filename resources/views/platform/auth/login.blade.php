@@ -12,7 +12,7 @@
         <h1 class="mt-2 text-2xl font-bold">Platform administrator</h1>
         <p class="mt-2 text-sm leading-6 text-slate-500">SaaS owner control plane. Pharmacy staff use the pharmacy workspace instead.</p>
 
-        <form method="POST" action="{{ route('platform.login.store') }}" class="mt-6 space-y-4">
+        <form method="POST" action="{{ \App\Support\PlatformRoute::url('login.store') }}" class="mt-6 space-y-4">
             @csrf
             <label class="block">
                 <span class="text-sm font-semibold">Email</span>

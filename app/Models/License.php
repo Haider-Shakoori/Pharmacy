@@ -33,6 +33,16 @@ class License extends Model
         return $this->hasMany(LicenseActivation::class);
     }
 
+    public function activationCodes(): HasMany
+    {
+        return $this->hasMany(LicenseActivationCode::class);
+    }
+
+    public function supportActions(): HasMany
+    {
+        return $this->hasMany(LicenseSupportAction::class);
+    }
+
     protected function casts(): array
     {
         return [
