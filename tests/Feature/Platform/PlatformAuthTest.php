@@ -45,6 +45,25 @@ class PlatformAuthTest extends TestCase
         $this->assertGuest('platform');
     }
 
+    public function test_legacy_platform_login_redirects_to_legacy_dashboard_on_deployment_host(): void
+    {
+        $admin = PlatformAdmin::query()->create([
+            'name' => 'Legacy Platform Admin',
+            'email' => 'legacy-admin@example.test',
+            'password' => 'secret-password',
+            'is_active' => true,
+        ]);
+
+        $host = (string) config('pharmacy.deployment_host');
+
+        $this->post('https://'.$host.'/platform/login', [
+            'email' => 'legacy-admin@example.test',
+            'password' => 'secret-password',
+        ])->assertRedirect(route('legacy.platform.dashboard'));
+
+        $this->assertAuthenticatedAs($admin, 'platform');
+    }
+
     public function test_inactive_platform_admin_cannot_login(): void
     {
         PlatformAdmin::query()->create([
