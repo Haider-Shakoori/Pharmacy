@@ -31,7 +31,10 @@ class LicenseActivationService
         ?string $buildNumber = null,
         string $platform = 'android',
     ): array {
-        $license = $this->keys->findByPlainText($licenseKey);
+        $license = $this->keys->findForActivation(
+            $licenseKey,
+            $platform,
+        );
 
         if ($license === null) {
             throw ValidationException::withMessages([
@@ -73,6 +76,12 @@ class LicenseActivationService
                 ->findOrFail($license->id);
 
             $this->assertLicenseUsable($license);
+
+            if ($platform === 'windows' && $license->windows_activation_key_consumed_at !== null) {
+                throw ValidationException::withMessages([
+                    'license_key' => 'This Windows activation key has already been used. Contact Darmaltoon support to release or reassign the license.',
+                ]);
+            }
 
             $plan = $license->subscription->plan;
             $now = CarbonImmutable::now();
@@ -132,6 +141,13 @@ class LicenseActivationService
                 'last_seen_at' => $now,
             ]);
             $activation->save();
+
+            if ($platform === 'windows') {
+                $license->forceFill([
+                    'windows_activation_key_consumed_at' => $now,
+                    'windows_activation_id' => $activation->id,
+                ])->save();
+            }
 
             return $this->buildActivationResult(
                 $license,
