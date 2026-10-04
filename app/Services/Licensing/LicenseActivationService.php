@@ -86,6 +86,20 @@ class LicenseActivationService
             $plan = $license->subscription->plan;
             $now = CarbonImmutable::now();
 
+            if ($platform === 'windows') {
+                $alreadyConsumed = LicenseActivation::query()
+                    ->where('license_id', $license->id)
+                    ->where('platform', 'windows')
+                    ->where('license_version', $license->version)
+                    ->exists();
+
+                if ($alreadyConsumed) {
+                    throw ValidationException::withMessages([
+                        'license_key' => 'This Windows activation key has already been used. Contact Darmaltoon support to reset or reassign the license.',
+                    ]);
+                }
+            }
+
             $activation = LicenseActivation::query()
                 ->where('license_id', $license->id)
                 ->where('device_id', $deviceId)
@@ -111,6 +125,7 @@ class LicenseActivationService
 
                 $activation = new LicenseActivation([
                     'license_id' => $license->id,
+                    'license_version' => $license->version,
                     'device_id' => $deviceId,
                     'activated_at' => $now,
                 ]);
@@ -132,6 +147,7 @@ class LicenseActivationService
             }
 
             $activation->fill([
+                'license_version' => $license->version,
                 'device_name' => $deviceName,
                 'platform' => $platform,
                 'app_version' => $appVersion,
@@ -213,6 +229,7 @@ class LicenseActivationService
                 $tenant === null ||
                 (string) $activation->device_id !== $deviceId ||
                 $activation->platform !== 'windows' ||
+                (int) $activation->license_version !== (int) $license->version ||
                 (string) $license->id !== (string) $payload['license_id'] ||
                 (int) $license->version !== (int) $payload['license_version'] ||
                 (string) $tenant->id !== (string) $payload['tenant_id']) {
