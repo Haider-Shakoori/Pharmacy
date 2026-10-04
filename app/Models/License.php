@@ -17,6 +17,8 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
     'status',
     'version',
     'generated_at',
+    'windows_consumed_at',
+    'windows_consumed_activation_id',
     'revoked_at',
 ])]
 class License extends Model
@@ -39,6 +41,7 @@ class License extends Model
             'status' => LicenseStatus::class,
             'version' => 'integer',
             'generated_at' => 'datetime',
+            'windows_consumed_at' => 'datetime',
             'revoked_at' => 'datetime',
         ];
     }
