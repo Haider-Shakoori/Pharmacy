@@ -3,6 +3,7 @@
 namespace App\Services\Desktop;
 
 use App\Enums\LicenseStatus;
+use App\Models\DesktopUserSession;
 use App\Models\LicenseActivation;
 use App\Models\Tenant;
 use App\Models\User;
@@ -30,6 +31,8 @@ class DesktopAccessService
         string $deviceId,
         string $email,
         string $password,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
     ): array {
         $lease = $this->tokens->verify(
             $leaseToken,
@@ -70,7 +73,14 @@ class DesktopAccessService
             ]);
         }
 
-        return $this->issueSession($activation, $tenant, $user);
+        return $this->issueSession(
+            $activation,
+            $tenant,
+            $user,
+            null,
+            $ipAddress,
+            $userAgent,
+        );
     }
 
     public function authenticate(Request $request): SyncAccessContext
@@ -104,6 +114,27 @@ class DesktopAccessService
             throw new AuthenticationException('The pharmacy user is no longer active.');
         }
 
+        if (isset($payload['session_id']) && $payload['session_id'] !== '') {
+            $session = DesktopUserSession::query()
+                ->whereKey($payload['session_id'])
+                ->where('license_activation_id', $activation->id)
+                ->where('user_id', (int) $user['id'])
+                ->first();
+
+            if ($session === null
+                || $session->revoked_at !== null
+                || $session->expires_at === null
+                || $session->expires_at->isPast()) {
+                throw new AuthenticationException('This desktop user session has been signed out by support or has expired.');
+            }
+
+            $session->forceFill([
+                'last_seen_at' => now(),
+                'last_ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])->save();
+        }
+
         $activation->forceFill(['last_seen_at' => now()])->save();
 
         return new SyncAccessContext(
@@ -115,7 +146,12 @@ class DesktopAccessService
         );
     }
 
-    public function refresh(string $accessToken, string $deviceId): array
+    public function refresh(
+        string $accessToken,
+        string $deviceId,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+    ): array
     {
         $payload = $this->tokens->verify(
             $accessToken,
@@ -144,7 +180,28 @@ class DesktopAccessService
             throw new AuthenticationException('The pharmacy user is no longer active.');
         }
 
-        return $this->issueSession($activation, $tenant, $user);
+        $session = null;
+
+        if (isset($payload['session_id']) && $payload['session_id'] !== '') {
+            $session = DesktopUserSession::query()
+                ->whereKey($payload['session_id'])
+                ->where('license_activation_id', $activation->id)
+                ->where('user_id', (int) $user['id'])
+                ->first();
+
+            if ($session === null || $session->revoked_at !== null) {
+                throw new AuthenticationException('This desktop user session has been signed out by support.');
+            }
+        }
+
+        return $this->issueSession(
+            $activation,
+            $tenant,
+            $user,
+            $session,
+            $ipAddress,
+            $userAgent,
+        );
     }
 
     private function resolveActivation(
@@ -255,6 +312,9 @@ class DesktopAccessService
         LicenseActivation $activation,
         Tenant $tenant,
         array $user,
+        ?DesktopUserSession $session = null,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
     ): array {
         $subscription = $activation->license->subscription;
         $plan = $subscription->plan;
@@ -273,9 +333,40 @@ class DesktopAccessService
             throw new AuthenticationException('The pharmacy subscription no longer permits an offline desktop session.');
         }
 
+        if ($session === null) {
+            DesktopUserSession::query()
+                ->where('license_activation_id', $activation->id)
+                ->whereNull('revoked_at')
+                ->update(['revoked_at' => $now]);
+
+            $session = DesktopUserSession::query()->create([
+                'license_activation_id' => $activation->id,
+                'tenant_id' => $tenant->id,
+                'user_id' => $user['id'],
+                'user_name' => $user['name'],
+                'user_email' => $user['email'],
+                'login_ip' => $ipAddress,
+                'last_ip' => $ipAddress,
+                'user_agent' => $userAgent,
+                'issued_at' => $now,
+                'last_seen_at' => $now,
+                'expires_at' => $expiresAt,
+            ]);
+        } else {
+            $session->forceFill([
+                'user_name' => $user['name'],
+                'user_email' => $user['email'],
+                'last_ip' => $ipAddress ?? $session->last_ip,
+                'user_agent' => $userAgent ?? $session->user_agent,
+                'last_seen_at' => $now,
+                'expires_at' => $expiresAt,
+            ])->save();
+        }
+
         $payload = [
             'v' => 1,
             'purpose' => 'desktop_access',
+            'session_id' => $session->id,
             'tenant_id' => $tenant->id,
             'activation_id' => $activation->id,
             'device_id' => $activation->device_id,
