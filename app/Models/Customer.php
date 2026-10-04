@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'phone', 'email', 'credit_limit', 'is_active', 'notes'])]
+#[Fillable(['desktop_source_id', 'name', 'phone', 'email', 'credit_limit', 'is_active', 'notes'])]
 class Customer extends Model
 {
     use HasUlids;
