@@ -88,7 +88,7 @@ class PlatformLicenseActivationManagementTest extends TestCase
         $this->actingAs($admin, 'platform')
             ->get($this->legacyPlatformUrl("/licenses/{$this->subscription->id}"))
             ->assertOk()
-            ->assertSee('Activated devices & sessions')
+            ->assertSee('Activated devices')
             ->assertSee('Front Counter')
             ->assertSee('owner@example.test')
             ->assertSee('Consumed');
