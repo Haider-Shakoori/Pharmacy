@@ -46,12 +46,12 @@
                             <td class="px-4 py-3">{{ $subscription->license?->version ?? '—' }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-2">
-                                    <form method="POST" action="{{ route('platform.licenses.regenerate', $subscription) }}">
+                                    <form method="POST" action="{{ \App\Support\PlatformRoute::url('licenses.regenerate', $subscription) }}">
                                         @csrf
                                         <button class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold">{{ $subscription->license ? 'Regenerate' : 'Generate' }}</button>
                                     </form>
                                     @if ($subscription->license?->status?->value === 'active')
-                                        <form method="POST" action="{{ route('platform.licenses.revoke', $subscription) }}">
+                                        <form method="POST" action="{{ \App\Support\PlatformRoute::url('licenses.revoke', $subscription) }}">
                                             @csrf
                                             <button class="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-700">Revoke</button>
                                         </form>
