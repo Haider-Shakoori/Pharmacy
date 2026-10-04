@@ -17,6 +17,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
@@ -56,18 +57,20 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->redirectGuestsTo(
             fn (Request $request) => $isLegacyPlatformRequest($request)
-                ? route('legacy.platform.login')
-                : ($isPlatformRequest($request)
-                    ? route('platform.login')
-                    : '/login'),
+                && Route::has('legacy.platform.login')
+                    ? route('legacy.platform.login')
+                    : ($isPlatformRequest($request)
+                        ? route('platform.login')
+                        : '/login'),
         );
 
         $middleware->redirectUsersTo(
             fn (Request $request) => $isLegacyPlatformRequest($request)
-                ? route('legacy.platform.dashboard')
-                : ($isPlatformRequest($request)
-                    ? route('platform.dashboard')
-                    : '/'),
+                && Route::has('legacy.platform.dashboard')
+                    ? route('legacy.platform.dashboard')
+                    : ($isPlatformRequest($request)
+                        ? route('platform.dashboard')
+                        : '/'),
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
