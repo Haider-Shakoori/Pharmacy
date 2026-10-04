@@ -26,6 +26,14 @@ class DesktopSyncPullController extends Controller
         ]);
 
         $desktopContext = $access->authenticate($request);
+
+        if (! (bool) ($desktopContext->tenant->business?->desktop_cloud_sync_enabled ?? true)) {
+            return response()->json([
+                'message' => 'Live server synchronization is disabled by the platform.',
+                'code' => 'desktop_sync_disabled',
+            ], 409);
+        }
+
         $context = new MobileAccessContext(
             $desktopContext->tenant,
             $desktopContext->activation,
