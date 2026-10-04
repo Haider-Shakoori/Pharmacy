@@ -23,6 +23,7 @@ class DesktopSessionRefreshController extends Controller
         $result = $access->refresh(
             $accessToken,
             $request->string('device_id')->toString(),
+            $request->ip(),
         );
 
         return response()->json([
