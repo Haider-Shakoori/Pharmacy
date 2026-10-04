@@ -155,7 +155,11 @@ class LicenseActivationApiTest extends TestCase
             'platform' => 'windows',
         ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('device_id');
+            ->assertJsonValidationErrors('license_key')
+            ->assertJsonPath(
+                'errors.license_key.0',
+                'This Windows activation key has already been used. Contact support to reset or reassign the license.',
+            );
     }
 
     public function test_windows_key_is_single_use_and_support_replacement_issues_a_fresh_single_use_key(): void
