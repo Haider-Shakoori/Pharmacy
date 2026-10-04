@@ -57,7 +57,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-end">
-                                <a href="{{ route('platform.subscriptions.edit', $subscription->business->tenant) }}" class="text-sm font-bold text-teal-700">Manage</a>
+                                <a href="{{ \App\Support\PlatformRoute::url('subscriptions.edit', $subscription->business->tenant) }}" class="text-sm font-bold text-teal-700">Manage</a>
                             </td>
                         </tr>
                     @empty
