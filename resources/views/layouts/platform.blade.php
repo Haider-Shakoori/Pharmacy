@@ -58,8 +58,8 @@
         @endif
         @if (session('generated_license_key'))
             <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
-                <p class="text-sm font-bold">New license key — copy it now</p>
-                <p class="mt-1 text-xs">For security, the plaintext key is not stored and cannot be shown again.</p>
+                <p class="text-sm font-bold">Activation key — copy it now</p>
+                <p class="mt-1 text-xs">For security, plaintext is never stored. Windows activation keys are single-use: after the first successful PC activation this key cannot be used again.</p>
                 <code class="mt-3 block break-all rounded-lg bg-white px-3 py-2 text-sm font-bold">{{ session('generated_license_key') }}</code>
             </div>
         @endif
