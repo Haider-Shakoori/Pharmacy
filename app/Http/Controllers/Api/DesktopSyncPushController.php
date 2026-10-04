@@ -24,6 +24,13 @@ class DesktopSyncPushController extends Controller
 
         $context = $access->authenticate($request);
 
+        if (! (bool) ($context->tenant->business?->desktop_cloud_sync_enabled ?? true)) {
+            return response()->json([
+                'message' => 'Live server synchronization is disabled by the platform.',
+                'code' => 'desktop_sync_disabled',
+            ], 409);
+        }
+
         return response()->json([
             'data' => [
                 'results' => $sync->push($context, $validated['events']),
