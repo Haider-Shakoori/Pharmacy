@@ -9,7 +9,7 @@
             <p class="text-sm font-semibold text-teal-700">Tenant management</p>
             <h2 class="mt-1 text-3xl font-bold tracking-tight">Pharmacies</h2>
         </div>
-        <a href="{{ route('platform.tenants.create') }}" class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">Add pharmacy</a>
+        <a href="{{ \App\Support\PlatformRoute::url('tenants.create') }}" class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">Add pharmacy</a>
     </div>
 
     <form method="GET" class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_180px_auto]">
@@ -50,10 +50,10 @@
                             <td class="px-4 py-3">{{ strtoupper($tenant->locale) }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-2">
-                                    <a href="{{ route('platform.tenants.edit', $tenant) }}" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold">Edit</a>
+                                    <a href="{{ \App\Support\PlatformRoute::url('tenants.edit', $tenant) }}" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold">Edit</a>
                                     @foreach (['active', 'suspended', 'archived'] as $nextStatus)
                                         @if ($tenant->status->value !== $nextStatus)
-                                            <form method="POST" action="{{ route('platform.tenants.status', [$tenant, $nextStatus]) }}">
+                                            <form method="POST" action="{{ \App\Support\PlatformRoute::url('tenants.status', [$tenant, $nextStatus]) }}">
                                                 @csrf
                                                 @method('PUT')
                                                 <button class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold">{{ ucfirst($nextStatus) }}</button>
