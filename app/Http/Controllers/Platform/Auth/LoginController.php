@@ -43,7 +43,12 @@ class LoginController extends Controller
             'last_login_at' => now(),
         ])->save();
 
-        return redirect()->intended(route('platform.dashboard'));
+        $dashboardRoute = $request->getHost() === config('pharmacy.deployment_host')
+            && $request->is('platform*')
+                ? 'legacy.platform.dashboard'
+                : 'platform.dashboard';
+
+        return redirect()->intended(route($dashboardRoute));
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -53,6 +58,11 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('platform.login');
+        $loginRoute = $request->getHost() === config('pharmacy.deployment_host')
+            && $request->is('platform*')
+                ? 'legacy.platform.login'
+                : 'platform.login';
+
+        return redirect()->route($loginRoute);
     }
 }
