@@ -18,7 +18,7 @@
     <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4">
         <span class="me-2 text-sm font-bold text-slate-600">Status</span>
         @foreach (['' => 'All', 'pending' => 'Pending', 'provisioning' => 'Provisioning', 'failed' => 'Failed', 'approved' => 'Approved', 'rejected' => 'Rejected'] as $value => $label)
-            <a href="{{ route('platform.trial-requests.index', $value === '' ? [] : ['status' => $value]) }}"
+            <a href="{{ \App\Support\PlatformRoute::url('trial-requests.index', $value === '' ? [] : ['status' => $value]) }}"
                class="rounded-lg px-3 py-2 text-xs font-bold {{ $status === $value ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
                 {{ $label }}
             </a>
@@ -80,7 +80,7 @@
                         @if ($trialRequest->tenant)
                             <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
                                 <span class="font-semibold text-slate-500">Tenant:</span>
-                                <a href="{{ route('platform.tenants.edit', $trialRequest->tenant) }}" class="font-bold text-teal-700">
+                                <a href="{{ \App\Support\PlatformRoute::url('tenants.edit', $trialRequest->tenant) }}" class="font-bold text-teal-700">
                                     {{ $trialRequest->tenant->name ?? $trialRequest->requested_slug }}
                                 </a>
                                 <span class="text-slate-400">{{ str_replace('_', ' ', $trialRequest->tenant->provisioning_status) }}</span>
@@ -90,14 +90,14 @@
 
                     @if (in_array($trialRequest->status, ['pending', 'failed', 'provisioning'], true))
                         <div class="w-full shrink-0 space-y-3 lg:w-72">
-                            <form method="POST" action="{{ route('platform.trial-requests.approve', $trialRequest) }}">
+                            <form method="POST" action="{{ \App\Support\PlatformRoute::url('trial-requests.approve', $trialRequest) }}">
                                 @csrf
                                 <button class="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-black text-slate-950 hover:bg-emerald-400">
                                     {{ $trialRequest->status === 'pending' ? 'Approve + create trial account' : 'Retry approval / provisioning' }}
                                 </button>
                             </form>
 
-                            <form method="POST" action="{{ route('platform.trial-requests.reject', $trialRequest) }}" class="rounded-xl border border-slate-200 p-3">
+                            <form method="POST" action="{{ \App\Support\PlatformRoute::url('trial-requests.reject', $trialRequest) }}" class="rounded-xl border border-slate-200 p-3">
                                 @csrf
                                 <textarea name="decision_notes" rows="2" placeholder="Rejection note (optional)"
                                           class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea>
