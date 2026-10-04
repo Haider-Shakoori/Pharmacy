@@ -30,6 +30,8 @@ class DesktopAccessService
         string $deviceId,
         string $email,
         string $password,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
     ): array {
         $lease = $this->tokens->verify(
             $leaseToken,
@@ -70,7 +72,14 @@ class DesktopAccessService
             ]);
         }
 
-        return $this->issueSession($activation, $tenant, $user);
+        return $this->issueSession(
+            $activation,
+            $tenant,
+            $user,
+            startNewSession: true,
+            ipAddress: $ipAddress,
+            userAgent: $userAgent,
+        );
     }
 
     public function authenticate(Request $request): SyncAccessContext
@@ -96,6 +105,7 @@ class DesktopAccessService
             activationId: $payload['activation_id'],
             tenantId: $payload['tenant_id'],
             deviceId: (string) $payload['device_id'],
+            sessionVersion: (int) ($payload['session_version'] ?? 0),
         );
 
         $user = $this->findActiveUser($tenant, (int) $payload['user_id']);
@@ -104,7 +114,20 @@ class DesktopAccessService
             throw new AuthenticationException('The pharmacy user is no longer active.');
         }
 
-        $activation->forceFill(['last_seen_at' => now()])->save();
+        $presence = [
+            'last_seen_at' => now(),
+            'session_last_seen_at' => now(),
+        ];
+
+        if ($request->ip() !== null) {
+            $presence['last_ip_address'] = $request->ip();
+        }
+
+        if ($request->userAgent() !== null) {
+            $presence['last_user_agent'] = $request->userAgent();
+        }
+
+        $activation->forceFill($presence)->save();
 
         return new SyncAccessContext(
             tenant: $tenant,
@@ -115,7 +138,12 @@ class DesktopAccessService
         );
     }
 
-    public function refresh(string $accessToken, string $deviceId): array
+    public function refresh(
+        string $accessToken,
+        string $deviceId,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+    ): array
     {
         $payload = $this->tokens->verify(
             $accessToken,
@@ -136,6 +164,7 @@ class DesktopAccessService
             activationId: $payload['activation_id'],
             tenantId: $payload['tenant_id'],
             deviceId: $deviceId,
+            sessionVersion: (int) ($payload['session_version'] ?? 0),
         );
 
         $user = $this->findActiveUser($tenant, (int) $payload['user_id']);
@@ -144,7 +173,14 @@ class DesktopAccessService
             throw new AuthenticationException('The pharmacy user is no longer active.');
         }
 
-        return $this->issueSession($activation, $tenant, $user);
+        return $this->issueSession(
+            $activation,
+            $tenant,
+            $user,
+            startNewSession: false,
+            ipAddress: $ipAddress,
+            userAgent: $userAgent,
+        );
     }
 
     private function resolveActivation(
@@ -153,6 +189,7 @@ class DesktopAccessService
         string $deviceId,
         string|int|null $licenseId = null,
         ?int $licenseVersion = null,
+        ?int $sessionVersion = null,
     ): array {
         $activation = LicenseActivation::query()
             ->with([
@@ -179,7 +216,8 @@ class DesktopAccessService
             (string) $tenant->id !== (string) $tenantId ||
             (string) $activation->device_id !== $deviceId ||
             ($licenseId !== null && (string) $license->id !== (string) $licenseId) ||
-            ($licenseVersion !== null && (int) $license->version !== $licenseVersion)) {
+            ($licenseVersion !== null && (int) $license->version !== $licenseVersion) ||
+            ($sessionVersion !== null && (int) $activation->session_version !== $sessionVersion)) {
             throw new AuthenticationException('The desktop activation no longer matches an active pharmacy subscription.');
         }
 
@@ -255,6 +293,9 @@ class DesktopAccessService
         LicenseActivation $activation,
         Tenant $tenant,
         array $user,
+        bool $startNewSession,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
     ): array {
         $subscription = $activation->license->subscription;
         $plan = $subscription->plan;
@@ -273,6 +314,30 @@ class DesktopAccessService
             throw new AuthenticationException('The pharmacy subscription no longer permits an offline desktop session.');
         }
 
+        $sessionVersion = (int) $activation->session_version;
+
+        if ($startNewSession) {
+            $sessionVersion++;
+        }
+
+        $sessionStartedAt = $startNewSession || $activation->session_started_at === null
+            ? $now
+            : $activation->session_started_at;
+
+        $activation->forceFill([
+            'current_user_id' => (string) $user['id'],
+            'current_user_name' => $user['name'],
+            'current_user_email' => $user['email'],
+            'session_version' => $sessionVersion,
+            'session_started_at' => $sessionStartedAt,
+            'session_last_seen_at' => $now,
+            'session_expires_at' => $expiresAt,
+            'session_signed_out_at' => null,
+            'last_seen_at' => $now,
+            'last_ip_address' => $ipAddress,
+            'last_user_agent' => $userAgent,
+        ])->save();
+
         $payload = [
             'v' => 1,
             'purpose' => 'desktop_access',
@@ -280,6 +345,7 @@ class DesktopAccessService
             'activation_id' => $activation->id,
             'device_id' => $activation->device_id,
             'user_id' => $user['id'],
+            'session_version' => $sessionVersion,
             'user_name' => $user['name'],
             'user_email' => $user['email'],
             'roles' => $user['roles'],
@@ -287,8 +353,6 @@ class DesktopAccessService
             'issued_at' => $now->getTimestamp(),
             'expires_at' => $expiresAt->getTimestamp(),
         ];
-
-        $activation->forceFill(['last_seen_at' => $now])->save();
 
         return [
             'access_token' => $this->signer->sign($payload),
