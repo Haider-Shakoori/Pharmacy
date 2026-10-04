@@ -25,6 +25,7 @@ class DesktopSessionLoginController extends Controller
             $request->string('device_id')->toString(),
             $request->string('email')->toString(),
             $request->string('password')->toString(),
+            $request->ip(),
         );
 
         return response()->json([
