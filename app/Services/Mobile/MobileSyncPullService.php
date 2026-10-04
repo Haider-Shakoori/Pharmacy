@@ -60,6 +60,7 @@ class MobileSyncPullService
                 ]),
                 'medicines' => Medicine::query()->select([
                     'id',
+                    'desktop_source_id',
                     'medicine_category_id',
                     'manufacturer_id',
                     'medicine_code',
@@ -103,6 +104,7 @@ class MobileSyncPullService
                 ]),
                 'customers' => Customer::query()->select([
                     'id',
+                    'desktop_source_id',
                     'name',
                     'phone',
                     'email',
@@ -221,6 +223,7 @@ class MobileSyncPullService
                 ],
                 'medicines' => [
                     'id' => $row->id,
+                    'desktop_source_id' => $row->desktop_source_id,
                     'medicine_category_id' => $row->medicine_category_id,
                     'manufacturer_id' => $row->manufacturer_id,
                     'medicine_code' => $row->medicine_code,
@@ -268,6 +271,7 @@ class MobileSyncPullService
                 ],
                 'customers' => [
                     'id' => $row->id,
+                    'desktop_source_id' => $row->desktop_source_id,
                     'name' => $row->name,
                     'phone' => $row->phone,
                     'email' => $row->email,
