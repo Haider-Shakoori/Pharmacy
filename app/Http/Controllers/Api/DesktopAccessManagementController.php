@@ -43,6 +43,7 @@ class DesktopAccessManagementController extends Controller
                 'is_active' => (bool) $data['is_active'],
             ]);
             $user->roles()->sync($data['role_ids']);
+            $user->touch();
 
             return response()->json([
                 'data' => $this->snapshot(),
@@ -105,6 +106,7 @@ class DesktopAccessManagementController extends Controller
                 'is_system' => false,
             ]);
             $role->permissions()->sync($data['permission_ids']);
+            $role->touch();
 
             return response()->json([
                 'data' => $this->snapshot(),
@@ -136,6 +138,11 @@ class DesktopAccessManagementController extends Controller
             ]);
 
             $role->permissions()->sync($data['permission_ids']);
+            $role->touch();
+
+            User::query()
+                ->whereHas('roles', fn ($query) => $query->whereKey($role->id))
+                ->update(['updated_at' => now()]);
 
             return response()->json([
                 'data' => $this->snapshot(),
