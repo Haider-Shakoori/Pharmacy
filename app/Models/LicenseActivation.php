@@ -10,6 +10,7 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
 
 #[Fillable([
     'license_id',
+    'license_version',
     'device_id',
     'device_name',
     'platform',
