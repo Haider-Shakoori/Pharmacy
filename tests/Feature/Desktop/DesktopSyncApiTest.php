@@ -3,6 +3,7 @@
 namespace Tests\Feature\Desktop;
 
 use App\Models\Branch;
+use App\Models\Customer;
 use App\Models\Medicine;
 use App\Models\Plan;
 use App\Models\ProductBatch;
@@ -121,6 +122,130 @@ class DesktopSyncApiTest extends TestCase
             $response->json('data.data.0.medicine_code'),
         );
         $this->assertNotEmpty($response->json('data.next_cursor'));
+    }
+
+    public function test_desktop_can_pull_dependency_and_access_streams(): void
+    {
+        foreach ([
+            'branches',
+            'stock_locations',
+            'permissions',
+            'roles',
+            'users',
+        ] as $stream) {
+            $response = $this->withToken($this->accessToken)
+                ->getJson("/api/v1/desktop/sync/pull/{$stream}?limit=100")
+                ->assertOk()
+                ->assertJsonPath('data.stream', $stream);
+
+            $this->assertNotEmpty($response->json('data.data'));
+        }
+
+        $users = $this->withToken($this->accessToken)
+            ->getJson('/api/v1/desktop/sync/pull/users?limit=100')
+            ->assertOk();
+
+        $owner = collect($users->json('data.data'))
+            ->firstWhere('email', 'desktop-owner@example.test');
+
+        $this->assertNotNull($owner);
+        $this->assertTrue($owner['is_active']);
+        $this->assertNotEmpty($owner['roles']);
+        $this->assertNotEmpty($owner['permissions']);
+    }
+
+    public function test_desktop_master_data_upserts_are_idempotent_by_desktop_source_id(): void
+    {
+        $medicineEvent = [
+            'idempotency_key' => 'medicine:desktop-local-1:upsert:1',
+            'event_type' => 'medicine.upsert',
+            'payload' => [
+                'v' => 1,
+                'local_id' => 'desktop-local-1',
+                'idempotency_key' => 'medicine:desktop-local-1:upsert:1',
+                'medicine_code' => 'DESKTOP-LOCAL-001',
+                'barcode' => '99000112233',
+                'brand_name' => 'Desktop Local Medicine',
+                'generic_name' => 'Local Generic',
+                'strength' => '250 mg',
+                'dosage_form' => 'Tablet',
+                'purchase_unit' => 'box',
+                'sale_unit' => 'tablet',
+                'units_per_purchase_unit' => '100.0000',
+                'reorder_level' => '20.0000',
+                'prescription_required' => false,
+                'batch_tracking_required' => true,
+                'expiry_tracking_required' => true,
+                'is_active' => true,
+                'notes' => 'Created from desktop sync.',
+            ],
+        ];
+
+        $firstMedicine = $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', [
+                'events' => [$medicineEvent],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.status', 'accepted');
+
+        $medicineId = $firstMedicine->json('data.results.0.server_id');
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', [
+                'events' => [$medicineEvent],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.status', 'accepted')
+            ->assertJsonPath('data.results.0.server_id', $medicineId);
+
+        $customerEvent = [
+            'idempotency_key' => 'customer:desktop-customer-1:upsert:1',
+            'event_type' => 'customer.upsert',
+            'payload' => [
+                'v' => 1,
+                'local_id' => 'desktop-customer-1',
+                'idempotency_key' => 'customer:desktop-customer-1:upsert:1',
+                'name' => 'Desktop Synced Customer',
+                'phone' => '0700888999',
+                'email' => 'desktop-customer@example.test',
+                'credit_limit' => '700.0000',
+                'is_active' => true,
+                'notes' => 'Created from desktop sync.',
+            ],
+        ];
+
+        $firstCustomer = $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', [
+                'events' => [$customerEvent],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.status', 'accepted');
+
+        $customerId = $firstCustomer->json('data.results.0.server_id');
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', [
+                'events' => [$customerEvent],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.status', 'accepted')
+            ->assertJsonPath('data.results.0.server_id', $customerId);
+
+        $this->tenant->run(function (): void {
+            $this->assertSame(
+                1,
+                Medicine::query()
+                    ->where('desktop_source_id', 'desktop-local-1')
+                    ->count(),
+            );
+
+            $this->assertSame(
+                1,
+                Customer::query()
+                    ->where('desktop_source_id', 'desktop-customer-1')
+                    ->count(),
+            );
+        });
     }
 
     public function test_mobile_purpose_token_is_rejected_by_desktop_sync_boundary(): void
