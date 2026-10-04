@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\DesktopSessionLoginController;
 use App\Http\Controllers\Api\DesktopSessionRefreshController;
 use App\Http\Controllers\Api\DesktopSyncPullController;
 use App\Http\Controllers\Api\DesktopSyncPushController;
+use App\Http\Controllers\Api\DesktopSyncStatusController;
 use App\Http\Controllers\Api\DesktopUpdateManifestController;
 use App\Http\Controllers\Api\LicenseActivationController;
 use App\Http\Controllers\Api\MobileDeviceRegistrationController;
@@ -38,6 +39,7 @@ Route::prefix('/v1/desktop')
     ->middleware(['api.payload', 'throttle:desktop-api'])
     ->group(function (): void {
         Route::get('/update/manifest', DesktopUpdateManifestController::class);
+        Route::get('/sync/status', DesktopSyncStatusController::class);
         Route::post('/sync/push', DesktopSyncPushController::class);
         Route::get('/sync/pull/{stream}', DesktopSyncPullController::class);
         Route::get('/access', [DesktopAccessManagementController::class, 'index']);
