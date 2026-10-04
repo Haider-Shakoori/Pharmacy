@@ -104,7 +104,9 @@ class TrialLicenseActivationTest extends TestCase
             'device_name' => 'Counter PC',
             'email' => 'owner@windows-trial.test',
             'password' => 'password123',
-        ])->assertOk();
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('license_key');
 
         $tenant->refresh()->load('business.subscription');
         $this->assertTrue(
@@ -120,7 +122,7 @@ class TrialLicenseActivationTest extends TestCase
             'password' => 'password123',
         ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('device_id');
+            ->assertJsonValidationErrors('license_key');
     }
 
     public function test_invalid_owner_credentials_do_not_consume_the_trial(): void
