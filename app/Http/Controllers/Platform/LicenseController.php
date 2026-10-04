@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Platform;
 use App\Http\Controllers\Controller;
 use App\Models\LicenseActivation;
 use App\Models\LicenseSupportAction;
+use App\Models\PlatformAdmin;
 use App\Models\Subscription;
 use App\Services\Licensing\LicenseKeyService;
 use Illuminate\Http\RedirectResponse;
@@ -56,10 +57,15 @@ class LicenseController extends Controller
                 ->limit(50)
                 ->get();
 
+        $supportAdmins = PlatformAdmin::query()
+            ->whereIn('id', $supportActions->pluck('platform_admin_id')->filter()->unique())
+            ->pluck('name', 'id');
+
         return view('platform.licenses.show', compact(
             'subscription',
             'license',
             'supportActions',
+            'supportAdmins',
         ));
     }
 
