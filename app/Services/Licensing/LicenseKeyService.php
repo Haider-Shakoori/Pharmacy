@@ -43,6 +43,11 @@ class LicenseKeyService
                 ->whereNull('revoked_at')
                 ->update(['revoked_at' => now()]);
 
+            $license->activationCodes()
+                ->whereNull('consumed_at')
+                ->whereNull('revoked_at')
+                ->update(['revoked_at' => now()]);
+
             return $plainText;
         });
     }
@@ -62,6 +67,11 @@ class LicenseKeyService
             ]);
 
             $license->activations()
+                ->whereNull('revoked_at')
+                ->update(['revoked_at' => now()]);
+
+            $license->activationCodes()
+                ->whereNull('consumed_at')
                 ->whereNull('revoked_at')
                 ->update(['revoked_at' => now()]);
         });
