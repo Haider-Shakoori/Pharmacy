@@ -2,10 +2,13 @@
 
 namespace Tests\Feature\Licensing;
 
+use App\Models\LicenseActivation;
 use App\Models\Plan;
+use App\Models\PlatformAdmin;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Services\Licensing\LicenseKeyService;
+use App\Services\Licensing\LicenseSupportService;
 use App\Services\Licensing\SignedTokenVerifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -153,6 +156,72 @@ class LicenseActivationApiTest extends TestCase
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('device_id');
+    }
+
+    public function test_windows_key_is_single_use_and_support_replacement_issues_a_fresh_single_use_key(): void
+    {
+        $firstDevice = '77777777-7777-4777-8777-777777777777';
+
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $this->plainTextKey,
+            'device_id' => $firstDevice,
+            'platform' => 'windows',
+            'device_name' => 'Original Pharmacy PC',
+        ])->assertOk();
+
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $this->plainTextKey,
+            'device_id' => '88888888-8888-4888-8888-888888888888',
+            'platform' => 'windows',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('license_key')
+            ->assertJsonPath(
+                'errors.license_key.0',
+                'This Windows activation key has already been used. Contact support to reset or reassign the license.',
+            );
+
+        $activation = LicenseActivation::query()
+            ->where('device_id', $firstDevice)
+            ->firstOrFail();
+
+        $admin = PlatformAdmin::query()->create([
+            'name' => 'Support Admin',
+            'email' => 'support@example.test',
+            'password' => 'secret-password',
+            'is_active' => true,
+        ]);
+
+        $replacementKey = app(LicenseSupportService::class)
+            ->replaceWindowsDevice($activation, $admin);
+
+        $this->assertNotSame($this->plainTextKey, $replacementKey);
+
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $replacementKey,
+            'device_id' => '99999999-9999-4999-8999-999999999999',
+            'platform' => 'windows',
+            'device_name' => 'Replacement Pharmacy PC',
+        ])->assertOk();
+
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $replacementKey,
+            'device_id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            'platform' => 'windows',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('license_key');
+
+        $this->assertDatabaseHas('license_activation_codes', [
+            'license_id' => $this->subscription->license->id,
+            'platform' => 'windows',
+        ]);
+
+        $this->assertDatabaseHas('license_support_actions', [
+            'license_id' => $this->subscription->license->id,
+            'action' => 'windows_device_replaced',
+            'platform_admin_id' => $admin->id,
+        ]);
     }
 
     public function test_invalid_or_inactive_subscription_cannot_activate(): void
