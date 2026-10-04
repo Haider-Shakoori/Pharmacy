@@ -30,6 +30,7 @@ class LicenseActivationService
         ?string $osVersion = null,
         ?string $buildNumber = null,
         string $platform = 'android',
+        bool $allowExistingWindowsActivation = false,
     ): array {
         $license = $this->keys->findByPlainText($licenseKey);
 
@@ -48,6 +49,7 @@ class LicenseActivationService
             $osVersion,
             $buildNumber,
             $platform,
+            $allowExistingWindowsActivation,
         );
     }
 
@@ -60,12 +62,13 @@ class LicenseActivationService
         ?string $osVersion = null,
         ?string $buildNumber = null,
         string $platform = 'android',
+        bool $allowExistingWindowsActivation = false,
     ): array {
         $platform = in_array($platform, ['android', 'windows'], true)
             ? $platform
             : 'android';
 
-        return DB::transaction(function () use ($license, $deviceId, $deviceName, $appVersion, $deviceModel, $osVersion, $buildNumber, $platform): array {
+        return DB::transaction(function () use ($license, $deviceId, $deviceName, $appVersion, $deviceModel, $osVersion, $buildNumber, $platform, $allowExistingWindowsActivation): array {
             /** @var License $license */
             $license = License::query()
                 ->with(['subscription.plan', 'subscription.business.tenant'])
@@ -77,16 +80,27 @@ class LicenseActivationService
             $plan = $license->subscription->plan;
             $now = CarbonImmutable::now();
 
-            if ($platform === 'windows' && $license->windows_consumed_at !== null) {
-                throw ValidationException::withMessages([
-                    'license_key' => 'This Windows activation key has already been used. Contact support to reset or reassign the license.',
-                ]);
-            }
-
             $activation = LicenseActivation::query()
                 ->where('license_id', $license->id)
                 ->where('device_id', $deviceId)
                 ->first();
+
+            if ($platform === 'windows' && $license->windows_consumed_at !== null) {
+                $isSameActiveActivation = $activation !== null
+                    && $activation->revoked_at === null
+                    && (string) $license->windows_consumed_activation_id === (string) $activation->id;
+
+                if (! $allowExistingWindowsActivation || ! $isSameActiveActivation) {
+                    $field = $allowExistingWindowsActivation ? 'device_id' : 'license_key';
+                    $message = $allowExistingWindowsActivation
+                        ? 'This Windows trial is already bound to another PC. Contact support if the device must be replaced.'
+                        : 'This Windows activation key has already been used. Contact support to reset or reassign the license.';
+
+                    throw ValidationException::withMessages([
+                        $field => $message,
+                    ]);
+                }
+            }
 
             $deviceLimit = $platform === 'windows'
                 ? $plan->max_windows_devices
