@@ -10,7 +10,7 @@
     ];
 @endphp
 
-<form method="POST" action="{{ $editing ? route('platform.plans.update', $plan) : route('platform.plans.store') }}" class="space-y-5">
+<form method="POST" action="{{ $editing ? \App\Support\PlatformRoute::url('plans.update', $plan) : \App\Support\PlatformRoute::url('plans.store') }}" class="space-y-5">
     @csrf
     @if ($editing) @method('PUT') @endif
 
@@ -118,6 +118,6 @@
         <button class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">
             {{ $editing ? 'Save plan' : 'Create plan' }}
         </button>
-        <a href="{{ route('platform.plans.index') }}" class="text-sm font-semibold text-slate-600">Cancel</a>
+        <a href="{{ \App\Support\PlatformRoute::url('plans.index') }}" class="text-sm font-semibold text-slate-600">Cancel</a>
     </div>
 </form>
