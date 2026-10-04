@@ -74,6 +74,12 @@ class LicenseActivationService
 
             $this->assertLicenseUsable($license);
 
+            if ($platform === 'windows' && $license->activation_key_consumed_at !== null) {
+                throw ValidationException::withMessages([
+                    'license_key' => 'This one-time Windows activation key has already been used. Contact support to reset or reassign this license.',
+                ]);
+            }
+
             $plan = $license->subscription->plan;
             $now = CarbonImmutable::now();
 
@@ -132,6 +138,13 @@ class LicenseActivationService
                 'last_seen_at' => $now,
             ]);
             $activation->save();
+
+            if ($platform === 'windows') {
+                $license->forceFill([
+                    'activation_key_consumed_at' => $now,
+                    'activation_key_consumed_by' => $activation->id,
+                ])->save();
+            }
 
             return $this->buildActivationResult(
                 $license,

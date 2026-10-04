@@ -3,11 +3,13 @@
 namespace Tests\Feature\Desktop;
 
 use App\Models\Plan;
+use App\Models\PlatformAdmin;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Licensing\LicenseKeyService;
+use App\Services\Licensing\LicenseSupportService;
 use App\Services\Licensing\SignedTokenVerifier;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -148,6 +150,80 @@ class DesktopSessionApiTest extends TestCase
                 'password' => 'secret-password',
             ])
             ->assertUnauthorized();
+    }
+
+    public function test_platform_support_can_force_sign_out_and_release_failed_pc_with_new_one_time_key(): void
+    {
+        app(RbacProvisioner::class)->provisionOwner(
+            $this->tenant,
+            'Owner',
+            'owner@example.test',
+            'secret-password',
+        );
+
+        $deviceId = '77777777-7777-4777-8777-777777777777';
+        $lease = $this->activateWindows($deviceId);
+
+        $login = $this->withToken($lease)
+            ->postJson('/api/v1/desktop/session/login', [
+                'device_id' => $deviceId,
+                'email' => 'owner@example.test',
+                'password' => 'secret-password',
+            ])
+            ->assertOk();
+
+        $activation = $this->subscription->license
+            ->activations()
+            ->where('device_id', $deviceId)
+            ->firstOrFail();
+
+        $this->assertSame('owner@example.test', $activation->fresh()->current_user_email);
+        $this->assertNotNull($activation->fresh()->session_last_seen_at);
+
+        $admin = PlatformAdmin::query()->create([
+            'name' => 'Support Admin',
+            'email' => 'support@example.test',
+            'password' => 'secret-password',
+            'is_active' => true,
+        ]);
+
+        $support = app(LicenseSupportService::class);
+        $support->forceSignOut($activation, $admin, 'Support test');
+
+        $this->withToken($login->json('data.access_token'))
+            ->postJson('/api/v1/desktop/session/refresh', [
+                'device_id' => $deviceId,
+            ])
+            ->assertUnauthorized();
+
+        $replacementKey = $support->releaseAndReassign(
+            $activation->fresh(),
+            $admin,
+            'PC failed and was replaced',
+        );
+
+        $this->assertNotSame($this->licenseKey, $replacementKey);
+        $this->assertNotNull($activation->fresh()->revoked_at);
+
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $this->licenseKey,
+            'device_id' => '88888888-8888-4888-8888-888888888888',
+            'platform' => 'windows',
+        ])->assertUnprocessable();
+
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $replacementKey,
+            'device_id' => '88888888-8888-4888-8888-888888888888',
+            'platform' => 'windows',
+            'device_name' => 'Replacement PC',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('license_support_actions', [
+            'license_id' => $this->subscription->license->id,
+            'activation_id' => $activation->id,
+            'platform_admin_id' => $admin->id,
+            'action' => 'device_released_and_key_reissued',
+        ]);
     }
 
     public function test_online_session_refresh_picks_up_changed_roles_and_permissions(): void

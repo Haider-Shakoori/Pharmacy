@@ -16,7 +16,10 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
     'key_hint',
     'status',
     'version',
+    'activation_key_generation',
     'generated_at',
+    'activation_key_consumed_at',
+    'activation_key_consumed_by',
     'revoked_at',
 ])]
 class License extends Model
@@ -33,12 +36,19 @@ class License extends Model
         return $this->hasMany(LicenseActivation::class);
     }
 
+    public function supportActions(): HasMany
+    {
+        return $this->hasMany(LicenseSupportAction::class);
+    }
+
     protected function casts(): array
     {
         return [
             'status' => LicenseStatus::class,
             'version' => 'integer',
+            'activation_key_generation' => 'integer',
             'generated_at' => 'datetime',
+            'activation_key_consumed_at' => 'datetime',
             'revoked_at' => 'datetime',
         ];
     }

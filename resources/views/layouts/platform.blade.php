@@ -8,6 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-slate-100 text-slate-900 antialiased">
+@php($platformRoutePrefix = request()->routeIs('legacy.platform.*') ? 'legacy.platform.' : 'platform.')
 <div class="min-h-screen lg:flex">
     <aside class="w-full border-b border-slate-800 bg-slate-950 text-white lg:min-h-screen lg:w-72 lg:border-b-0 lg:border-e">
         <div class="flex items-center justify-between gap-4 px-5 py-5 lg:block">
@@ -16,11 +17,11 @@
                 <h1 class="mt-1 text-lg font-bold">Platform Control Plane</h1>
             </div>
             <div class="flex items-center gap-2 lg:mt-4">
-                <a href="{{ route('platform.account.password.edit') }}"
-                   class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold {{ request()->routeIs('platform.account.*') ? 'border-teal-500 bg-teal-500/10 text-teal-200' : 'text-slate-200 hover:bg-slate-900' }}">
+                <a href="{{ route($platformRoutePrefix.'account.password.edit') }}"
+                   class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold {{ request()->routeIs('platform.account.*', 'legacy.platform.account.*') ? 'border-teal-500 bg-teal-500/10 text-teal-200' : 'text-slate-200 hover:bg-slate-900' }}">
                     Change password
                 </a>
-                <form method="POST" action="{{ route('platform.logout') }}">
+                <form method="POST" action="{{ route($platformRoutePrefix.'logout') }}">
                     @csrf
                     <button class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900">Sign out</button>
                 </form>
@@ -28,19 +29,19 @@
         </div>
 
         <nav class="flex gap-2 overflow-x-auto px-4 pb-4 text-sm lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
-            <a href="{{ route('platform.dashboard') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.dashboard') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Dashboard</a>
-            <a href="{{ route('platform.tenants.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.tenants.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Pharmacies</a>
-            <a href="{{ route('platform.trial-requests.index') }}" class="flex items-center justify-between gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.trial-requests.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">
+            <a href="{{ route($platformRoutePrefix.'dashboard') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.dashboard', 'legacy.platform.dashboard') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Dashboard</a>
+            <a href="{{ route($platformRoutePrefix.'tenants.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.tenants.*', 'legacy.platform.tenants.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Pharmacies</a>
+            <a href="{{ route($platformRoutePrefix.'trial-requests.index') }}" class="flex items-center justify-between gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.trial-requests.*', 'legacy.platform.trial-requests.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">
                 <span>Trial Requests</span>
                 @php($pendingTrialRequests = \App\Models\TrialRequest::query()->where('status', 'pending')->count())
                 @if ($pendingTrialRequests > 0)
                     <span class="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black text-slate-950">{{ $pendingTrialRequests }}</span>
                 @endif
             </a>
-            <a href="{{ route('platform.plans.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.plans.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Plans</a>
-            <a href="{{ route('platform.subscriptions.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.subscriptions.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Subscriptions</a>
-            <a href="{{ route('platform.monitoring.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.monitoring.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Monitoring</a>
-            <a href="{{ route('platform.licenses.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.licenses.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Licenses</a>
+            <a href="{{ route($platformRoutePrefix.'plans.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.plans.*', 'legacy.platform.plans.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Plans</a>
+            <a href="{{ route($platformRoutePrefix.'subscriptions.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.subscriptions.*', 'legacy.platform.subscriptions.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Subscriptions</a>
+            <a href="{{ route($platformRoutePrefix.'monitoring.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.monitoring.*', 'legacy.platform.monitoring.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Monitoring</a>
+            <a href="{{ route($platformRoutePrefix.'licenses.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.licenses.*', 'legacy.platform.licenses.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Licenses</a>
         </nav>
     </aside>
 

@@ -34,7 +34,12 @@ class LicenseKeyService
                 'key_hint' => $hint,
                 'status' => LicenseStatus::Active,
                 'version' => $license->exists ? $license->version + 1 : 1,
+                'activation_key_generation' => $license->exists
+                    ? ((int) $license->activation_key_generation) + 1
+                    : 1,
                 'generated_at' => now(),
+                'activation_key_consumed_at' => null,
+                'activation_key_consumed_by' => null,
                 'revoked_at' => null,
             ]);
             $license->save();
@@ -64,6 +69,32 @@ class LicenseKeyService
             $license->activations()
                 ->whereNull('revoked_at')
                 ->update(['revoked_at' => now()]);
+        });
+    }
+
+    public function issueNextWindowsActivationKey(Subscription $subscription): string
+    {
+        return DB::transaction(function () use ($subscription): string {
+            $license = $subscription->license()->lockForUpdate()->first();
+
+            if ($license === null) {
+                return $this->rotate($subscription);
+            }
+
+            $plainText = $this->generatePlainTextKey();
+
+            $license->forceFill([
+                'key_hash' => hash('sha256', $plainText),
+                'key_hint' => substr($plainText, 0, 8).'…'.substr($plainText, -6),
+                'status' => LicenseStatus::Active,
+                'activation_key_generation' => ((int) $license->activation_key_generation) + 1,
+                'generated_at' => now(),
+                'activation_key_consumed_at' => null,
+                'activation_key_consumed_by' => null,
+                'revoked_at' => null,
+            ])->save();
+
+            return $plainText;
         });
     }
 
