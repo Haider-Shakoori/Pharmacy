@@ -152,7 +152,37 @@ class LicenseActivationApiTest extends TestCase
             'platform' => 'windows',
         ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('device_id');
+            ->assertJsonValidationErrors('license_key')
+            ->assertJsonPath(
+                'errors.license_key.0',
+                'This Windows activation key has already been used. Contact Darmaltoon support to release or reassign the license.',
+            );
+    }
+
+    public function test_windows_activation_key_is_one_time_even_for_the_same_pc(): void
+    {
+        $deviceId = '77777777-7777-4777-8777-777777777777';
+
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $this->plainTextKey,
+            'device_id' => $deviceId,
+            'platform' => 'windows',
+            'device_name' => 'One Time PC',
+        ])->assertOk();
+
+        $this->postJson('/api/v1/license/activate', [
+            'license_key' => $this->plainTextKey,
+            'device_id' => $deviceId,
+            'platform' => 'windows',
+            'device_name' => 'One Time PC',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('license_key');
+
+        $license = $this->subscription->license()->firstOrFail();
+
+        $this->assertNotNull($license->windows_activation_key_consumed_at);
+        $this->assertNotNull($license->windows_activation_id);
     }
 
     public function test_invalid_or_inactive_subscription_cannot_activate(): void
