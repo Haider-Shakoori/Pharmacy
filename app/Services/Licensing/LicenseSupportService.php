@@ -20,22 +20,39 @@ class LicenseSupportService
         PlatformAdmin $admin,
         ?string $reason = null,
     ): string {
-        $plainText = $this->keys->issueNextWindowsActivationKey($subscription);
-        $license = $subscription->license()->firstOrFail();
+        return DB::transaction(function () use ($subscription, $admin, $reason): string {
+            $subscription->loadMissing(['plan', 'license']);
 
-        $this->audit(
-            $license->id,
-            null,
-            $admin,
-            'one_time_key_issued',
-            $reason,
-            [
-                'generation' => $license->activation_key_generation,
-                'key_hint' => $license->key_hint,
-            ],
-        );
+            $activeWindows = $subscription->license?->activations()
+                ->where('platform', 'windows')
+                ->whereNull('revoked_at')
+                ->count() ?? 0;
 
-        return $plainText;
+            $limit = $subscription->plan->max_windows_devices;
+
+            if ($limit !== null && $activeWindows >= $limit) {
+                throw ValidationException::withMessages([
+                    'license' => 'The Windows device limit has been reached. Release a failed or replaced PC before issuing another activation key.',
+                ]);
+            }
+
+            $plainText = $this->keys->issueNextWindowsActivationKey($subscription);
+            $license = $subscription->license()->firstOrFail();
+
+            $this->audit(
+                $license->id,
+                null,
+                $admin,
+                'one_time_key_issued',
+                $reason,
+                [
+                    'generation' => $license->activation_key_generation,
+                    'key_hint' => $license->key_hint,
+                ],
+            );
+
+            return $plainText;
+        });
     }
 
     public function forceSignOut(
