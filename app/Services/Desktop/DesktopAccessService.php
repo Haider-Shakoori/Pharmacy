@@ -151,8 +151,7 @@ class DesktopAccessService
         string $deviceId,
         ?string $ipAddress = null,
         ?string $userAgent = null,
-    ): array
-    {
+    ): array {
         $payload = $this->tokens->verify(
             $accessToken,
             purpose: 'desktop_access',
