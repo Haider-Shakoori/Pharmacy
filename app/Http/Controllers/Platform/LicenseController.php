@@ -69,12 +69,19 @@ class LicenseController extends Controller
     public function issueWindowsKey(
         Subscription $subscription,
         LicenseSupportService $support,
+        LicenseKeyService $keys,
     ): RedirectResponse {
         $license = $subscription->license;
 
         if ($license === null) {
+            $keys->ensureForSubscription($subscription);
+            $subscription->refresh()->load('license');
+            $license = $subscription->license;
+        }
+
+        if ($license === null) {
             throw ValidationException::withMessages([
-                'license' => 'Generate the subscription license before issuing a Windows activation key.',
+                'license' => 'The subscription license could not be initialized.',
             ]);
         }
 
