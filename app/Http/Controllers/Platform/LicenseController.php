@@ -22,12 +22,12 @@ class LicenseController extends Controller
         $search = trim((string) $request->query('search'));
 
         $subscriptions = Subscription::query()
-            ->with(['business.tenant', 'plan', 'license'])
-            ->withCount([
-                'license as active_windows_count' => fn ($query) => $query
-                    ->join('license_activations', 'licenses.id', '=', 'license_activations.license_id')
-                    ->where('license_activations.platform', 'windows')
-                    ->whereNull('license_activations.revoked_at'),
+            ->with([
+                'business.tenant',
+                'plan',
+                'license.activations' => fn ($query) => $query
+                    ->where('platform', 'windows')
+                    ->whereNull('revoked_at'),
             ])
             ->when($search !== '', function ($query) use ($search): void {
                 $query->whereHas('business', function ($query) use ($search): void {
@@ -47,7 +47,9 @@ class LicenseController extends Controller
         $subscription->load([
             'business.tenant',
             'plan',
-            'license.activationCodes' => fn ($query) => $query->latest('generated_at'),
+            'license.activationCodes' => fn ($query) => $query
+                ->with('issuedBy')
+                ->latest('generated_at'),
             'license.activations' => fn ($query) => $query
                 ->with(['desktopSessions' => fn ($query) => $query->latest('last_seen_at')])
                 ->latest('last_seen_at'),
