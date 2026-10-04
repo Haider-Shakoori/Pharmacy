@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -25,6 +26,28 @@ return new class extends Migration
             $table->string('last_ip_address', 45)->nullable()->after('session_signed_out_at');
             $table->text('last_user_agent')->nullable()->after('last_ip_address');
         });
+
+        DB::table('licenses')
+            ->orderBy('id')
+            ->get(['id'])
+            ->each(function (object $license): void {
+                $activation = DB::table('license_activations')
+                    ->where('license_id', $license->id)
+                    ->where('platform', 'windows')
+                    ->whereNull('revoked_at')
+                    ->latest('last_seen_at')
+                    ->latest('activated_at')
+                    ->first(['id', 'activated_at']);
+
+                if ($activation !== null) {
+                    DB::table('licenses')
+                        ->where('id', $license->id)
+                        ->update([
+                            'windows_consumed_at' => $activation->activated_at ?? now(),
+                            'windows_consumed_activation_id' => $activation->id,
+                        ]);
+                }
+            });
 
         Schema::create('license_support_actions', function (Blueprint $table): void {
             $table->ulid('id')->primary();
