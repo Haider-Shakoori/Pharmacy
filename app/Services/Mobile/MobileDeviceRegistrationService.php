@@ -151,6 +151,7 @@ class MobileDeviceRegistrationService
             $osVersion,
             $buildNumber,
             $platform,
+            allowExistingWindowsActivation: true,
         );
     }
 
@@ -204,6 +205,7 @@ class MobileDeviceRegistrationService
         ?string $osVersion,
         ?string $buildNumber,
         string $platform,
+        bool $allowExistingWindowsActivation = false,
     ): array {
         $activated = $this->activation->activateLicense(
             $license,
@@ -214,6 +216,7 @@ class MobileDeviceRegistrationService
             $osVersion,
             $buildNumber,
             $platform,
+            $allowExistingWindowsActivation,
         );
 
         $now = CarbonImmutable::now();
