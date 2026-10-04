@@ -44,6 +44,22 @@ class MobileSyncPushService
             ? $event['payload']
             : [];
 
+        if ($eventType === 'medicine.upsert') {
+            return $this->pushMedicineUpsert(
+                $context,
+                $payload,
+                $idempotencyKey,
+            );
+        }
+
+        if ($eventType === 'customer.upsert') {
+            return $this->pushCustomerUpsert(
+                $context,
+                $payload,
+                $idempotencyKey,
+            );
+        }
+
         if ($eventType !== 'sale.completed') {
             return $this->rejected(
                 $idempotencyKey,
@@ -155,6 +171,285 @@ class MobileSyncPushService
                 $idempotencyKey,
                 'server_error',
                 'The server could not process this event.',
+                retryable: true,
+            );
+        }
+    }
+
+    private function pushMedicineUpsert(
+        SyncAccessContext $context,
+        array $payload,
+        string $idempotencyKey,
+    ): array {
+        if (! in_array('medicines.manage', $context->permissions, true)) {
+            return $this->rejected(
+                $idempotencyKey,
+                'permission_denied',
+                'The signed-in pharmacy user cannot synchronize medicine changes.',
+            );
+        }
+
+        if (($payload['idempotency_key'] ?? null) !== $idempotencyKey) {
+            return $this->rejected(
+                $idempotencyKey,
+                'idempotency_mismatch',
+                'The event and payload idempotency keys do not match.',
+            );
+        }
+
+        $validator = Validator::make($payload, [
+            'local_id' => ['required', 'string', 'max:64'],
+            'medicine_code' => ['required', 'string', 'max:80'],
+            'barcode' => ['nullable', 'string', 'max:120'],
+            'brand_name' => ['required', 'string', 'max:180'],
+            'generic_name' => ['nullable', 'string', 'max:180'],
+            'strength' => ['nullable', 'string', 'max:100'],
+            'dosage_form' => ['nullable', 'string', 'max:80'],
+            'purchase_unit' => ['required', 'string', 'max:50'],
+            'sale_unit' => ['required', 'string', 'max:50'],
+            'units_per_purchase_unit' => ['required', 'numeric', 'gt:0'],
+            'reorder_level' => ['required', 'numeric', 'min:0'],
+            'prescription_required' => ['required', 'boolean'],
+            'batch_tracking_required' => ['required', 'boolean'],
+            'expiry_tracking_required' => ['required', 'boolean'],
+            'is_active' => ['required', 'boolean'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->rejected(
+                $idempotencyKey,
+                'validation_failed',
+                (string) collect($validator->errors()->all())->first(),
+            );
+        }
+
+        try {
+            return $context->tenant->run(function () use (
+                $payload,
+                $idempotencyKey,
+            ): array {
+                $localId = trim((string) $payload['local_id']);
+                $code = trim((string) $payload['medicine_code']);
+
+                $medicine = Medicine::query()
+                    ->where('desktop_source_id', $localId)
+                    ->first();
+
+                if ($medicine === null) {
+                    $medicine = Medicine::query()
+                        ->where('medicine_code', $code)
+                        ->first();
+
+                    if ($medicine !== null &&
+                        filled($medicine->desktop_source_id) &&
+                        $medicine->desktop_source_id !== $localId) {
+                        return $this->rejected(
+                            $idempotencyKey,
+                            'identity_conflict',
+                            'The medicine code is already linked to another desktop record.',
+                        );
+                    }
+                }
+
+                $barcode = blank($payload['barcode'] ?? null)
+                    ? null
+                    : trim((string) $payload['barcode']);
+
+                if ($barcode !== null) {
+                    $barcodeOwner = Medicine::query()
+                        ->where('barcode', $barcode)
+                        ->when(
+                            $medicine !== null,
+                            fn ($query) => $query->whereKeyNot($medicine->getKey()),
+                        )
+                        ->exists();
+
+                    if ($barcodeOwner) {
+                        return $this->rejected(
+                            $idempotencyKey,
+                            'validation_failed',
+                            'The medicine barcode is already in use.',
+                        );
+                    }
+                }
+
+                $attributes = [
+                    'desktop_source_id' => $localId,
+                    'medicine_code' => $code,
+                    'barcode' => $barcode,
+                    'brand_name' => trim((string) $payload['brand_name']),
+                    'generic_name' => blank($payload['generic_name'] ?? null)
+                        ? null
+                        : trim((string) $payload['generic_name']),
+                    'strength' => blank($payload['strength'] ?? null)
+                        ? null
+                        : trim((string) $payload['strength']),
+                    'dosage_form' => blank($payload['dosage_form'] ?? null)
+                        ? null
+                        : trim((string) $payload['dosage_form']),
+                    'purchase_unit' => trim((string) $payload['purchase_unit']),
+                    'sale_unit' => trim((string) $payload['sale_unit']),
+                    'units_per_purchase_unit' => $payload['units_per_purchase_unit'],
+                    'reorder_level' => $payload['reorder_level'],
+                    'prescription_required' => (bool) $payload['prescription_required'],
+                    'batch_tracking_required' => (bool) $payload['batch_tracking_required'],
+                    'expiry_tracking_required' => (bool) $payload['expiry_tracking_required'],
+                    'is_active' => (bool) $payload['is_active'],
+                    'notes' => blank($payload['notes'] ?? null)
+                        ? null
+                        : trim((string) $payload['notes']),
+                ];
+
+                if ($medicine === null) {
+                    $medicine = Medicine::query()->create($attributes);
+                } else {
+                    $medicine->update($attributes);
+                }
+
+                return [
+                    'idempotency_key' => $idempotencyKey,
+                    'status' => 'accepted',
+                    'aggregate_type' => 'medicine',
+                    'local_id' => $localId,
+                    'server_id' => (string) $medicine->id,
+                    'server_updated_at' => $medicine->updated_at?->toISOString(),
+                ];
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return $this->rejected(
+                $idempotencyKey,
+                'server_error',
+                'The server could not synchronize the medicine.',
+                retryable: true,
+            );
+        }
+    }
+
+    private function pushCustomerUpsert(
+        SyncAccessContext $context,
+        array $payload,
+        string $idempotencyKey,
+    ): array {
+        if (! in_array('customers.manage', $context->permissions, true)) {
+            return $this->rejected(
+                $idempotencyKey,
+                'permission_denied',
+                'The signed-in pharmacy user cannot synchronize customer changes.',
+            );
+        }
+
+        if (($payload['idempotency_key'] ?? null) !== $idempotencyKey) {
+            return $this->rejected(
+                $idempotencyKey,
+                'idempotency_mismatch',
+                'The event and payload idempotency keys do not match.',
+            );
+        }
+
+        $validator = Validator::make($payload, [
+            'local_id' => ['required', 'string', 'max:64'],
+            'name' => ['required', 'string', 'max:180'],
+            'phone' => ['nullable', 'string', 'max:64'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'credit_limit' => ['required', 'numeric', 'min:0'],
+            'is_active' => ['required', 'boolean'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->rejected(
+                $idempotencyKey,
+                'validation_failed',
+                (string) collect($validator->errors()->all())->first(),
+            );
+        }
+
+        try {
+            return $context->tenant->run(function () use (
+                $payload,
+                $idempotencyKey,
+            ): array {
+                $localId = trim((string) $payload['local_id']);
+                $email = blank($payload['email'] ?? null)
+                    ? null
+                    : Str::lower(trim((string) $payload['email']));
+                $phone = blank($payload['phone'] ?? null)
+                    ? null
+                    : trim((string) $payload['phone']);
+
+                $customer = Customer::query()
+                    ->where('desktop_source_id', $localId)
+                    ->first();
+
+                if ($customer === null && $email !== null) {
+                    $matches = Customer::query()
+                        ->whereRaw('LOWER(email) = ?', [$email])
+                        ->limit(2)
+                        ->get();
+
+                    if ($matches->count() === 1) {
+                        $customer = $matches->first();
+                    }
+                }
+
+                if ($customer === null && $phone !== null) {
+                    $matches = Customer::query()
+                        ->where('phone', $phone)
+                        ->limit(2)
+                        ->get();
+
+                    if ($matches->count() === 1) {
+                        $customer = $matches->first();
+                    }
+                }
+
+                if ($customer !== null &&
+                    filled($customer->desktop_source_id) &&
+                    $customer->desktop_source_id !== $localId) {
+                    return $this->rejected(
+                        $idempotencyKey,
+                        'identity_conflict',
+                        'The customer is already linked to another desktop record.',
+                    );
+                }
+
+                $attributes = [
+                    'desktop_source_id' => $localId,
+                    'name' => trim((string) $payload['name']),
+                    'phone' => $phone,
+                    'email' => $email,
+                    'credit_limit' => $payload['credit_limit'],
+                    'is_active' => (bool) $payload['is_active'],
+                    'notes' => blank($payload['notes'] ?? null)
+                        ? null
+                        : trim((string) $payload['notes']),
+                ];
+
+                if ($customer === null) {
+                    $customer = Customer::query()->create($attributes);
+                } else {
+                    $customer->update($attributes);
+                }
+
+                return [
+                    'idempotency_key' => $idempotencyKey,
+                    'status' => 'accepted',
+                    'aggregate_type' => 'customer',
+                    'local_id' => $localId,
+                    'server_id' => (string) $customer->id,
+                    'server_updated_at' => $customer->updated_at?->toISOString(),
+                ];
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return $this->rejected(
+                $idempotencyKey,
+                'server_error',
+                'The server could not synchronize the customer.',
                 retryable: true,
             );
         }

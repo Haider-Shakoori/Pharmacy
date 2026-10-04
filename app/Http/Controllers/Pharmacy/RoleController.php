@@ -7,6 +7,7 @@ use App\Http\Requests\Pharmacy\StoreRoleRequest;
 use App\Http\Requests\Pharmacy\UpdateRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -38,6 +39,7 @@ class RoleController extends Controller
 
         $role = Role::query()->create($validated + ['is_system' => false]);
         $role->permissions()->sync($permissionIds);
+        $role->touch();
 
         return redirect()
             ->route('pharmacy.roles.edit', $role)
@@ -59,6 +61,11 @@ class RoleController extends Controller
         }
 
         $role->permissions()->sync($request->validated('permission_ids'));
+        $role->touch();
+
+        User::query()
+            ->whereHas('roles', fn ($query) => $query->whereKey($role->id))
+            ->update(['updated_at' => now()]);
 
         return back()->with('success', 'Role permissions updated.');
     }

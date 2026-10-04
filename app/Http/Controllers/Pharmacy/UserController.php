@@ -40,6 +40,7 @@ class UserController extends Controller
 
         $user = User::query()->create($validated);
         $user->roles()->sync($roleIds);
+        $user->touch();
 
         return redirect()
             ->route('pharmacy.users.edit', $user)
@@ -72,6 +73,7 @@ class UserController extends Controller
 
         $user->update($validated);
         $user->roles()->sync($roleIds);
+        $user->touch();
 
         return back()->with('success', 'Pharmacy user updated.');
     }
