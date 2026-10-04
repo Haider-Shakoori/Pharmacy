@@ -14,11 +14,15 @@ class UpdateTenantRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $values = [
+            'desktop_cloud_sync_enabled' => $this->boolean('desktop_cloud_sync_enabled'),
+        ];
+
         if ($this->has('slug')) {
-            $this->merge([
-                'slug' => strtolower(trim((string) $this->input('slug'))),
-            ]);
+            $values['slug'] = strtolower(trim((string) $this->input('slug')));
         }
+
+        $this->merge($values);
     }
 
     public function rules(): array
@@ -41,6 +45,7 @@ class UpdateTenantRequest extends FormRequest
             'timezone' => ['required', 'timezone'],
             'currency' => ['required', 'alpha', 'size:3'],
             'locale' => ['required', Rule::in(config('pharmacy.locales'))],
+            'desktop_cloud_sync_enabled' => ['required', 'boolean'],
         ];
     }
 }
