@@ -63,6 +63,37 @@ class PlatformLicenseActivationManagementTest extends TestCase
         $this->licenseKey = app(LicenseKeyService::class)->rotate($this->subscription);
     }
 
+    public function test_platform_can_view_device_and_signed_in_staff_session(): void
+    {
+        $admin = $this->platformAdmin();
+        app(RbacProvisioner::class)->provisionOwner(
+            $this->tenant,
+            'Owner',
+            'owner@example.test',
+            'secret-password',
+        );
+
+        $deviceId = '80000000-0000-4000-8000-000000000001';
+        $activation = $this->activateWindows($deviceId);
+
+        $this->withToken($activation['lease_token'])
+            ->withHeader('User-Agent', 'Darmaltoon Windows 1.0.8')
+            ->postJson('/api/v1/desktop/session/login', [
+                'device_id' => $deviceId,
+                'email' => 'owner@example.test',
+                'password' => 'secret-password',
+            ])
+            ->assertOk();
+
+        $this->actingAs($admin, 'platform')
+            ->get($this->legacyPlatformUrl("/licenses/{$this->subscription->id}"))
+            ->assertOk()
+            ->assertSee('Activated devices & sessions')
+            ->assertSee('Front Counter')
+            ->assertSee('owner@example.test')
+            ->assertSee('Consumed');
+    }
+
     public function test_support_can_force_sign_out_a_specific_desktop_session(): void
     {
         $admin = $this->platformAdmin();
