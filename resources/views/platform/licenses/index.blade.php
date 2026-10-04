@@ -60,7 +60,7 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-2">
-                                    <a href="{{ AppSupportPlatformRoute::url('licenses.show', $subscription) }}"
+                                    <a href="{{ \App\Support\PlatformRoute::url('licenses.show', $subscription) }}"
                                        class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white">
                                         Devices & sessions
                                     </a>
