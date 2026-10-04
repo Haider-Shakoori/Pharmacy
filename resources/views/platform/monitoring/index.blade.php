@@ -10,7 +10,7 @@
             <h2 class="mt-1 text-3xl font-bold tracking-tight">Subscription monitoring</h2>
             <p class="mt-2 text-sm text-slate-500">Trials, renewals, license health and Android device check-ins across every pharmacy.</p>
         </div>
-        <a href="{{ route('platform.subscriptions.index') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-center text-sm font-bold text-slate-700">Manage subscriptions</a>
+        <a href="{{ \App\Support\PlatformRoute::url('subscriptions.index') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-center text-sm font-bold text-slate-700">Manage subscriptions</a>
     </div>
 
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -96,7 +96,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-end">
-                                <a href="{{ route('platform.subscriptions.edit', $row['tenant_id']) }}" class="font-bold text-teal-700">Manage</a>
+                                <a href="{{ \App\Support\PlatformRoute::url('subscriptions.edit', $row['tenant_id']) }}" class="font-bold text-teal-700">Manage</a>
                             </td>
                         </tr>
                     @empty
