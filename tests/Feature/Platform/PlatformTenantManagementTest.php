@@ -62,6 +62,7 @@ class PlatformTenantManagementTest extends TestCase
             'timezone' => 'Asia/Kabul',
             'currency' => 'AFN',
             'locale' => 'ps',
+            'desktop_cloud_sync_enabled' => '0',
         ])->assertRedirect();
 
         $this->put("/platform/tenants/{$tenant->id}/status/suspended")
@@ -71,6 +72,7 @@ class PlatformTenantManagementTest extends TestCase
 
         $this->assertSame('Kabul Central Pharmacy Updated', $tenant->name);
         $this->assertSame('ps', $tenant->locale);
+        $this->assertFalse($tenant->business->fresh()->desktop_cloud_sync_enabled);
         $this->assertSame(TenantStatus::Suspended, $tenant->status);
     }
 
