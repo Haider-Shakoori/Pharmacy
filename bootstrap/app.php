@@ -48,19 +48,28 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.payload' => RejectOversizedApiPayload::class,
         ]);
 
-        $isPlatformRequest = static fn (Request $request): bool => $request->getHost() === config('pharmacy.platform_domain')
-            || $request->is('platform*');
+        $isLegacyPlatformRequest = static fn (Request $request): bool =>
+            $request->getHost() === config('pharmacy.deployment_host')
+            && $request->is('platform*');
+
+        $isPlatformRequest = static fn (Request $request): bool =>
+            $request->getHost() === config('pharmacy.platform_domain')
+            || $isLegacyPlatformRequest($request);
 
         $middleware->redirectGuestsTo(
-            fn (Request $request) => $isPlatformRequest($request)
-                ? route('platform.login')
-                : '/login',
+            fn (Request $request) => $isLegacyPlatformRequest($request)
+                ? route('legacy.platform.login')
+                : ($isPlatformRequest($request)
+                    ? route('platform.login')
+                    : '/login'),
         );
 
         $middleware->redirectUsersTo(
-            fn (Request $request) => $isPlatformRequest($request)
-                ? route('platform.dashboard')
-                : '/',
+            fn (Request $request) => $isLegacyPlatformRequest($request)
+                ? route('legacy.platform.dashboard')
+                : ($isPlatformRequest($request)
+                    ? route('platform.dashboard')
+                    : '/'),
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
