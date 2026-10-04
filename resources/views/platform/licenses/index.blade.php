@@ -23,6 +23,8 @@
                         <th class="px-4 py-3 text-start">Pharmacy</th>
                         <th class="px-4 py-3 text-start">Plan</th>
                         <th class="px-4 py-3 text-start">License</th>
+                        <th class="px-4 py-3 text-start">Windows activation</th>
+                        <th class="px-4 py-3 text-start">Devices</th>
                         <th class="px-4 py-3 text-start">Version</th>
                         <th class="px-4 py-3 text-end">Actions</th>
                     </tr>
@@ -43,9 +45,30 @@
                                     <span class="text-xs text-amber-700">Not generated</span>
                                 @endif
                             </td>
+                            <td class="px-4 py-3">
+                                @if ($subscription->license)
+                                    @if ($subscription->license->windows_activation_key_consumed_at)
+                                        <span class="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">Consumed</span>
+                                        <p class="mt-1 text-xs text-slate-500">{{ $subscription->license->windows_activation_key_consumed_at->diffForHumans() }}</p>
+                                    @else
+                                        <span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">Ready</span>
+                                    @endif
+                                @else
+                                    <span class="text-slate-400">—</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3">
+                                @php($activations = $subscription->license?->activations ?? collect())
+                                <p class="font-semibold">{{ $activations->whereNull('revoked_at')->count() }} active</p>
+                                <p class="mt-1 text-xs text-slate-500">{{ $activations->count() }} total</p>
+                            </td>
                             <td class="px-4 py-3">{{ $subscription->license?->version ?? '—' }}</td>
                             <td class="px-4 py-3">
-                                <div class="flex justify-end gap-2">
+                                <div class="flex flex-wrap justify-end gap-2">
+                                    @if ($subscription->license)
+                                        <a href="{{ route('platform.licenses.show', $subscription) }}"
+                                           class="rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-xs font-semibold text-teal-800">Devices & sessions</a>
+                                    @endif
                                     <form method="POST" action="{{ route('platform.licenses.regenerate', $subscription) }}">
                                         @csrf
                                         <button class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold">{{ $subscription->license ? 'Regenerate' : 'Generate' }}</button>
@@ -60,7 +83,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-4 py-10 text-center text-slate-500">No subscriptions exist yet.</td></tr>
+                        <tr><td colspan="7" class="px-4 py-10 text-center text-slate-500">No subscriptions exist yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>
