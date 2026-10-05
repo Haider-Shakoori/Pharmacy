@@ -2,13 +2,17 @@
 
 namespace Tests\Unit\Backups;
 
+use App\Models\Tenant;
 use App\Services\Backups\BackupManager;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Tests\TestCase;
 
 class BackupManagerTest extends TestCase
 {
+    use RefreshDatabase;
+
     private string $root;
 
     protected function setUp(): void
@@ -72,6 +76,22 @@ class BackupManagerTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $manager->verify($name);
+    }
+
+    public function test_automatic_backup_skips_tenant_without_application_ready_database(): void
+    {
+        Tenant::query()->create([
+            'id' => '01M3W7N7MVV64GNTYMZKV3Y8SZ',
+            'status' => 'active',
+            'provisioning_status' => 'failed',
+            'data' => [],
+        ]);
+
+        $manifest = app(BackupManager::class)->create(
+            includeCentral: false,
+        );
+
+        $this->assertSame([], $manifest['entries']);
     }
 
     public function test_backup_name_cannot_escape_configured_root(): void
