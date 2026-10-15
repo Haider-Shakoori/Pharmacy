@@ -5,7 +5,7 @@
 @section('body_class', 'bg-slate-100 text-slate-900 antialiased overflow-hidden')
 
 @section('content')
-<div class="flex h-screen min-h-0 flex-col" x-data="pharmacyPos()" x-init="$nextTick(() => $refs.search?.focus())">
+<div class="flex h-screen min-h-0 flex-col" x-data="pharmacyPos()" x-init="$nextTick(() => $refs.search?.focus())" @keydown.window.f2.prevent="$refs.search?.focus()">
     <header class="z-20 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 shadow-sm sm:px-5">
         <div class="flex min-w-0 items-center gap-3">
             <a href="{{ route('pharmacy.dashboard') }}" class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-900 font-black text-white">Rx</a>
@@ -43,10 +43,10 @@
                         </select>
                     </div>
                     <div class="flex gap-2">
-                        <input x-ref="search" x-model="query" @keydown.enter.prevent="search()" autocomplete="off" placeholder="Scan barcode or search medicine, generic, code, strength…" class="min-w-0 flex-1 rounded-xl border border-slate-300 px-4 py-3 text-base outline-none ring-teal-200 focus:ring-4">
+                        <input x-ref="search" x-model="query" @keydown.enter.prevent="search()" autocomplete="off" aria-label="Scan barcode or search medicine" placeholder="Scan barcode or search medicine, generic, code, strength…" class="min-w-0 flex-1 rounded-xl border border-slate-300 px-4 py-3 text-base outline-none ring-teal-200 focus:ring-4">
                         <button type="button" @click="search()" class="rounded-xl bg-teal-700 px-5 py-3 font-black text-white">Search</button>
                     </div>
-                    <p x-show="error" x-text="error" class="mt-2 text-sm font-semibold text-red-600"></p>
+                    <p x-show="error" x-text="error" role="alert" aria-live="assertive" class="mt-2 text-sm font-semibold text-red-600"></p><p class="mt-1 text-xs text-slate-500">F2: focus search · Enter: search or add matching barcode.</p>
                 </div>
 
                 <div class="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
