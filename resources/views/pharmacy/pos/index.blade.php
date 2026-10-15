@@ -156,7 +156,7 @@ function pharmacyPos() {
         payments: [{method:'cash',amount:0,reference:''}],
         prescriptionReference: '', prescriberName: '', prescriptionDate: new Date().toISOString().slice(0,10),
         canPriceOverride: @js(auth()->user()->hasPermission('pos.price_override')),
-        busy: false, error: '',
+        busy: false, error: '', checkoutKey: null,
         get subtotal(){ return this.cart.reduce((t,i)=>t+this.lineSubtotal(i),0) },
         get discountTotal(){ return this.cart.reduce((t,i)=>t+(Number(i.discount_amount)||0),0) },
         get grandTotal(){ return Math.max(0,this.subtotal-this.discountTotal) },
@@ -170,24 +170,26 @@ function pharmacyPos() {
         lineTotal(item){ return Math.max(0,this.lineSubtotal(item)-(Number(item.discount_amount)||0)) },
         batchPlan(item){ let remaining=Number(item.quantity)||0, parts=[]; for(const batch of (item.batches||[])){if(remaining<=0)break;const take=Math.min(remaining,Number(batch.available)||0);if(take>0){parts.push((batch.batch_number||'Unbatched')+': '+take+' × '+this.money(batch.sale_price)+(batch.expires_at?' · exp '+batch.expires_at:''));remaining-=take}} if(remaining>0)parts.push('Short '+remaining); return parts.join(' | ')||'No eligible batch' },
         prepareOverride(item){ if(item.override_price)item.unit_price=Number(this.standardAverage(item).toFixed(2)); this.fillCash() },
-        clearCart(){ this.cart=[]; this.results=[]; this.query=''; this.prescriptionReference=''; this.prescriberName=''; this.payments=[{method:'cash',amount:0,reference:''}]; this.error='' },
+        clearCart(){ this.cart=[]; this.results=[]; this.query=''; this.prescriptionReference=''; this.prescriberName=''; this.payments=[{method:'cash',amount:0,reference:''}]; this.error=''; this.checkoutKey=null },
         async search(){ this.error=''; if(!this.query.trim()||!this.location)return; const url=@js(route('pharmacy.pos.search'))+'?'+new URLSearchParams({q:this.query,location:this.location}); const r=await fetch(url,{headers:{Accept:'application/json'}}); const j=await r.json(); if(!r.ok){this.error=j.message||'Search failed.';return} this.results=j.data||[]; if(this.results.length===1&&(this.results[0].barcode===this.query||this.results[0].code===this.query))this.add(this.results[0]) },
         add(item){ const existing=this.cart.find(v=>v.id===item.id); if(existing)existing.quantity=Number(existing.quantity)+1; else this.cart.push({...item,quantity:1,unit_price:Number(item.price||0),override_price:false,discount_amount:0}); this.query=''; this.results=[]; this.fillCash(); this.$nextTick(()=>this.$refs.search?.focus()) },
         fillCash(force=false){ if(this.payments.length===1&&this.payments[0].method==='cash'&&(force||true))this.payments[0].amount=Number(this.grandTotal.toFixed(2)) },
         async toggleFullscreen(){ try{ if(!document.fullscreenElement)await document.documentElement.requestFullscreen(); else await document.exitFullscreen() }catch(e){} },
         async checkout(){
+            if (this.busy) return;
             this.error='';
             if(this.hasShortage){this.error='One or more items exceed available sellable stock.';return}
             if(this.requiresPrescription&&!this.prescriptionReference.trim()){this.error='Prescription reference is required for prescription-only medicines.';return}
             if(this.cart.some(i=>Number(i.quantity||0)<=0)){this.error='Every cart quantity must be greater than zero.';return}
             this.busy=true;
+            if (!this.checkoutKey) this.checkoutKey=crypto.randomUUID();
             const payload={
                 stock_location_id:this.location,
                 customer_id:this.customerId||null,
                 prescription_reference:this.prescriptionReference||null,
                 prescriber_name:this.prescriberName||null,
                 prescription_date:this.requiresPrescription?this.prescriptionDate:null,
-                idempotency_key:crypto.randomUUID(),
+                idempotency_key:this.checkoutKey,
                 lines:this.cart.map(x=>({medicine_id:x.id,quantity:x.quantity,unit_price:x.override_price?x.unit_price:null,override_price:!!x.override_price,discount_amount:x.discount_amount||0})),
                 payments:this.payments
             };
@@ -196,7 +198,8 @@ function pharmacyPos() {
                 const j=await r.json();
                 if(!r.ok){this.error=Object.values(j.errors||{}).flat()[0]||j.message||'Sale could not be completed.';return}
                 window.location=j.receipt_url
-            }finally{this.busy=false}
+            }catch(e){this.error='Connection interrupted. Confirm the sale in Invoices before retrying; repeating this request will use the same sale key.'}
+            finally{this.busy=false}
         }
     }
 }
