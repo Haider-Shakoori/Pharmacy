@@ -196,7 +196,7 @@ function pharmacyPos() {
             try{
                 const r=await fetch(@js(route('pharmacy.pos.store')),{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json','X-CSRF-TOKEN':@js(csrf_token())},body:JSON.stringify(payload)});
                 const j=await r.json();
-                if(!r.ok){this.error=Object.values(j.errors||{}).flat()[0]||j.message||'Sale could not be completed.';return}
+                if(!r.ok){this.error=Object.values(j.errors||{}).flat()[0]||j.message||'Sale could not be completed.';if(r.status===422)this.checkoutKey=null;return}
                 window.location=j.receipt_url
             }catch(e){this.error='Connection interrupted. Confirm the sale in Invoices before retrying; repeating this request will use the same sale key.'}
             finally{this.busy=false}
