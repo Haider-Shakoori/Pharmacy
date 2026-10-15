@@ -6,7 +6,7 @@
 <div class="mx-auto max-w-7xl space-y-5">
     <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-            <p class="text-sm font-semibold text-teal-700">Inventory batch</p>
+            <p class="text-sm font-semibold text-blue-700">Inventory batch</p>
             <h1 class="mt-1 text-3xl font-bold">{{ $batch->medicine->brand_name }}</h1>
             <p class="mt-1 text-sm text-slate-500">{{ $batch->batch_number ?: 'Unbatched' }} · {{ $batch->location->branch->name }} / {{ $batch->location->name }}</p>
         </div>
@@ -24,6 +24,17 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">{{ $label }}</p><p class="mt-2 text-xl font-bold">{{ $value }}</p></div>
         @endforeach
     </div>
+
+    @if ($errors->any())
+        <div role="alert" class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+            <p class="font-bold">The stock change was not posted.</p>
+            <ul class="mt-2 list-disc space-y-1 ps-5">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+        </div>
+    @endif
+
+    @if ($batch->status !== 'active')
+        <div role="status" class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">Batch status: {{ str($batch->status)->headline() }}. This batch is excluded from normal FEFO sales allocation.</div>
+    @endif
 
     @if ($batch->isExpired())
         <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">This batch is expired and is excluded from normal FEFO sales allocation.</div>
@@ -48,16 +59,16 @@
         @if (auth()->user()->hasPermission('inventory.adjust'))
         <section class="rounded-2xl border border-slate-200 bg-white p-5">
             <h2 class="font-bold">Stock adjustment</h2>
-            <p class="mt-1 text-sm text-slate-500">Adjustments create a source document and immutable movement. Negative stock is rejected.</p>
+            <p class="mt-1 text-sm text-slate-500">Adjustments post an audited stock movement and its accounting impact immediately. Negative stock is rejected. Review the quantity and reason before posting.</p>
             <form method="POST" action="{{ route('pharmacy.inventory.adjustments.store') }}" class="mt-4 grid gap-3 sm:grid-cols-2">
                 @csrf
                 <input type="hidden" name="product_batch_id" value="{{ $batch->id }}">
-                <input type="number" step="0.0001" name="quantity_delta" required placeholder="+/- quantity" class="rounded-xl border border-slate-300 px-3 py-2.5">
+                <input type="number" step="0.0001" name="quantity_delta" required value="{{ old('quantity_delta') }}" placeholder="+/- quantity" class="rounded-xl border border-slate-300 px-3 py-2.5">
                 <select name="reason_code" class="rounded-xl border border-slate-300 px-3 py-2.5">
                     <option value="count_correction">Count correction</option><option value="damage">Damage</option><option value="wastage">Wastage</option><option value="found_stock">Found stock</option><option value="other">Other</option>
                 </select>
-                <input name="reason" required placeholder="Reason" class="rounded-xl border border-slate-300 px-3 py-2.5 sm:col-span-2">
-                <button class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white sm:col-span-2">Post adjustment</button>
+                <input name="reason" required value="{{ old('reason') }}" placeholder="Reason" class="rounded-xl border border-slate-300 px-3 py-2.5 sm:col-span-2">
+                <button class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white sm:col-span-2">Post adjustment</button>
             </form>
         </section>
         @endif
