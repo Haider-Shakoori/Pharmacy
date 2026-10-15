@@ -3,6 +3,13 @@
 Date: 2026-10-15
 Sources: PharmaDesktop DashboardView.xaml, NotificationCenterView.xaml and NotificationService.cs; Laravel DashboardController, AlertController, OperationalAlertService and Blade dashboard/alerts views. The user also supplied a screenshot of the completed desktop dashboard as a visual reference.
 
+## Dashboard completion follow-up
+- Added seven-day completed-sales revenue chart by tenant business date; no synthetic points or CDN chart dependencies.
+- Added recent completed sales with authorized POS visibility and eager-loaded customer names.
+- Added low-stock and near-expiry preview lists using the existing operational alert snapshot.
+- Added license/subscription and pharmacy overview side panels. Purchase order count uses the tenant database; date uses the same pharmacy business date.
+- User-supplied desktop screenshot is a visual reference, not a claim of pixel-perfect equivalence. No browser screenshot comparison has yet been executed.
+
 ## Delivered
 - Dashboard: low-stock, near-expiry and expired summary cards linking to the existing authorized alerts route. Counts use the existing tenant-derived `$alerts` snapshot; no new calculations or queries.
 - Dashboard: hooks for desktop-inspired KPI card treatments with the existing desktop blue palette.
