@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Pharmacy;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\PurchaseOrder;
+use Carbon\CarbonImmutable;
 use App\Models\ProductBatch;
 use App\Models\Sale;
 use App\Services\Alerts\OperationalAlertService;
@@ -27,7 +29,33 @@ class DashboardController extends Controller
         $stockValue = (string) (ProductBatch::query()->where('status', 'active')->where('available_quantity', '>', 0)
             ->selectRaw('COALESCE(SUM(available_quantity * purchase_cost), 0) as value')->value('value') ?? '0');
 
+        $recentSales = Sale::query()
+            ->where('status', 'completed')
+            ->with('customer:id,name')
+            ->orderByDesc('completed_at')
+            ->limit(6)
+            ->get(['id', 'sale_number', 'customer_id', 'grand_total', 'payment_status', 'completed_at']);
+
+        $salesByDay = Sale::query()
+            ->where('status', 'completed')
+            ->whereDate('business_date', '>=', CarbonImmutable::parse($businessDate)->subDays(6)->toDateString())
+            ->whereDate('business_date', '<=', $businessDate)
+            ->selectRaw('business_date, COUNT(*) as invoices, COALESCE(SUM(grand_total), 0) as revenue')
+            ->groupBy('business_date')
+            ->get()->keyBy(fn ($row) => $row->business_date->toDateString());
+        $salesTrend = collect(range(6, 0))->map(function (int $daysAgo) use ($businessDate, $salesByDay): array {
+            $date = CarbonImmutable::parse($businessDate)->subDays($daysAgo)->toDateString();
+            $row = $salesByDay->get($date);
+
+            return ['date' => $date, 'revenue' => (float) ($row?->revenue ?? 0), 'invoices' => (int) ($row?->invoices ?? 0)];
+        })->all();
+
+        $purchaseOrdersToday = PurchaseOrder::query()->whereDate('order_date', $businessDate)->count();
+
         return view('pharmacy.dashboard', [
+            'recentSales' => $recentSales,
+            'salesTrend' => $salesTrend,
+            'purchaseOrdersToday' => $purchaseOrdersToday,
             'tenant' => $tenant,
             'subscriptionHealth' => $health->forTenant($tenant),
             'alerts' => $snapshot,
