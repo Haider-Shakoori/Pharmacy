@@ -7,7 +7,7 @@
 <div class="mx-auto max-w-7xl space-y-6">
     <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-            <p class="text-sm font-semibold text-teal-700">Finance control</p>
+            <p class="text-sm font-semibold text-blue-700">Finance control</p>
             <h1 class="mt-1 text-3xl font-bold tracking-tight">Accounting</h1>
             <p class="mt-1 text-sm text-slate-500">Double-entry tenant ledger with source-document links, reversals and fixed-precision AFN values.</p>
         </div>
@@ -22,12 +22,12 @@
                     @endforeach
                 </select>
             </label>
-            <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white">Apply</button>
+            <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white">Apply</button><a href="{{ route('pharmacy.accounting.index') }}" class="self-center text-sm font-semibold text-blue-700">Reset</a>
         </form>
     </div>
 
     @if ($errors->any())
-        <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <div role="alert" class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             <ul class="list-disc space-y-1 ps-5">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
         </div>
     @endif
@@ -52,7 +52,7 @@
 
     <div class="grid gap-5 xl:grid-cols-3">
         <section class="rounded-2xl border border-slate-200 bg-white p-5">
-            <p class="text-sm font-semibold text-teal-700">Inventory reconciliation</p>
+            <p class="text-sm font-semibold text-blue-700">Inventory reconciliation</p>
             <dl class="mt-4 space-y-3 text-sm">
                 <div class="flex justify-between gap-4"><dt class="text-slate-500">Ledger inventory</dt><dd class="font-bold">{{ $fmt($inventoryReconciliation['ledger_inventory']) }} AFN</dd></div>
                 <div class="flex justify-between gap-4"><dt class="text-slate-500">Batch stock value</dt><dd class="font-bold">{{ $fmt($inventoryReconciliation['batch_stock_value']) }} AFN</dd></div>
@@ -62,7 +62,7 @@
         </section>
 
         <section class="rounded-2xl border border-slate-200 bg-white p-5">
-            <p class="text-sm font-semibold text-teal-700">Receivable aging</p>
+            <p class="text-sm font-semibold text-blue-700">Receivable aging</p>
             <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
                 @foreach (['current' => 'Current', '1_30' => '1–30 days', '31_60' => '31–60 days', '61_90' => '61–90 days', '90_plus' => '90+ days'] as $key => $label)
                     <div class="rounded-xl bg-slate-50 p-3"><p class="text-xs text-slate-500">{{ $label }}</p><p class="mt-1 font-bold">{{ $fmt($receivableAging[$key]) }} AFN</p></div>
@@ -71,7 +71,7 @@
         </section>
 
         <section class="rounded-2xl border border-slate-200 bg-white p-5">
-            <p class="text-sm font-semibold text-teal-700">Payable aging</p>
+            <p class="text-sm font-semibold text-blue-700">Payable aging</p>
             <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
                 @foreach (['current' => 'Current', '1_30' => '1–30 days', '31_60' => '31–60 days', '61_90' => '61–90 days', '90_plus' => '90+ days'] as $key => $label)
                     <div class="rounded-xl bg-slate-50 p-3"><p class="text-xs text-slate-500">{{ $label }}</p><p class="mt-1 font-bold">{{ $fmt($payableAging[$key]) }} AFN</p></div>
@@ -97,7 +97,7 @@
                     <label class="text-xs font-semibold">Reference<input name="reference" value="{{ old('reference') }}" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></label>
                     <label class="text-xs font-semibold">Notes<textarea name="notes" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">{{ old('notes') }}</textarea></label>
                 </div>
-                <button class="rounded-lg bg-teal-700 px-4 py-2 text-sm font-bold text-white">Post expense</button>
+                <button class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white">Post expense</button>
             </form>
         </section>
 
@@ -132,7 +132,7 @@
                 <input type="hidden" name="currency" value="AFN">
                 <label class="block text-xs font-semibold">Parent<select name="parent_id" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">No parent</option>@foreach($accounts as $account)<option value="{{ $account->id }}">{{ $account->code }} · {{ $account->name }}</option>@endforeach</select></label>
                 <label class="block text-xs font-semibold">Description<textarea name="description" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea></label>
-                <button class="rounded-lg border border-teal-700 px-4 py-2 text-sm font-bold text-teal-700">Create account</button>
+                <button class="rounded-lg border border-teal-700 px-4 py-2 text-sm font-bold text-blue-700">Create account</button>
             </form>
         </section>
     </div>
