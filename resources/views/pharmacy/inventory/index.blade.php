@@ -6,9 +6,9 @@
 <div class="mx-auto max-w-7xl space-y-5">
     <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-            <p class="text-sm font-semibold text-teal-700">Batch-aware stock</p>
+            <p class="text-sm font-semibold text-blue-700">Batch-aware stock</p>
             <h1 class="mt-1 text-3xl font-bold tracking-tight">Inventory</h1>
-            <p class="mt-1 text-sm text-slate-500">FEFO-ready stock by batch, expiry and location.</p>
+            <p class="mt-1 text-sm text-slate-500">Batch stock, expiry, location and sales eligibility. Only active, unexpired batches with available quantity are eligible for normal FEFO allocation.</p>
         </div>
         <a href="{{ route('pharmacy.inventory.locations') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold">Branches & locations</a>
     </div>
@@ -20,7 +20,7 @@
         <div class="rounded-2xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Expired sales</p><p class="mt-2 text-xl font-bold">{{ $policy['block_expired_sales'] ? 'Blocked' : 'Policy review' }}</p></div>
     </div>
 
-    <form method="GET" class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 lg:grid-cols-[1fr_180px_180px_220px_auto]">
+    <form method="GET" class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 lg:grid-cols-[minmax(0,1fr)_150px_150px_170px_150px_auto]">
         <input name="search" value="{{ $search }}" placeholder="Medicine, code or batch" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
         <select name="status" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
             <option value="">All statuses</option>
@@ -40,14 +40,20 @@
                 <option value="{{ $item->id }}" @selected($location === $item->id)>{{ $item->branch->name }} · {{ $item->name }}</option>
             @endforeach
         </select>
+        <select name="eligibility" aria-label="Sale eligibility" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+            <option value="">All eligibility</option>
+            <option value="sellable" @selected($eligibility === 'sellable')>FEFO eligible</option>
+            <option value="blocked" @selected($eligibility === 'blocked')>Not sellable</option>
+        </select>
         <button class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">Filter</button>
+        <a href="{{ route('pharmacy.inventory.index') }}" class="self-center text-center text-sm font-semibold text-blue-700 lg:col-span-full lg:justify-self-end">Clear filters</a>
     </form>
 
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div class="overflow-x-auto">
             <table class="min-w-[1050px] w-full text-sm">
                 <thead class="bg-slate-50 text-xs uppercase text-slate-500">
-                    <tr><th class="px-4 py-3 text-start">Medicine</th><th class="px-4 py-3 text-start">Batch</th><th class="px-4 py-3 text-start">Location</th><th class="px-4 py-3 text-start">Expiry</th><th class="px-4 py-3 text-start">Status</th><th class="px-4 py-3 text-end">Available</th><th class="px-4 py-3 text-end">Cost</th></tr>
+                    <tr><th class="px-4 py-3 text-start">Medicine</th><th class="px-4 py-3 text-start">Batch</th><th class="px-4 py-3 text-start">Location</th><th class="px-4 py-3 text-start">Expiry</th><th class="px-4 py-3 text-start">Status</th><th class="px-4 py-3 text-start">Sale eligibility</th><th class="px-4 py-3 text-end">Available</th><th class="px-4 py-3 text-end">Cost</th></tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                 @forelse ($batches as $batch)
@@ -55,6 +61,7 @@
                         $expired = $batch->expires_at?->isBefore(today()) ?? false;
                         $near = $batch->expires_at && ! $expired && $batch->expires_at->lte(today()->addDays((int) $policy['near_expiry_days']));
                         $low = (float) $batch->available_quantity <= (float) $policy['low_stock_threshold'];
+                        $sellable = $batch->status === 'active' && ! $expired && (float) $batch->available_quantity > 0;
                     @endphp
                     <tr>
                         <td class="px-4 py-3"><a href="{{ route('pharmacy.inventory.show', $batch) }}" class="font-semibold text-teal-700">{{ $batch->medicine->brand_name }}</a><p class="text-xs text-slate-500">{{ $batch->medicine->generic_name }} {{ $batch->medicine->strength }}</p></td>
@@ -62,11 +69,12 @@
                         <td class="px-4 py-3">{{ $batch->location->branch->name }} · {{ $batch->location->name }}</td>
                         <td class="px-4 py-3"><span class="{{ $expired ? 'font-bold text-red-700' : ($near ? 'font-semibold text-amber-700' : '') }}">{{ $batch->expires_at?->toDateString() ?? '—' }}</span></td>
                         <td class="px-4 py-3">{{ str($batch->status)->headline() }}</td>
+                        <td class="px-4 py-3"><span class="rounded-full px-2.5 py-1 text-xs font-bold {{ $sellable ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800' }}">{{ $sellable ? 'FEFO eligible' : ($expired ? 'Expired' : ($batch->status !== 'active' ? str($batch->status)->headline() : 'No available stock')) }}</span></td>
                         <td class="px-4 py-3 text-end"><span class="{{ $low ? 'font-bold text-amber-700' : 'font-semibold' }}">{{ $batch->available_quantity }}</span></td>
                         <td class="px-4 py-3 text-end">{{ $batch->purchase_cost }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="px-4 py-10 text-center text-slate-500">No inventory batches found. Post a goods receipt to inventory to create stock.</td></tr>
+                    <tr><td colspan="8" class="px-4 py-10 text-center text-slate-500">No inventory batches found. Post a goods receipt to inventory to create stock.</td></tr>
                 @endforelse
                 </tbody>
             </table>
