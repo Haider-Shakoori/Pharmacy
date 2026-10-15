@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Pharmacy;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
-use App\Models\PurchaseOrder;
 use App\Models\ProductBatch;
+use App\Models\PurchaseOrder;
 use App\Models\Sale;
 use App\Services\Alerts\OperationalAlertService;
 use App\Services\Subscriptions\SubscriptionHealthService;
