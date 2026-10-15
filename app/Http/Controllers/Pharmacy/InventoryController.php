@@ -21,6 +21,7 @@ class InventoryController extends Controller
         $status = (string) $request->query('status');
         $expiry = (string) $request->query('expiry');
         $location = (string) $request->query('location');
+        $eligibility = (string) $request->query('eligibility');
         $policy = $settings->inventory($tenantContext->tenant());
         $nearExpiryDate = today()->addDays((int) $policy['near_expiry_days']);
 
@@ -39,6 +40,14 @@ class InventoryController extends Controller
                 ->whereDate('expires_at', '>=', today())
                 ->whereDate('expires_at', '<=', $nearExpiryDate))
             ->when($expiry === 'no_expiry', fn ($query) => $query->whereNull('expires_at'))
+            ->when($eligibility === 'sellable', fn ($query) => $query
+                ->where('status', 'active')
+                ->where('available_quantity', '>', 0)
+                ->where(fn ($query) => $query->whereNull('expires_at')->orWhereDate('expires_at', '>=', today())))
+            ->when($eligibility === 'blocked', fn ($query) => $query->where(fn ($query) => $query
+                ->where('status', '!=', 'active')
+                ->orWhere('available_quantity', '<=', 0)
+                ->orWhereDate('expires_at', '<', today())))
             ->orderByRaw('CASE WHEN expires_at IS NULL THEN 1 ELSE 0 END')
             ->orderBy('expires_at')
             ->paginate(config('pharmacy.performance.default_page_size'))
@@ -51,6 +60,7 @@ class InventoryController extends Controller
             'status' => $status,
             'expiry' => $expiry,
             'location' => $location,
+            'eligibility' => $eligibility,
             'policy' => $policy,
         ]);
     }
