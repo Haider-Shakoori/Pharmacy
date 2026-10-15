@@ -5,10 +5,16 @@
 @section('content')
 <div class="mx-auto max-w-5xl space-y-6">
     <div>
-        <p class="text-sm font-semibold text-teal-700">{{ __('settings.subtitle') }}</p>
+        <p class="text-sm font-semibold text-blue-700">{{ __('settings.subtitle') }}</p>
         <h1 class="mt-1 text-3xl font-bold tracking-tight">{{ __('settings.title') }}</h1>
     </div>
 
+    @if ($errors->any())
+        <div role="alert" class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+            <p class="font-bold">Settings were not saved.</p>
+            <ul class="mt-2 list-disc space-y-1 ps-5">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+        </div>
+    @endif
     <form method="POST" action="{{ route('pharmacy.settings.update') }}" class="space-y-6">
         @csrf
         @method('PUT')
@@ -45,7 +51,7 @@
 
                 <label class="block">
                     <span class="text-sm font-semibold">{{ __('settings.language') }}</span>
-                    <select name="locale" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
+                    <select name="locale" dir="auto" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5">
                         @foreach (['en' => 'English', 'fa' => 'دری', 'ps' => 'پښتو'] as $code => $label)
                             <option value="{{ $code }}" @selected(old('locale', $profile['locale']) === $code)>{{ $label }}</option>
                         @endforeach
@@ -135,7 +141,7 @@
             </div>
         </section>
 
-        <button class="rounded-xl bg-teal-700 px-5 py-3 text-sm font-bold text-white">{{ __('settings.save') }}</button>
+        <button class="rounded-xl bg-blue-700 px-5 py-3 text-sm font-bold text-white">{{ __('settings.save') }}</button>
     </form>
 </div>
 @endsection
