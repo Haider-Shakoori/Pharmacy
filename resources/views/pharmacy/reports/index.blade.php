@@ -5,8 +5,8 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
     <div class="flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
-        <div><p class="text-sm font-semibold text-teal-700">Operational reporting</p><h1 class="mt-1 text-3xl font-bold tracking-tight">Reports</h1><p class="mt-1 text-sm text-slate-500">Traceable totals from tenant sales, returns, purchases and stock movements.</p></div>
-        <form method="GET" class="flex flex-wrap gap-2"><input type="date" name="from" value="{{ $from }}" class="rounded-xl border border-slate-300 px-3 py-2"><input type="date" name="to" value="{{ $to }}" class="rounded-xl border border-slate-300 px-3 py-2"><button class="rounded-xl bg-slate-900 px-4 py-2 font-bold text-white">Apply</button></form>
+        <div><p class="text-sm font-semibold text-blue-700">Operational reporting</p><h1 class="mt-1 text-3xl font-bold tracking-tight">Reports</h1><p class="mt-1 text-sm text-slate-500">Traceable totals from tenant sales, returns, purchases and stock movements.</p></div>
+        <form method="GET" class="flex flex-wrap items-end gap-2"><label class="text-xs font-semibold text-slate-600">From<input type="date" name="from" value="{{ $from }}" class="mt-1 block rounded-xl border border-slate-300 px-3 py-2"></label><label class="text-xs font-semibold text-slate-600">To<input type="date" name="to" value="{{ $to }}" class="mt-1 block rounded-xl border border-slate-300 px-3 py-2"></label><button class="rounded-xl bg-slate-900 px-4 py-2 font-bold text-white">Apply</button><a href="{{ route('pharmacy.reports.index') }}" class="px-2 py-2 text-sm font-semibold text-blue-700">Reset</a></form>
     </div>
 
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -19,12 +19,12 @@
         @foreach (['sales'=>'Sales CSV','returns'=>'Returns CSV','purchases'=>'Purchases CSV','movements'=>'Stock Movements CSV'] as $type=>$label)
             <a href="{{ route('pharmacy.reports.export', ['type'=>$type,'from'=>$from,'to'=>$to]) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold">{{ $label }}</a>
         @endforeach
-        <button onclick="window.print()" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold">Print / Save PDF</button>
+        <button type="button" onclick="window.print()" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold">Print / Save PDF</button>
     </div>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 class="font-bold">Sales</h2>
-        <div class="mt-3 overflow-x-auto"><table class="min-w-full text-sm"><thead><tr class="border-b text-slate-500"><th class="py-2 text-start">Sale</th><th class="text-start">Date</th><th class="text-start">Cashier</th><th class="text-end">Total</th><th class="text-end">Due</th></tr></thead><tbody>@foreach($sales as $sale)<tr class="border-b border-slate-100"><td class="py-2">{{ $sale->sale_number }}</td><td>{{ $sale->business_date->toDateString() }}</td><td>{{ $sale->cashier?->name }}</td><td class="text-end">{{ number_format((float)$sale->grand_total,2) }}</td><td class="text-end">{{ number_format((float)$sale->due_total,2) }}</td></tr>@endforeach</tbody></table></div>
+        <div class="mt-3 overflow-x-auto"><table class="min-w-[600px] w-full text-sm"><thead><tr class="border-b text-slate-500"><th class="py-2 text-start">Sale</th><th class="text-start">Date</th><th class="text-start">Cashier</th><th class="text-end">Total</th><th class="text-end">Due</th></tr></thead><tbody>@foreach($sales as $sale)<tr class="border-b border-slate-100"><td class="py-2">{{ $sale->sale_number }}</td><td>{{ $sale->business_date->toDateString() }}</td><td>{{ $sale->cashier?->name }}</td><td class="text-end">{{ number_format((float)$sale->grand_total,2) }}</td><td class="text-end">{{ number_format((float)$sale->due_total,2) }}</td></tr>@endforeach</tbody></table></div>
         @if($sales->hasPages())<div class="mt-3">{{ $sales->links() }}</div>@endif
     </section>
 
