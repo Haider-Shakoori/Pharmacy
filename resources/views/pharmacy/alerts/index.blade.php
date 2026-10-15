@@ -3,17 +3,25 @@
 @section('title', __('pharmacy.alerts.title').' — '.__('pharmacy.product'))
 
 @section('content')
-<div class="mx-auto max-w-7xl space-y-6">
+<div class="mx-auto max-w-7xl space-y-6 dt-alert-center">
     <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-            <p class="text-sm font-semibold text-teal-700">{{ __('pharmacy.alerts.subtitle') }}</p>
+            <p class="text-sm font-semibold text-blue-700">{{ __('pharmacy.alerts.subtitle') }}</p>
             <h1 class="mt-1 text-3xl font-bold tracking-tight">{{ __('pharmacy.alerts.title') }}</h1>
             <p class="mt-2 text-sm text-slate-500">{{ __('pharmacy.alerts.policy', ['low' => $alerts['policy']['low_stock_threshold'], 'days' => $alerts['policy']['near_expiry_days']]) }}</p>
         </div>
         <a href="{{ route('pharmacy.inventory.index') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">{{ __('pharmacy.nav.inventory') }}</a>
     </div>
 
-    <section class="grid gap-4 sm:grid-cols-3">
+    <section class="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-blue-950" role="note">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="font-semibold">{{ __('pharmacy.alerts.title') }} · {{ $alerts['business_date'] }}</p>
+            <a href="{{ route('pharmacy.dashboard') }}" class="font-bold underline underline-offset-2">{{ __('pharmacy.dashboard') }}</a>
+        </div>
+        <p class="mt-1 text-blue-800">{{ __('pharmacy.alerts.policy', ['low' => $alerts['policy']['low_stock_threshold'], 'days' => $alerts['policy']['near_expiry_days']]) }}</p>
+    </section>
+
+    <section class="grid gap-4 sm:grid-cols-3" aria-label="{{ __('pharmacy.alerts.title') }}">
         <article class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
             <p class="text-sm font-semibold text-amber-800">{{ __('pharmacy.alerts.low_stock') }}</p>
             <p class="mt-2 text-3xl font-black text-amber-950">{{ $alerts['counts']['low_stock'] }}</p>
@@ -32,7 +40,7 @@
         <div class="border-b border-slate-100 px-5 py-4"><h2 class="font-bold">{{ __('pharmacy.alerts.low_stock') }}</h2></div>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
-                <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                <thead class="bg-slate-50 text-start text-xs uppercase tracking-wide text-slate-500">
                     <tr><th class="px-5 py-3">{{ __('pharmacy.alerts.medicine') }}</th><th class="px-5 py-3">{{ __('pharmacy.alerts.available') }}</th><th class="px-5 py-3">{{ __('pharmacy.alerts.threshold') }}</th></tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
