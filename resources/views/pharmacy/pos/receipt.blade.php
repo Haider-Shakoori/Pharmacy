@@ -38,7 +38,7 @@ function setReceiptPaper(size) {
     document.getElementById('receiptMain').style.maxWidth = width || '';
     let style = document.getElementById('receiptPrintSize');
     if (!style) { style = document.createElement('style'); style.id = 'receiptPrintSize'; document.head.appendChild(style); }
-    style.textContent = width ? '@media print { @page { size: ' + width + ' auto; margin: 1mm; } }' : '';
+    style.textContent = width ? '@media print { @page { margin: 1mm; } }' : '';
 }
 </script>
 </body></html>
