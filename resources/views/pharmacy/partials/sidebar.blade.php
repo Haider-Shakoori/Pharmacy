@@ -1,60 +1,62 @@
 <div class="flex h-full min-h-screen flex-col">
     <div class="border-b border-slate-100 px-6 py-6">
         <div class="flex items-center gap-3">
-            <div class="grid h-11 w-11 place-items-center rounded-xl bg-teal-700 text-lg font-black text-white">Rx</div>
-            <div>
+            <div class="grid h-11 w-11 place-items-center rounded-xl bg-blue-600 text-lg font-black text-white">Rx</div>
+            <div class="dt-sidebar-copy">
                 <p class="font-bold text-slate-900">{{ __('pharmacy.product') }}</p>
                 <p class="text-xs text-slate-500">Afghanistan • AFN</p>
             </div>
         </div>
     </div>
 
-    <nav class="flex-1 space-y-1 px-4 py-5">
+    <nav aria-label="Pharmacy modules" class="flex-1 space-y-1 px-4 py-5">
+        <p class="dt-nav-label">Workspace</p>
         @if (auth()->user()->hasPermission('dashboard.view'))
-            <a href="{{ route('pharmacy.dashboard') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('pharmacy.dashboard') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.dashboard') }}</a>
-            <a href="{{ route('pharmacy.alerts.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('pharmacy.alerts.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.alerts') }}</a>
+            <a href="{{ route('pharmacy.dashboard') }}" aria-current="{{ request()->routeIs('pharmacy.dashboard') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('pharmacy.dashboard') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.dashboard') }}</a>
+            <a href="{{ route('pharmacy.alerts.index') }}" aria-current="{{ request()->routeIs('pharmacy.alerts.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ request()->routeIs('pharmacy.alerts.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.alerts') }}</a>
         @endif
         @if (auth()->user()->hasPermission('pos.sell'))
-            <a href="{{ route('pharmacy.pos.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-bold {{ request()->routeIs('pharmacy.pos.index') ? 'bg-emerald-50 text-emerald-800' : 'text-emerald-700 hover:bg-emerald-50' }}">{{ __('pharmacy.nav.pos') }}</a>
-            <a href="{{ route('pharmacy.pos.invoices') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.pos.invoices', 'pharmacy.pos.receipt') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">POS Invoices</a>
+            <a href="{{ route('pharmacy.pos.index') }}" aria-current="{{ request()->routeIs('pharmacy.pos.index') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-bold {{ request()->routeIs('pharmacy.pos.index') ? 'bg-blue-50 text-blue-800' : 'text-emerald-700 hover:bg-blue-50' }}">{{ __('pharmacy.nav.pos') }}</a>
+            <a href="{{ route('pharmacy.pos.invoices') }}" aria-current="{{ request()->routeIs('pharmacy.pos.invoices', 'pharmacy.pos.receipt') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.pos.invoices', 'pharmacy.pos.receipt') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">POS Invoices</a>
         @endif
         @if (auth()->user()->hasPermission('customers.manage'))
-            <a href="{{ route('pharmacy.customers.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.customers.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.customers') }}</a>
+            <a href="{{ route('pharmacy.customers.index') }}" aria-current="{{ request()->routeIs('pharmacy.customers.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.customers.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.customers') }}</a>
         @endif
         @if (auth()->user()->hasPermission('users.manage'))
-            <a href="{{ route('pharmacy.users.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.users.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.users') }}</a>
+            <a href="{{ route('pharmacy.users.index') }}" aria-current="{{ request()->routeIs('pharmacy.users.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.users.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.users') }}</a>
         @endif
         @if (auth()->user()->hasPermission('roles.manage'))
-            <a href="{{ route('pharmacy.roles.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.roles.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Roles & Permissions</a>
+            <a href="{{ route('pharmacy.roles.index') }}" aria-current="{{ request()->routeIs('pharmacy.roles.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.roles.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">Roles & Permissions</a>
         @endif
         @if (auth()->user()->hasPermission('settings.manage'))
-            <a href="{{ route('pharmacy.settings.edit') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.settings.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.settings') }}</a>
+            <a href="{{ route('pharmacy.settings.edit') }}" aria-current="{{ request()->routeIs('pharmacy.settings.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.settings.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.settings') }}</a>
         @endif
 
         <div class="my-3 border-t border-slate-100"></div>
+        <p class="dt-nav-label">Operations</p>
         @if (auth()->user()->hasPermission('medicines.manage'))
-            <a href="{{ route('pharmacy.medicines.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.medicines.*') || request()->routeIs('pharmacy.medicine-references.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.medicines') }}</a>
+            <a href="{{ route('pharmacy.medicines.index') }}" aria-current="{{ request()->routeIs('pharmacy.medicines.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.medicines.*') || request()->routeIs('pharmacy.medicine-references.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.medicines') }}</a>
         @endif
         @if (auth()->user()->hasAnyPermission(['purchases.manage', 'purchases.approve', 'purchases.pay']))
-            <a href="{{ route('pharmacy.purchase-orders.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.purchase-*') || request()->routeIs('pharmacy.supplier-payments.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Purchasing</a>
+            <a href="{{ route('pharmacy.purchase-orders.index') }}" aria-current="{{ request()->routeIs('pharmacy.purchase-*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.purchase-*') || request()->routeIs('pharmacy.supplier-payments.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">Purchasing</a>
         @endif
         @if (auth()->user()->hasPermission('purchases.manage'))
-            <a href="{{ route('pharmacy.suppliers.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.suppliers.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Suppliers</a>
+            <a href="{{ route('pharmacy.suppliers.index') }}" aria-current="{{ request()->routeIs('pharmacy.suppliers.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.suppliers.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">Suppliers</a>
         @endif
         @if (auth()->user()->hasPermission('inventory.manage'))
-            <a href="{{ route('pharmacy.inventory.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.inventory.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.inventory') }}</a>
+            <a href="{{ route('pharmacy.inventory.index') }}" aria-current="{{ request()->routeIs('pharmacy.inventory.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.inventory.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">{{ __('pharmacy.nav.inventory') }}</a>
         @endif
         @if (auth()->user()->hasPermission('daily_closing.perform'))
-            <a href="{{ route('pharmacy.daily-closing.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.daily-closing.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Daily Closing</a>
+            <a href="{{ route('pharmacy.daily-closing.index') }}" aria-current="{{ request()->routeIs('pharmacy.daily-closing.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.daily-closing.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">Daily Closing</a>
         @endif
         @if (auth()->user()->hasPermission('safe.view'))
-            <a href="{{ route('pharmacy.safe.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-bold {{ request()->routeIs('pharmacy.safe.*') ? 'bg-amber-50 text-amber-900' : 'text-amber-800 hover:bg-amber-50' }}">{{ __('safe.nav') }}</a>
+            <a href="{{ route('pharmacy.safe.index') }}" aria-current="{{ request()->routeIs('pharmacy.safe.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-bold {{ request()->routeIs('pharmacy.safe.*') ? 'bg-amber-50 text-amber-900' : 'text-amber-800 hover:bg-amber-50' }}">{{ __('safe.nav') }}</a>
         @endif
         @if (auth()->user()->hasPermission('reports.view'))
-            <a href="{{ route('pharmacy.reports.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.reports.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Reports</a>
+            <a href="{{ route('pharmacy.reports.index') }}" aria-current="{{ request()->routeIs('pharmacy.reports.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.reports.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">Reports</a>
         @endif
         @if (auth()->user()->hasPermission('accounting.manage'))
-            <a href="{{ route('pharmacy.accounting.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.accounting.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50' }}">Accounting</a>
+            <a href="{{ route('pharmacy.accounting.index') }}" aria-current="{{ request()->routeIs('pharmacy.accounting.*') ? 'page' : 'false' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('pharmacy.accounting.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">Accounting</a>
         @endif
 
         <div class="my-3 border-t border-slate-100"></div>
@@ -65,7 +67,7 @@
         </a>
     </nav>
 
-    <div class="border-t border-slate-100 p-4">
+    <div class="dt-sidebar-footer border-t border-slate-100 p-4">
         <div class="rounded-xl bg-slate-900 p-4 text-white">
             <p class="text-xs font-semibold uppercase tracking-wider text-teal-300">{{ __('pharmacy.low_bandwidth') }}</p>
             <p class="mt-1 text-xs leading-5 text-slate-300">Server-rendered UI, compact assets and offline-first Android synchronization.</p>
