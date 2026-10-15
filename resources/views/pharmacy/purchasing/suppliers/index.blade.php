@@ -3,11 +3,11 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-5">
     <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div><p class="text-sm font-semibold text-teal-700">Purchasing</p><h1 class="text-3xl font-bold">Suppliers</h1></div>
-        <a href="{{ route('pharmacy.suppliers.create') }}" class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">Add supplier</a>
+        <div><p class="text-sm font-semibold text-blue-700">Purchasing</p><h1 class="text-3xl font-bold">Suppliers</h1></div>
+        <a href="{{ route('pharmacy.suppliers.create') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white">Add supplier</a>
     </div>
     <form method="GET" class="flex gap-2 rounded-2xl border border-slate-200 bg-white p-4">
-        <input name="search" value="{{ $search }}" placeholder="Search supplier, code, phone..." class="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2.5">
+        <input name="search" value="{{ $search }}" aria-label="Search suppliers" placeholder="Search supplier, code, phone..." class="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2.5">
         <button class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">Search</button>
     </form>
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -17,11 +17,11 @@
                 <tbody class="divide-y divide-slate-100">
                 @forelse ($suppliers as $supplier)
                     <tr>
-                        <td class="px-4 py-3"><p class="font-semibold">{{ $supplier->name }}</p><p class="text-xs text-slate-500">{{ $supplier->code }} · {{ $supplier->is_active ? 'Active' : 'Inactive' }}</p></td>
+                        <td class="px-4 py-3"><p class="font-semibold">{{ $supplier->name }}</p><p class="text-xs text-slate-500">{{ $supplier->code }} · <span class="{{ $supplier->is_active ? 'font-semibold text-emerald-700' : 'font-semibold text-red-700' }}">{{ $supplier->is_active ? 'Active' : 'Inactive' }}</span></p></td>
                         <td class="px-4 py-3"><p>{{ $supplier->contact_person ?: '—' }}</p><p class="text-xs text-slate-500">{{ $supplier->phone ?: $supplier->whatsapp ?: '—' }}</p></td>
                         <td class="px-4 py-3">{{ $supplier->purchase_orders_count }}</td>
                         <td class="px-4 py-3">{{ $supplier->invoices_count }}</td>
-                        <td class="px-4 py-3 text-end"><a class="font-semibold text-teal-700" href="{{ route('pharmacy.suppliers.edit', $supplier) }}">Edit</a></td>
+                        <td class="px-4 py-3 text-end"><a class="font-semibold text-blue-700" href="{{ route('pharmacy.suppliers.edit', $supplier) }}">Edit</a></td>
                     </tr>
                 @empty
                     <tr><td colspan="5" class="px-4 py-10 text-center text-slate-500">No suppliers found.</td></tr>
