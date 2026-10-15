@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Pharmacy;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\PurchaseOrder;
-use Carbon\CarbonImmutable;
 use App\Models\ProductBatch;
 use App\Models\Sale;
 use App\Services\Alerts\OperationalAlertService;
 use App\Services\Subscriptions\SubscriptionHealthService;
 use App\Support\Tenancy\TenantContext;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 
 class DashboardController extends Controller
