@@ -3,9 +3,23 @@
 @section('title', __('pharmacy.dashboard').' — '.__('pharmacy.product'))
 
 @section('content')
-<div class="dt-dashboard mx-auto max-w-[1600px] space-y-4 text-slate-800">
+<style>
+.dt-reference-dashboard {font-family:'Segoe UI',Inter,ui-sans-serif,system-ui,sans-serif}
+.dt-reference-dashboard .dt-glass-kpi {isolation:isolate; box-shadow:0 5px 14px #7892b524,inset 0 1px 0 #fff}
+.dt-reference-dashboard .dt-kpi-wave {opacity:.58;background:radial-gradient(ellipse at 88% 100%,var(--wave) 0,transparent 56%),linear-gradient(160deg,transparent 42%,var(--wash) 100%)}
+.dt-reference-dashboard .dt-kpi-green{--wave:#27cb7b99;--wash:#cff9e5}.dt-reference-dashboard .dt-kpi-blue{--wave:#21aeff99;--wash:#cfefff}.dt-reference-dashboard .dt-kpi-amber{--wave:#ffb625a8;--wash:#fff1cb}.dt-reference-dashboard .dt-kpi-pink{--wave:#ff458699;--wash:#ffe0eb}.dt-reference-dashboard .dt-kpi-purple{--wave:#8b65ff99;--wash:#e8e0ff}
+.dt-reference-dashboard .dt-kpi-green .dt-kpi-symbol{background:#2cc36e;box-shadow:0 0 0 9px #2cc36e30}
+.dt-reference-dashboard .dt-kpi-blue .dt-kpi-symbol{background:#129cef;box-shadow:0 0 0 9px #129cef30}
+.dt-reference-dashboard .dt-kpi-amber .dt-kpi-symbol{background:#ffae08;box-shadow:0 0 0 9px #ffae0830}
+.dt-reference-dashboard .dt-kpi-pink .dt-kpi-symbol{background:#fc376b;box-shadow:0 0 0 9px #fc376b30}
+.dt-reference-dashboard .dt-kpi-purple .dt-kpi-symbol{background:#6031ed;box-shadow:0 0 0 9px #6031ed30}
+.dt-reference-dashboard section {scroll-margin-top:5rem}
+@media(min-width:1536px){.dt-reference-dashboard .dt-glass-kpi{min-width:0}}
+</style>
+
+<div class="dt-dashboard mx-auto max-w-[1800px] space-y-3 text-slate-800 dt-reference-dashboard">
     {{-- Desktop-aligned compact title row --}}
-    <header class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4">
+    <header class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/80 bg-white/85 px-5 py-4">
         <div>
             <p class="text-[11px] font-bold uppercase tracking-widest text-blue-600">{{ $tenant->name }}</p>
             <h1 class="text-2xl font-bold tracking-tight">{{ __('pharmacy.dashboard') }}</h1>
@@ -19,21 +33,31 @@
         </div>
     </header>
 
-    {{-- Desktop KPI strip: keep server values and mobile stacking --}}
-    <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4" aria-label="Key performance indicators">
-        @foreach ($stats as $index => $stat)
-            <article class="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
-                <div class="absolute inset-y-0 start-0 w-1 {{ ['bg-blue-600','bg-amber-500','bg-rose-500','bg-sky-600','bg-emerald-600','bg-indigo-600','bg-cyan-600','bg-violet-600'][$index % 8] }}"></div>
-                <p class="text-xs font-semibold text-slate-500">{{ $stat['label'] }}</p>
-                <p class="mt-2 text-xl font-extrabold tracking-tight tabular-nums sm:text-2xl">{{ $stat['value'] }}</p>
+    {{-- Five illustrated desktop KPI tiles, matching the user's reference layout. --}}
+    <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5" aria-label="Desktop overview metrics">
+        @foreach ([
+            ['label' => 'Total Sales Today', 'value' => $stats[0]['value'], 'note' => $stats[4]['value'].' invoices', 'tone' => 'green', 'icon' => '▥'],
+            ['label' => 'Purchases Today', 'value' => 'AFN '.number_format($todayPurchaseValue, 2), 'note' => $purchaseOrdersToday.' purchase orders', 'tone' => 'blue', 'icon' => '🛒'],
+            ['label' => 'Low Stock Items', 'value' => $stats[1]['value'], 'note' => 'Items below threshold', 'tone' => 'amber', 'icon' => '⬡'],
+            ['label' => 'Expiring Soon', 'value' => $stats[2]['value'], 'note' => 'Within configured expiry window', 'tone' => 'pink', 'icon' => '▣'],
+            ['label' => 'Cash in Drawer', 'value' => '—', 'note' => 'Drawer balance not available in web', 'tone' => 'purple', 'icon' => '▤'],
+        ] as $metric)
+            <article class="dt-glass-kpi dt-kpi-{{ $metric['tone'] }} relative flex min-h-[114px] items-center gap-3 overflow-hidden rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm">
+                <div class="dt-kpi-symbol relative z-10 grid h-16 w-16 shrink-0 place-items-center rounded-2xl text-3xl font-bold text-white" aria-hidden="true">{{ $metric['icon'] }}</div>
+                <div class="relative z-10 min-w-0">
+                    <p class="text-xs font-semibold text-slate-700">{{ $metric['label'] }}</p>
+                    <p class="mt-1 text-[clamp(1.15rem,1.55vw,1.7rem)] font-extrabold tracking-tight text-slate-950 tabular-nums">{{ $metric['value'] }}</p>
+                    <p class="mt-1 text-[11px] text-slate-500">{{ $metric['note'] }}</p>
+                </div>
+                <span class="dt-kpi-wave pointer-events-none absolute inset-x-0 bottom-0 h-[48%]" aria-hidden="true"></span>
             </article>
         @endforeach
     </section>
 
-    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_270px]">
         <div class="min-w-0 space-y-4">
             {{-- Desktop sales overview with real server-side period selection --}}
-            <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Sales overview">
+            <section class="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm backdrop-blur-sm" aria-label="Sales overview">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 class="text-base font-bold">Sales Overview</h2>
@@ -64,7 +88,7 @@
             </section>
 
             <div class="grid gap-4 lg:grid-cols-2">
-                <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <section class="overflow-hidden rounded-2xl border border-white/80 bg-white/80 shadow-sm backdrop-blur-sm">
                     <div class="flex items-center justify-between border-b px-4 py-3"><h2 class="text-sm font-bold">Low Stock Items</h2><a href="{{ route('pharmacy.alerts.index') }}" class="text-xs font-semibold text-blue-700">View all →</a></div>
                     <div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-slate-50 text-slate-500"><tr><th class="p-3 text-start">Medicine</th><th class="p-3 text-end">Current</th><th class="p-3 text-end">Minimum</th></tr></thead><tbody>
                     @forelse (array_slice($alerts['low_stock'], 0, 6) as $item)
