@@ -83,8 +83,6 @@ class DashboardController extends Controller
             ->whereDate('order_date', '>=', $date->startOfMonth()->toDateString())
             ->whereDate('order_date', '<=', $businessDate)->count();
 
-
-
         return view('pharmacy.dashboard', [
             'selectedPeriod' => $selectedPeriod,
             'periodSales' => (float) ($periodTotals?->revenue ?? 0),
