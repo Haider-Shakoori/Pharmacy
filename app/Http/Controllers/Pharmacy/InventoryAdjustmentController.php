@@ -25,12 +25,17 @@ class InventoryAdjustmentController extends Controller
             $request->user()->id,
         );
 
-        $request->user()->notify(new InventoryActivityNotification(
-            'Inventory adjustment posted',
-            'Adjustment '.$adjustment->number.' recorded for batch '.($batch->batch_number ?: $batch->id).'.',
-            (string) $adjustment->id,
-            'success',
-        ));
+        try {
+            $request->user()->notify(new InventoryActivityNotification(
+                'Inventory adjustment posted',
+                'Adjustment '.$adjustment->number.' recorded for batch '.($batch->batch_number ?: $batch->id).'.',
+                (string) $adjustment->id,
+                'success',
+            ));
+        } catch (\Throwable $exception) {
+            // A notification failure must not make a committed stock action appear retryable.
+            report($exception);
+        }
 
         return redirect()
             ->route('pharmacy.inventory.show', $batch)
