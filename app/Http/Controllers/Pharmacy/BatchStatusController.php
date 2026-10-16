@@ -25,12 +25,17 @@ class BatchStatusController extends Controller
         );
 
         if ($previousStatus !== $updatedBatch->status) {
-            $request->user()->notify(new InventoryActivityNotification(
-                'Batch status changed',
-                'Batch '.($updatedBatch->batch_number ?: $updatedBatch->id).' changed from '.$previousStatus.' to '.$updatedBatch->status.'.',
-                (string) $updatedBatch->id,
-                in_array($updatedBatch->status, ['recalled', 'quarantined', 'damaged'], true) ? 'warning' : 'info',
-            ));
+            try {
+                $request->user()->notify(new InventoryActivityNotification(
+                    'Batch status changed',
+                    'Batch '.($updatedBatch->batch_number ?: $updatedBatch->id).' changed from '.$previousStatus.' to '.$updatedBatch->status.'.',
+                    (string) $updatedBatch->id,
+                    in_array($updatedBatch->status, ['recalled', 'quarantined', 'damaged'], true) ? 'warning' : 'info',
+                ));
+            } catch (\Throwable $exception) {
+                // Status changes are already committed; report a noncritical notification failure.
+                report($exception);
+            }
         }
 
         return back()->with('success', 'Batch status updated with an audit event.');
