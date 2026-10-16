@@ -11,6 +11,7 @@
         </div>
         <div class="flex gap-2">
             <a href="{{ route('pharmacy.medicines.csv.template') }}" class="rounded-xl border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-800">Download medicine CSV template</a>
+            <a href="{{ route('pharmacy.csv-import.form', 'medicines') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white">Import medicines CSV</a>
             <a href="{{ route('pharmacy.medicine-references.index') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold">Categories & Manufacturers</a>
             <a href="{{ route('pharmacy.medicines.create') }}" class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">Add medicine</a>
         </div>
