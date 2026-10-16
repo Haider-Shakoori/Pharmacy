@@ -43,6 +43,17 @@ class MedicineMasterTest extends TestCase
         );
     }
 
+    public function test_csv_import_routes_require_authenticated_tenant_session(): void
+    {
+        $tenant = $this->createTenant(['name' => 'CSV Secure Pharmacy', 'slug' => 'csv-secure']);
+
+        foreach (['medicines', 'inventory'] as $kind) {
+            $this->onTenantDomain($tenant)->get('/csv-import/'.$kind)->assertRedirect('/login');
+            $this->onTenantDomain($tenant)->post('/csv-import/'.$kind.'/preview', [])->assertRedirect('/login');
+            $this->onTenantDomain($tenant)->post('/csv-import/'.$kind.'/commit', [])->assertRedirect('/login');
+        }
+    }
+
     public function test_medicine_master_is_tenant_isolated(): void
     {
         $tenantA = $this->createTenant(['name' => 'A Pharmacy', 'slug' => 'a']);
