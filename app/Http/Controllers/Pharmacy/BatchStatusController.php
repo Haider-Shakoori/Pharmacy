@@ -28,10 +28,10 @@ class BatchStatusController extends Controller
 
         if ($previousStatus !== $updatedBatch->status) {
             $notifier->record($request->user(), new InventoryActivityNotification(
-            'Batch status changed',
-            'Batch '.($updatedBatch->batch_number ?: $updatedBatch->id).' changed from '.$previousStatus.' to '.$updatedBatch->status.'.',
-            (string) $updatedBatch->id,
-            in_array($updatedBatch->status, ['recalled', 'quarantined', 'damaged'], true) ? 'warning' : 'info',
+                'Batch status changed',
+                'Batch '.($updatedBatch->batch_number ?: $updatedBatch->id).' changed from '.$previousStatus.' to '.$updatedBatch->status.'.',
+                (string) $updatedBatch->id,
+                in_array($updatedBatch->status, ['recalled', 'quarantined', 'damaged'], true) ? 'warning' : 'info',
             ));
         }
 
