@@ -28,10 +28,10 @@ class InventoryAdjustmentController extends Controller
         );
 
         $notifier->record($request->user(), new InventoryActivityNotification(
-                'Inventory adjustment posted',
-                'Adjustment '.$adjustment->number.' recorded for batch '.($batch->batch_number ?: $batch->id).'.',
-                (string) $adjustment->id,
-                'success',
+            'Inventory adjustment posted',
+            'Adjustment '.$adjustment->number.' recorded for batch '.($batch->batch_number ?: $batch->id).'.',
+            (string) $adjustment->id,
+            'success',
         ));
 
         return redirect()
