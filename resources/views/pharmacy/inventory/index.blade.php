@@ -12,6 +12,7 @@
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('pharmacy.inventory.csv.template') }}" class="rounded-xl border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-800">Download opening stock CSV template</a>
+            <a href="{{ route('pharmacy.csv-import.form', 'inventory') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white">Import inventory CSV</a>
         <a href="{{ route('pharmacy.inventory.locations') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold">Branches & locations</a>
         </div>
     </div>
