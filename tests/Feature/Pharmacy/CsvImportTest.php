@@ -8,7 +8,7 @@ use App\Models\StockMovement;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Inventory\InventoryProvisioner;
 use App\Services\Subscriptions\TrialProvisioner;
-use Illuminate\Foundation\Http\UploadedFile;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
