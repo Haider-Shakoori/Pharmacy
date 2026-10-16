@@ -32,6 +32,8 @@ class InventoryAdjustmentController extends Controller
             'Adjustment '.$adjustment->number.' recorded for batch '.($batch->batch_number ?: $batch->id).'.',
             (string) $adjustment->id,
             'success',
+            'adjustment_posted',
+            ['number' => $adjustment->number, 'batch' => $batch->batch_number ?: $batch->id],
         ));
 
         return redirect()
