@@ -23,7 +23,7 @@ class CsvImportController extends Controller
 
     public function form(string $kind): View
     {
-        abort_unless(in_array($kind, ['medicines', 'inventory'], true), 404);
+        $this->assertKind($kind);
 
         return view('pharmacy.csv-import', [
             'kind' => $kind,
@@ -177,5 +177,6 @@ class CsvImportController extends Controller
     private function assertKind(string $kind): void
     {
         abort_unless(in_array($kind, ['medicines', 'inventory'], true), 404);
+        abort_unless(request()->user()?->hasPermission($kind === 'medicines' ? 'medicines.manage' : 'inventory.manage'), 403);
     }
 }
