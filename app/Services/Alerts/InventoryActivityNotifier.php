@@ -19,15 +19,20 @@ class InventoryActivityNotifier
         try {
             $recipient->notify($notification);
 
-            $oldIds = $recipient->notifications()
-                ->orderByDesc('created_at')
-                ->orderByDesc('id')
-                ->skip(self::RETENTION_LIMIT)
-                ->pluck('id');
+            // A bounded LIMIT is required with OFFSET on SQLite and avoids
+            // accumulating large id lists for tenants with long histories.
+            do {
+                $oldIds = $recipient->notifications()
+                    ->orderByDesc('created_at')
+                    ->orderByDesc('id')
+                    ->limit(250)
+                    ->offset(self::RETENTION_LIMIT)
+                    ->pluck('id');
 
-            if ($oldIds->isNotEmpty()) {
-                $recipient->notifications()->whereIn('id', $oldIds->all())->delete();
-            }
+                if ($oldIds->isNotEmpty()) {
+                    $recipient->notifications()->whereIn('id', $oldIds->all())->delete();
+                }
+            } while ($oldIds->isNotEmpty());
         } catch (Throwable $exception) {
             report($exception);
         }
