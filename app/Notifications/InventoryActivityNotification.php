@@ -11,6 +11,8 @@ class InventoryActivityNotification extends Notification
         private readonly string $message,
         private readonly string $reference,
         private readonly string $severity = 'info',
+        private readonly ?string $event = null,
+        private readonly array $parameters = [],
     ) {}
 
     public function via(object $notifiable): array
@@ -26,6 +28,8 @@ class InventoryActivityNotification extends Notification
             'message' => $this->message,
             'reference' => $this->reference,
             'severity' => $this->severity,
+            'event' => $this->event,
+            'parameters' => $this->parameters,
         ];
     }
 }
