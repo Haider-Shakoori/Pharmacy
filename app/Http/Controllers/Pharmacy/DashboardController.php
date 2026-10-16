@@ -55,6 +55,7 @@ class DashboardController extends Controller
         })->all();
 
         $purchaseOrdersToday = PurchaseOrder::query()->whereDate('order_date', $businessDate)->count();
+        $todayPurchaseValue = (float) PurchaseOrder::query()->whereDate('order_date', $businessDate)->sum('grand_total');
 
         $selectedPeriod = (string) $request->query('period', 'week');
         if (in_array($selectedPeriod, ['today', 'week', 'month', 'year'], true) === false) {
@@ -95,6 +96,7 @@ class DashboardController extends Controller
             'recentSales' => $recentSales,
             'salesTrend' => $salesTrend,
             'purchaseOrdersToday' => $purchaseOrdersToday,
+            'todayPurchaseValue' => $todayPurchaseValue,
             'tenant' => $tenant,
             'subscriptionHealth' => $health->forTenant($tenant),
             'alerts' => $snapshot,
