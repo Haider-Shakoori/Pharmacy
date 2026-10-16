@@ -5,13 +5,13 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-5">
     <div>
-        <p class="text-sm font-semibold text-teal-700">Activation security</p>
+        <p class="text-sm font-semibold text-blue-700">Activation security</p>
         <h2 class="mt-1 text-3xl font-bold tracking-tight">Licenses</h2>
         <p class="mt-2 text-sm text-slate-500">Keys are stored only as hashes. Regenerating a key invalidates existing device activations.</p>
     </div>
 
     <form method="GET" class="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-        <input name="search" value="{{ $search }}" placeholder="Search pharmacy" class="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+        <input name="search" value="{{ $search }}" aria-label="Search pharmacy licenses" placeholder="Search pharmacy" class="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
         <button class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">Search</button>
     </form>
 
@@ -67,16 +67,16 @@
                                 <div class="flex flex-wrap justify-end gap-2">
                                     @if ($subscription->license)
                                         <a href="{{ route('platform.licenses.show', $subscription) }}"
-                                           class="rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-xs font-semibold text-teal-800">Devices & sessions</a>
+                                           class="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-800">Devices & sessions</a>
                                     @endif
                                     <form method="POST" action="{{ route('platform.licenses.regenerate', $subscription) }}">
                                         @csrf
-                                        <button class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold">{{ $subscription->license ? 'Regenerate' : 'Generate' }}</button>
+                                        <button @if($subscription->license) onclick="return confirm('Regenerate the license key? Existing device activations may be invalidated.')" @endif class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold">{{ $subscription->license ? 'Regenerate' : 'Generate' }}</button>
                                     </form>
                                     @if ($subscription->license?->status?->value === 'active')
                                         <form method="POST" action="{{ route('platform.licenses.revoke', $subscription) }}">
                                             @csrf
-                                            <button class="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-700">Revoke</button>
+                                            <button onclick="return confirm('Revoke this license and interrupt authorized device access?')" class="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-700">Revoke</button>
                                         </form>
                                     @endif
                                 </div>
