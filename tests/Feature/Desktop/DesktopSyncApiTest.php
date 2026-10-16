@@ -173,6 +173,39 @@ class DesktopSyncApiTest extends TestCase
             ->assertJsonValidationErrors('cursor');
     }
 
+    public function test_desktop_sync_push_validates_event_batch_size_and_required_fields(): void
+    {
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', ['events' => []])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('events');
+
+        $tooManyEvents = array_fill(0, 26, [
+            'idempotency_key' => 'batch-test',
+            'event_type' => 'customer.upsert',
+            'payload' => ['v' => 1],
+        ]);
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', ['events' => $tooManyEvents])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('events');
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', [
+                'events' => [['event_type' => 'customer.upsert', 'payload' => ['v' => 1]]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('events.0.idempotency_key');
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', [
+                'events' => [['idempotency_key' => 'missing-type', 'payload' => ['v' => 1]]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('events.0.event_type');
+    }
+
     public function test_desktop_session_can_pull_incremental_medicine_stream(): void
     {
         $response = $this->withToken($this->accessToken)
