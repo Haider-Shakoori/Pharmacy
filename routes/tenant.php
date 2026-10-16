@@ -10,6 +10,7 @@ use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginControlle
 use App\Http\Controllers\Pharmacy\BatchStatusController;
 use App\Http\Controllers\Pharmacy\CustomerController;
 use App\Http\Controllers\Pharmacy\CsvTemplateController;
+use App\Http\Controllers\Pharmacy\CsvImportController;
 use App\Http\Controllers\Pharmacy\DailyClosingController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
 use App\Http\Controllers\Pharmacy\ExpenseController;
@@ -86,6 +87,10 @@ Route::domain('{pharmacy}.'.config('pharmacy.tenant_domain'))->middleware([
             Route::get('/inventory/csv/template', [CsvTemplateController::class, 'inventory'])
                 ->middleware('permission:inventory.manage')
                 ->name('inventory.csv.template');
+
+            Route::get('/csv-import/{kind}', [CsvImportController::class, 'form'])->name('csv-import.form');
+            Route::post('/csv-import/{kind}/preview', [CsvImportController::class, 'preview'])->name('csv-import.preview');
+            Route::post('/csv-import/{kind}/commit', [CsvImportController::class, 'commit'])->name('csv-import.commit');
 
             Route::resource('medicines', PharmacyMedicineController::class)
                 ->except(['show', 'destroy'])
