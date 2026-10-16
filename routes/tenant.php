@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Pharmacy\AccountingAdjustmentController;
 use App\Http\Controllers\Pharmacy\AccountingController;
 use App\Http\Controllers\Pharmacy\AlertController;
+use App\Http\Controllers\Pharmacy\AlertHistoryController;
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
 use App\Http\Controllers\Pharmacy\BatchStatusController;
 use App\Http\Controllers\Pharmacy\CustomerController;
@@ -62,6 +63,12 @@ Route::domain('{pharmacy}.'.config('pharmacy.tenant_domain'))->middleware([
             Route::get('/alerts', AlertController::class)
                 ->middleware('permission:dashboard.view')
                 ->name('alerts.index');
+            Route::post('/alerts/history/read', [AlertHistoryController::class, 'markAllRead'])
+                ->middleware('permission:dashboard.view')
+                ->name('alerts.history.read');
+            Route::post('/alerts/history/clear', [AlertHistoryController::class, 'clear'])
+                ->middleware('permission:dashboard.view')
+                ->name('alerts.history.clear');
 
             Route::resource('users', PharmacyUserController::class)
                 ->except(['show', 'destroy'])
