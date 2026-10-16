@@ -14,6 +14,35 @@ class MedicineMasterTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_csv_templates_match_desktop_headers_and_require_login(): void
+    {
+        $tenant = $this->createTenant(['name' => 'CSV Pharmacy', 'slug' => 'csv-pharmacy']);
+
+        $this->onTenantDomain($tenant)
+            ->get('/medicines/csv/template')
+            ->assertRedirect('/login');
+
+        $this->onTenantDomain($tenant)
+            ->get('/inventory/csv/template')
+            ->assertRedirect('/login');
+
+        $controller = new \App\Http\Controllers\Pharmacy\CsvTemplateController;
+
+        $medicines = $controller->medicines();
+        $this->assertStringContainsString('medicine-template.csv', $medicines->headers->get('Content-Disposition'));
+        $this->assertSame(
+            'medicine_code,brand_name,generic_name,strength,dosage_form,category,manufacturer,manufacturer_country,barcode,purchase_unit,sale_unit,units_per_purchase_unit,reorder_level,prescription_required,batch_tracking_required,expiry_tracking_required,is_active,notes',
+            trim((string) $medicines->getContent(), "\xEF\xBB\xBF\r\n"),
+        );
+
+        $inventory = $controller->inventory();
+        $this->assertStringContainsString('inventory-template.csv', $inventory->headers->get('Content-Disposition'));
+        $this->assertSame(
+            'medicine_code,batch_number,expiry_date,manufactured_date,quantity,purchase_cost,sale_price,notes',
+            trim((string) $inventory->getContent(), "\xEF\xBB\xBF\r\n"),
+        );
+    }
+
     public function test_medicine_master_is_tenant_isolated(): void
     {
         $tenantA = $this->createTenant(['name' => 'A Pharmacy', 'slug' => 'a']);
