@@ -34,7 +34,7 @@ class LoginController extends Controller
             'is_active' => true,
         ], (bool) ($validated['remember'] ?? false))) {
             throw ValidationException::withMessages([
-                'email' => 'The provided credentials are invalid.',
+                'email' => __('pharmacy.login.invalid'),
             ]);
         }
 

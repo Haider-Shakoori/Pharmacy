@@ -8,6 +8,17 @@ return [
     'low_bandwidth' => 'Low-bandwidth mode',
     'offline_ready' => 'Offline-first architecture',
     'coming_batch' => 'Batch :batch',
+    'login' => [
+        'title' => 'Pharmacy Login',
+        'heading' => 'Pharmacy sign in',
+        'subtitle' => 'Sign in with your staff account for this pharmacy.',
+        'email' => 'Email',
+        'password' => 'Password',
+        'remember' => 'Remember me',
+        'submit' => 'Sign in',
+        'languages' => 'Choose language',
+        'invalid' => 'The provided credentials are invalid.',
+    ],
     'nav' => [
         'alerts' => 'Alerts',
         'dashboard' => 'Dashboard',
