@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Pharmacy;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Pharmacy\StoreInventoryAdjustmentRequest;
 use App\Models\ProductBatch;
+use App\Notifications\InventoryActivityNotification;
 use App\Services\Inventory\InventoryAdjustmentService;
 use Illuminate\Http\RedirectResponse;
 
@@ -23,6 +24,18 @@ class InventoryAdjustmentController extends Controller
             $request->validated('reason'),
             $request->user()->id,
         );
+
+        try {
+            $request->user()->notify(new InventoryActivityNotification(
+                'Inventory adjustment posted',
+                'Adjustment '.$adjustment->number.' recorded for batch '.($batch->batch_number ?: $batch->id).'.',
+                (string) $adjustment->id,
+                'success',
+            ));
+        } catch (\Throwable $exception) {
+            // A notification failure must not make a committed stock action appear retryable.
+            report($exception);
+        }
 
         return redirect()
             ->route('pharmacy.inventory.show', $batch)

@@ -73,5 +73,39 @@
             </div>
         </section>
     @endforeach
+
+    <section class="rounded-2xl border border-slate-200 bg-white" aria-labelledby="notification-history-title">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+            <div>
+                <h2 id="notification-history-title" class="font-bold">My activity notifications</h2>
+                <p class="mt-1 text-xs text-slate-500">Stored for your account in this pharmacy. {{ $unreadCount }} unread. Latest 100 shown.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <form method="POST" action="{{ route('pharmacy.alerts.history.read') }}">
+                    @csrf
+                    <button type="submit" class="rounded-xl border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700">Mark all read</button>
+                </form>
+                <form method="POST" action="{{ route('pharmacy.alerts.history.clear') }}" onsubmit="return confirm('Clear your notification history? This cannot be undone.')">
+                    @csrf
+                    <button type="submit" class="rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-700">Clear history</button>
+                </form>
+            </div>
+        </div>
+        <div class="divide-y divide-slate-100">
+            @forelse ($history as $notification)
+                <article class="px-5 py-4 {{ $notification->read_at ? '' : 'bg-blue-50/40' }}">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h3 class="font-semibold text-slate-900">{{ $notification->data['title'] ?? 'Pharmacy activity' }}</h3>
+                        <span class="text-xs text-slate-500">{{ $notification->created_at?->format('Y-m-d H:i') }}</span>
+                    </div>
+                    <p class="mt-1 text-sm text-slate-700">{{ $notification->data['message'] ?? '' }}</p>
+                    <p class="mt-1 text-xs font-medium text-slate-500">{{ ucfirst($notification->data['category'] ?? 'operations') }} · {{ $notification->read_at ? 'Read' : 'Unread' }}</p>
+                </article>
+            @empty
+                <p class="px-5 py-8 text-center text-sm text-slate-500">No activity notifications yet. Posted inventory adjustments and batch status changes will appear here.</p>
+            @endforelse
+        </div>
+    </section>
+
 </div>
 @endsection
