@@ -20,6 +20,19 @@ class LocaleSwitchTest extends TestCase
             ->assertSessionHas('locale', 'fa');
     }
 
+    public function test_each_supported_locale_can_be_selected_and_persisted_for_tenant(): void
+    {
+        $tenant = $this->createTenant(['name' => 'Language Pharmacy', 'slug' => 'language-pharmacy']);
+
+        foreach (['en', 'fa', 'ps'] as $locale) {
+            $this->onTenantDomain($tenant)
+                ->from('/login')
+                ->get('/locale/'.$locale)
+                ->assertRedirect('/login')
+                ->assertSessionHas('locale', $locale);
+        }
+    }
+
     public function test_unsupported_locale_is_rejected_on_tenant_domain(): void
     {
         $tenant = $this->createTenant(['name' => 'Kabul Pharmacy', 'slug' => 'kabul']);
