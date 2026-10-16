@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Pharmacy\StoreInventoryAdjustmentRequest;
 use App\Models\ProductBatch;
 use App\Notifications\InventoryActivityNotification;
+use App\Services\Alerts\InventoryActivityNotifier;
 use App\Services\Inventory\InventoryAdjustmentService;
 use Illuminate\Http\RedirectResponse;
 
@@ -14,6 +15,7 @@ class InventoryAdjustmentController extends Controller
     public function store(
         StoreInventoryAdjustmentRequest $request,
         InventoryAdjustmentService $service,
+        InventoryActivityNotifier $notifier,
     ): RedirectResponse {
         $batch = ProductBatch::query()->findOrFail($request->validated('product_batch_id'));
 
@@ -25,17 +27,14 @@ class InventoryAdjustmentController extends Controller
             $request->user()->id,
         );
 
-        try {
-            $request->user()->notify(new InventoryActivityNotification(
-                'Inventory adjustment posted',
-                'Adjustment '.$adjustment->number.' recorded for batch '.($batch->batch_number ?: $batch->id).'.',
-                (string) $adjustment->id,
-                'success',
-            ));
-        } catch (\Throwable $exception) {
-            // A notification failure must not make a committed stock action appear retryable.
-            report($exception);
-        }
+        $notifier->record($request->user(), new InventoryActivityNotification(
+            'Inventory adjustment posted',
+            'Adjustment '.$adjustment->number.' recorded for batch '.($batch->batch_number ?: $batch->id).'.',
+            (string) $adjustment->id,
+            'success',
+            'adjustment_posted',
+            ['number' => $adjustment->number, 'batch' => $batch->batch_number ?: $batch->id],
+        ));
 
         return redirect()
             ->route('pharmacy.inventory.show', $batch)

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Pharmacy\ChangeBatchStatusRequest;
 use App\Models\ProductBatch;
 use App\Notifications\InventoryActivityNotification;
+use App\Services\Alerts\InventoryActivityNotifier;
 use App\Services\Inventory\BatchStatusService;
 use Illuminate\Http\RedirectResponse;
 
@@ -15,6 +16,7 @@ class BatchStatusController extends Controller
         ChangeBatchStatusRequest $request,
         ProductBatch $productBatch,
         BatchStatusService $service,
+        InventoryActivityNotifier $notifier,
     ): RedirectResponse {
         $previousStatus = $productBatch->status;
         $updatedBatch = $service->change(
@@ -25,17 +27,14 @@ class BatchStatusController extends Controller
         );
 
         if ($previousStatus !== $updatedBatch->status) {
-            try {
-                $request->user()->notify(new InventoryActivityNotification(
-                    'Batch status changed',
-                    'Batch '.($updatedBatch->batch_number ?: $updatedBatch->id).' changed from '.$previousStatus.' to '.$updatedBatch->status.'.',
-                    (string) $updatedBatch->id,
-                    in_array($updatedBatch->status, ['recalled', 'quarantined', 'damaged'], true) ? 'warning' : 'info',
-                ));
-            } catch (\Throwable $exception) {
-                // Status changes are already committed; report a noncritical notification failure.
-                report($exception);
-            }
+            $notifier->record($request->user(), new InventoryActivityNotification(
+                'Batch status changed',
+                'Batch '.($updatedBatch->batch_number ?: $updatedBatch->id).' changed from '.$previousStatus.' to '.$updatedBatch->status.'.',
+                (string) $updatedBatch->id,
+                in_array($updatedBatch->status, ['recalled', 'quarantined', 'damaged'], true) ? 'warning' : 'info',
+                'batch_status',
+                ['batch' => $updatedBatch->batch_number ?: $updatedBatch->id, 'from' => $previousStatus, 'to' => $updatedBatch->status],
+            ));
         }
 
         return back()->with('success', 'Batch status updated with an audit event.');
