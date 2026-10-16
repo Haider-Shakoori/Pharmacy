@@ -52,6 +52,4 @@ class LocaleSwitchTest extends TestCase
                 ->assertSee('type="submit"', false);
         }
     }
-
-
 }
