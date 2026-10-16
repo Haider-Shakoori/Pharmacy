@@ -153,6 +153,59 @@ class DesktopSyncApiTest extends TestCase
             ->assertJsonPath('code', 'desktop_sync_disabled');
     }
 
+    public function test_desktop_sync_pull_rejects_invalid_pagination_parameters(): void
+    {
+        $maxPageSize = (int) config('pharmacy.performance.sync_max_page_size', 250);
+
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/desktop/sync/pull/medicines?limit=0')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('limit');
+
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/desktop/sync/pull/medicines?limit='.($maxPageSize + 1))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('limit');
+
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/desktop/sync/pull/medicines?cursor='.str_repeat('a', 1001))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('cursor');
+    }
+
+    public function test_desktop_sync_push_validates_event_batch_size_and_required_fields(): void
+    {
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', ['events' => []])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('events');
+
+        $tooManyEvents = array_fill(0, 26, [
+            'idempotency_key' => 'batch-test',
+            'event_type' => 'customer.upsert',
+            'payload' => ['v' => 1],
+        ]);
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', ['events' => $tooManyEvents])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('events');
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', [
+                'events' => [['event_type' => 'customer.upsert', 'payload' => ['v' => 1]]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('events.0.idempotency_key');
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/desktop/sync/push', [
+                'events' => [['idempotency_key' => 'missing-type', 'payload' => ['v' => 1]]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('events.0.event_type');
+    }
+
     public function test_desktop_session_can_pull_incremental_medicine_stream(): void
     {
         $response = $this->withToken($this->accessToken)
