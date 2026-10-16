@@ -32,6 +32,8 @@ class BatchStatusController extends Controller
                 'Batch '.($updatedBatch->batch_number ?: $updatedBatch->id).' changed from '.$previousStatus.' to '.$updatedBatch->status.'.',
                 (string) $updatedBatch->id,
                 in_array($updatedBatch->status, ['recalled', 'quarantined', 'damaged'], true) ? 'warning' : 'info',
+                'batch_status',
+                ['batch' => $updatedBatch->batch_number ?: $updatedBatch->id, 'from' => $previousStatus, 'to' => $updatedBatch->status],
             ));
         }
 
