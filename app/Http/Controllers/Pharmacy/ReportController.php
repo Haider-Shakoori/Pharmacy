@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pharmacy;
 
 use App\Http\Controllers\Controller;
 use App\Services\Reports\PharmacyReportService;
+use App\Support\Exports\SpreadsheetSafeCsv;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -41,7 +42,7 @@ class ReportController extends Controller
             $out = fopen('php://output', 'w');
             fputcsv($out, $headers);
             foreach ($reports->exportRows($validated['type'], $from, $to) as $row) {
-                fputcsv($out, $row);
+                fputcsv($out, SpreadsheetSafeCsv::row($row));
             }
             fclose($out);
         }, "{$validated['type']}-{$from}-to-{$to}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
