@@ -4,18 +4,22 @@ namespace App\Http\Controllers\Pharmacy;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Medicine;
 use App\Models\ProductBatch;
 use App\Models\PurchaseOrder;
 use App\Models\Sale;
+use App\Models\Supplier;
 use App\Services\Alerts\OperationalAlertService;
 use App\Services\Subscriptions\SubscriptionHealthService;
 use App\Support\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     public function __invoke(
+        Request $request,
         TenantContext $tenantContext,
         SubscriptionHealthService $health,
         OperationalAlertService $alerts,
@@ -52,7 +56,42 @@ class DashboardController extends Controller
 
         $purchaseOrdersToday = PurchaseOrder::query()->whereDate('order_date', $businessDate)->count();
 
+        $selectedPeriod = (string) $request->query('period', 'week');
+        if (in_array($selectedPeriod, ['today', 'week', 'month', 'year'], true) === false) {
+            $selectedPeriod = 'week';
+        }
+        $date = CarbonImmutable::parse($businessDate);
+        $periodStart = match ($selectedPeriod) {
+            'today' => $date,
+            'week' => $date->startOfWeek(),
+            'month' => $date->startOfMonth(),
+            'year' => $date->startOfYear(),
+        };
+        $periodTotals = Sale::query()->where('status', 'completed')
+            ->whereDate('business_date', '>=', $periodStart->toDateString())
+            ->whereDate('business_date', '<=', $businessDate)
+            ->selectRaw('COUNT(*) as invoices, COALESCE(SUM(grand_total), 0) as revenue')
+            ->first();
+        $overviewMedicines = Medicine::query()->count();
+        $overviewBatches = ProductBatch::query()->count();
+        $overviewSuppliers = Supplier::query()->count();
+        $overviewMonthSales = (float) (Sale::query()->where('status', 'completed')
+            ->whereDate('business_date', '>=', $date->startOfMonth()->toDateString())
+            ->whereDate('business_date', '<=', $businessDate)
+            ->sum('grand_total') ?? 0);
+        $overviewMonthPurchases = PurchaseOrder::query()
+            ->whereDate('order_date', '>=', $date->startOfMonth()->toDateString())
+            ->whereDate('order_date', '<=', $businessDate)->count();
+
         return view('pharmacy.dashboard', [
+            'selectedPeriod' => $selectedPeriod,
+            'periodSales' => (float) ($periodTotals?->revenue ?? 0),
+            'periodInvoiceCount' => (int) ($periodTotals?->invoices ?? 0),
+            'overviewMedicines' => $overviewMedicines,
+            'overviewBatches' => $overviewBatches,
+            'overviewSuppliers' => $overviewSuppliers,
+            'overviewMonthSales' => $overviewMonthSales,
+            'overviewMonthPurchases' => $overviewMonthPurchases,
             'recentSales' => $recentSales,
             'salesTrend' => $salesTrend,
             'purchaseOrdersToday' => $purchaseOrdersToday,
