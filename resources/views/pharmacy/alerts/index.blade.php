@@ -59,7 +59,7 @@
             <div class="border-b border-slate-100 px-5 py-4"><h2 class="font-bold">{{ __('pharmacy.alerts.'.$labelKey) }}</h2></div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
-                    <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                    <thead class="bg-slate-50 text-start text-xs uppercase tracking-wide text-slate-500">
                         <tr><th class="px-5 py-3">{{ __('pharmacy.alerts.medicine') }}</th><th class="px-5 py-3">{{ __('pharmacy.alerts.batch') }}</th><th class="px-5 py-3">{{ __('pharmacy.alerts.location') }}</th><th class="px-5 py-3">{{ __('pharmacy.alerts.available') }}</th><th class="px-5 py-3">{{ __('pharmacy.alerts.expiry') }}</th></tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -77,32 +77,48 @@
     <section class="rounded-2xl border border-slate-200 bg-white" aria-labelledby="notification-history-title">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
             <div>
-                <h2 id="notification-history-title" class="font-bold">My activity notifications</h2>
-                <p class="mt-1 text-xs text-slate-500">Stored for your account in this pharmacy. {{ $unreadCount }} unread. Latest 100 shown.</p>
+                <h2 id="notification-history-title" class="font-bold">{{ __('pharmacy.alerts.history.title') }}</h2>
+                <p class="mt-1 text-xs text-slate-500">{{ __('pharmacy.alerts.history.summary', ['unread' => $unreadCount]) }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <form method="POST" action="{{ route('pharmacy.alerts.history.read') }}">
                     @csrf
-                    <button type="submit" class="rounded-xl border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700">Mark all read</button>
+                    <button type="submit" class="rounded-xl border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700">{{ __('pharmacy.alerts.history.mark_read') }}</button>
                 </form>
-                <form method="POST" action="{{ route('pharmacy.alerts.history.clear') }}" onsubmit="return confirm('Clear your notification history? This cannot be undone.')">
+                <form method="POST" action="{{ route('pharmacy.alerts.history.clear') }}" onsubmit="return confirm(this.dataset.confirm)" data-confirm="{{ __('pharmacy.alerts.history.clear_confirm') }}">
                     @csrf
-                    <button type="submit" class="rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-700">Clear history</button>
+                    <button type="submit" class="rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-700">{{ __('pharmacy.alerts.history.clear') }}</button>
                 </form>
             </div>
         </div>
         <div class="divide-y divide-slate-100">
             @forelse ($history as $notification)
+                @php
+                    $event = $notification->data['event'] ?? null;
+                    $knownEvent = in_array($event, ['batch_status', 'adjustment_posted'], true);
+                    $parameters = $notification->data['parameters'] ?? [];
+                    if (! is_array($parameters)) {
+                        $parameters = [];
+                    }
+                    if ($event === 'batch_status') {
+                        foreach (['from', 'to'] as $stateKey) {
+                            $status = (string) ($parameters[$stateKey] ?? '');
+                            if (in_array($status, ['active', 'quarantined', 'recalled', 'damaged'], true)) {
+                                $parameters[$stateKey] = __('pharmacy.alerts.history.states.'.$status);
+                            }
+                        }
+                    }
+                @endphp
                 <article class="px-5 py-4 {{ $notification->read_at ? '' : 'bg-blue-50/40' }}">
                     <div class="flex flex-wrap items-center justify-between gap-2">
-                        <h3 class="font-semibold text-slate-900">{{ $notification->data['title'] ?? 'Pharmacy activity' }}</h3>
-                        <span class="text-xs text-slate-500">{{ $notification->created_at?->format('Y-m-d H:i') }}</span>
+                        <h3 class="font-semibold text-slate-900">{{ $knownEvent ? __('pharmacy.alerts.history.events.'.$event.'.title') : ($notification->data['title'] ?? __('pharmacy.alerts.history.default_title')) }}</h3>
+                        <time dir="ltr" datetime="{{ $notification->created_at?->toIso8601String() }}" class="text-xs text-slate-500">{{ $notification->created_at?->format('Y-m-d H:i') }}</time>
                     </div>
-                    <p class="mt-1 text-sm text-slate-700">{{ $notification->data['message'] ?? '' }}</p>
-                    <p class="mt-1 text-xs font-medium text-slate-500">{{ ucfirst($notification->data['category'] ?? 'operations') }} · {{ $notification->read_at ? 'Read' : 'Unread' }}</p>
+                    <p class="mt-1 text-sm text-slate-700">{{ $knownEvent ? __('pharmacy.alerts.history.events.'.$event.'.message', $parameters) : ($notification->data['message'] ?? '') }}</p>
+                    <p class="mt-1 text-xs font-medium text-slate-500">{{ ($notification->data['category'] ?? '') === 'inventory' ? __('pharmacy.alerts.history.inventory') : __('pharmacy.alerts.history.operations') }} · {{ $notification->read_at ? __('pharmacy.alerts.history.read') : __('pharmacy.alerts.history.unread') }}</p>
                 </article>
             @empty
-                <p class="px-5 py-8 text-center text-sm text-slate-500">No activity notifications yet. Posted inventory adjustments and batch status changes will appear here.</p>
+                <p class="px-5 py-8 text-center text-sm text-slate-500">{{ __('pharmacy.alerts.history.empty') }}</p>
             @endforelse
         </div>
     </section>
