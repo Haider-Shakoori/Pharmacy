@@ -57,7 +57,7 @@ class DashboardController extends Controller
         $purchaseOrdersToday = PurchaseOrder::query()->whereDate('order_date', $businessDate)->count();
 
         $selectedPeriod = (string) $request->query('period', 'week');
-        if (! in_array($selectedPeriod, ['today', 'week', 'month', 'year'], true)) {
+        if (!in_array($selectedPeriod, ['today', 'week', 'month', 'year'], true)) {
             $selectedPeriod = 'week';
         }
         $date = CarbonImmutable::parse($businessDate);
