@@ -49,7 +49,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(
-      find.text('Device registration is required before transactional POS is enabled.'),
+      find.text(
+        'Device registration is required before transactional POS is enabled.',
+      ),
       findsOneWidget,
     );
     expect(find.textContaining('No network link'), findsOneWidget);
