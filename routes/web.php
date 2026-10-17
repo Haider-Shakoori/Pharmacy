@@ -99,6 +99,7 @@ Route::domain(config('pharmacy.registration_domain'))->group(function (): void {
 
 $platformDomain = (string) config('pharmacy.platform_domain');
 $deploymentHost = (string) config('pharmacy.deployment_host');
+$platformPathPrefix = (string) config('pharmacy.platform_path_prefix', '');
 
 if ($platformDomain === $deploymentHost) {
     // Single-host deployment: keep the canonical platform route names under /platform.
@@ -109,6 +110,7 @@ if ($platformDomain === $deploymentHost) {
 } else {
     // Dedicated platform host: canonical routes have no /platform prefix.
     Route::domain($platformDomain)
+        ->prefix($platformPathPrefix)
         ->name('platform.')
         ->group($platformRoutes);
 }
