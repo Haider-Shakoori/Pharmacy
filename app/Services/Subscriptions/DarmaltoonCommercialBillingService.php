@@ -39,6 +39,10 @@ class DarmaltoonCommercialBillingService
         return DB::connection('central')->transaction(function () use ($tenant, $admin, $reference, $amount): array {
             $business = $tenant->business()->lockForUpdate()->firstOrFail();
 
+            if (CommercialPaymentReceipt::query()->where('payment_reference', $reference)->exists()) {
+                throw ValidationException::withMessages(['payment_reference' => 'This payment reference is already recorded.']);
+            }
+
             if (CommercialEnrollment::query()->where('business_id', $business->id)->exists()) {
                 throw ValidationException::withMessages(['payment_reference' => 'This pharmacy has already made its first payment. Record a renewal instead.']);
             }
@@ -106,6 +110,9 @@ class DarmaltoonCommercialBillingService
     {
         return DB::connection('central')->transaction(function () use ($tenant, $admin, $reference, $amount): CommercialPaymentReceipt {
             $business = $tenant->business()->lockForUpdate()->firstOrFail();
+            if (CommercialPaymentReceipt::query()->where('payment_reference', $reference)->exists()) {
+                throw ValidationException::withMessages(['payment_reference' => 'This payment reference is already recorded.']);
+            }
             $enrollment = CommercialEnrollment::query()->where('business_id', $business->id)->lockForUpdate()->first();
             if ($enrollment === null) {
                 throw ValidationException::withMessages(['payment_reference' => 'A confirmed initial payment is required before renewal.']);
