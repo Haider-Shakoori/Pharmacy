@@ -21,7 +21,7 @@ class WebsiteLeadController extends Controller
         $leads = WebsiteLead::query()
             ->when(in_array($status, WebsiteLead::STATUSES, true),
                 fn ($query) => $query->where('status', $status))
-            ->when(in_array($kind, ['demo', 'contact'], true),
+            ->when(in_array($kind, ['demo', 'contact', 'trial'], true),
                 fn ($query) => $query->where('kind', $kind))
             ->when($test === 'yes', fn ($query) => $query->where('is_test', true))
             ->when($test !== 'yes', fn ($query) => $query->where('is_test', false))
