@@ -247,7 +247,7 @@ void main() {
           )
           .getSingle();
       expect(row.read<String>('status'), 'retry');
-      expect(row.readNullable<int>('next_attempt_at'), isNull);
+      expect(row.readNullable<int>('next_attempt_at'), equals(null));
 
       // A replay is acknowledged by the server's idempotency key, not as a new sale.
       await repository.acknowledge(
