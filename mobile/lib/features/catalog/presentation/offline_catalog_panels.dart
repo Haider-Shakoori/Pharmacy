@@ -230,7 +230,7 @@ class _StockBrowserState extends State<_StockBrowser> {
                               subtitle: Text(
                                 '${batch.locationId} · ${strings.catalogExpiry}: $date · $status',
                               ),
-                              trailing: Text('${batch.quantity.compact}'),
+                              trailing: Text(batch.quantity.compact),
                             );
                           })
                           .toList(growable: false),
