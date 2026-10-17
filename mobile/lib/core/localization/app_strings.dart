@@ -183,15 +183,18 @@ class AppStrings {
       'customersTitle': 'Customers',
       'customersBody': 'Customer data will be cached locally only after the offline database and sync contracts are in place.',
       'catalogReadOnly': 'Locally cached data · read only. Sync to refresh.',
-      'catalogPermissionDenied': 'Your account cannot view this pharmacy catalog.',
+      'catalogPermissionDenied':
+          'Your account cannot view this pharmacy catalog.',
       'catalogRefresh': 'Refresh cached records',
       'catalogAllLocations': 'All locations',
-      'catalogEmptyStock': 'No cached medicines yet. Open Sync to download inventory.',
+      'catalogEmptyStock':
+          'No cached medicines yet. Open Sync to download inventory.',
       'catalogNoBatches': 'No cached batches for this medicine.',
       'catalogExpired': 'Expired',
       'catalogBatch': 'Batch',
       'catalogExpiry': 'Expiry',
-      'catalogEmptyCustomers': 'No cached customers yet. Open Sync to download customers.',
+      'catalogEmptyCustomers':
+          'No cached customers yet. Open Sync to download customers.',
       'catalogSearchCustomers': 'Search customers by name or phone',
       'catalogBalance': 'Balance',
       'syncTitle': 'Synchronization',
@@ -316,15 +319,18 @@ class AppStrings {
       'customersTitle': 'مشتریان',
       'customersBody': 'اطلاعات مشتری پس از آماده‌شدن دیتابیس آفلاین و قراردادهای همگام‌سازی به‌صورت محلی ذخیره می‌شود.',
       'catalogReadOnly': 'معلومات ذخیره‌شدهٔ محلی · فقط نمایش. برای تازه‌سازی همگام‌سازی کنید.',
-      'catalogPermissionDenied': 'حساب شما اجازهٔ دیدن این اطلاعات دواخانه را ندارد.',
+      'catalogPermissionDenied':
+          'حساب شما اجازهٔ دیدن این اطلاعات دواخانه را ندارد.',
       'catalogRefresh': 'تازه‌سازی معلومات ذخیره‌شده',
       'catalogAllLocations': 'همه موقعیت‌ها',
-      'catalogEmptyStock': 'هنوز ادویه‌ای ذخیره نشده است. برای دریافت موجودی همگام‌سازی کنید.',
+      'catalogEmptyStock':
+          'هنوز ادویه‌ای ذخیره نشده است. برای دریافت موجودی همگام‌سازی کنید.',
       'catalogNoBatches': 'هیچ بچ ذخیره‌شده‌ای برای این دوا وجود ندارد.',
       'catalogExpired': 'تاریخ‌گذشته',
       'catalogBatch': 'بچ',
       'catalogExpiry': 'انقضا',
-      'catalogEmptyCustomers': 'هنوز مشتری‌ای ذخیره نشده است. برای دریافت مشتریان همگام‌سازی کنید.',
+      'catalogEmptyCustomers':
+          'هنوز مشتری‌ای ذخیره نشده است. برای دریافت مشتریان همگام‌سازی کنید.',
       'catalogSearchCustomers': 'جستجوی مشتری با نام یا شماره تلفن',
       'catalogBalance': 'مانده',
       'syncTitle': 'همگام‌سازی',
@@ -448,16 +454,20 @@ class AppStrings {
           'ځايي بچونه او ذخیره به د SQLite/Drift ډیټابیس له طبقې سره اضافه شي.',
       'customersTitle': 'پېرودونکي',
       'customersBody': 'د پېرودونکو معلومات به د آفلاین ډیټابیس او همغږۍ تړونونو له چمتو کېدو وروسته ځايي وساتل شي.',
-      'catalogReadOnly': 'ځايي خوندي شوي معلومات · یوازې کتل. د تازه کولو لپاره همغږي وکړئ.',
-      'catalogPermissionDenied': 'ستاسو حساب د دې فارمسي د معلوماتو د لیدلو اجازه نه لري.',
+      'catalogReadOnly':
+          'ځايي خوندي شوي معلومات · یوازې کتل. د تازه کولو لپاره همغږي وکړئ.',
+      'catalogPermissionDenied':
+          'ستاسو حساب د دې فارمسي د معلوماتو د لیدلو اجازه نه لري.',
       'catalogRefresh': 'خوندي معلومات تازه کړئ',
       'catalogAllLocations': 'ټول ځایونه',
-      'catalogEmptyStock': 'لا تر اوسه درمل نه دي خوندي شوي. د ذخیرې لپاره همغږي وکړئ.',
+      'catalogEmptyStock':
+          'لا تر اوسه درمل نه دي خوندي شوي. د ذخیرې لپاره همغږي وکړئ.',
       'catalogNoBatches': 'د دې درمل لپاره خوندي بچ نشته.',
       'catalogExpired': 'نېټه تېر',
       'catalogBatch': 'بچ',
       'catalogExpiry': 'د ختمېدو نېټه',
-      'catalogEmptyCustomers': 'لا پېرودونکي نه دي خوندي شوي. د پېرودونکو لپاره همغږي وکړئ.',
+      'catalogEmptyCustomers':
+          'لا پېرودونکي نه دي خوندي شوي. د پېرودونکو لپاره همغږي وکړئ.',
       'catalogSearchCustomers': 'پېرودونکی د نوم یا ټیلیفون له مخې ولټوئ',
       'catalogBalance': 'پاتې حساب',
       'syncTitle': 'همغږي',
