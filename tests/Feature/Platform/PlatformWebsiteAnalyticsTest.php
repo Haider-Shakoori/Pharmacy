@@ -4,6 +4,7 @@ namespace Tests\Feature\Platform;
 
 use App\Models\PlatformAdmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use PDO;
 use Tests\TestCase;
 
@@ -114,5 +115,36 @@ class PlatformWebsiteAnalyticsTest extends TestCase
         ])->assertSessionHasErrors(['engine', 'question']);
 
         $this->assertSame('1', (string) $db->query('SELECT COUNT(*) FROM ai_mention_checks')->fetchColumn());
+    }
+
+    public function test_authenticated_owner_receives_cross_subdomain_analytics_exclusion_cookie(): void
+    {
+        $this->signInAsOwner();
+        $response = $this->get(route('legacy.platform.analytics.index'));
+        $response->assertOk()->assertCookie('dt_analytics_exclude', '1');
+    }
+
+    public function test_owner_can_import_only_verified_search_console_csv(): void
+    {
+        $this->signInAsOwner();
+        $this->seedAggregateMetrics();
+        $csv = 'Top queries,Clicks,Impressions,CTR,Position
+pharmacy software,12,250,4.8%,5.2
+offline pharmacy management,3,100,3%,9.1
+';
+        $upload = UploadedFile::fake()->createWithContent('Queries.csv', $csv);
+        $this->post(route('legacy.platform.analytics.queries.import'), [
+            'period_start' => '2026-09-01', 'period_end' => '2026-09-30', 'search_csv' => $upload,
+        ])->assertRedirect();
+        $this->get('/platform/analytics')->assertOk()->assertSee('pharmacy software')->assertSee('250');
+        $db = new PDO('sqlite:'.$this->analyticsFile);
+        $this->assertEquals(2, (int) $db->query('SELECT COUNT(*) FROM search_console_queries')->fetchColumn());
+        $bad = UploadedFile::fake()->createWithContent('bad.csv', 'foo,bar
+baz,qux
+');
+        $this->post(route('legacy.platform.analytics.queries.import'), [
+            'period_start' => '2026-09-01', 'period_end' => '2026-09-30', 'search_csv' => $bad,
+        ])->assertSessionHas('error');
+        $this->assertEquals(2, (int) $db->query('SELECT COUNT(*) FROM search_console_queries')->fetchColumn());
     }
 }
