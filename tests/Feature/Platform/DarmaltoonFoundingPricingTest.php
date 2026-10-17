@@ -25,6 +25,7 @@ class DarmaltoonFoundingPricingTest extends TestCase
     {
         parent::setUp();
         $this->withoutVite();
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
         $this->admin = PlatformAdmin::query()->create([
             'name' => 'Payment Reviewer',
             'email' => 'finance@example.test',
