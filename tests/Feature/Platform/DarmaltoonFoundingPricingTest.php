@@ -13,6 +13,7 @@ use App\Services\Subscriptions\DarmaltoonCommercialBillingService;
 use App\Support\Commercial\DarmaltoonLaunchPricing as Pricing;
 use Database\Seeders\DarmaltoonLaunchPlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Tests\TestCase;
 
 class DarmaltoonFoundingPricingTest extends TestCase
@@ -25,7 +26,7 @@ class DarmaltoonFoundingPricingTest extends TestCase
     {
         parent::setUp();
         $this->withoutVite();
-        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+        $this->withoutMiddleware(ThrottleRequests::class);
         $this->admin = PlatformAdmin::query()->create([
             'name' => 'Payment Reviewer',
             'email' => 'finance@example.test',
