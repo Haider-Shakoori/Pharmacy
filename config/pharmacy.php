@@ -8,6 +8,9 @@ return [
     'deployment_host' => env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af'),
     'tenant_domain' => env('PHARMACY_TENANT_DOMAIN', 'darmaltoon.com'),
     'platform_domain' => env('PHARMACY_PLATFORM_DOMAIN', 'platform.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
+    // Optional path on a dedicated platform host (e.g. darmaltoon.com/platform).
+    // Empty preserves the current dedicated-subdomain /login default.
+    'platform_path_prefix' => trim((string) env('PHARMACY_PLATFORM_PATH_PREFIX', ''), '/'),
     'registration_domain' => env('PHARMACY_REGISTRATION_DOMAIN', 'register.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
     'api_domain' => env('PHARMACY_API_DOMAIN', 'api.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
     'downloads_domain' => env('PHARMACY_DOWNLOADS_DOMAIN', 'downloads.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),
