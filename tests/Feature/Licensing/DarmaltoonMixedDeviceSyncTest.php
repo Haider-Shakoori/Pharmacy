@@ -196,6 +196,51 @@ class DarmaltoonMixedDeviceSyncTest extends TestCase
             ->assertOk()->assertJsonPath('data.stream', 'inventory');
     }
 
+    public function test_late_android_offline_sale_is_rejected_if_windows_already_consumed_the_stock(): void
+    {
+        // These sales represent outbox entries created while separate
+        // clients were disconnected and later submitted to the shared API.
+        $android = $this->registerAndroid('11111111-1111-4111-8111-111111111111')->assertOk();
+        $pc = $this->postJson('/api/v1/license/activate', [
+            'license_key' => $this->licenseKey,
+            'device_id' => '33333333-3333-4333-8333-333333333333',
+            'platform' => 'windows',
+        ])->assertOk();
+
+        $desktopToken = $this->withToken($pc->json('data.lease_token'))
+            ->postJson('/api/v1/desktop/session/login', [
+                'device_id' => '33333333-3333-4333-8333-333333333333',
+                'email' => 'owner@darmaltoon.test',
+                'password' => 'secret-password',
+            ])->assertOk()->json('data.access_token');
+
+        $desktopEvent = $this->saleEvent('sale:offline-windows-18:completed');
+        $desktopEvent['payload']['lines'][0]['quantity'] = '18.0000';
+        $desktopEvent['payload']['payments'][0]['amount'] = '180.0000';
+
+        $this->withToken($desktopToken)->postJson('/api/v1/desktop/sync/push', [
+            'events' => [$desktopEvent],
+        ])->assertOk()->assertJsonPath('data.results.0.status', 'accepted');
+
+        $staleAndroidSale = $this->saleEvent('sale:offline-android-4:completed');
+        $staleAndroidSale['payload']['lines'][0]['quantity'] = '4.0000';
+        $staleAndroidSale['payload']['payments'][0]['amount'] = '40.0000';
+
+        $this->withToken($android->json('data.access_token'))
+            ->postJson('/api/v1/mobile/sync/push', [
+                'events' => [$staleAndroidSale],
+            ])->assertOk()
+            ->assertJsonPath('data.results.0.status', 'rejected')
+            ->assertJsonPath('data.results.0.code', 'stock_conflict')
+            ->assertJsonPath('data.results.0.retryable', false);
+
+        $this->tenant->run(function (): void {
+            $this->assertSame(1, Sale::query()->count());
+            $this->assertSame('2.0000', ProductBatch::query()
+                ->where('batch_number', 'DARM-BATCH')->sole()->available_quantity);
+        });
+    }
+
     private function registerAndroid(string $deviceId)
     {
         return $this->postJson('/api/v1/mobile/register', [
