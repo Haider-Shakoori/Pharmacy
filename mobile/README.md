@@ -56,7 +56,7 @@ The script creates the Android host with application ID
 A build can seed the Cloud endpoint:
 
 ```bash
-flutter run --dart-define=API_BASE_URL=https://demo.pharmacy.businessos.af
+flutter run --dart-define=API_BASE_URL=https://darmaltoon.com
 ```
 
 The connection screen can then persist the authorized Local/Cloud profile in
