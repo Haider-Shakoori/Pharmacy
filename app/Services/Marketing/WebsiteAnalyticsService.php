@@ -47,7 +47,7 @@ class WebsiteAnalyticsService
             'available' => false,
             'metrics' => ['views' => 0, 'ai_referrals' => 0, 'demo_requests' => 0, 'contact_requests' => 0, 'unique_visitors' => 0, 'sessions' => 0, 'engaged_sessions' => 0, 'bounce_rate' => null],
             'sources' => [], 'ai_providers' => [], 'pages' => [], 'campaigns' => [],
-            'mentions' => [], 'mention_totals' => [], 'countries' => [],
+            'mentions' => [], 'mention_totals' => [], 'countries' => [], 'country_sessions' => [], 'devices' => [], 'languages' => [], 'actions' => [],
             'daily' => [], 'landing_pages' => [], 'campaign_terms' => [],
             'search_queries' => [], 'search_period' => null,
             'coverage' => ['visitors' => false, 'countries' => false, 'sessions' => false],
@@ -62,7 +62,7 @@ class WebsiteAnalyticsService
             $since = gmdate('Y-m-d', time() - (29 * 86400));
 
             $group = static function (PDO $db, string $column, string $filter, string $since): array {
-                $allowed = ['event', 'source', 'referrer', 'path', 'campaign'];
+                $allowed = ['event', 'source', 'referrer', 'path', 'campaign', 'device', 'language'];
                 if (! in_array($column, $allowed, true)) {
                     return [];
                 }
@@ -99,6 +99,7 @@ class WebsiteAnalyticsService
             $hasVisitors = $tableExists('visitor_days');
             $sessionStats = ['unique_visitors' => 0, 'sessions' => 0, 'engaged_sessions' => 0, 'bounce_rate' => null];
             $landing = [];
+            $countrySessions = [];
             if ($hasSessions) {
                 $stmt = $db->prepare('SELECT COUNT(*) AS sessions, COUNT(DISTINCT visitor_hash) AS unique_visitors,
                     COALESCE(SUM(engaged),0) AS engaged_sessions,
@@ -113,6 +114,10 @@ class WebsiteAnalyticsService
                     WHERE day >= ? GROUP BY landing_path ORDER BY total DESC LIMIT 15');
                 $landingStmt->execute([$since]);
                 $landing = $landingStmt->fetchAll();
+                $countryStmt = $db->prepare('SELECT country AS label, COUNT(*) AS total FROM visit_sessions
+                    WHERE day >= ? GROUP BY country ORDER BY total DESC LIMIT 30');
+                $countryStmt->execute([$since]);
+                $countrySessions = $countryStmt->fetchAll();
             }
             $countries = [];
             if ($hasCountry) {
@@ -160,7 +165,11 @@ class WebsiteAnalyticsService
                 'campaigns' => $group($db, 'campaign', "AND event='page_view' AND campaign != ''", $since),
                 'mentions' => $mentions,
                 'mention_totals' => $mentionTotals,
-                'countries' => $countries, 'daily' => $daily,
+                'countries' => $countries, 'country_sessions' => $countrySessions,
+                'devices' => $group($db, 'device', "AND event='page_view'", $since),
+                'languages' => $group($db, 'language', "AND event='page_view'", $since),
+                'actions' => $group($db, 'event', "AND event!='page_view'", $since),
+                'daily' => $daily,
                 'landing_pages' => $landing, 'campaign_terms' => $terms,
                 'search_queries' => $searchQueries, 'search_period' => $searchPeriod,
                 'coverage' => ['visitors' => $hasVisitors, 'countries' => $hasCountry, 'sessions' => $hasSessions],
