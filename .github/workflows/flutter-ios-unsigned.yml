@@ -1,0 +1,87 @@
+name: Flutter iOS Unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'feat/**']
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-ios-unsigned.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-ios-unsigned.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    name: Build unsigned iOS IPA
+    # connectivity_plus 7.x needs the iOS 26 SDK (NWPath.isUltraConstrained).
+    runs-on: macos-26
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Generate native iOS host
+        run: |
+          flutter create --platforms=ios --org af.businessos --project-name businessos_pharmacy .
+          # Flutter generates a starter widget test for MyApp, but this app uses AppShell.
+          # Remove only the generated sample; repository tests remain unchanged.
+          rm -f test/widget_test.dart
+          flutter pub get
+
+      - name: Generate Drift database code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze app
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        run: flutter test
+
+      - name: Build without Apple signing
+        run: |
+          flutter build ios --release --no-codesign \
+            --dart-define=API_BASE_URL=https://pharmacy.darmaltoon.com
+
+      - name: Package unsigned Runner.app as IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="build/ios/iphoneos/Runner.app"
+          test -d "$app"
+          if codesign -dv "$app" >/dev/null 2>&1; then
+            echo "::error::Runner.app unexpectedly has a code signature"
+            exit 1
+          fi
+          mkdir -p build/ios/unsigned/Payload
+          cp -R "$app" build/ios/unsigned/Payload/Runner.app
+          (
+            cd build/ios/unsigned
+            /usr/bin/zip -q -r -y Darmaltoon-Pharmacy-Unsigned.ipa Payload
+          )
+          unzip -t build/ios/unsigned/Darmaltoon-Pharmacy-Unsigned.ipa | tail -1
+          shasum -a 256 build/ios/unsigned/Darmaltoon-Pharmacy-Unsigned.ipa
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: darmaltoon-pharmacy-ios-unsigned
+          path: mobile/build/ios/unsigned/Darmaltoon-Pharmacy-Unsigned.ipa
+          retention-days: 30
+          if-no-files-found: error
