@@ -223,59 +223,65 @@ void main() {
     expect(medicine.read<String>('brand_name'), 'Synced Medicine');
     expect(await repository.checkpoint('medicines'), 'cursor-1');
   });
-  test('stale sending event recovers after interrupted synchronization', () async {
-    final int old = DateTime.now().millisecondsSinceEpoch ~/ 1000 - 600;
-    await database.customStatement(
-      '''
+  test(
+    'stale sending event recovers after interrupted synchronization',
+    () async {
+      final int old = DateTime.now().millisecondsSinceEpoch ~/ 1000 - 600;
+      await database.customStatement(
+        '''
       UPDATE sync_outbox_entries
       SET status = 'sending', updated_at = ?
       ''',
-      <Object?>[old],
-    );
+        <Object?>[old],
+      );
 
-    final List<SyncOutboxEvent> recovered = await repository.pendingOutbox();
-    expect(
-      recovered.map((SyncOutboxEvent item) => item.idempotencyKey),
-      contains('sale:sale-local-1:completed'),
-    );
+      final List<SyncOutboxEvent> recovered = await repository.pendingOutbox();
+      expect(
+        recovered.map((SyncOutboxEvent item) => item.idempotencyKey),
+        contains('sale:sale-local-1:completed'),
+      );
 
-    final QueryRow row = await database
-        .customSelect('SELECT status, next_attempt_at FROM sync_outbox_entries')
-        .getSingle();
-    expect(row.read<String>('status'), 'retry');
-    expect(row.readNullable<int>('next_attempt_at'), isNull);
+      final QueryRow row = await database
+          .customSelect(
+            'SELECT status, next_attempt_at FROM sync_outbox_entries',
+          )
+          .getSingle();
+      expect(row.read<String>('status'), 'retry');
+      expect(row.readNullable<int>('next_attempt_at'), isNull);
 
-    // A replay is acknowledged by the server's idempotency key, not as a new sale.
-    await repository.acknowledge(
-      recovered.single,
-      const SyncPushResult(
-        idempotencyKey: 'sale:sale-local-1:completed',
-        status: 'accepted',
-        serverId: 'server-sale-1',
-      ),
-    );
-    final QueryRow sale = await database
-        .customSelect('SELECT sync_state FROM local_sales')
-        .getSingle();
-    expect(sale.read<String>('sync_state'), 'synced');
-  });
+      // A replay is acknowledged by the server's idempotency key, not as a new sale.
+      await repository.acknowledge(
+        recovered.single,
+        const SyncPushResult(
+          idempotencyKey: 'sale:sale-local-1:completed',
+          status: 'accepted',
+          serverId: 'server-sale-1',
+        ),
+      );
+      final QueryRow sale = await database
+          .customSelect('SELECT sync_state FROM local_sales')
+          .getSingle();
+      expect(sale.read<String>('sync_state'), 'synced');
+    },
+  );
 
-  test('recently sending event is not retried during an in-flight request', () async {
-    final int now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    await database.customStatement(
-      '''
+  test(
+    'recently sending event is not retried during an in-flight request',
+    () async {
+      final int now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      await database.customStatement(
+        '''
       UPDATE sync_outbox_entries
       SET status = 'sending', updated_at = ?
       ''',
-      <Object?>[now],
-    );
+        <Object?>[now],
+      );
 
-    expect(await repository.pendingOutbox(), isEmpty);
-    final QueryRow row = await database
-        .customSelect('SELECT status FROM sync_outbox_entries')
-        .getSingle();
-    expect(row.read<String>('status'), 'sending');
-  });
-
-
+      expect(await repository.pendingOutbox(), isEmpty);
+      final QueryRow row = await database
+          .customSelect('SELECT status FROM sync_outbox_entries')
+          .getSingle();
+      expect(row.read<String>('status'), 'sending');
+    },
+  );
 }
