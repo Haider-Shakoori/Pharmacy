@@ -48,7 +48,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('Offline-ready mobile foundation'), findsOneWidget);
+    expect(
+      find.text(
+        'Device registration is required before transactional POS is enabled.',
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('No network link'), findsOneWidget);
     expect(find.text('POS'), findsWidgets);
     expect(find.text('Sync'), findsWidgets);

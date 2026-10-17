@@ -2,6 +2,7 @@ import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
+import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
 import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
@@ -27,33 +28,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     final AppStrings strings = AppStrings.of(context);
 
     final List<_ShellDestination> destinations = <_ShellDestination>[
-      _ShellDestination(
-        icon: Icons.point_of_sale_rounded,
-        label: strings.pos,
-        title: strings.posTitle,
-        body: strings.posBody,
-      ),
-      _ShellDestination(
-        icon: Icons.inventory_2_outlined,
-        label: strings.stock,
-        title: strings.stockTitle,
-        body: strings.stockBody,
-      ),
+      _ShellDestination(icon: Icons.point_of_sale_rounded, label: strings.pos),
+      _ShellDestination(icon: Icons.inventory_2_outlined, label: strings.stock),
       _ShellDestination(
         icon: Icons.people_alt_outlined,
         label: strings.customers,
-        title: strings.customersTitle,
-        body: strings.customersBody,
       ),
-      _ShellDestination(
-        icon: Icons.sync_rounded,
-        label: strings.sync,
-        title: strings.syncTitle,
-        body: strings.syncBody,
-      ),
+      _ShellDestination(icon: Icons.sync_rounded, label: strings.sync),
     ];
-
-    final _ShellDestination current = destinations[_selectedIndex];
 
     return Scaffold(
       appBar: AppBar(
@@ -87,30 +69,12 @@ class _AppShellState extends ConsumerState<AppShell> {
           children: <Widget>[
             const ConnectivityBanner(),
             const SizedBox(height: 16),
-            if (_selectedIndex != 0) ...<Widget>[
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        strings.foundation,
-                        style: Theme.of(context).textTheme.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(strings.foundationBody),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
             if (_selectedIndex == 0)
               const OfflinePosPanel()
-            else
-              _FeaturePanel(destination: current),
+            else if (_selectedIndex == 1)
+              const OfflineStockPanel()
+            else if (_selectedIndex == 2)
+              const OfflineCustomersPanel(),
             if (_selectedIndex == 1) ...<Widget>[
               const SizedBox(height: 16),
               const OperationalAlertsCard(),
@@ -148,49 +112,9 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 }
 
-class _FeaturePanel extends StatelessWidget {
-  const _FeaturePanel({required this.destination});
-
-  final _ShellDestination destination;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: <Widget>[
-            Icon(destination.icon, size: 44),
-            const SizedBox(height: 12),
-            Text(
-              destination.title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              destination.body,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ShellDestination {
-  const _ShellDestination({
-    required this.icon,
-    required this.label,
-    required this.title,
-    required this.body,
-  });
+  const _ShellDestination({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
-  final String title;
-  final String body;
 }
