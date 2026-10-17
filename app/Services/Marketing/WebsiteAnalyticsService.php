@@ -132,4 +132,3 @@ class WebsiteAnalyticsService
         $stmt->execute([gmdate('Y-m-d H:i:s'), $engine, $question, $result, $evidenceUrl]);
     }
 }
-

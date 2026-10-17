@@ -42,4 +42,3 @@ class WebsiteAnalyticsController extends Controller
         return back()->with('success', 'Observed AI response recorded.')->withFragment('ai-checks');
     }
 }
-

@@ -116,4 +116,3 @@ class PlatformWebsiteAnalyticsTest extends TestCase
         $this->assertSame('1', (string) $db->query('SELECT COUNT(*) FROM ai_mention_checks')->fetchColumn());
     }
 }
-
