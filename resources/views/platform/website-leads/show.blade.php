@@ -13,6 +13,12 @@
         </p>
     </div>
 
+    @if($lead->kind === 'trial')
+        <div class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+            This is an enquiry for a 7-day trial, not an active account. Verify the applicant and complete the secure Trial Requests onboarding and approval process before provisioning a pharmacy. Never request passwords by email or internal notes.
+        </div>
+    @endif
+
     <div class="grid gap-5 lg:grid-cols-2">
         <section class="rounded-2xl border border-slate-200 bg-white p-5">
             <h3 class="mb-4 text-lg font-black">Contact details</h3>

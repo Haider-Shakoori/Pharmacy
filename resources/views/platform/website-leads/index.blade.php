@@ -8,7 +8,7 @@
         <div>
             <p class="text-xs font-bold uppercase tracking-wider text-teal-700">Sales / website enquiries</p>
             <h2 class="mt-1 text-3xl font-black">Demo Requests</h2>
-            <p class="mt-2 text-sm text-slate-500">Private requests received from darmaltoon.com. Website request IDs prevent repeated imports.</p>
+            <p class="mt-2 text-sm text-slate-500">Private demo, trial and contact enquiries received from darmaltoon.com. Trial enquiries require staff follow-up and approval; submitting this website form never activates an account automatically.</p>
         </div>
         <div class="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-bold text-teal-900">
             {{ number_format($newCount) }} new genuine requests
@@ -25,6 +25,7 @@
             <select name="kind" id="kind" class="w-full rounded-lg border-slate-300 text-sm">
                 <option value="">All</option>
                 <option value="demo" @selected($kind === 'demo')>Demo</option>
+                <option value="trial" @selected($kind === 'trial')>7-day trial enquiry</option>
                 <option value="contact" @selected($kind === 'contact')>Contact</option>
             </select>
         </div>

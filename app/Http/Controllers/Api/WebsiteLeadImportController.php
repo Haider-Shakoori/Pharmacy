@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class WebsiteLeadImportController extends Controller
 {
@@ -28,7 +29,7 @@ class WebsiteLeadImportController extends Controller
             'leads' => ['required', 'array', 'min:1', 'max:50'],
             'leads.*.id' => ['required', 'integer', 'min:1'],
             'leads.*.created_at' => ['required', 'integer', 'min:1'],
-            'leads.*.kind' => ['required', Rule::in(['demo', 'contact'])],
+            'leads.*.kind' => ['required', Rule::in(['demo', 'contact', 'trial'])],
             'leads.*.language' => ['required', Rule::in(['en', 'fa', 'ps'])],
             'leads.*.name' => ['required', 'string', 'min:2', 'max:100'],
             'leads.*.phone' => ['required', 'string', 'min:6', 'max:40'],
@@ -38,6 +39,14 @@ class WebsiteLeadImportController extends Controller
             'leads.*.details' => ['nullable', 'array', 'max:12'],
             'leads.*.details.*' => ['nullable', 'string', 'max:150'],
         ]);
+
+        foreach ($data['leads'] as $index => $item) {
+            if ($item['kind'] === 'trial' && (empty($item['email']) || empty($item['pharmacy']))) {
+                throw ValidationException::withMessages([
+                    "leads.{$index}.email" => 'Trial applications require a valid contact email and pharmacy name.',
+                ]);
+            }
+        }
 
         $imported = 0;
         $skipped = 0;
