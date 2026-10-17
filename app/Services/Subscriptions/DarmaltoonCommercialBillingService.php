@@ -66,8 +66,7 @@ class DarmaltoonCommercialBillingService
             $expected = Pricing::firstYearPrice($confirmed);
 
             if (Pricing::normaliseAmount($amount) !== $expected) {
-                throw ValidationException::withMessages(['amount' =>
-                    'Payment does not match the current first-year rate of AFN '.$expected.'. Confirm the correct amount before activating.']);
+                throw ValidationException::withMessages(['amount' => 'Payment does not match the current first-year rate of AFN '.$expected.'. Confirm the correct amount before activating.']);
             }
 
             $founding = $confirmed < Pricing::FOUNDING_LIMIT;
@@ -149,8 +148,7 @@ class DarmaltoonCommercialBillingService
             || $plan->currency !== Pricing::CURRENCY || $plan->max_windows_devices !== 1
             || $plan->max_android_devices !== 2 || $plan->max_branches !== 1
             || (string) $plan->price !== Pricing::REGULAR_FIRST_YEAR) {
-            throw ValidationException::withMessages(['payment_reference' =>
-                'The Darmaltoon Standard Annual plan must be configured and enabled at AFN 7,000, yearly, 1 Windows / 2 Android / 1 branch before payment confirmation.']);
+            throw ValidationException::withMessages(['payment_reference' => 'The Darmaltoon Standard Annual plan must be configured and enabled at AFN 7,000, yearly, 1 Windows / 2 Android / 1 branch before payment confirmation.']);
         }
 
         return $plan;
