@@ -80,17 +80,13 @@
         </div>
     </section>
 
-    @php
-        $toggles = [
+    <section class="grid gap-2 sm:grid-cols-2">
+        @foreach ([
             'prescription_required' => 'Prescription required',
             'batch_tracking_required' => 'Require batch / lot tracking',
             'expiry_tracking_required' => 'Require expiry tracking',
             'is_active' => 'Active medicine',
-        ];
-    @endphp
-
-    <section class="grid gap-2 sm:grid-cols-2">
-        @foreach ($toggles as $key => $label)
+        ] as $key => $label)
             <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 text-sm font-medium">
                 <input type="hidden" name="{{ $key }}" value="0">
                 <input type="checkbox" name="{{ $key }}" value="1"
