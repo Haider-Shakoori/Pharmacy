@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class WebsiteLeadImportController extends Controller
 {
@@ -41,7 +42,7 @@ class WebsiteLeadImportController extends Controller
 
         foreach ($data['leads'] as $index => $item) {
             if ($item['kind'] === 'trial' && (empty($item['email']) || empty($item['pharmacy']))) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     "leads.{$index}.email" => 'Trial applications require a valid contact email and pharmacy name.',
                 ]);
             }
