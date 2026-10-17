@@ -7,46 +7,35 @@ import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browse
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class OfflineStockPanel extends ConsumerWidget {
+class OfflineStockPanel extends StatelessWidget {
   const OfflineStockPanel({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return _CatalogAccess(
-      isStock: true,
-      registration: ref.watch(mobileRegistrationProvider),
-      database: ref.watch(pharmacyDatabaseProvider),
-    );
+  Widget build(BuildContext context) {
+    return const _CatalogAccess(isStock: true);
   }
 }
 
-class OfflineCustomersPanel extends ConsumerWidget {
+class OfflineCustomersPanel extends StatelessWidget {
   const OfflineCustomersPanel({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return _CatalogAccess(
-      isStock: false,
-      registration: ref.watch(mobileRegistrationProvider),
-      database: ref.watch(pharmacyDatabaseProvider),
-    );
+  Widget build(BuildContext context) {
+    return const _CatalogAccess(isStock: false);
   }
 }
 
-class _CatalogAccess extends StatelessWidget {
-  const _CatalogAccess({
-    required this.isStock,
-    required this.registration,
-    required this.database,
-  });
+class _CatalogAccess extends ConsumerWidget {
+  const _CatalogAccess({required this.isStock});
 
   final bool isStock;
-  final AsyncValue<MobileRegistration?> registration;
-  final AsyncValue<PharmacyDatabase> database;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final AppStrings strings = AppStrings.of(context);
+    final AsyncValue<MobileRegistration?> registration = ref.watch(
+      mobileRegistrationProvider,
+    );
     return registration.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (Object error, StackTrace trace) => Text(error.toString()),
@@ -61,7 +50,8 @@ class _CatalogAccess extends StatelessWidget {
         if (!permitted) {
           return _InfoCard(message: strings.catalogPermissionDenied);
         }
-        return database.when(
+        // Open the tenant-scoped database only after a device is registered.
+        return ref.watch(pharmacyDatabaseProvider).when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (Object error, StackTrace trace) => Text(error.toString()),
           data: (PharmacyDatabase db) => isStock
