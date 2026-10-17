@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Platform;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Platform\UpdateSubscriptionRequest;
+use App\Models\CommercialEnrollment;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Services\Licensing\LicenseKeyService;
+use App\Services\Subscriptions\DarmaltoonCommercialBillingService;
 use App\Services\Subscriptions\SubscriptionHealthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,13 +45,16 @@ class SubscriptionController extends Controller
         return view('platform.subscriptions.index', compact('subscriptions', 'search', 'status'));
     }
 
-    public function edit(Tenant $tenant): View
+    public function edit(Tenant $tenant, DarmaltoonCommercialBillingService $billing): View
     {
         $tenant->load('business.subscription.plan', 'business.subscription.license.activations');
 
         return view('platform.subscriptions.edit', [
             'tenant' => $tenant,
             'subscription' => $tenant->business?->subscription,
+            'commercialOffer' => $billing->snapshot(),
+            'commercialEnrollment' => CommercialEnrollment::query()
+                ->where('business_id', $tenant->business?->id)->with(['receipts' => fn ($query) => $query->latest('paid_at')])->first(),
             'plans' => Plan::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')

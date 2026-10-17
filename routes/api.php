@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\DarmaltoonLaunchOfferController;
 use App\Http\Controllers\Api\DesktopAccessManagementController;
 use App\Http\Controllers\Api\DesktopLicenseRefreshController;
 use App\Http\Controllers\Api\DesktopSessionLoginController;
@@ -16,6 +17,9 @@ use App\Http\Controllers\Api\MobileSyncPushController;
 use App\Http\Controllers\Api\TrialDeviceRegistrationController;
 use App\Http\Controllers\Api\WebsiteLeadImportController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/v1/marketing/launch-offer', DarmaltoonLaunchOfferController::class)
+    ->middleware('throttle:30,1');
 
 Route::middleware('api.payload')->group(function (): void {
     Route::post('/v1/marketing/leads/import', WebsiteLeadImportController::class)

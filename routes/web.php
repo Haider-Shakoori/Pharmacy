@@ -3,6 +3,7 @@
 use App\Http\Controllers\Health\ReadinessController;
 use App\Http\Controllers\Platform\Account\PasswordController as PlatformPasswordController;
 use App\Http\Controllers\Platform\Auth\LoginController as PlatformLoginController;
+use App\Http\Controllers\Platform\DarmaltoonCommercialPaymentController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\Platform\LicenseController;
 use App\Http\Controllers\Platform\PlanController;
@@ -67,6 +68,10 @@ $platformRoutes = static function (): void {
             ->middleware('throttle:5,1')->name('analytics.queries.import');
         Route::post('/analytics/ai-mentions', [WebsiteAnalyticsController::class, 'storeMention'])
             ->middleware('throttle:10,1')->name('analytics.mentions.store');
+        Route::post('/subscriptions/{tenant}/commercial/first-payment', [DarmaltoonCommercialPaymentController::class, 'initial'])
+            ->name('subscriptions.commercial.initial')->middleware('throttle:5,1');
+        Route::post('/subscriptions/{tenant}/commercial/renew', [DarmaltoonCommercialPaymentController::class, 'renew'])
+            ->name('subscriptions.commercial.renew')->middleware('throttle:5,1');
         Route::get('/subscriptions/{tenant}/edit', [SubscriptionController::class, 'edit'])->name('subscriptions.edit');
         Route::put('/subscriptions/{tenant}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
 
