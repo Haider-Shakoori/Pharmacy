@@ -50,7 +50,9 @@ class LoginController extends Controller
                 ? 'legacy.platform.dashboard'
                 : 'platform.dashboard';
 
-        return redirect()->intended(route($dashboardRoute));
+        return redirect()->intended(route($dashboardRoute))->withCookie(cookie(
+            'dt_analytics_exclude', '1', 525600, '/', '.darmaltoon.com', true, true, false, 'lax',
+        ));
     }
 
     public function destroy(Request $request): RedirectResponse

@@ -6,17 +6,38 @@ namespace App\Http\Controllers\Platform;
 
 use App\Http\Controllers\Controller;
 use App\Services\Marketing\WebsiteAnalyticsService;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 use RuntimeException;
 
 class WebsiteAnalyticsController extends Controller
 {
-    public function index(WebsiteAnalyticsService $analytics): View
+    public function index(WebsiteAnalyticsService $analytics): Response
     {
-        return view('platform.analytics.index', ['report' => $analytics->snapshot()]);
+        return response()->view('platform.analytics.index', ['report' => $analytics->snapshot()])
+            ->cookie('dt_analytics_exclude', '1', 525600, '/', '.darmaltoon.com', true, true, false, 'lax');
+    }
+
+    public function importQueries(Request $request, WebsiteAnalyticsService $analytics): RedirectResponse
+    {
+        $data = $request->validate([
+            'period_start' => ['required', 'date_format:Y-m-d', 'before_or_equal:period_end'],
+            'period_end' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'search_csv' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
+        ]);
+        try {
+            $count = $analytics->importSearchQueries(
+                $data['search_csv']->getRealPath(),
+                $data['period_start'],
+                $data['period_end'],
+            );
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage())->withFragment('keywords');
+        }
+
+        return back()->with('success', "Imported {$count} verified Google Search Console queries.")->withFragment('keywords');
     }
 
     public function storeMention(Request $request, WebsiteAnalyticsService $analytics): RedirectResponse

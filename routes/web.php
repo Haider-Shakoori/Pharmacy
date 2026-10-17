@@ -15,6 +15,7 @@ use App\Http\Controllers\Platform\TenantTrialController;
 use App\Http\Controllers\Platform\TrialRequestController;
 use App\Http\Controllers\Platform\WebsiteAnalyticsController;
 use App\Http\Controllers\PublicTrialRequestController;
+use App\Http\Middleware\ExcludeOwnerMarketingVisits;
 use Illuminate\Support\Facades\Route;
 
 $platformRoutes = static function (): void {
@@ -25,7 +26,7 @@ $platformRoutes = static function (): void {
             ->name('login.store');
     });
 
-    Route::middleware('auth:platform')->group(function (): void {
+    Route::middleware(['auth:platform', ExcludeOwnerMarketingVisits::class])->group(function (): void {
         Route::get('/', PlatformDashboardController::class)->name('dashboard');
         Route::post('/logout', [PlatformLoginController::class, 'destroy'])->name('logout');
 
@@ -57,6 +58,8 @@ $platformRoutes = static function (): void {
         Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
         Route::get('/monitoring', SubscriptionMonitoringController::class)->name('monitoring.index');
         Route::get('/analytics', [WebsiteAnalyticsController::class, 'index'])->name('analytics.index');
+        Route::post('/analytics/search-queries', [WebsiteAnalyticsController::class, 'importQueries'])
+            ->middleware('throttle:5,1')->name('analytics.queries.import');
         Route::post('/analytics/ai-mentions', [WebsiteAnalyticsController::class, 'storeMention'])
             ->middleware('throttle:10,1')->name('analytics.mentions.store');
         Route::get('/subscriptions/{tenant}/edit', [SubscriptionController::class, 'edit'])->name('subscriptions.edit');
