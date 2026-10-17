@@ -37,6 +37,13 @@
                     <span class="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black text-slate-950">{{ $pendingTrialRequests }}</span>
                 @endif
             </a>
+            <a href="{{ route('platform.demo-requests.index') }}" class="flex items-center justify-between gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.demo-requests.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">
+                <span>Demo Requests</span>
+                @php($newWebsiteRequests = \App\Models\WebsiteLead::query()->where('status', 'new')->where('is_test', false)->count())
+                @if ($newWebsiteRequests > 0)
+                    <span class="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black text-slate-950">{{ $newWebsiteRequests }}</span>
+                @endif
+            </a>
             <a href="{{ route('platform.plans.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.plans.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Plans</a>
             <a href="{{ route('platform.subscriptions.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.subscriptions.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Subscriptions</a>
             <a href="{{ route('platform.monitoring.index') }}" class="block whitespace-nowrap rounded-lg px-3 py-2.5 {{ request()->routeIs('platform.monitoring.*') ? 'bg-teal-700 text-white' : 'text-slate-300 hover:bg-slate-900' }}">Monitoring</a>
