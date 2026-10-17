@@ -24,6 +24,7 @@
             ['Subscription attention', $metrics['subscription_attention']],
             ['Stale devices', $metrics['stale_devices']],
             ['Pending trial requests', $metrics['pending_trial_requests']],
+            ['New demo requests', $metrics['new_demo_requests']],
         ] as [$label, $value])
             <article class="rounded-2xl border border-slate-200 bg-white p-5">
                 <p class="text-sm font-medium text-slate-500">{{ $label }}</p>
@@ -31,6 +32,16 @@
             </article>
         @endforeach
     </section>
+
+    @if ($metrics['new_demo_requests'] > 0)
+        <section class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-5">
+            <div>
+                <h3 class="font-bold text-teal-950">New website demo requests</h3>
+                <p class="mt-1 text-sm text-teal-800">{{ $metrics['new_demo_requests'] }} genuine demo request(s) need follow-up.</p>
+            </div>
+            <a href="{{ route('platform.demo-requests.index', ['kind' => 'demo', 'status' => 'new']) }}" class="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-black text-white">View demo requests</a>
+        </section>
+    @endif
 
     @if ($metrics['pending_trial_requests'] > 0)
         <section class="flex flex-col justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:flex-row sm:items-center">
