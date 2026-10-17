@@ -5,10 +5,15 @@ namespace App\Support\Commercial;
 final class DarmaltoonLaunchPricing
 {
     public const PLAN_CODE = 'DARMALTOON_STANDARD_ANNUAL';
+
     public const FOUNDING_LIMIT = 10;
+
     public const FOUNDING_FIRST_YEAR = '5000.00';
+
     public const REGULAR_FIRST_YEAR = '7000.00';
+
     public const ANNUAL_RENEWAL = '5000.00';
+
     public const CURRENCY = 'AFN';
 
     public static function firstYearPrice(int $confirmedFounders): string
