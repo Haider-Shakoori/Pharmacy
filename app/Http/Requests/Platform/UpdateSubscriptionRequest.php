@@ -3,8 +3,8 @@
 namespace App\Http\Requests\Platform;
 
 use App\Enums\SubscriptionStatus;
-use App\Models\Plan;
 use App\Models\CommercialEnrollment;
+use App\Models\Plan;
 use App\Support\Commercial\DarmaltoonLaunchPricing as Pricing;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
