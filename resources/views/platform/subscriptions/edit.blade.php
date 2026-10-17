@@ -29,6 +29,94 @@
         </section>
     @endif
 
+    <section class="rounded-2xl border border-teal-200 bg-white p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-teal-700">Darmaltoon Standard / Launch pricing</p>
+                <h3 class="mt-1 text-xl font-black">Verified payments &amp; founding customers</h3>
+            </div>
+            <div class="rounded-lg bg-teal-50 px-4 py-2 text-sm font-bold text-teal-900">
+                {{ $commercialOffer['remaining'] }} of 10 founder places remain
+            </div>
+        </div>
+        <p class="mt-2 text-sm text-slate-600">
+            First {{ \App\Support\Commercial\DarmaltoonLaunchPricing::FOUNDING_LIMIT }} <strong>paid</strong> pharmacies:
+            AFN 5,000 first year. Later customers: AFN 7,000 first year.
+            Renewal: AFN 5,000/year for both. Trials and demo requests never consume places.
+        </p>
+        <p class="mt-1 text-xs text-amber-700">
+            Do not confirm payment before independently verifying receipt. Founder places are allocated atomically at confirmation,
+            not reserved by this screen. Existing promised prices require individual review.
+        </p>
+        @if($commercialEnrollment)
+            <div class="mt-4 rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm">
+                <strong>{{ ucfirst($commercialEnrollment->offer_tier) }} customer
+                    @if($commercialEnrollment->founder_number) #{{ $commercialEnrollment->founder_number }} @endif
+                </strong>
+                <p class="mt-1">First year: AFN {{ number_format((float) $commercialEnrollment->first_year_amount, 0) }}
+                    · Renewal: AFN {{ number_format((float) $commercialEnrollment->renewal_amount, 0) }}/year</p>
+                <p class="mt-1 text-xs text-slate-600">The agreed renewal rate is saved per pharmacy; changing marketing pricing never updates this record.</p>
+            </div>
+        @endif
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+            @if(!$commercialEnrollment)
+                <form method="POST" action="{{ route('platform.subscriptions.commercial.initial', $tenant) }}"
+                    class="space-y-3 rounded-xl border border-slate-200 p-4">
+                    @csrf
+                    <h4 class="font-bold">Confirm first payment</h4>
+                    <p class="text-sm text-slate-600">
+                        Indicative price: <strong>AFN {{ number_format((float) $commercialOffer['first_year_price'], 0) }}</strong>
+                        · verified once the payment is recorded.
+                    </p>
+                    <label class="block text-sm font-semibold">Amount received (AFN)
+                        <input required type="number" min="1" step="0.01" name="amount"
+                            value="{{ old('amount', $commercialOffer['first_year_price']) }}"
+                            class="mt-1 block w-full rounded-lg border-slate-300">
+                    </label>
+                    <label class="block text-sm font-semibold">External payment reference
+                        <input required maxlength="150" name="payment_reference" value="{{ old('payment_reference') }}"
+                            class="mt-1 block w-full rounded-lg border-slate-300" placeholder="Bank/cash receipt number">
+                    </label>
+                    <label class="flex items-start gap-2 text-sm"><input type="checkbox" name="payment_verified" value="1" required>
+                        I independently confirmed payment and its reference.</label>
+                    <button class="rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">
+                        Record payment &amp; activate annual license</button>
+                </form>
+            @else
+                <form method="POST" action="{{ route('platform.subscriptions.commercial.renew', $tenant) }}"
+                    class="space-y-3 rounded-xl border border-slate-200 p-4">
+                    @csrf
+                    <h4 class="font-bold">Confirm annual renewal</h4>
+                    <label class="block text-sm font-semibold">Amount received (AFN)
+                        <input required type="number" min="1" step="0.01" name="amount"
+                            value="{{ old('amount', $commercialEnrollment->renewal_amount) }}"
+                            class="mt-1 block w-full rounded-lg border-slate-300">
+                    </label>
+                    <label class="block text-sm font-semibold">New payment reference
+                        <input required maxlength="150" name="payment_reference" value="{{ old('payment_reference') }}"
+                            class="mt-1 block w-full rounded-lg border-slate-300">
+                    </label>
+                    <label class="flex items-start gap-2 text-sm"><input type="checkbox" name="payment_verified" value="1" required>
+                        I independently confirmed this renewal payment.</label>
+                    <button class="rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">Record paid annual renewal</button>
+                </form>
+            @endif
+            <div class="rounded-xl border border-slate-200 p-4">
+                <h4 class="font-bold">Payment history</h4>
+                @forelse(($commercialEnrollment?->receipts ?? collect()) as $receipt)
+                    <div class="border-b border-slate-100 py-3 text-sm last:border-b-0">
+                        <strong>{{ ucfirst($receipt->kind) }} · AFN {{ number_format((float) $receipt->amount, 0) }}</strong>
+                        <p class="text-xs text-slate-600">Receipt: {{ $receipt->payment_reference }}</p>
+                        <p class="text-xs text-slate-600">Recorded {{ $receipt->paid_at?->format('Y-m-d H:i') }}
+                            · coverage until {{ $receipt->coverage_ends_at?->format('Y-m-d') }}</p>
+                    </div>
+                @empty
+                    <p class="mt-3 text-sm text-slate-500">No verified launch payments have been recorded for this pharmacy.</p>
+                @endforelse
+            </div>
+        </div>
+    </section>
+
     <form method="POST" action="{{ route('platform.subscriptions.update', $tenant) }}" class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
         @csrf
         @method('PUT')
