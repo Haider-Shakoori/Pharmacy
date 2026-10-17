@@ -14,6 +14,7 @@ use App\Http\Controllers\Platform\TenantStatusController;
 use App\Http\Controllers\Platform\TenantTrialController;
 use App\Http\Controllers\Platform\TrialRequestController;
 use App\Http\Controllers\Platform\WebsiteAnalyticsController;
+use App\Http\Controllers\Platform\WebsiteLeadController;
 use App\Http\Controllers\PublicTrialRequestController;
 use App\Http\Middleware\ExcludeOwnerMarketingVisits;
 use Illuminate\Support\Facades\Route;
@@ -52,6 +53,10 @@ $platformRoutes = static function (): void {
             ->name('trial-requests.approve');
         Route::post('/trial-requests/{trialRequest}/reject', [TrialRequestController::class, 'reject'])
             ->name('trial-requests.reject');
+
+        Route::get('/demo-requests', [WebsiteLeadController::class, 'index'])->name('demo-requests.index');
+        Route::get('/demo-requests/{websiteLead}', [WebsiteLeadController::class, 'show'])->name('demo-requests.show');
+        Route::put('/demo-requests/{websiteLead}', [WebsiteLeadController::class, 'update'])->name('demo-requests.update');
 
         Route::resource('plans', PlanController::class)->except(['show', 'destroy']);
 

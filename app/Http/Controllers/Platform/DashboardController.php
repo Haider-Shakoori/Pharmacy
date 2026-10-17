@@ -6,6 +6,7 @@ use App\Enums\TenantStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\TrialRequest;
+use App\Models\WebsiteLead;
 use App\Services\Subscriptions\PlatformSubscriptionMonitoringService;
 use Illuminate\Contracts\View\View;
 
@@ -30,6 +31,7 @@ class DashboardController extends Controller
                 'subscription_attention' => $subscriptionSnapshot['metrics']['attention'],
                 'stale_devices' => $subscriptionSnapshot['metrics']['stale_devices'],
                 'pending_trial_requests' => TrialRequest::query()->where('status', 'pending')->count(),
+                'new_demo_requests' => WebsiteLead::query()->where('kind', 'demo')->where('status', 'new')->where('is_test', false)->count(),
             ],
             'subscriptionAttention' => $subscriptionSnapshot['rows']
                 ->where('needs_attention', true)
