@@ -54,17 +54,21 @@
         </p>
         <div class="grid gap-5 xl:grid-cols-2">
             @foreach ([
-                'Visits by country' => $report['countries'],
+                'Sessions by country' => $report['country_sessions'],
+                'Page views by country' => $report['countries'],
                 'Landing pages by sessions' => $report['landing_pages'],
                 'Self-declared campaign search terms' => $report['campaign_terms'],
                 'Daily page-view trend (UTC)' => $report['daily'],
+                'Device types' => $report['devices'],
+                'Languages' => $report['languages'],
+                'Tracked interactions' => $report['actions'],
             ] as $title => $rows)
                 <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5">
                     <h3 class="mb-3 text-lg font-bold text-slate-900">{{ $title }}</h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm">
                             <thead class="border-b border-slate-100 text-slate-500">
-                                <tr><th class="py-3 text-start">Country / page / term / date</th><th class="py-3 text-end">Count</th></tr>
+                                <tr><th class="py-3 text-start">Category / page / term / date</th><th class="py-3 text-end">Count</th></tr>
                             </thead>
                             <tbody>
                                 @forelse ($rows as $row)
@@ -80,7 +84,7 @@
                             </tbody>
                         </table>
                     </div>
-                    @if ($title === 'Visits by country')
+                    @if (in_array($title, ['Sessions by country','Page views by country'], true))
                         <p class="mt-3 text-xs text-slate-500">Country is estimated from IP at request time. VPNs and proxies affect accuracy. Raw IPs are not saved. <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer" class="underline">IP geolocation by DB-IP</a> (CC BY 4.0).</p>
                     @endif
                     @if ($title === 'Self-declared campaign search terms')
