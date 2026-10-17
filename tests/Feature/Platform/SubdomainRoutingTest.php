@@ -28,14 +28,18 @@ class SubdomainRoutingTest extends TestCase
     public function test_platform_login_uses_platform_subdomain_without_legacy_prefix(): void
     {
         $host = (string) config('pharmacy.platform_domain');
+        $prefix = $host === config('pharmacy.deployment_host')
+            ? 'platform'
+            : trim((string) config('pharmacy.platform_path_prefix', ''), '/');
+        $path = '/'.($prefix === '' ? '' : $prefix.'/').'login';
 
-        $this->get('https://'.$host.'/login')
+        $this->get('https://'.$host.$path)
             ->assertOk()
             ->assertSee('Platform');
 
         $url = route('platform.login');
         $this->assertSame($host, parse_url($url, PHP_URL_HOST));
-        $this->assertSame('/login', parse_url($url, PHP_URL_PATH));
+        $this->assertSame($path, parse_url($url, PHP_URL_PATH));
     }
 
     public function test_api_readiness_uses_reserved_api_subdomain(): void
