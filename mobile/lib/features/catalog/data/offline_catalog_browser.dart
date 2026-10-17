@@ -27,8 +27,9 @@ class OfflineCatalogBrowser {
     DateTime? now,
   }) async {
     final String needle = '%${search.trim()}%';
-    final List<QueryRow> medicines = await _database.customSelect(
-      '''
+    final List<QueryRow> medicines = await _database
+        .customSelect(
+          '''
       SELECT id, medicine_code, brand_name, generic_name, sale_unit
       FROM local_medicines
       WHERE is_deleted = 0
@@ -38,12 +39,13 @@ class OfflineCatalogBrowser {
       ORDER BY brand_name COLLATE NOCASE, id
       LIMIT 100
       ''',
-      variables: <Variable<Object>>[
-        Variable<String>(needle),
-        Variable<String>(needle),
-        Variable<String>(needle),
-      ],
-    ).get();
+          variables: <Variable<Object>>[
+            Variable<String>(needle),
+            Variable<String>(needle),
+            Variable<String>(needle),
+          ],
+        )
+        .get();
 
     final DateTime timestamp = now ?? DateTime.now();
     final DateTime today = DateTime(
@@ -64,16 +66,13 @@ class OfflineCatalogBrowser {
         args.add(Variable<String>(locationId));
       }
 
-      final List<QueryRow> batches = await _database.customSelect(
-        '''
+      final List<QueryRow> batches = await _database.customSelect('''
         SELECT id, batch_number, stock_location_id, available_quantity,
                sale_price, status, expires_at
         FROM local_inventory_batches
         WHERE medicine_id = ? AND is_deleted = 0 $locationCondition
         ORDER BY expires_at IS NULL, expires_at, id
-        ''',
-        variables: args,
-      ).get();
+        ''', variables: args).get();
 
       FixedDecimal available = FixedDecimal.zero;
       final List<StockBatchSnapshot> lots = <StockBatchSnapshot>[];
@@ -121,8 +120,9 @@ class OfflineCatalogBrowser {
 
   Future<List<CustomerSnapshot>> customers({String search = ''}) async {
     final String pattern = '%${search.trim()}%';
-    final List<QueryRow> rows = await _database.customSelect(
-      '''
+    final List<QueryRow> rows = await _database
+        .customSelect(
+          '''
       SELECT id, name, phone, balance
       FROM local_customers
       WHERE is_deleted = 0
@@ -130,11 +130,12 @@ class OfflineCatalogBrowser {
       ORDER BY name COLLATE NOCASE, id
       LIMIT 100
       ''',
-      variables: <Variable<Object>>[
-        Variable<String>(pattern),
-        Variable<String>(pattern),
-      ],
-    ).get();
+          variables: <Variable<Object>>[
+            Variable<String>(pattern),
+            Variable<String>(pattern),
+          ],
+        )
+        .get();
     return rows
         .map(
           (QueryRow row) => CustomerSnapshot(
