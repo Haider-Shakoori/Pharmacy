@@ -14,9 +14,12 @@ use App\Http\Controllers\Api\MobileSessionRefreshController;
 use App\Http\Controllers\Api\MobileSyncPullController;
 use App\Http\Controllers\Api\MobileSyncPushController;
 use App\Http\Controllers\Api\TrialDeviceRegistrationController;
+use App\Http\Controllers\Api\WebsiteLeadImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('api.payload')->group(function (): void {
+    Route::post('/v1/marketing/leads/import', WebsiteLeadImportController::class)
+        ->middleware('throttle:15,1');
     Route::post('/v1/license/activate', LicenseActivationController::class)
         ->middleware('throttle:license-activation');
 
