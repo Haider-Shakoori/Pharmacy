@@ -54,28 +54,34 @@ void main() {
     expect(await browser.stockLocations(), <String>['main', 'secondary']);
   });
 
-  test('location filter excludes other location and never mutates stock', () async {
-    final List<StockMedicineSnapshot> list = await browser.medicines(
-      locationId: 'main',
-      now: DateTime(2026, 10, 17),
-    );
-    expect(list, hasLength(1));
-    expect(list.single.available.compact, '1.25');
-    expect(list.single.batches, hasLength(3));
+  test(
+    'location filter excludes other location and never mutates stock',
+    () async {
+      final List<StockMedicineSnapshot> list = await browser.medicines(
+        locationId: 'main',
+        now: DateTime(2026, 10, 17),
+      );
+      expect(list, hasLength(1));
+      expect(list.single.available.compact, '1.25');
+      expect(list.single.batches, hasLength(3));
 
-    final List<StockMedicineSnapshot> all = await browser.medicines(
-      search: 'hidden',
-    );
-    expect(all, isEmpty);
-  });
+      final List<StockMedicineSnapshot> all = await browser.medicines(
+        search: 'hidden',
+      );
+      expect(all, isEmpty);
+    },
+  );
 
-  test('customer search respects deletion flags and exact balance text', () async {
-    final List<CustomerSnapshot> found = await browser.customers(
-      search: '0700',
-    );
-    expect(found, hasLength(1));
-    expect(found.single.name, 'Ahmad Wali');
-    expect(found.single.balance, '125.2500');
-    expect(await browser.customers(search: 'Deleted'), isEmpty);
-  });
+  test(
+    'customer search respects deletion flags and exact balance text',
+    () async {
+      final List<CustomerSnapshot> found = await browser.customers(
+        search: '0700',
+      );
+      expect(found, hasLength(1));
+      expect(found.single.name, 'Ahmad Wali');
+      expect(found.single.balance, '125.2500');
+      expect(await browser.customers(search: 'Deleted'), isEmpty);
+    },
+  );
 }
