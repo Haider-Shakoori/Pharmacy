@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\Subscriptions\DarmaltoonCommercialBillingService;
+use App\Support\Commercial\DarmaltoonLaunchPricing;
 use Illuminate\Http\JsonResponse;
 
 class DarmaltoonLaunchOfferController extends Controller
@@ -15,7 +16,7 @@ class DarmaltoonLaunchOfferController extends Controller
         // Aggregate only: no names, payment references or pharmacy identities.
         // Availability is indicative; a place is allocated only on confirmed payment.
         return response()->json([
-            'founding_limit' => \App\Support\Commercial\DarmaltoonLaunchPricing::FOUNDING_LIMIT,
+            'founding_limit' => DarmaltoonLaunchPricing::FOUNDING_LIMIT,
             'founding_remaining' => $snapshot['remaining'],
             'founding_confirmed' => $snapshot['confirmed_founders'],
             'first_year_price_afn' => $snapshot['first_year_price'],
