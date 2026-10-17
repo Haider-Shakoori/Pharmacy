@@ -28,24 +28,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     final AppStrings strings = AppStrings.of(context);
 
     final List<_ShellDestination> destinations = <_ShellDestination>[
-      _ShellDestination(
-        icon: Icons.point_of_sale_rounded,
-        label: strings.pos,
-      ),
-      _ShellDestination(
-        icon: Icons.inventory_2_outlined,
-        label: strings.stock,
-      ),
+      _ShellDestination(icon: Icons.point_of_sale_rounded, label: strings.pos),
+      _ShellDestination(icon: Icons.inventory_2_outlined, label: strings.stock),
       _ShellDestination(
         icon: Icons.people_alt_outlined,
         label: strings.customers,
       ),
-      _ShellDestination(
-        icon: Icons.sync_rounded,
-        label: strings.sync,
-      ),
+      _ShellDestination(icon: Icons.sync_rounded, label: strings.sync),
     ];
-
 
     return Scaffold(
       appBar: AppBar(
@@ -123,10 +113,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 }
 
 class _ShellDestination {
-  const _ShellDestination({
-    required this.icon,
-    required this.label,
-  });
+  const _ShellDestination({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
