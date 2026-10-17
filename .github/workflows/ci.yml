@@ -32,6 +32,13 @@ jobs:
       - name: Run Laravel tests
         run: php artisan test
 
+      - name: Verify planned darmaltoon.com/platform routes (no production change)
+        env:
+          PHARMACY_DEPLOYMENT_HOST: pharmacy.darmaltoon.com
+          PHARMACY_PLATFORM_DOMAIN: darmaltoon.com
+          PHARMACY_PLATFORM_PATH_PREFIX: platform
+        run: php artisan test --filter=SubdomainRoutingTest
+
       - name: Check PHP formatting
         run: vendor/bin/pint --test
 
