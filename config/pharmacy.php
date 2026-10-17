@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'marketing_analytics_db_path' => env('DARMALTOON_MARKETING_ANALYTICS_DB', dirname(base_path()).'/.darmaltoon-analytics/metrics.sqlite'),
     'deployment_host' => env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af'),
     'tenant_domain' => env('PHARMACY_TENANT_DOMAIN', 'darmaltoon.com'),
     'platform_domain' => env('PHARMACY_PLATFORM_DOMAIN', 'platform.'.env('PHARMACY_DEPLOYMENT_HOST', 'pharmacy.businessos.af')),

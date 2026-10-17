@@ -13,6 +13,7 @@ use App\Http\Controllers\Platform\TenantProvisioningRetryController;
 use App\Http\Controllers\Platform\TenantStatusController;
 use App\Http\Controllers\Platform\TenantTrialController;
 use App\Http\Controllers\Platform\TrialRequestController;
+use App\Http\Controllers\Platform\WebsiteAnalyticsController;
 use App\Http\Controllers\PublicTrialRequestController;
 use Illuminate\Support\Facades\Route;
 
@@ -55,6 +56,9 @@ $platformRoutes = static function (): void {
 
         Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
         Route::get('/monitoring', SubscriptionMonitoringController::class)->name('monitoring.index');
+        Route::get('/analytics', [WebsiteAnalyticsController::class, 'index'])->name('analytics.index');
+        Route::post('/analytics/ai-mentions', [WebsiteAnalyticsController::class, 'storeMention'])
+            ->middleware('throttle:10,1')->name('analytics.mentions.store');
         Route::get('/subscriptions/{tenant}/edit', [SubscriptionController::class, 'edit'])->name('subscriptions.edit');
         Route::put('/subscriptions/{tenant}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
 
