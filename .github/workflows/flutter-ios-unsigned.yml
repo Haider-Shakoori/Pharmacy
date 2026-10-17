@@ -57,7 +57,7 @@ jobs:
       - name: Build without Apple signing
         run: |
           flutter build ios --release --no-codesign \
-            --dart-define=API_BASE_URL=https://pharmacy.darmaltoon.com
+            --dart-define=API_BASE_URL=https://darmaltoon.com
 
       - name: Package unsigned Runner.app as IPA
         shell: bash
