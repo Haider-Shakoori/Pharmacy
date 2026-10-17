@@ -43,7 +43,8 @@ class _CatalogAccess extends ConsumerWidget {
         if (user == null) {
           return _InfoCard(message: strings.registrationRequired);
         }
-        final bool permitted = user.permissions.contains('pos.sell') ||
+        final bool permitted =
+            user.permissions.contains('pos.sell') ||
             user.permissions.contains(
               isStock ? 'inventory.manage' : 'customers.manage',
             );
@@ -51,13 +52,15 @@ class _CatalogAccess extends ConsumerWidget {
           return _InfoCard(message: strings.catalogPermissionDenied);
         }
         // Open the tenant-scoped database only after a device is registered.
-        return ref.watch(pharmacyDatabaseProvider).when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (Object error, StackTrace trace) => Text(error.toString()),
-          data: (PharmacyDatabase db) => isStock
-              ? _StockBrowser(database: db)
-              : _CustomerBrowser(database: db),
-        );
+        return ref
+            .watch(pharmacyDatabaseProvider)
+            .when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (Object error, StackTrace trace) => Text(error.toString()),
+              data: (PharmacyDatabase db) => isStock
+                  ? _StockBrowser(database: db)
+                  : _CustomerBrowser(database: db),
+            );
       },
     );
   }
@@ -70,10 +73,7 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Text(message),
-    ),
+    child: Padding(padding: const EdgeInsets.all(20), child: Text(message)),
   );
 }
 
@@ -112,7 +112,9 @@ class _StockBrowserState extends State<_StockBrowser> {
       _error = null;
     });
     try {
-      final OfflineCatalogBrowser browser = OfflineCatalogBrowser(widget.database);
+      final OfflineCatalogBrowser browser = OfflineCatalogBrowser(
+        widget.database,
+      );
       final List<String> locations = await browser.stockLocations();
       final List<StockMedicineSnapshot> medicines = await browser.medicines(
         search: _search.text,
@@ -145,7 +147,10 @@ class _StockBrowserState extends State<_StockBrowser> {
       children: <Widget>[
         Text(strings.stockTitle, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
-        Text(strings.catalogReadOnly, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          strings.catalogReadOnly,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         const SizedBox(height: 12),
         TextField(
           controller: _search,
@@ -172,10 +177,8 @@ class _StockBrowserState extends State<_StockBrowser> {
               child: Text(strings.catalogAllLocations),
             ),
             ..._locations.map(
-              (String id) => DropdownMenuItem<String>(
-                value: id,
-                child: Text(id),
-              ),
+              (String id) =>
+                  DropdownMenuItem<String>(value: id, child: Text(id)),
             ),
           ],
           onChanged: (String? value) {
@@ -198,38 +201,39 @@ class _StockBrowserState extends State<_StockBrowser> {
               child: ExpansionTile(
                 title: Text(item.name),
                 subtitle: Text(
-                  [item.medicineCode, item.genericName]
-                      .where((String value) => value.isNotEmpty)
-                      .join(' · '),
+                  [
+                    item.medicineCode,
+                    item.genericName,
+                  ].where((String value) => value.isNotEmpty).join(' · '),
                 ),
                 trailing: Text(
                   '${item.available.compact} ${item.saleUnit}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 children: item.batches.isEmpty
-                    ? <Widget>[
-                        ListTile(title: Text(strings.catalogNoBatches)),
-                      ]
-                    : item.batches.map((StockBatchSnapshot batch) {
-                        final String date = batch.expiresAt == null
-                            ? '—'
-                            : '${batch.expiresAt!.year}-'
-                                  '${batch.expiresAt!.month.toString().padLeft(2, '0')}-'
-                                  '${batch.expiresAt!.day.toString().padLeft(2, '0')}';
-                        final String status = batch.expired
-                            ? strings.catalogExpired
-                            : batch.status;
-                        return ListTile(
-                          dense: true,
-                          title: Text(
-                            '${strings.catalogBatch}: ${batch.batchNumber.isEmpty ? '—' : batch.batchNumber}',
-                          ),
-                          subtitle: Text(
-                            '${batch.locationId} · ${strings.catalogExpiry}: $date · $status',
-                          ),
-                          trailing: Text('${batch.quantity.compact}'),
-                        );
-                      }).toList(growable: false),
+                    ? <Widget>[ListTile(title: Text(strings.catalogNoBatches))]
+                    : item.batches
+                          .map((StockBatchSnapshot batch) {
+                            final String date = batch.expiresAt == null
+                                ? '—'
+                                : '${batch.expiresAt!.year}-'
+                                      '${batch.expiresAt!.month.toString().padLeft(2, '0')}-'
+                                      '${batch.expiresAt!.day.toString().padLeft(2, '0')}';
+                            final String status = batch.expired
+                                ? strings.catalogExpired
+                                : batch.status;
+                            return ListTile(
+                              dense: true,
+                              title: Text(
+                                '${strings.catalogBatch}: ${batch.batchNumber.isEmpty ? '—' : batch.batchNumber}',
+                              ),
+                              subtitle: Text(
+                                '${batch.locationId} · ${strings.catalogExpiry}: $date · $status',
+                              ),
+                              trailing: Text('${batch.quantity.compact}'),
+                            );
+                          })
+                          .toList(growable: false),
               ),
             ),
           ),
@@ -271,10 +275,9 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
       _error = null;
     });
     try {
-      final List<CustomerSnapshot> customers =
-          await OfflineCatalogBrowser(widget.database).customers(
-        search: _search.text,
-      );
+      final List<CustomerSnapshot> customers = await OfflineCatalogBrowser(
+        widget.database,
+      ).customers(search: _search.text);
       if (!mounted) {
         return;
       }
@@ -299,9 +302,15 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(strings.customersTitle, style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          strings.customersTitle,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         const SizedBox(height: 8),
-        Text(strings.catalogReadOnly, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          strings.catalogReadOnly,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         const SizedBox(height: 12),
         TextField(
           controller: _search,
@@ -337,7 +346,10 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: <Widget>[
-                    Text(strings.catalogBalance, style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      strings.catalogBalance,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     Text('AFN ${customer.balance}'),
                   ],
                 ),
