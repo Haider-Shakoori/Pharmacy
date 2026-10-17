@@ -1,17 +1,9 @@
 name: Flutter iOS Unsigned IPA
 
+# Final unsigned release is operator-triggered after feature and API migration QA.
+# Ordinary commits should not publish a new IPA prematurely.
 on:
   workflow_dispatch:
-  push:
-    branches: [main, 'feat/**']
-    paths:
-      - 'mobile/**'
-      - '.github/workflows/flutter-ios-unsigned.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'mobile/**'
-      - '.github/workflows/flutter-ios-unsigned.yml'
 
 permissions:
   contents: read
@@ -57,7 +49,7 @@ jobs:
       - name: Build without Apple signing
         run: |
           flutter build ios --release --no-codesign \
-            --dart-define=API_BASE_URL=https://pharmacy.darmaltoon.com
+            --dart-define=API_BASE_URL=https://darmaltoon.com
 
       - name: Package unsigned Runner.app as IPA
         shell: bash
