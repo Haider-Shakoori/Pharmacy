@@ -39,6 +39,9 @@ jobs:
       - name: Generate native iOS host
         run: |
           flutter create --platforms=ios --org af.businessos --project-name businessos_pharmacy .
+          # Flutter generates a starter widget test for MyApp, but this app uses AppShell.
+          # Remove only the generated sample; repository tests remain unchanged.
+          rm -f test/widget_test.dart
           flutter pub get
 
       - name: Generate Drift database code
