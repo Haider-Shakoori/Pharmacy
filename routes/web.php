@@ -3,9 +3,9 @@
 use App\Http\Controllers\Health\ReadinessController;
 use App\Http\Controllers\Platform\Account\PasswordController as PlatformPasswordController;
 use App\Http\Controllers\Platform\Auth\LoginController as PlatformLoginController;
+use App\Http\Controllers\Platform\DarmaltoonCommercialPaymentController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\Platform\LicenseController;
-use App\Http\Controllers\Platform\DarmaltoonCommercialPaymentController;
 use App\Http\Controllers\Platform\PlanController;
 use App\Http\Controllers\Platform\SubscriptionController;
 use App\Http\Controllers\Platform\SubscriptionMonitoringController;
