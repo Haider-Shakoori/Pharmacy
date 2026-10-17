@@ -143,6 +143,45 @@ class PlatformWebsiteLeadTest extends TestCase
         $this->assertTrue($test->fresh()->is_test);
     }
 
+    public function test_website_trial_enquiry_imports_to_the_private_inbox_without_activating_an_account(): void
+    {
+        $payload = $this->lead(72);
+        $payload['kind'] = 'trial';
+        $payload['pharmacy'] = 'Pending Trial Pharmacy';
+
+        $this->withToken($this->token)->postJson('/api/v1/marketing/leads/import', [
+            'leads' => [$payload],
+        ])->assertOk()->assertJsonPath('imported', 1);
+
+        $lead = WebsiteLead::query()->where('source_id', 72)->sole();
+        $this->assertSame('trial', $lead->kind);
+        $this->assertSame('new', $lead->status);
+        $this->assertDatabaseCount('trial_requests', 0);
+        $this->assertDatabaseCount('subscriptions', 0);
+
+        $this->signIn();
+        $this->get('/platform/demo-requests?kind=trial')->assertOk()
+            ->assertSee('Pending Trial Pharmacy')
+            ->assertSee('7-day trial enquiry');
+
+        $this->get('/platform/demo-requests/'.$lead->id)->assertOk()
+            ->assertSee('not an active account');
+    }
+
+    public function test_trial_enquiry_cannot_import_without_email_and_pharmacy(): void
+    {
+        $payload = $this->lead(73);
+        $payload['kind'] = 'trial';
+        $payload['email'] = null;
+        $payload['pharmacy'] = null;
+
+        $this->withToken($this->token)->postJson('/api/v1/marketing/leads/import', [
+            'leads' => [$payload],
+        ])->assertUnprocessable()->assertJsonValidationErrors('leads.0.email');
+
+        $this->assertDatabaseCount('website_leads', 0);
+    }
+
     public function test_invalid_import_cannot_store_untrusted_request_payload(): void
     {
         $bad = $this->lead(18);
