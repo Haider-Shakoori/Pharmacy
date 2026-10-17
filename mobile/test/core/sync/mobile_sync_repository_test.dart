@@ -234,8 +234,10 @@ void main() {
     );
 
     final List<SyncOutboxEvent> recovered = await repository.pendingOutbox();
-    expect(recovered.map((SyncOutboxEvent item) => item.idempotencyKey),
-        contains('sale:sale-local-1:completed'));
+    expect(
+      recovered.map((SyncOutboxEvent item) => item.idempotencyKey),
+      contains('sale:sale-local-1:completed'),
+    );
 
     final QueryRow row = await database
         .customSelect('SELECT status, next_attempt_at FROM sync_outbox_entries')
