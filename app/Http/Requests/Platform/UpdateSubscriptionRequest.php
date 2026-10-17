@@ -4,6 +4,8 @@ namespace App\Http\Requests\Platform;
 
 use App\Enums\SubscriptionStatus;
 use App\Models\Plan;
+use App\Models\CommercialEnrollment;
+use App\Support\Commercial\DarmaltoonLaunchPricing as Pricing;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -48,6 +50,12 @@ class UpdateSubscriptionRequest extends FormRequest
 
                 if ($plan !== null && ! $plan->is_active) {
                     $validator->errors()->add('plan_id', 'Inactive plans cannot be assigned to pharmacies.');
+                }
+
+                if ($plan?->code === Pricing::PLAN_CODE
+                    && $this->input('status') === 'active'
+                    && ! CommercialEnrollment::query()->where('business_id', $this->route('tenant')?->business?->id)->exists()) {
+                    $validator->errors()->add('status', 'Verify and record the first-year payment to activate the Darmaltoon Standard plan.');
                 }
             },
         ];
