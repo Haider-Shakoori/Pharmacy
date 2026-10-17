@@ -27,6 +27,18 @@ class AppStrings {
   String get posBody => _value('posBody');
   String get stockTitle => _value('stockTitle');
   String get stockBody => _value('stockBody');
+  String get catalogReadOnly => _value('catalogReadOnly');
+  String get catalogPermissionDenied => _value('catalogPermissionDenied');
+  String get catalogRefresh => _value('catalogRefresh');
+  String get catalogAllLocations => _value('catalogAllLocations');
+  String get catalogEmptyStock => _value('catalogEmptyStock');
+  String get catalogNoBatches => _value('catalogNoBatches');
+  String get catalogExpired => _value('catalogExpired');
+  String get catalogBatch => _value('catalogBatch');
+  String get catalogExpiry => _value('catalogExpiry');
+  String get catalogEmptyCustomers => _value('catalogEmptyCustomers');
+  String get catalogSearchCustomers => _value('catalogSearchCustomers');
+  String get catalogBalance => _value('catalogBalance');
   String get customersTitle => _value('customersTitle');
   String get customersBody => _value('customersBody');
   String get syncTitle => _value('syncTitle');
@@ -170,6 +182,18 @@ class AppStrings {
       'stockBody': 'Local batch and stock snapshots will be added with the SQLite/Drift data layer.',
       'customersTitle': 'Customer lookup foundation',
       'customersBody': 'Customer data will be cached locally only after the offline database and sync contracts are in place.',
+      'catalogReadOnly': 'Locally cached data · read only. Sync to refresh.',
+      'catalogPermissionDenied': 'Your account cannot view this pharmacy catalog.',
+      'catalogRefresh': 'Refresh cached records',
+      'catalogAllLocations': 'All locations',
+      'catalogEmptyStock': 'No cached medicines yet. Open Sync to download inventory.',
+      'catalogNoBatches': 'No cached batches for this medicine.',
+      'catalogExpired': 'Expired',
+      'catalogBatch': 'Batch',
+      'catalogExpiry': 'Expiry',
+      'catalogEmptyCustomers': 'No cached customers yet. Open Sync to download customers.',
+      'catalogSearchCustomers': 'Search customers by name or phone',
+      'catalogBalance': 'Balance',
       'syncTitle': 'Synchronization',
       'syncBody': 'Push offline sales only after server acknowledgement, then pull incremental catalog, inventory and customer updates.',
       'networkAvailable': 'Network link available',
@@ -291,6 +315,18 @@ class AppStrings {
           'بچ‌ها و موجودی محلی با لایه دیتابیس SQLite/Drift اضافه می‌شوند.',
       'customersTitle': 'بنیاد جستجوی مشتری',
       'customersBody': 'اطلاعات مشتری پس از آماده‌شدن دیتابیس آفلاین و قراردادهای همگام‌سازی به‌صورت محلی ذخیره می‌شود.',
+      'catalogReadOnly': 'معلومات ذخیره‌شدهٔ محلی · فقط نمایش. برای تازه‌سازی همگام‌سازی کنید.',
+      'catalogPermissionDenied': 'حساب شما اجازهٔ دیدن این اطلاعات دواخانه را ندارد.',
+      'catalogRefresh': 'تازه‌سازی معلومات ذخیره‌شده',
+      'catalogAllLocations': 'همه موقعیت‌ها',
+      'catalogEmptyStock': 'هنوز ادویه‌ای ذخیره نشده است. برای دریافت موجودی همگام‌سازی کنید.',
+      'catalogNoBatches': 'هیچ بچ ذخیره‌شده‌ای برای این دوا وجود ندارد.',
+      'catalogExpired': 'تاریخ‌گذشته',
+      'catalogBatch': 'بچ',
+      'catalogExpiry': 'انقضا',
+      'catalogEmptyCustomers': 'هنوز مشتری‌ای ذخیره نشده است. برای دریافت مشتریان همگام‌سازی کنید.',
+      'catalogSearchCustomers': 'جستجوی مشتری با نام یا شماره تلفن',
+      'catalogBalance': 'مانده',
       'syncTitle': 'همگام‌سازی',
       'syncBody': 'فروش‌های آفلاین فقط پس از تأیید سرور ارسال می‌شوند و سپس دواها، موجودی و مشتریان به‌صورت افزایشی دریافت می‌شوند.',
       'networkAvailable': 'اتصال شبکه موجود است',
@@ -412,6 +448,18 @@ class AppStrings {
           'ځايي بچونه او ذخیره به د SQLite/Drift ډیټابیس له طبقې سره اضافه شي.',
       'customersTitle': 'د پېرودونکي لټون بنسټ',
       'customersBody': 'د پېرودونکو معلومات به د آفلاین ډیټابیس او همغږۍ تړونونو له چمتو کېدو وروسته ځايي وساتل شي.',
+      'catalogReadOnly': 'ځايي خوندي شوي معلومات · یوازې کتل. د تازه کولو لپاره همغږي وکړئ.',
+      'catalogPermissionDenied': 'ستاسو حساب د دې فارمسي د معلوماتو د لیدلو اجازه نه لري.',
+      'catalogRefresh': 'خوندي معلومات تازه کړئ',
+      'catalogAllLocations': 'ټول ځایونه',
+      'catalogEmptyStock': 'لا تر اوسه درمل نه دي خوندي شوي. د ذخیرې لپاره همغږي وکړئ.',
+      'catalogNoBatches': 'د دې درمل لپاره خوندي بچ نشته.',
+      'catalogExpired': 'نېټه تېر',
+      'catalogBatch': 'بچ',
+      'catalogExpiry': 'د ختمېدو نېټه',
+      'catalogEmptyCustomers': 'لا پېرودونکي نه دي خوندي شوي. د پېرودونکو لپاره همغږي وکړئ.',
+      'catalogSearchCustomers': 'پېرودونکی د نوم یا ټیلیفون له مخې ولټوئ',
+      'catalogBalance': 'پاتې حساب',
       'syncTitle': 'همغږي',
       'syncBody': 'آفلاین پلور یوازې د سرور له تایید وروسته لېږل کېږي، بیا درمل، ذخیره او پېرودونکي په تدریجي ډول راکښته کېږي.',
       'networkAvailable': 'د شبکې اړیکه شته',
