@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\Sales\PosSaleService;
 use App\Services\Sync\SyncAccessContext;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -485,7 +486,7 @@ class MobileSyncPushService
             return true; // Legacy clients cannot overwrite newer web data.
         }
         try {
-            $clientTime = \Illuminate\Support\Carbon::parse($raw);
+            $clientTime = Carbon::parse($raw);
         } catch (Throwable) {
             return true;
         }
@@ -515,7 +516,7 @@ class MobileSyncPushService
     ): void {
         try {
             $localTime = filled($payload['local_updated_at'] ?? null)
-                ? \Illuminate\Support\Carbon::parse($payload['local_updated_at'])
+                ? Carbon::parse($payload['local_updated_at'])
                 : now();
         } catch (Throwable) {
             $localTime = now();
