@@ -116,6 +116,18 @@ class PharmacySettings
     ): void {
         $this->inside($tenant, function () use ($tenant, $profile, $dailyClosing, $inventory): void {
             $record = $this->record($tenant);
+            $business = $tenant->business;
+            if ($business === null) {
+                throw new \RuntimeException('The pharmacy business profile is missing.');
+            }
+
+            // Central business profile is canonical for licensing and desktop clients.
+            $business->forceFill([
+                'pharmacy_name' => $profile['name'],
+                'default_timezone' => $profile['timezone'],
+                'default_locale' => $profile['locale'],
+            ])->save();
+
             $record->fill([
                 'display_name' => $profile['name'],
                 'phone' => $profile['phone'],

@@ -56,7 +56,9 @@ class PharmacySettingsTest extends TestCase
 
         $this->assertSame('Kabul City Pharmacy', $profile['name']);
         $this->assertSame('fa', $profile['locale']);
-        $this->assertSame('Kabul Pharmacy', $tenant->fresh()->business->pharmacy_name);
+        $this->assertSame('Kabul City Pharmacy', $tenant->fresh()->business->pharmacy_name);
+        $this->assertSame('Asia/Kabul', $tenant->fresh()->business->default_timezone);
+        $this->assertSame('fa', $tenant->fresh()->business->default_locale);
         $this->assertSame('02:30', $closing['business_day_rollover_time']);
         $this->assertEquals(100.0, $closing['variance_note_threshold']);
         $this->assertTrue($closing['require_counted_cash']);
