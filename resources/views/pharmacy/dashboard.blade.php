@@ -2,36 +2,40 @@
 @section('title', __('pharmacy.dashboard').' — '.__('pharmacy.product'))
 @section('content')
 @php $maxRevenue=max(1,...array_column($salesTrend,'revenue'));$netCash=$todayPaid-$todayExpenses;$alertTotal=(int)$alerts['counts']['total'];$avgTicket=$todayTransactions?$todaySales/$todayTransactions:0;$collection=$todaySales>0?min(100,$todayPaid/$todaySales*100):0; @endphp
-<div class="prism mx-auto max-w-[1660px]">
-  <header class="prism-intro"><div><span>YOUR PHARMACY · {{ strtoupper($businessDate) }}</span><h1>Everything important,<br><em>in one glance.</em></h1><p>{{ $tenant->name }} is {{ $alertTotal?'asking for your attention in '.$alertTotal.' areas.':'running smoothly today.' }}</p></div><div class="prism-intro-actions">@if(auth()->user()->hasPermission('pos.sell'))<a href="{{ route('pharmacy.pos.index') }}"><i>＋</i><span><small>QUICK ACTION</small><strong>Start new sale</strong></span><b>→</b></a>@endif</div></header>
+<div class="atelier mx-auto max-w-[1660px]">
+<header class="at-head"><div><span>DARMALTOON / DAILY OPERATIONS</span><h1>{{ $tenant->name }}</h1></div><div class="at-date"><small>BUSINESS DATE</small><strong>{{ $businessDate }}</strong></div></header>
+<section class="at-command">
+  <div class="at-command-copy"><span>GOOD {{ now()->hour<12?'MORNING':(now()->hour<17?'AFTERNOON':'EVENING') }}</span><h2>Your pharmacy,<br><em>clearly understood.</em></h2><p>{{ $alertTotal ? $alertTotal.' operational items need review today.' : 'No urgent operational issues require your attention.' }}</p></div>
+  <div class="at-command-actions">@if(auth()->user()->hasPermission('pos.sell'))<a class="sale" href="{{ route('pharmacy.pos.index') }}"><span>01</span><div><small>PRIMARY</small><strong>New sale</strong></div><b>↗</b></a>@endif @if(auth()->user()->hasPermission('purchases.manage'))<a href="{{ route('pharmacy.purchase-orders.create') }}"><span>02</span><div><small>SUPPLY</small><strong>New purchase</strong></div><b>↗</b></a>@endif</div>
+</section>
 
-  <section class="prism-bento">
-    <article class="prism-hero">
-      <div class="prism-hero-head"><span>Today’s revenue</span><b><i></i> LIVE</b></div><strong>AFN {{ number_format($todaySales,2) }}</strong><p>{{ $todayTransactions }} completed sales · average ticket AFN {{ number_format($avgTicket,0) }}</p>
-      <div class="prism-wave"><svg viewBox="0 0 600 100" preserveAspectRatio="none"><defs><linearGradient id="pwave" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e6b6ff"/><stop offset=".55" stop-color="#9e8cff"/><stop offset="1" stop-color="#78d6ff"/></linearGradient></defs><path d="M0 74 C65 80,90 20,155 42 S250 91,305 49 S405 8,460 43 S535 80,600 25" fill="none" stroke="url(#pwave)" stroke-width="4" stroke-linecap="round"/></svg></div>
-      <div class="prism-hero-foot"><span><small>Collected</small><b>AFN {{ number_format($todayPaid,0) }}</b></span><span><small>Credit</small><b>AFN {{ number_format($todayDue,0) }}</b></span><span><small>Net cash</small><b>AFN {{ number_format($netCash,0) }}</b></span></div>
-    </article>
+<section class="at-ticker">
+ <div><span>REVENUE TODAY</span><strong>AFN {{ number_format($todaySales,2) }}</strong><small>{{ $todayTransactions }} transactions</small></div>
+ <div><span>COLLECTED</span><strong>AFN {{ number_format($todayPaid,2) }}</strong><small>{{ number_format($collection,0) }}% collection rate</small></div>
+ <div><span>INVENTORY</span><strong>AFN {{ number_format($stockValue,2) }}</strong><small>{{ $overviewMedicines }} medicines</small></div>
+ <div class="{{ $alertTotal?'attention':'' }}"><span>ATTENTION</span><strong>{{ $alertTotal }}</strong><small>{{ $alerts['counts']['low_stock'] }} stock · {{ $alerts['counts']['near_expiry'] }} expiry</small></div>
+</section>
 
-    <article class="prism-orbit"><div class="prism-orbit-title"><span>Collection rate</span><b>{{ number_format($collection,0) }}%</b></div><div class="prism-donut" style="--value:{{ $collection }}"><div><strong>{{ number_format($collection,0) }}</strong><small>%</small></div></div><p>AFN {{ number_format($todayPaid,0) }} of {{ number_format($todaySales,0) }}</p></article>
+<section class="at-workspace">
+ <main>
+  <article class="at-performance">
+   <header><div><span>01 / PERFORMANCE</span><h3>Sales movement</h3></div><nav>@foreach(['today'=>'D','week'=>'W','month'=>'M','year'=>'Y'] as $key=>$label)<a href="{{ request()->fullUrlWithQuery(['period'=>$key]) }}" class="{{ $selectedPeriod===$key?'active':'' }}">{{ $label }}</a>@endforeach</nav></header>
+   <div class="at-performance-total"><strong>AFN {{ number_format($periodSales,2) }}</strong><span>{{ $periodInvoiceCount }} invoices in selected period</span></div>
+   <div class="at-columns">@foreach($salesTrend as $day)<div><span>{{ $day['revenue']?number_format($day['revenue']/1000,1).'k':'' }}</span><section><i style="height:{{ $day['revenue']?max(3,$day['revenue']/$maxRevenue*100):1 }}%"></i></section><b>{{ \Carbon\CarbonImmutable::parse($day['date'])->format('D') }}</b></div>@endforeach</div>
+   <footer><div><i class="green"></i><span>Collected</span><strong>{{ number_format($periodPaid,2) }}</strong></div><div><i class="orange"></i><span>Credit</span><strong>{{ number_format($periodDue,2) }}</strong></div><div><i></i><span>Avg. ticket today</span><strong>{{ number_format($avgTicket,2) }}</strong></div></footer>
+  </article>
+  @if(auth()->user()->hasPermission('pos.sell'))<article class="at-ledger"><header><div><span>02 / ACTIVITY</span><h3>Transaction ledger</h3></div><a href="{{ route('pharmacy.pos.invoices') }}">OPEN ALL ↗</a></header><div>@forelse(array_slice($recentSales->all(),0,5) as $sale)<section><span class="at-index">{{ str_pad($loop->iteration,2,'0',STR_PAD_LEFT) }}</span><div><strong>{{ $sale->sale_number }}</strong><small>{{ $sale->customer?->name??'Walk-in customer' }}</small></div><time>{{ $sale->completed_at?->format('H:i') }}</time><b>AFN {{ number_format((float)$sale->grand_total,2) }}</b><em class="{{ (float)$sale->due_total>0?'due':'paid' }}">{{ (float)$sale->due_total>0?'CREDIT':'PAID' }}</em></section>@empty<p>No completed sales yet.</p>@endforelse</div></article>@endif
+ </main>
+ <aside>
+  <article class="at-cash"><span>03 / CASH POSITION</span><h3>Today</h3><strong>AFN {{ number_format($netCash,2) }}</strong><small>NET CASH AFTER EXPENSES</small><div><p><span>Collections</span><b>+ {{ number_format($todayPaid,0) }}</b></p><p><span>Expenses</span><b class="negative">− {{ number_format($todayExpenses,0) }}</b></p><p><span>Purchases</span><b>{{ number_format($todayPurchaseValue,0) }}</b></p></div>@if(auth()->user()->hasPermission('safe.view'))<a href="{{ route('pharmacy.safe.index') }}">CASH SAFE ↗</a>@endif</article>
+  <article class="at-watch"><header><span>04 / STOCK WATCH</span><a href="{{ route('pharmacy.alerts.index') }}">ALL</a></header><h3>Running low</h3><div>@forelse(array_slice($alerts['low_stock'],0,4) as $item)<section><span>{{ mb_strtoupper(mb_substr($item['name'],0,2)) }}</span><div><strong>{{ $item['name'] }}</strong><small>Reorder at {{ $item['threshold'] }}</small></div><b>{{ $item['available_quantity'] }}</b></section>@empty<p>Stock levels are healthy.</p>@endforelse</div></article>
+  <article class="at-credit"><span>05 / RECEIVABLES</span><strong>AFN {{ number_format($outstandingCredit,2) }}</strong><p>Customer credit outstanding</p>@if(auth()->user()->hasPermission('customers.manage'))<a href="{{ route('pharmacy.customers.index') }}">CUSTOMER ACCOUNTS ↗</a>@endif</article>
+ </aside>
+</section>
 
-    <article class="prism-alert {{ $alertTotal?'hot':'' }}"><div><span>Pharmacy health</span><b>{{ $alertTotal?'ACTION':'GOOD' }}</b></div><strong>{{ $alertTotal }}</strong><p>items need attention</p><footer><a href="{{ route('pharmacy.alerts.index') }}">{{ $alerts['counts']['low_stock'] }} low stock</a><a href="{{ route('pharmacy.alerts.index') }}">{{ $alerts['counts']['near_expiry'] }} expiry</a></footer></article>
-
-    <article class="prism-inventory"><span>Inventory universe</span><strong>AFN {{ number_format($stockValue,0) }}</strong><p>Total stock value</p><div><span><b>{{ $overviewMedicines }}</b><small>Medicines</small></span><span><b>{{ $overviewBatches }}</b><small>Batches</small></span><span><b>{{ $overviewSuppliers }}</b><small>Suppliers</small></span></div></article>
-
-    <article class="prism-trend">
-      <header><div><span>SALES RHYTHM</span><h2>Last 7 days</h2></div><nav>@foreach(['today'=>'D','week'=>'W','month'=>'M','year'=>'Y'] as $key=>$label)<a href="{{ request()->fullUrlWithQuery(['period'=>$key]) }}" class="{{ $selectedPeriod===$key?'active':'' }}">{{ $label }}</a>@endforeach</nav></header>
-      <div class="prism-trend-total"><strong>AFN {{ number_format($periodSales,2) }}</strong><span>{{ $periodInvoiceCount }} invoices</span></div>
-      <div class="prism-linechart"><svg viewBox="0 0 700 180" preserveAspectRatio="none">@php $pts=[];foreach($salesTrend as $i=>$day){$x=$i*(700/6);$y=155-($day['revenue']/$maxRevenue*125);$pts[]=[round($x,1),round($y,1)];} @endphp<defs><linearGradient id="pline" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a45ff5"/><stop offset="1" stop-color="#4ca9ff"/></linearGradient><linearGradient id="pfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9b72f6" stop-opacity=".2"/><stop offset="1" stop-color="#9b72f6" stop-opacity="0"/></linearGradient></defs><path d="M {{ $pts[0][0] }} {{ $pts[0][1] }} @foreach(array_slice($pts,1) as $p)L {{ $p[0] }} {{ $p[1] }} @endforeach L700 175 L0 175 Z" fill="url(#pfill)"/><polyline points="@foreach($pts as $p){{ $p[0] }},{{ $p[1] }} @endforeach" fill="none" stroke="url(#pline)" stroke-width="3" vector-effect="non-scaling-stroke"/>@foreach($pts as $p)<circle cx="{{ $p[0] }}" cy="{{ $p[1] }}" r="4" fill="#fff" stroke="#8c68ed" stroke-width="2" vector-effect="non-scaling-stroke"/>@endforeach</svg><div>@foreach($salesTrend as $day)<span>{{ \Carbon\CarbonImmutable::parse($day['date'])->format('D') }}</span>@endforeach</div></div>
-    </article>
-
-    <article class="prism-credit"><span>Customer credit</span><strong>AFN {{ number_format($outstandingCredit,2) }}</strong><p>Outstanding across active accounts</p>@if(auth()->user()->hasPermission('customers.manage'))<a href="{{ route('pharmacy.customers.index') }}">Open accounts <b>↗</b></a>@endif</article>
-
-    <article class="prism-actions"><span>DO SOMETHING</span><div>@if(auth()->user()->hasPermission('medicines.manage'))<a href="{{ route('pharmacy.medicines.create') }}"><i>＋</i><b>Add medicine</b></a>@endif @if(auth()->user()->hasPermission('purchases.manage'))<a href="{{ route('pharmacy.purchase-orders.create') }}"><i>↙</i><b>Purchase</b></a>@endif @if(auth()->user()->hasPermission('inventory.manage'))<a href="{{ route('pharmacy.inventory.index') }}"><i>◇</i><b>Inventory</b></a>@endif @if(auth()->user()->hasPermission('accounting.manage'))<a href="{{ route('pharmacy.accounting.index') }}"><i>≋</i><b>Accounting</b></a>@endif</div></article>
-  </section>
-
-  <section class="prism-bottom">
-    <article><header><div><span>ATTENTION QUEUE</span><h2>What needs you next</h2></div><a href="{{ route('pharmacy.alerts.index') }}">See all →</a></header><div class="prism-queue">@forelse(array_slice($alerts['low_stock'],0,4) as $item)<div><span class="danger">{{ mb_strtoupper(mb_substr($item['name'],0,1)) }}</span><section><strong>{{ $item['name'] }}</strong><small>Only {{ $item['available_quantity'] }} left · reorder at {{ $item['threshold'] }}</small></section><b>LOW STOCK</b></div>@empty<p>Nothing urgent in stock right now ✓</p>@endforelse</div></article>
-    @if(auth()->user()->hasPermission('pos.sell'))<article><header><div><span>RECENT SALES</span><h2>Latest transactions</h2></div><a href="{{ route('pharmacy.pos.invoices') }}">All invoices →</a></header><div class="prism-sales">@forelse(array_slice($recentSales->all(),0,4) as $sale)<div><span>⌑</span><section><strong>{{ $sale->sale_number }}</strong><small>{{ $sale->customer?->name??'Walk-in' }} · {{ $sale->completed_at?->format('H:i') }}</small></section><b>AFN {{ number_format((float)$sale->grand_total,0) }}</b></div>@empty<p>No completed sales yet.</p>@endforelse</div></article>@endif
-  </section>
+<section class="at-footer-grid">
+ <article><span>PHARMACY SCALE</span><div><p><strong>{{ $overviewMedicines }}</strong><small>Medicines</small></p><p><strong>{{ $overviewBatches }}</strong><small>Batches</small></p><p><strong>{{ $activeCustomers }}</strong><small>Customers</small></p><p><strong>{{ $overviewSuppliers }}</strong><small>Suppliers</small></p></div></article>
+ <article class="at-shortcuts"><span>FAST ACCESS</span><div>@if(auth()->user()->hasPermission('medicines.manage'))<a href="{{ route('pharmacy.medicines.create') }}">Add medicine <b>↗</b></a>@endif @if(auth()->user()->hasPermission('inventory.manage'))<a href="{{ route('pharmacy.inventory.index') }}">Inventory <b>↗</b></a>@endif @if(auth()->user()->hasPermission('accounting.manage'))<a href="{{ route('pharmacy.accounting.index') }}">Accounting <b>↗</b></a>@endif @if(auth()->user()->hasPermission('reports.view'))<a href="{{ route('pharmacy.reports.index') }}">Reports <b>↗</b></a>@endif</div></article>
+</section>
 </div>
 @endsection
