@@ -98,3 +98,40 @@ body{min-height:100vh;color:var(--dt-text);background:var(--dt-bg)}
 @media(max-width:1023px){.dt-sidebar{display:none}.dt-main{width:100%}}
 @media(max-width:640px){.dt-main{padding:1rem}.dt-profile-button{border:0;background:transparent;padding:0}.dt-topbar{background:rgba(255,255,255,.96)}}
 @media(prefers-reduced-motion:reduce){.dt-sidebar,.dt-sidebar nav a,.dt-icon-button{transition:none!important}}
+
+/* Darmaltoon premium shell v3 */
+body{background:#f6f7fb}
+.dt-shell{padding:0;background:linear-gradient(135deg,#f8faff 0%,#f4f6fa 48%,#f8f9fc 100%)}
+.dt-sidebar{width:16.5rem;margin:14px 0 14px 14px;height:calc(100vh - 28px);top:14px;border-radius:24px;background:radial-gradient(circle at 15% 0,rgba(42,112,255,.28),transparent 16rem),linear-gradient(180deg,#0b1730 0%,#081326 48%,#07101f 100%);box-shadow:0 24px 60px rgba(8,19,38,.18),inset 0 1px rgba(255,255,255,.06)}
+[dir="rtl"] .dt-sidebar{margin:14px 14px 14px 0}
+.dt-brand{display:flex;height:86px;align-items:center;gap:.8rem;margin:0 12px;border-bottom:1px solid rgba(255,255,255,.08);padding:0 10px}
+.dt-brand-mark{position:relative;display:grid;height:42px;width:42px;place-items:center;border-radius:14px;background:linear-gradient(145deg,#338cff,#1166e8);box-shadow:0 10px 25px rgba(17,102,232,.3),inset 0 1px rgba(255,255,255,.3);font-size:26px;font-weight:300;color:white}
+.dt-brand-mark:after{content:"";position:absolute;inset:-4px;border:1px solid rgba(99,164,255,.18);border-radius:18px}
+.dt-nav-item{position:relative;padding:.66rem .75rem!important;margin:2px 0;font-size:.79rem!important}
+.dt-nav-icon{display:grid;height:27px;width:27px;flex:0 0 27px;place-items:center;border-radius:8px;color:#8095b1;transition:.15s}
+.dt-nav-icon svg{height:17px;width:17px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.dt-sidebar nav a:hover .dt-nav-icon{color:#b9d5ff;background:rgba(61,139,255,.09)}
+.dt-sidebar nav a[aria-current="page"]{background:linear-gradient(90deg,rgba(50,128,255,.20),rgba(50,128,255,.08))!important;box-shadow:none!important}
+.dt-sidebar nav a[aria-current="page"]:before{content:"";position:absolute;inset-inline-start:-3px;top:10px;bottom:10px;width:3px;border-radius:9px;background:#4f9cff;box-shadow:0 0 14px #338cff}
+.dt-sidebar nav a[aria-current="page"] .dt-nav-icon{background:linear-gradient(145deg,#2c82ff,#1767dd);color:#fff;box-shadow:0 5px 13px rgba(23,103,221,.28)}
+.dt-nav-pos:not([aria-current="page"]){color:#86efac!important}.dt-nav-pos:not([aria-current="page"]) .dt-nav-icon{color:#6ee7a3}
+.dt-sidebar .dt-nav-label{padding:1.2rem .75rem .4rem;font-size:.58rem;letter-spacing:.18em;color:#60738f}
+.dt-sidebar-footer{padding:10px 12px 14px}
+.dt-app-card{display:flex!important;align-items:center!important;gap:.7rem!important;min-height:62px!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:16px!important;background:rgba(255,255,255,.045)!important;padding:.7rem!important}
+.dt-app-card:hover{background:rgba(255,255,255,.08)!important}
+.dt-app-icon{display:grid;height:34px;width:34px;place-items:center;border-radius:11px;background:rgba(59,130,246,.16);font-size:18px;color:#93c5fd}.dt-app-card strong{display:block;font-size:.73rem;color:#e5edf8}.dt-app-card small{display:block;margin-top:2px;font-size:.61rem;color:#6f829d}
+.dt-sidebar-compact{width:5.1rem}.dt-sidebar-compact .dt-brand{justify-content:center;padding:0}.dt-sidebar-compact .dt-brand-mark{height:38px;width:38px}.dt-sidebar-compact .dt-nav-item{justify-content:center!important;padding:.55rem!important}.dt-sidebar-compact .dt-nav-icon{height:31px;width:31px}.dt-sidebar-compact .dt-app-card{justify-content:center!important}.dt-sidebar-compact .dt-app-icon{flex:none}
+.dt-topbar{top:0;margin:0 18px;background:rgba(246,247,251,.82);border:0;box-shadow:none;backdrop-filter:blur(22px)}
+.dt-topbar>div:first-child{height:82px!important;padding-inline:8px!important}
+.dt-icon-button{border-color:#e7eaf0;background:rgba(255,255,255,.8);box-shadow:0 3px 10px rgba(16,24,40,.035)}
+.dt-profile-button{border-color:#e7eaf0;background:rgba(255,255,255,.86);box-shadow:0 3px 12px rgba(16,24,40,.04)}
+.dt-avatar{border-radius:11px;background:linear-gradient(145deg,#0d2245,#183a70);box-shadow:0 4px 10px rgba(13,34,69,.18)}
+.dt-top-pos{background:linear-gradient(135deg,#1478ff,#0863e3);border:1px solid rgba(255,255,255,.2);box-shadow:0 8px 20px rgba(20,120,255,.18)}
+.dt-main{padding-top:.25rem!important}
+.dt-main>div,.dt-main>section{animation:dt-enter .28s ease-out both}
+@keyframes dt-enter{from{opacity:.65;transform:translateY(3px)}to{opacity:1;transform:none}}
+.dt-main :is(section,article).rounded-2xl.bg-white,.dt-main :is(section,article).rounded-xl.bg-white{border:1px solid rgba(226,230,238,.88)!important;box-shadow:0 10px 30px rgba(20,33,61,.045)!important}
+.dt-main table{font-size:.82rem}.dt-main thead{background:#f8f9fc!important}.dt-main thead th{font-size:.66rem;font-weight:800;letter-spacing:.04em}
+.dt-main :is(input,select,textarea){background:#fff;box-shadow:inset 0 1px 2px rgba(16,24,40,.025)}
+.dt-profile-menu{box-shadow:0 20px 45px rgba(15,23,42,.13)!important}
+@media(max-width:1023px){.dt-shell{padding:0}.dt-topbar{margin:0}.dt-sidebar{margin:0}.dt-main{padding-top:1rem!important}}
