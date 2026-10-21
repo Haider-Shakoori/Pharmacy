@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
+    'desktop_last_modified_at',
+    'desktop_last_sync_server_at',
     'desktop_source_id',
     'medicine_category_id',
     'manufacturer_id',
@@ -61,6 +63,8 @@ class Medicine extends Model
     protected function casts(): array
     {
         return [
+            'desktop_last_modified_at' => 'datetime',
+            'desktop_last_sync_server_at' => 'datetime',
             'units_per_purchase_unit' => 'decimal:4',
             'reorder_level' => 'decimal:4',
             'prescription_required' => 'boolean',
