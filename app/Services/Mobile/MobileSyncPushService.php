@@ -252,6 +252,11 @@ class MobileSyncPushService
                     }
                 }
 
+                if ($medicine !== null &&
+                    $this->isOlderDesktopRevision($medicine, $payload)) {
+                    return $this->serverVersionWins($idempotencyKey, $medicine, 'medicine', $localId);
+                }
+
                 $barcode = blank($payload['barcode'] ?? null)
                     ? null
                     : trim((string) $payload['barcode']);
@@ -306,6 +311,7 @@ class MobileSyncPushService
                 } else {
                     $medicine->update($attributes);
                 }
+                $this->recordAcceptedDesktopVersion($medicine, $payload);
 
                 return [
                     'idempotency_key' => $idempotencyKey,
@@ -416,6 +422,11 @@ class MobileSyncPushService
                     );
                 }
 
+                if ($customer !== null &&
+                    $this->isOlderDesktopRevision($customer, $payload)) {
+                    return $this->serverVersionWins($idempotencyKey, $customer, 'customer', $localId);
+                }
+
                 $attributes = [
                     'desktop_source_id' => $localId,
                     'name' => trim((string) $payload['name']),
@@ -433,6 +444,7 @@ class MobileSyncPushService
                 } else {
                     $customer->update($attributes);
                 }
+                $this->recordAcceptedDesktopVersion($customer, $payload);
 
                 return [
                     'idempotency_key' => $idempotencyKey,
@@ -453,6 +465,110 @@ class MobileSyncPushService
                 retryable: true,
             );
         }
+    }
+
+    /**
+     * Compare the client's source edit timestamp with the previous accepted
+     * desktop edit. Server updated_at is the time of delivery, not the time
+     * the offline edit happened, so it cannot be used alone: several locally
+     * queued changes might arrive after one another much later.
+     *
+     * A web edit after the last desktop acceptance updates updated_at but
+     * not desktop_last_sync_server_at, allowing us to compare true edit times.
+     */
+    private function isOlderDesktopRevision(
+        Medicine|Customer $record,
+        array $payload,
+    ): bool {
+        $raw = $payload['local_updated_at'] ?? null;
+        if (! is_string($raw) || trim($raw) === '') {
+            return true; // Legacy clients cannot overwrite newer web data.
+        }
+        try {
+            $clientTime = \Illuminate\Support\Carbon::parse($raw);
+        } catch (Throwable) {
+            return true;
+        }
+        if ($clientTime->greaterThan(now()->addMinutes(5))) {
+            return true; // Protect against badly skewed local clocks.
+        }
+
+        $priorClient = $record->desktop_last_modified_at;
+        if ($priorClient !== null && $clientTime->lessThanOrEqualTo($priorClient)) {
+            return true;
+        }
+
+        $priorServer = $record->desktop_last_sync_server_at;
+        $lastHash = (string) ($record->desktop_last_sync_hash ?? '');
+        $contentChanged = $lastHash !== '' &&
+            ! hash_equals($lastHash, $this->masterDataFingerprint($record));
+        $changedOnServer = $priorServer === null ||
+            $record->updated_at->greaterThan($priorServer) ||
+            $contentChanged;
+
+        return $changedOnServer &&
+            $clientTime->lessThanOrEqualTo($record->updated_at);
+    }
+
+    private function recordAcceptedDesktopVersion(
+        Medicine|Customer $record, array $payload,
+    ): void {
+        try {
+            $localTime = filled($payload['local_updated_at'] ?? null)
+                ? \Illuminate\Support\Carbon::parse($payload['local_updated_at'])
+                : now();
+        } catch (Throwable) {
+            $localTime = now();
+        }
+        // Save source metadata without moving updated_at forward again.
+        $record->timestamps = false;
+        try {
+            $record->forceFill([
+                'desktop_last_modified_at' => $localTime,
+                'desktop_last_sync_server_at' => $record->updated_at,
+                'desktop_last_sync_hash' => $this->masterDataFingerprint($record->fresh()),
+            ])->save();
+        } finally {
+            $record->timestamps = true;
+        }
+    }
+
+    private function masterDataFingerprint(Medicine|Customer $record): string
+    {
+        $fields = $record instanceof Medicine
+            ? [
+                'desktop_source_id', 'medicine_code', 'barcode', 'brand_name',
+                'generic_name', 'strength', 'dosage_form', 'purchase_unit',
+                'sale_unit', 'units_per_purchase_unit', 'reorder_level',
+                'prescription_required', 'batch_tracking_required',
+                'expiry_tracking_required', 'is_active', 'notes',
+            ]
+            : ['desktop_source_id', 'name', 'phone', 'email',
+                'credit_limit', 'is_active', 'notes'];
+
+        $values = [];
+        foreach ($fields as $field) {
+            $values[$field] = $record->getRawOriginal($field);
+        }
+
+        return hash('sha256', json_encode($values, JSON_THROW_ON_ERROR));
+    }
+
+    private function serverVersionWins(
+        string $key,
+        Medicine|Customer $record,
+        string $type,
+        string $localId,
+    ): array {
+        return [
+            'idempotency_key' => $key,
+            'status' => 'accepted',
+            'code' => 'server_newer',
+            'aggregate_type' => $type,
+            'local_id' => $localId,
+            'server_id' => (string) $record->id,
+            'server_updated_at' => $record->updated_at?->toISOString(),
+        ];
     }
 
     private function resolveReferences(array $payload): array

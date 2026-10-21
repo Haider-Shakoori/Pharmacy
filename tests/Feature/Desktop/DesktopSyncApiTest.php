@@ -346,6 +346,127 @@ class DesktopSyncApiTest extends TestCase
         });
     }
 
+    public function test_latest_customer_edit_wins_across_delayed_desktop_events_and_web_updates(): void
+    {
+        $baseKey = 'customer:master-version-test:upsert:';
+        $base = [
+            'v' => 1,
+            'local_id' => 'master-version-test',
+            'name' => 'Initial Desktop Name',
+            'email' => 'version-test@example.test',
+            'phone' => null,
+            'credit_limit' => '0.0000',
+            'is_active' => true,
+            'notes' => null,
+        ];
+        $push = function (int $number, string $name, string $timestamp) use ($baseKey, $base) {
+            $key = $baseKey.$number;
+
+            return $this->withToken($this->accessToken)
+                ->postJson('/api/v1/desktop/sync/push', [
+                    'events' => [[
+                        'idempotency_key' => $key,
+                        'event_type' => 'customer.upsert',
+                        'payload' => array_merge($base, [
+                            'idempotency_key' => $key,
+                            'name' => $name,
+                            'local_updated_at' => $timestamp,
+                        ]),
+                    ]],
+                ])
+                ->assertOk()
+                ->assertJsonPath('data.results.0.status', 'accepted');
+        };
+
+        $push(1, 'Initial Desktop Name', now()->subMinutes(10)->toISOString());
+        // Two edits accumulated while offline must be processed in source order,
+        // despite the server assigning a later updated_at to the first arrival.
+        $push(2, 'Later Offline Desktop Name', now()->subMinutes(5)->toISOString());
+        $this->tenant->run(function (): void {
+            $record = Customer::query()->where('desktop_source_id', 'master-version-test')->firstOrFail();
+            $this->assertSame('Later Offline Desktop Name', $record->name);
+            $record->update(['name' => 'Latest Web Name']);
+        });
+
+        $push(3, 'Stale Offline Desktop Name', now()->subMinutes(3)->toISOString())
+            ->assertJsonPath('data.results.0.code', 'server_newer');
+
+        $this->tenant->run(function (): void {
+            $this->assertSame(
+                'Latest Web Name',
+                Customer::query()->where('desktop_source_id', 'master-version-test')->value('name'),
+            );
+        });
+
+        $push(4, 'Fresh Desktop Name', now()->addSeconds(2)->toISOString());
+        $this->tenant->run(function (): void {
+            $this->assertSame(
+                'Fresh Desktop Name',
+                Customer::query()->where('desktop_source_id', 'master-version-test')->value('name'),
+            );
+        });
+    }
+
+    public function test_latest_medicine_edit_wins_and_web_edit_is_not_overwritten_by_stale_desktop(): void
+    {
+        $base = [
+            'v' => 1,
+            'local_id' => 'medicine-master-version-test',
+            'medicine_code' => 'MASTER-VERSION-MED',
+            'brand_name' => 'First Local Brand',
+            'barcode' => null,
+            'generic_name' => null,
+            'strength' => null,
+            'dosage_form' => null,
+            'purchase_unit' => 'box',
+            'sale_unit' => 'unit',
+            'units_per_purchase_unit' => '10.0000',
+            'reorder_level' => '0.0000',
+            'prescription_required' => false,
+            'batch_tracking_required' => true,
+            'expiry_tracking_required' => true,
+            'is_active' => true,
+            'notes' => null,
+        ];
+        $send = function (int $n, string $name, string $modifiedAt) use ($base) {
+            $key = 'medicine:master-version:'.(string) $n;
+
+            return $this->withToken($this->accessToken)
+                ->postJson('/api/v1/desktop/sync/push', ['events' => [[
+                    'idempotency_key' => $key,
+                    'event_type' => 'medicine.upsert',
+                    'payload' => array_merge($base, [
+                        'idempotency_key' => $key,
+                        'brand_name' => $name,
+                        'local_updated_at' => $modifiedAt,
+                    ]),
+                ]]])
+                ->assertOk()
+                ->assertJsonPath('data.results.0.status', 'accepted');
+        };
+
+        $send(1, 'First Local Brand', now()->subMinutes(20)->toISOString());
+        $send(2, 'Later Local Brand', now()->subMinutes(10)->toISOString());
+        $this->tenant->run(function (): void {
+            $medicine = Medicine::query()->where('medicine_code', 'MASTER-VERSION-MED')->firstOrFail();
+            $this->assertSame('Later Local Brand', $medicine->brand_name);
+            $medicine->update(['brand_name' => 'Newer Web Brand']);
+        });
+
+        $send(3, 'Stale Desktop Brand', now()->subMinutes(5)->toISOString())
+            ->assertJsonPath('data.results.0.code', 'server_newer');
+        $this->tenant->run(function (): void {
+            $this->assertSame('Newer Web Brand',
+                Medicine::query()->where('medicine_code', 'MASTER-VERSION-MED')->value('brand_name'));
+        });
+
+        $send(4, 'Newest Desktop Brand', now()->addSeconds(2)->toISOString());
+        $this->tenant->run(function (): void {
+            $this->assertSame('Newest Desktop Brand',
+                Medicine::query()->where('medicine_code', 'MASTER-VERSION-MED')->value('brand_name'));
+        });
+    }
+
     public function test_mobile_purpose_token_is_rejected_by_desktop_sync_boundary(): void
     {
         $now = now();
