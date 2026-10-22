@@ -66,6 +66,7 @@ class BackupManager
                 ->when(
                     is_array($tenantIds),
                     fn ($query) => $query->whereKey($tenantIds),
+                    fn ($query) => $query->where('provisioning_status', 'application_ready'),
                 )
                 ->orderBy('id')
                 ->get();
@@ -74,6 +75,18 @@ class BackupManager
                 throw new RuntimeException(
                     'One or more requested tenants were not found.',
                 );
+            }
+
+            if (is_array($tenantIds)) {
+                $unprovisioned = $tenants->first(
+                    fn (Tenant $tenant): bool => $tenant->provisioning_status !== 'application_ready',
+                );
+
+                if ($unprovisioned !== null) {
+                    throw new RuntimeException(
+                        'Tenant database is not application-ready: '.$unprovisioned->id,
+                    );
+                }
             }
 
             foreach ($tenants as $tenant) {
