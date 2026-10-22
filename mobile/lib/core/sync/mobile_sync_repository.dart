@@ -10,6 +10,22 @@ class MobileSyncRepository {
 
   Future<List<SyncOutboxEvent>> pendingOutbox({int limit = 25}) async {
     final int now = _seconds(DateTime.now());
+
+    // A force-quit or a lost acknowledgement can leave an event in 'sending'.
+    // Recover only stale sends: a current 20-second network request should
+    // never have its in-flight event selected by another sync run. The server
+    // uses idempotency keys, so replaying after an unknown outcome is safe.
+    await _database.customStatement(
+      '''
+      UPDATE sync_outbox_entries
+      SET status = 'retry',
+          next_attempt_at = NULL,
+          updated_at = ?
+      WHERE status = 'sending' AND updated_at <= ?
+      ''',
+      <Object?>[now, now - 120],
+    );
+
     final List<QueryRow> rows = await _database
         .customSelect(
           '''
