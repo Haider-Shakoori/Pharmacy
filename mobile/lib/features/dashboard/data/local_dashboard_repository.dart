@@ -44,13 +44,15 @@ class LocalDashboardRepository {
         '${date.month.toString().padLeft(2, '0')}-'
         '${date.day.toString().padLeft(2, '0')}';
 
-    final List<QueryRow> sales = await _database.customSelect(
-      '''
+    final List<QueryRow> sales = await _database
+        .customSelect(
+          '''
       SELECT total FROM local_sales
       WHERE business_date = ? AND status = 'completed'
       ''',
-      variables: <Variable<Object>>[Variable<String>(businessDate)],
-    ).get();
+          variables: <Variable<Object>>[Variable<String>(businessDate)],
+        )
+        .get();
 
     FixedDecimal salesTotal = FixedDecimal.zero;
     for (final QueryRow sale in sales) {
@@ -58,9 +60,9 @@ class LocalDashboardRepository {
     }
 
     Future<int> count(String table, String where) async {
-      final QueryRow row = await _database.customSelect(
-        'SELECT COUNT(*) AS total FROM $table WHERE $where',
-      ).getSingle();
+      final QueryRow row = await _database
+          .customSelect('SELECT COUNT(*) AS total FROM $table WHERE $where')
+          .getSingle();
       return row.read<int>('total');
     }
 
