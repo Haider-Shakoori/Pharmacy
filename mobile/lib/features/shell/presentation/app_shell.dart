@@ -11,6 +11,7 @@ import 'package:businessos_pharmacy/features/status/presentation/connectivity_ba
 import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({required this.localeNotifier, super.key});
@@ -66,8 +67,10 @@ class _AppShellState extends ConsumerState<AppShell> {
                 color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: const Icon(Icons.local_pharmacy_rounded,
-                  size: 23, color: Colors.white),
+              child: Padding(
+                padding: const EdgeInsets.all(5),
+                child: SvgPicture.asset('assets/brand/darmaltoon-mark.svg'),
+              ),
             ),
             const SizedBox(width: 10),
             Flexible(
