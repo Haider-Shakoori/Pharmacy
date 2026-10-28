@@ -60,7 +60,7 @@ jobs:
         run: flutter test
 
       - name: Build optimized Android APK
-        run: flutter build apk --release --dart-define=API_BASE_URL=https://darmaltoon.com
+        run: flutter build apk --release
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v6

@@ -21,6 +21,10 @@ fi
 MANIFEST="android/app/src/main/AndroidManifest.xml"
 GRADLE="android/app/build.gradle.kts"
 
+if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
+  sed -i '/<manifest /a\\    <uses-permission android:name="android.permission.CAMERA" />' "$MANIFEST"
+fi
+
 if ! grep -q "android.permission.POST_NOTIFICATIONS" "$MANIFEST"; then
   sed -i '/<manifest /a\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' "$MANIFEST"
 fi
@@ -38,4 +42,11 @@ dependencies {
 EOF
 fi
 
-echo "Android notification permission and desugaring are configured."
+# Keep the existing application ID for upgrade compatibility, but show
+# Darmaltoon as the installed application name.
+sed -i 's/android:label="pharmacy"/android:label="Darmaltoon"/' "$MANIFEST"
+mkdir -p android/app/src/main/res/drawable
+cp "$ROOT_DIR/tool/assets/darmaltoon_launcher.xml" android/app/src/main/res/drawable/darmaltoon_launcher.xml
+sed -i 's|@mipmap/ic_launcher|@drawable/darmaltoon_launcher|' "$MANIFEST"
+
+echo "Android branding, notification permission and desugaring are configured."

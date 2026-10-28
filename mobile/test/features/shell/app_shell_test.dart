@@ -2,6 +2,7 @@ import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/network/connectivity_monitor.dart';
 import 'package:businessos_pharmacy/features/shell/presentation/app_shell.dart';
+import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,6 +45,9 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Welcome to Darmaltoon'), findsOneWidget);
+
     await tester.tap(find.text('Stock').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -56,6 +60,8 @@ void main() {
     );
     expect(find.textContaining('No network link'), findsOneWidget);
     expect(find.text('POS'), findsWidgets);
-    expect(find.text('Sync'), findsWidgets);
+    await tester.tap(find.text('More').last);
+    await tester.pump();
+    expect(find.byType(SyncStatusCard), findsOneWidget);
   });
 }
