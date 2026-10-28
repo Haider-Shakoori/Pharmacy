@@ -12,6 +12,9 @@ on:
       - 'mobile/**'
       - '.github/workflows/flutter-mobile.yml'
 
+permissions:
+  contents: write
+
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -48,10 +51,20 @@ jobs:
       - name: Generate Drift database code
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Check Dart formatting
+      - name: Format Dart source
+        run: dart format lib test
+
+      - name: Commit formatting to Android feature branch
+        if: github.head_ref == 'feature/darmaltoon-android-ui' || github.ref == 'refs/heads/feature/darmaltoon-android-ui'
+        working-directory: .
         run: |
-          dart format lib test
-          git diff --exit-code -- lib test
+          if ! git diff --quiet -- mobile/lib mobile/test; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add mobile/lib mobile/test
+            git commit -m 'style(android): apply Dart formatter'
+            git push origin HEAD:feature/darmaltoon-android-ui
+          fi
 
       - name: Analyze
         run: flutter analyze
