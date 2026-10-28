@@ -50,7 +50,10 @@ class _AppShellState extends ConsumerState<AppShell> {
       _ShellDestination(icon: Icons.grid_view_rounded, label: homeLabel),
       _ShellDestination(icon: Icons.point_of_sale_rounded, label: strings.pos),
       _ShellDestination(icon: Icons.inventory_2_outlined, label: strings.stock),
-      _ShellDestination(icon: Icons.people_alt_outlined, label: strings.customers),
+      _ShellDestination(
+        icon: Icons.people_alt_outlined,
+        label: strings.customers,
+      ),
       _ShellDestination(icon: Icons.tune_rounded, label: moreLabel),
     ];
 
@@ -74,8 +77,11 @@ class _AppShellState extends ConsumerState<AppShell> {
             ),
             const SizedBox(width: 10),
             Flexible(
-              child: Text(strings.appName,
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text(
+                strings.appName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
