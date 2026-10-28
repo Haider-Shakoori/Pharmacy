@@ -21,6 +21,11 @@ fi
 MANIFEST="android/app/src/main/AndroidManifest.xml"
 GRADLE="android/app/build.gradle.kts"
 
+# Preserve the existing Android application ID while displaying the correct brand.
+# This runs after flutter create, so it applies to every CI-generated Android host.
+sed -i 's/android:label="pharmacy"/android:label="Darmaltoon"/g' "$MANIFEST"
+sed -i 's/android:label="businessos_pharmacy"/android:label="Darmaltoon"/g' "$MANIFEST"
+
 if ! grep -q "android.permission.POST_NOTIFICATIONS" "$MANIFEST"; then
   sed -i '/<manifest /a\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' "$MANIFEST"
 fi
