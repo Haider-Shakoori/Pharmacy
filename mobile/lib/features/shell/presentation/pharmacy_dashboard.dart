@@ -1,6 +1,7 @@
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 /// A navigation-first overview. Never invent sales totals or stock statistics.
 class PharmacyDashboard extends StatelessWidget {
@@ -33,7 +34,14 @@ class PharmacyDashboard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Icon(Icons.local_pharmacy_rounded, color: Colors.white, size: 34),
+              Container(
+                width: 52,
+                height: 52,
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13)),
+                child: SvgPicture.asset('assets/brand/darmaltoon-official.svg',
+                    placeholderBuilder: (context) => const Icon(Icons.local_pharmacy_rounded, color: Color(0xFF075AA7))),
+              ),
               const SizedBox(height: 12),
               const Text('Darmaltoon  •  درملتون',
                   style: TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.w800)),
