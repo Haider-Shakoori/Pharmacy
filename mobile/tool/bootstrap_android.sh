@@ -38,4 +38,8 @@ dependencies {
 EOF
 fi
 
-echo "Android notification permission and desugaring are configured."
+# Keep the existing application ID for upgrade compatibility, but show
+# Darmaltoon as the installed application name.
+sed -i 's/android:label="pharmacy"/android:label="Darmaltoon"/' "$MANIFEST"
+
+echo "Android branding, notification permission and desugaring are configured."
