@@ -8,9 +8,9 @@ import 'package:businessos_pharmacy/core/licensing/offline_lease_authorizer.dart
 import 'package:businessos_pharmacy/core/licensing/offline_lease_verifier.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_catalog_repository.dart';
-import 'package:businessos_pharmacy/features/pos/presentation/barcode_scan_page.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_checkout_service.dart';
 import 'package:businessos_pharmacy/features/pos/domain/offline_pos_models.dart';
+import 'package:businessos_pharmacy/features/pos/presentation/barcode_scan_page.dart';
 import 'package:businessos_pharmacy/features/receipt/data/offline_receipt_repository.dart';
 import 'package:businessos_pharmacy/features/receipt/domain/offline_receipt.dart';
 import 'package:businessos_pharmacy/features/receipt/presentation/receipt_print_sheet.dart';
