@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="128dp"
+    android:height="128dp"
+    android:viewportWidth="128"
+    android:viewportHeight="128">
+    <!-- Android launcher rendition of the official Darmaltoon D mark. -->
+    <path
+        android:fillColor="#096EEB"
+        android:pathData="M18,12 h44 c34,0 56,21 56,52 s-22,52 -56,52 H18 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M39,32 h23 c19,0 32,12 32,32 S81,96 62,96 H39 Z" />
+    <group
+        android:pivotX="66"
+        android:pivotY="61"
+        android:rotation="41">
+        <path
+            android:fillColor="#0D4DBE"
+            android:pathData="M66,39 c5.5,0 10,4.5 10,10 v25 c0,5.5 -4.5,10 -10,10 s-10,-4.5 -10,-10 V49 c0,-5.5 4.5,-10 10,-10 Z" />
+        <path
+            android:fillColor="#03C9BD"
+            android:pathData="M56,61 H76 V73 c0,5.5 -4.5,10 -10,10 s-10,-4.5 -10,-10 Z" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3"
+            android:pathData="M57,61 L75,61" />
+    </group>
+    <path
+        android:fillColor="#08B4CA"
+        android:pathData="M88,73 h8 v-8 h8 v8 h8 v8 h-8 v8 h-8 v-8 h-8 Z" />
+</vector>
