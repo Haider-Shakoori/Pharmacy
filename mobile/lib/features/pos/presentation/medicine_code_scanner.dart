@@ -52,7 +52,8 @@ class _MedicineCodeScannerState extends State<MedicineCodeScanner> {
         'بارکود را در چارچوب قرار دهید. کود باید در فهرست ادویه ثبت باشد.',
       AppLocale.pashto =>
         'بارکوډ په چوکاټ کې ونیسئ. کوډ باید د درملو په لست کې ثبت وي.',
-      _ => 'Point at a barcode saved as a medicine code in your pharmacy catalog.',
+      _ =>
+        'Point at a barcode saved as a medicine code in your pharmacy catalog.',
     };
 
     return Scaffold(
@@ -67,13 +68,18 @@ class _MedicineCodeScannerState extends State<MedicineCodeScanner> {
                   MobileScanner(
                     controller: _controller,
                     onDetect: _onDetect,
-                    errorBuilder: (BuildContext context, MobileScannerException error) {
-                      return Center(child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(error.errorDetails?.message ??
-                            error.errorCode.toString()),
-                      ));
-                    },
+                    errorBuilder:
+                        (BuildContext context, MobileScannerException error) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Text(
+                                error.errorDetails?.message ??
+                                    error.errorCode.toString(),
+                              ),
+                            ),
+                          );
+                        },
                   ),
                   IgnorePointer(
                     child: Center(
