@@ -3,6 +3,7 @@ import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
+import 'package:businessos_pharmacy/features/dashboard/presentation/darmaltoon_dashboard.dart';
 import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
@@ -23,29 +24,62 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   int _selectedIndex = 0;
 
+  void _navigateTo(int index) {
+    setState(() => _selectedIndex = index);
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
+    final AppLocale appLocale = AppLocale.fromCode(
+      Localizations.localeOf(context).languageCode,
+    );
+    final String homeLabel = switch (appLocale) {
+      AppLocale.dari => 'خانه',
+      AppLocale.pashto => 'کور',
+      _ => 'Home',
+    };
+    final String moreLabel = switch (appLocale) {
+      AppLocale.dari => 'بیشتر',
+      AppLocale.pashto => 'نور',
+      _ => 'More',
+    };
 
     final List<_ShellDestination> destinations = <_ShellDestination>[
+      _ShellDestination(icon: Icons.grid_view_rounded, label: homeLabel),
       _ShellDestination(icon: Icons.point_of_sale_rounded, label: strings.pos),
       _ShellDestination(icon: Icons.inventory_2_outlined, label: strings.stock),
-      _ShellDestination(
-        icon: Icons.people_alt_outlined,
-        label: strings.customers,
-      ),
-      _ShellDestination(icon: Icons.sync_rounded, label: strings.sync),
+      _ShellDestination(icon: Icons.people_alt_outlined, label: strings.customers),
+      _ShellDestination(icon: Icons.tune_rounded, label: moreLabel),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(strings.appName),
+        titleSpacing: 16,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: const Icon(Icons.local_pharmacy_rounded,
+                  size: 23, color: Colors.white),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(strings.appName,
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
         actions: <Widget>[
           PopupMenuButton<AppLocale>(
             tooltip: strings.language,
-            initialValue: AppLocale.fromCode(
-              Localizations.localeOf(context).languageCode,
-            ),
+            initialValue: appLocale,
             onSelected: (AppLocale locale) {
               widget.localeNotifier.value = locale;
             },
@@ -65,40 +99,39 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          key: ValueKey<int>(_selectedIndex),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: <Widget>[
             const ConnectivityBanner(),
-            const SizedBox(height: 16),
-            if (_selectedIndex == 0)
-              const OfflinePosPanel()
-            else if (_selectedIndex == 1)
-              const OfflineStockPanel()
-            else if (_selectedIndex == 2)
-              const OfflineCustomersPanel(),
-            if (_selectedIndex == 1) ...<Widget>[
+            const SizedBox(height: 14),
+            switch (_selectedIndex) {
+              0 => DarmaltoonDashboard(onNavigate: _navigateTo),
+              1 => const OfflinePosPanel(),
+              2 => const OfflineStockPanel(),
+              3 => const OfflineCustomersPanel(),
+              _ => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  const SyncStatusCard(),
+                  const SizedBox(height: 16),
+                  const MobileRegistrationCard(),
+                  const SizedBox(height: 16),
+                  ConnectionModeCard(
+                    defaultCloudUri: AppEnvironment.current.apiBaseUri,
+                  ),
+                ],
+              ),
+            },
+            if (_selectedIndex == 2) ...<Widget>[
               const SizedBox(height: 16),
               const OperationalAlertsCard(),
-            ],
-            if (_selectedIndex == 3) ...<Widget>[
-              const SizedBox(height: 16),
-              const SyncStatusCard(),
-              const SizedBox(height: 16),
-              const MobileRegistrationCard(),
-              const SizedBox(height: 16),
-              ConnectionModeCard(
-                defaultCloudUri: AppEnvironment.current.apiBaseUri,
-              ),
             ],
           ],
         ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (int index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+        onDestinationSelected: _navigateTo,
         destinations: destinations
             .map(
               (_ShellDestination destination) => NavigationDestination(
