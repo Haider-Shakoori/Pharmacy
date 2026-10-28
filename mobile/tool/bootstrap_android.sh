@@ -26,6 +26,10 @@ GRADLE="android/app/build.gradle.kts"
 sed -i 's/android:label="pharmacy"/android:label="Darmaltoon"/g' "$MANIFEST"
 sed -i 's/android:label="businessos_pharmacy"/android:label="Darmaltoon"/g' "$MANIFEST"
 
+if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
+  sed -i '/<manifest /a\    <uses-permission android:name="android.permission.CAMERA" />' "$MANIFEST"
+fi
+
 if ! grep -q "android.permission.POST_NOTIFICATIONS" "$MANIFEST"; then
   sed -i '/<manifest /a\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' "$MANIFEST"
 fi
