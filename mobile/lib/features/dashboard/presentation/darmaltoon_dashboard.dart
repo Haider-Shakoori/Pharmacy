@@ -7,6 +7,7 @@ import 'package:businessos_pharmacy/features/alerts/domain/operational_alert.dar
 import 'package:businessos_pharmacy/features/dashboard/data/local_dashboard_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 /// Home overview uses the same registration and local data as POS and Stock.
 /// It never invents pharmacy-wide sales or loads another database.
@@ -131,7 +132,10 @@ class _DashboardContentsState extends State<_DashboardContents> {
               CircleAvatar(
                 radius: 22,
                 backgroundColor: Colors.white.withValues(alpha: 0.18),
-                child: const Icon(Icons.local_pharmacy_rounded, color: Colors.white),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: SvgPicture.asset('assets/brand/darmaltoon-mark.svg'),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -398,7 +402,7 @@ class _EmptyDashboard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: <Widget>[
-          const Icon(Icons.local_pharmacy_rounded, size: 42),
+          SvgPicture.asset('assets/brand/darmaltoon-mark.svg', width: 46, height: 46),
           const SizedBox(height: 12),
           Text(title, style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center),
