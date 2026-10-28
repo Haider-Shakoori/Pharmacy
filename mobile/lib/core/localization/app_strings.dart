@@ -169,7 +169,7 @@ class AppStrings {
   static const Map<AppLocale, Map<String, String>>
   _translations = <AppLocale, Map<String, String>>{
     AppLocale.english: <String, String>{
-      'appName': 'BusinessOS Pharmacy',
+      'appName': 'Darmaltoon',
       'foundation': 'Offline-ready mobile foundation',
       'foundationBody': 'The local database, offline POS and synchronization engine are enabled in the next mobile batches.',
       'pos': 'POS',
@@ -304,7 +304,7 @@ class AppStrings {
       'syncPulled': 'records pulled',
     },
     AppLocale.dari: <String, String>{
-      'appName': 'فارمسی BusinessOS',
+      'appName': 'درملتون',
       'foundation': 'بنیاد موبایل آماده برای کار آفلاین',
       'foundationBody': 'دیتابیس محلی، فروش آفلاین و سیستم همگام‌سازی در مراحل بعدی موبایل فعال می‌شوند.',
       'pos': 'فروش',
@@ -440,7 +440,7 @@ class AppStrings {
       'syncPulled': 'رکورد دریافت شد',
     },
     AppLocale.pashto: <String, String>{
-      'appName': 'BusinessOS فارمسي',
+      'appName': 'درملتون',
       'foundation': 'د آفلاین کار لپاره چمتو موبایل بنسټ',
       'foundationBody': 'ځايي ډیټابیس، آفلاین پلور او همغږي په راتلونکو موبایل پړاوونو کې فعالېږي.',
       'pos': 'پلور',
