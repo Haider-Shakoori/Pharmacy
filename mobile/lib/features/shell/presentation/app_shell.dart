@@ -29,7 +29,19 @@ class _AppShellState extends ConsumerState<AppShell> {
     final AppStrings strings = AppStrings.of(context);
 
     final List<_ShellDestination> destinations = <_ShellDestination>[
-      _ShellDestination(icon: Icons.home_rounded, label: AppLocale.fromCode(Localizations.localeOf(context).languageCode) == AppLocale.english ? 'Home' : AppLocale.fromCode(Localizations.localeOf(context).languageCode) == AppLocale.dari ? 'خانه' : 'کور'),
+      _ShellDestination(
+        icon: Icons.home_rounded,
+        label:
+            AppLocale.fromCode(Localizations.localeOf(context).languageCode) ==
+                AppLocale.english
+            ? 'Home'
+            : AppLocale.fromCode(
+                    Localizations.localeOf(context).languageCode,
+                  ) ==
+                  AppLocale.dari
+            ? 'خانه'
+            : 'کور',
+      ),
       _ShellDestination(icon: Icons.point_of_sale_rounded, label: strings.pos),
       _ShellDestination(icon: Icons.inventory_2_outlined, label: strings.stock),
       _ShellDestination(
@@ -70,13 +82,19 @@ class _AppShellState extends ConsumerState<AppShell> {
           padding: const EdgeInsets.all(16),
           children: <Widget>[
             if (_selectedIndex == 0)
-              PharmacyDashboard(onOpenSection: (int index) => setState(() => _selectedIndex = index))
+              PharmacyDashboard(
+                onOpenSection: (int index) =>
+                    setState(() => _selectedIndex = index),
+              )
             else ...<Widget>[
               const ConnectivityBanner(),
               const SizedBox(height: 16),
-              if (_selectedIndex == 1) const OfflinePosPanel()
-              else if (_selectedIndex == 2) const OfflineStockPanel()
-              else if (_selectedIndex == 3) const OfflineCustomersPanel(),
+              if (_selectedIndex == 1)
+                const OfflinePosPanel()
+              else if (_selectedIndex == 2)
+                const OfflineStockPanel()
+              else if (_selectedIndex == 3)
+                const OfflineCustomersPanel(),
             ],
             if (_selectedIndex == 2) ...<Widget>[
               const SizedBox(height: 16),

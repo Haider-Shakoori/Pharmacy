@@ -11,7 +11,10 @@ abstract final class AppTheme {
       colorScheme: colors,
       useMaterial3: true,
       scaffoldBackgroundColor: const Color(0xFFF2F7FC),
-      appBarTheme: const AppBarTheme(centerTitle: false, backgroundColor: Color(0xFFF2F7FC)),
+      appBarTheme: const AppBarTheme(
+        centerTitle: false,
+        backgroundColor: Color(0xFFF2F7FC),
+      ),
       cardTheme: const CardThemeData(
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,

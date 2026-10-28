@@ -11,7 +11,9 @@ class PharmacyDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final locale = AppLocale.fromCode(Localizations.localeOf(context).languageCode);
+    final locale = AppLocale.fromCode(
+      Localizations.localeOf(context).languageCode,
+    );
     final rtl = locale != AppLocale.english;
     final pashto = locale == AppLocale.pashto;
     String label(String en, String fa, String ps) =>
@@ -38,24 +40,47 @@ class PharmacyDashboard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13)),
-                child: SvgPicture.asset('assets/brand/darmaltoon-mark.svg',
-                    placeholderBuilder: (context) => const Icon(Icons.local_pharmacy_rounded, color: Color(0xFF075AA7))),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: SvgPicture.asset(
+                  'assets/brand/darmaltoon-mark.svg',
+                  placeholderBuilder: (context) => const Icon(
+                    Icons.local_pharmacy_rounded,
+                    color: Color(0xFF075AA7),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
-              const Text('Darmaltoon  •  درملتون',
-                  style: TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.w800)),
+              const Text(
+                'Darmaltoon  •  درملتون',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 23,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 6),
-              Text(label('Your pharmacy workspace', 'مدیریت دواخانه شما', 'ستاسو د درملتون مدیریت'),
-                  style: const TextStyle(color: Colors.white, fontSize: 14)),
+              Text(
+                label(
+                  'Your pharmacy workspace',
+                  'مدیریت دواخانه شما',
+                  'ستاسو د درملتون مدیریت',
+                ),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 16),
         const ConnectivityBanner(),
         const SizedBox(height: 22),
-        Text(label('Quick actions', 'دسترسی سریع', 'چټک کارونه'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          label('Quick actions', 'دسترسی سریع', 'چټک کارونه'),
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 2,
@@ -65,18 +90,34 @@ class PharmacyDashboard extends StatelessWidget {
           crossAxisSpacing: 12,
           childAspectRatio: 1.55,
           children: <Widget>[
-            _ActionTile(icon: Icons.point_of_sale_rounded,
-                title: label('New sale', 'فروش جدید', 'نوی پلور'),
-                color: const Color(0xFF0877CA), onTap: () => onOpenSection(1)),
-            _ActionTile(icon: Icons.inventory_2_rounded,
-                title: label('Inventory', 'موجودی', 'زېرمه'),
-                color: const Color(0xFF119D84), onTap: () => onOpenSection(2)),
-            _ActionTile(icon: Icons.people_alt_rounded,
-                title: label('Customers', 'مشتریان', 'پېرودونکي'),
-                color: const Color(0xFF8065C5), onTap: () => onOpenSection(3)),
-            _ActionTile(icon: Icons.sync_rounded,
-                title: label('Sync & settings', 'همگام‌سازی و تنظیمات', 'همغږي او تنظیمات'),
-                color: const Color(0xFFE38C35), onTap: () => onOpenSection(4)),
+            _ActionTile(
+              icon: Icons.point_of_sale_rounded,
+              title: label('New sale', 'فروش جدید', 'نوی پلور'),
+              color: const Color(0xFF0877CA),
+              onTap: () => onOpenSection(1),
+            ),
+            _ActionTile(
+              icon: Icons.inventory_2_rounded,
+              title: label('Inventory', 'موجودی', 'زېرمه'),
+              color: const Color(0xFF119D84),
+              onTap: () => onOpenSection(2),
+            ),
+            _ActionTile(
+              icon: Icons.people_alt_rounded,
+              title: label('Customers', 'مشتریان', 'پېرودونکي'),
+              color: const Color(0xFF8065C5),
+              onTap: () => onOpenSection(3),
+            ),
+            _ActionTile(
+              icon: Icons.sync_rounded,
+              title: label(
+                'Sync & settings',
+                'همگام‌سازی و تنظیمات',
+                'همغږي او تنظیمات',
+              ),
+              color: const Color(0xFFE38C35),
+              onTap: () => onOpenSection(4),
+            ),
           ],
         ),
         const SizedBox(height: 20),
@@ -84,15 +125,21 @@ class PharmacyDashboard extends StatelessWidget {
           color: scheme.surface,
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(children: <Widget>[
-              Icon(Icons.verified_user_outlined, color: scheme.primary),
-              const SizedBox(width: 12),
-              Expanded(child: Text(label(
-                'Sales, stock and customer records use your registered pharmacy data. Open Sync to refresh offline records.',
-                'فروشات، موجودی و مشتریان از اطلاعات دواخانه ثبت‌شده شما استفاده می‌کنند. برای تازه‌سازی آفلاین، همگام‌سازی را باز کنید.',
-                'پلور، زېرمه او پېرودونکي ستاسو د ثبت شوي درملتون معلومات کاروي. د تازه کولو لپاره همغږي پرانیزئ.',
-              ))),
-            ]),
+            child: Row(
+              children: <Widget>[
+                Icon(Icons.verified_user_outlined, color: scheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label(
+                      'Sales, stock and customer records use your registered pharmacy data. Open Sync to refresh offline records.',
+                      'فروشات، موجودی و مشتریان از اطلاعات دواخانه ثبت‌شده شما استفاده می‌کنند. برای تازه‌سازی آفلاین، همگام‌سازی را باز کنید.',
+                      'پلور، زېرمه او پېرودونکي ستاسو د ثبت شوي درملتون معلومات کاروي. د تازه کولو لپاره همغږي پرانیزئ.',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -101,7 +148,12 @@ class PharmacyDashboard extends StatelessWidget {
 }
 
 class _ActionTile extends StatelessWidget {
-  const _ActionTile({required this.icon, required this.title, required this.color, required this.onTap});
+  const _ActionTile({
+    required this.icon,
+    required this.title,
+    required this.color,
+    required this.onTap,
+  });
   final IconData icon;
   final String title;
   final Color color;
@@ -122,8 +174,11 @@ class _ActionTile extends StatelessWidget {
           children: <Widget>[
             Icon(icon, size: 29, color: color),
             const SizedBox(height: 8),
-            Text(title, textAlign: TextAlign.center,
-                style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: color, fontWeight: FontWeight.w700),
+            ),
           ],
         ),
       ),
