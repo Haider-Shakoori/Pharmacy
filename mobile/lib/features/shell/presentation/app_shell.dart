@@ -29,7 +29,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     final AppStrings strings = AppStrings.of(context);
 
     final List<_ShellDestination> destinations = <_ShellDestination>[
-      _ShellDestination(icon: Icons.home_rounded, label: 'Home'),
+      _ShellDestination(icon: Icons.home_rounded, label: AppLocale.fromCode(Localizations.localeOf(context).languageCode) == AppLocale.english ? 'Home' : AppLocale.fromCode(Localizations.localeOf(context).languageCode) == AppLocale.dari ? 'خانه' : 'کور'),
       _ShellDestination(icon: Icons.point_of_sale_rounded, label: strings.pos),
       _ShellDestination(icon: Icons.inventory_2_outlined, label: strings.stock),
       _ShellDestination(
