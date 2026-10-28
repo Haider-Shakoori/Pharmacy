@@ -44,6 +44,9 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Welcome to Darmaltoon'), findsOneWidget);
+
     await tester.tap(find.text('Stock').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -56,6 +59,8 @@ void main() {
     );
     expect(find.textContaining('No network link'), findsOneWidget);
     expect(find.text('POS'), findsWidgets);
-    expect(find.text('Sync'), findsWidgets);
+    await tester.tap(find.text('More').last);
+    await tester.pump();
+    expect(find.text('Synchronization status'), findsOneWidget);
   });
 }
