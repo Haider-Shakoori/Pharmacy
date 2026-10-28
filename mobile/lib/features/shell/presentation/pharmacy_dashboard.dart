@@ -1,4 +1,5 @@
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
+import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -121,6 +122,8 @@ class PharmacyDashboard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
+        const OperationalAlertsCard(),
+        const SizedBox(height: 16),
         Card(
           color: scheme.surface,
           child: Padding(
