@@ -21,6 +21,10 @@ fi
 MANIFEST="android/app/src/main/AndroidManifest.xml"
 GRADLE="android/app/build.gradle.kts"
 
+if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
+  sed -i '/<manifest /a\\    <uses-permission android:name="android.permission.CAMERA" />' "$MANIFEST"
+fi
+
 if ! grep -q "android.permission.POST_NOTIFICATIONS" "$MANIFEST"; then
   sed -i '/<manifest /a\    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' "$MANIFEST"
 fi
