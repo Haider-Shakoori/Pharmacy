@@ -35,7 +35,7 @@ class _BusinessOsPharmacyAppState extends State<BusinessOsPharmacyApp> {
       builder: (BuildContext context, AppLocale appLocale, Widget? child) {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
-          title: 'BusinessOS Pharmacy',
+          title: 'Darmaltoon | درملتون',
           theme: AppTheme.light(),
           routerConfig: _router,
           locale: appLocale.locale,
