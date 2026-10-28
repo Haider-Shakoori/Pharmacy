@@ -20,8 +20,9 @@ class DarmaltoonDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final _DashboardText t = _DashboardText.of(context);
-    final AsyncValue<MobileRegistration?> registration =
-        ref.watch(mobileRegistrationProvider);
+    final AsyncValue<MobileRegistration?> registration = ref.watch(
+      mobileRegistrationProvider,
+    );
 
     return registration.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -50,19 +51,21 @@ class DarmaltoonDashboard extends ConsumerWidget {
           );
         }
 
-        return ref.watch(pharmacyDatabaseProvider).when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (Object error, StackTrace stack) => Text(error.toString()),
-          data: (PharmacyDatabase database) => _DashboardContents(
-            key: ValueKey<String>(user.tenantId),
-            registration: user,
-            database: database,
-            onNavigate: onNavigate,
-            canSell: canSell,
-            canManageStock: canManageStock,
-            canSeeCustomers: canSeeCustomers,
-          ),
-        );
+        return ref
+            .watch(pharmacyDatabaseProvider)
+            .when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (Object error, StackTrace stack) => Text(error.toString()),
+              data: (PharmacyDatabase database) => _DashboardContents(
+                key: ValueKey<String>(user.tenantId),
+                registration: user,
+                database: database,
+                onNavigate: onNavigate,
+                canSell: canSell,
+                canManageStock: canManageStock,
+                canSeeCustomers: canSeeCustomers,
+              ),
+            );
       },
     );
   }
@@ -191,126 +194,194 @@ class _DashboardContentsState extends State<_DashboardContents> {
         const SizedBox(height: 12),
         FutureBuilder<LocalDashboardSnapshot>(
           future: _snapshot,
-          builder: (BuildContext context, AsyncSnapshot<LocalDashboardSnapshot> state) {
-            if (state.hasError) {
-              return _EmptyDashboard(
-                title: t.unavailable,
-                description: state.error.toString(),
-                action: t.refresh,
-                onPressed: _refresh,
-              );
-            }
-            if (!state.hasData) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 28),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
+          builder:
+              (
+                BuildContext context,
+                AsyncSnapshot<LocalDashboardSnapshot> state,
+              ) {
+                if (state.hasError) {
+                  return _EmptyDashboard(
+                    title: t.unavailable,
+                    description: state.error.toString(),
+                    action: t.refresh,
+                    onPressed: _refresh,
+                  );
+                }
+                if (!state.hasData) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 28),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
 
-            final LocalDashboardSnapshot data = state.data!;
-            final List<_Metric> metrics = <_Metric>[
-              if (widget.canSell)
-                _Metric(t.todaySales, data.salesToday.toString(),
-                    Icons.receipt_long_rounded, const Color(0xFF0E82C4)),
-              if (widget.canSell)
-                _Metric(t.todayRevenue, 'AFN ${data.salesTodayAmount.compact}',
-                    Icons.payments_outlined, const Color(0xFF078768)),
-              if (widget.canManageStock)
-                _Metric(t.medicines, data.cachedMedicines.toString(),
-                    Icons.medication_outlined, const Color(0xFF7565D8)),
-              if (widget.canSeeCustomers)
-                _Metric(t.customers, data.cachedCustomers.toString(),
-                    Icons.people_outline_rounded, const Color(0xFF3B82F6)),
-              _Metric(t.pendingSync, data.pendingSync.toString(),
-                  Icons.cloud_upload_outlined, const Color(0xFFD8891C)),
-              if (widget.canManageStock)
-                _Metric(t.stockAlerts, data.alerts.total.toString(),
-                    Icons.notification_important_outlined, const Color(0xFFC44757)),
-            ];
+                final LocalDashboardSnapshot data = state.data!;
+                final List<_Metric> metrics = <_Metric>[
+                  if (widget.canSell)
+                    _Metric(
+                      t.todaySales,
+                      data.salesToday.toString(),
+                      Icons.receipt_long_rounded,
+                      const Color(0xFF0E82C4),
+                    ),
+                  if (widget.canSell)
+                    _Metric(
+                      t.todayRevenue,
+                      'AFN ${data.salesTodayAmount.compact}',
+                      Icons.payments_outlined,
+                      const Color(0xFF078768),
+                    ),
+                  if (widget.canManageStock)
+                    _Metric(
+                      t.medicines,
+                      data.cachedMedicines.toString(),
+                      Icons.medication_outlined,
+                      const Color(0xFF7565D8),
+                    ),
+                  if (widget.canSeeCustomers)
+                    _Metric(
+                      t.customers,
+                      data.cachedCustomers.toString(),
+                      Icons.people_outline_rounded,
+                      const Color(0xFF3B82F6),
+                    ),
+                  _Metric(
+                    t.pendingSync,
+                    data.pendingSync.toString(),
+                    Icons.cloud_upload_outlined,
+                    const Color(0xFFD8891C),
+                  ),
+                  if (widget.canManageStock)
+                    _Metric(
+                      t.stockAlerts,
+                      data.alerts.total.toString(),
+                      Icons.notification_important_outlined,
+                      const Color(0xFFC44757),
+                    ),
+                ];
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    final double width = (constraints.maxWidth - 12) / 2;
-                    return Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: metrics.map((_Metric metric) => SizedBox(
-                        width: width,
-                        child: _MetricTile(metric: metric),
-                      )).toList(growable: false),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-                Text(t.quickActions, style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                )),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    if (widget.canSell)
-                      _ActionChip(label: t.newSale, icon: Icons.add_shopping_cart_rounded,
-                          onTap: () => widget.onNavigate(1)),
-                    if (widget.canManageStock)
-                      _ActionChip(label: t.inventory, icon: Icons.inventory_2_outlined,
-                          onTap: () => widget.onNavigate(2)),
-                    if (widget.canSeeCustomers)
-                      _ActionChip(label: t.customers, icon: Icons.people_outline_rounded,
-                          onTap: () => widget.onNavigate(3)),
-                    _ActionChip(label: t.syncNow, icon: Icons.sync_rounded,
-                        onTap: () => widget.onNavigate(4)),
-                  ],
-                ),
-                if (widget.canManageStock && data.alerts.total > 0) ...<Widget>[
-                  const SizedBox(height: 24),
-                  Text(t.attention, style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  )),
-                  const SizedBox(height: 8),
-                  Card(
-                    child: Column(
-                      children: data.alerts.alerts.take(3).map((LocalOperationalAlert alert) =>
-                        ListTile(
-                          dense: true,
-                          leading: Icon(
-                            alert.severity == OperationalAlertSeverity.critical
-                                ? Icons.error_outline_rounded
-                                : Icons.warning_amber_rounded,
-                            color: alert.severity == OperationalAlertSeverity.critical
-                                ? const Color(0xFFC44757)
-                                : const Color(0xFFD8891C),
+                    LayoutBuilder(
+                      builder:
+                          (BuildContext context, BoxConstraints constraints) {
+                            final double width =
+                                (constraints.maxWidth - 12) / 2;
+                            return Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: metrics
+                                  .map(
+                                    (_Metric metric) => SizedBox(
+                                      width: width,
+                                      child: _MetricTile(metric: metric),
+                                    ),
+                                  )
+                                  .toList(growable: false),
+                            );
+                          },
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      t.quickActions,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: <Widget>[
+                        if (widget.canSell)
+                          _ActionChip(
+                            label: t.newSale,
+                            icon: Icons.add_shopping_cart_rounded,
+                            onTap: () => widget.onNavigate(1),
                           ),
-                          title: Text(alert.title, maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                          subtitle: Text(alert.detail, maxLines: 2,
-                              overflow: TextOverflow.ellipsis),
+                        if (widget.canManageStock)
+                          _ActionChip(
+                            label: t.inventory,
+                            icon: Icons.inventory_2_outlined,
+                            onTap: () => widget.onNavigate(2),
+                          ),
+                        if (widget.canSeeCustomers)
+                          _ActionChip(
+                            label: t.customers,
+                            icon: Icons.people_outline_rounded,
+                            onTap: () => widget.onNavigate(3),
+                          ),
+                        _ActionChip(
+                          label: t.syncNow,
+                          icon: Icons.sync_rounded,
+                          onTap: () => widget.onNavigate(4),
                         ),
-                      ).toList(growable: false),
+                      ],
                     ),
-                  ),
-                ],
-                if (data.rejectedSync > 0) ...<Widget>[
-                  const SizedBox(height: 12),
-                  Card(
-                    color: const Color(0xFFFFF4F1),
-                    child: ListTile(
-                      leading: const Icon(Icons.sync_problem, color: Color(0xFFB42318)),
-                      title: Text(t.syncConflicts(data.rejectedSync)),
-                      onTap: () => widget.onNavigate(4),
-                      trailing: const Icon(Icons.chevron_right),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 18),
-                Text(t.scopeNotice, style: theme.textTheme.bodySmall),
-              ],
-            );
-          },
+                    if (widget.canManageStock &&
+                        data.alerts.total > 0) ...<Widget>[
+                      const SizedBox(height: 24),
+                      Text(
+                        t.attention,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        child: Column(
+                          children: data.alerts.alerts
+                              .take(3)
+                              .map(
+                                (LocalOperationalAlert alert) => ListTile(
+                                  dense: true,
+                                  leading: Icon(
+                                    alert.severity ==
+                                            OperationalAlertSeverity.critical
+                                        ? Icons.error_outline_rounded
+                                        : Icons.warning_amber_rounded,
+                                    color:
+                                        alert.severity ==
+                                            OperationalAlertSeverity.critical
+                                        ? const Color(0xFFC44757)
+                                        : const Color(0xFFD8891C),
+                                  ),
+                                  title: Text(
+                                    alert.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  subtitle: Text(
+                                    alert.detail,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(growable: false),
+                        ),
+                      ),
+                    ],
+                    if (data.rejectedSync > 0) ...<Widget>[
+                      const SizedBox(height: 12),
+                      Card(
+                        color: const Color(0xFFFFF4F1),
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.sync_problem,
+                            color: Color(0xFFB42318),
+                          ),
+                          title: Text(t.syncConflicts(data.rejectedSync)),
+                          onTap: () => widget.onNavigate(4),
+                          trailing: const Icon(Icons.chevron_right),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    Text(t.scopeNotice, style: theme.textTheme.bodySmall),
+                  ],
+                );
+              },
         ),
       ],
     );
@@ -348,15 +419,20 @@ class _MetricTile extends StatelessWidget {
               child: Icon(metric.icon, color: metric.color, size: 23),
             ),
             const SizedBox(height: 11),
-            Text(metric.value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                )),
+            Text(
+              metric.value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w900),
+            ),
             const SizedBox(height: 3),
-            Text(metric.label, maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              metric.label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
         ),
       ),
@@ -402,10 +478,17 @@ class _EmptyDashboard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: <Widget>[
-          SvgPicture.asset('assets/brand/darmaltoon-mark.svg', width: 46, height: 46),
+          SvgPicture.asset(
+            'assets/brand/darmaltoon-mark.svg',
+            width: 46,
+            height: 46,
+          ),
           const SizedBox(height: 12),
-          Text(title, style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 8),
           Text(description, textAlign: TextAlign.center),
           const SizedBox(height: 16),
@@ -421,8 +504,9 @@ class _DashboardText {
 
   final AppLocale locale;
 
-  static _DashboardText of(BuildContext context) =>
-      _DashboardText(AppLocale.fromCode(Localizations.localeOf(context).languageCode));
+  static _DashboardText of(BuildContext context) => _DashboardText(
+    AppLocale.fromCode(Localizations.localeOf(context).languageCode),
+  );
 
   String get welcome => switch (locale) {
     AppLocale.dari => 'به درملتون خوش آمدید',
