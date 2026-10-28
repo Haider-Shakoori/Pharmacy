@@ -45,5 +45,8 @@ fi
 # Keep the existing application ID for upgrade compatibility, but show
 # Darmaltoon as the installed application name.
 sed -i 's/android:label="pharmacy"/android:label="Darmaltoon"/' "$MANIFEST"
+mkdir -p android/app/src/main/res/drawable
+cp "$ROOT_DIR/tool/assets/darmaltoon_launcher.xml" android/app/src/main/res/drawable/darmaltoon_launcher.xml
+sed -i 's|@mipmap/ic_launcher|@drawable/darmaltoon_launcher|' "$MANIFEST"
 
 echo "Android branding, notification permission and desugaring are configured."
