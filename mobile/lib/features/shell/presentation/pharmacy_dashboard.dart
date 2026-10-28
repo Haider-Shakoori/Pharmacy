@@ -39,7 +39,7 @@ class PharmacyDashboard extends StatelessWidget {
                 height: 52,
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13)),
-                child: SvgPicture.asset('assets/brand/darmaltoon-official.svg',
+                child: SvgPicture.asset('assets/brand/darmaltoon-mark.svg',
                     placeholderBuilder: (context) => const Icon(Icons.local_pharmacy_rounded, color: Color(0xFF075AA7))),
               ),
               const SizedBox(height: 12),
