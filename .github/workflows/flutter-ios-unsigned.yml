@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - feature/darmaltoon-android-ui
-    paths:
-      - '.github/workflows/flutter-ios-unsigned.yml'
 
 permissions:
   contents: read
