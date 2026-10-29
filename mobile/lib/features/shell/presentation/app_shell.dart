@@ -12,6 +12,7 @@ import 'package:businessos_pharmacy/features/shell/presentation/pharmacy_dashboa
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -45,25 +46,121 @@ class _AppShellState extends ConsumerState<AppShell> {
       );
     }
     if (deviceRegistration.value == null) {
+      final AppLocale locale = AppLocale.fromCode(
+        Localizations.localeOf(context).languageCode,
+      );
+      final bool dari = locale == AppLocale.dari;
+      final bool pashto = locale == AppLocale.pashto;
+      String tr(String en, String fa, String ps) =>
+          pashto ? ps : (dari ? fa : en);
+
       return Scaffold(
-        appBar: AppBar(title: const Text('Darmaltoon  درملتون')),
+        appBar: AppBar(
+          title: const Text('Darmaltoon'),
+          actions: <Widget>[
+            PopupMenuButton<AppLocale>(
+              tooltip: strings.language,
+              onSelected: (AppLocale value) {
+                widget.localeNotifier.value = value;
+              },
+              itemBuilder: (BuildContext context) => AppLocale.values
+                  .map(
+                    (AppLocale value) => PopupMenuItem<AppLocale>(
+                      value: value,
+                      child: Text(value.label),
+                    ),
+                  )
+                  .toList(),
+              icon: const Icon(Icons.language_rounded),
+            ),
+          ],
+        ),
         body: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
             children: <Widget>[
-              Text(
-                'Connect your pharmacy',
-                style: Theme.of(context).textTheme.headlineSmall,
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: <Color>[Color(0xFF075AA7), Color(0xFF0A91BC)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(26),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Container(
+                      width: 68,
+                      height: 68,
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: SvgPicture.asset(
+                        'assets/brand/darmaltoon-mark.svg',
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Darmaltoon  •  درملتون',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 25,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      tr(
+                        'Connect your pharmacy to get started',
+                        'برای شروع دواخانه خود را وصل کنید',
+                        'د پیل لپاره خپل درملتون وصل کړئ',
+                      ),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'First enter your pharmacy server link and save it. Then enter your device registration credentials to activate this device.',
+              const SizedBox(height: 24),
+              _SetupStep(
+                number: '01',
+                title: tr(
+                  'Pharmacy server link',
+                  'لینک سرور دواخانه',
+                  'د درملتون سرور لینک',
+                ),
+                subtitle: tr(
+                  'Enter the web or LAN address supplied by your pharmacy administrator, then save the connection.',
+                  'آدرس ویب یا شبکه داخلی را وارد کرده و اتصال را ذخیره کنید.',
+                  'د ویب یا محلي شبکې پته ولیکئ او اړیکه خوندي کړئ.',
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               ConnectionModeCard(
                 defaultCloudUri: AppEnvironment.current.apiBaseUri,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
+              _SetupStep(
+                number: '02',
+                title: tr(
+                  'Register this device',
+                  'ثبت این دستگاه',
+                  'دا وسیله ثبت کړئ',
+                ),
+                subtitle: tr(
+                  'Use the activation details provided for your pharmacy.',
+                  'مشخصات فعال‌سازی دواخانه خود را وارد کنید.',
+                  'د خپل درملتون د فعالولو معلومات دننه کړئ.',
+                ),
+              ),
+              const SizedBox(height: 12),
               const MobileRegistrationCard(),
             ],
           ),
@@ -181,4 +278,55 @@ class _ShellDestination {
 
   final IconData icon;
   final String label;
+}
+
+class _SetupStep extends StatelessWidget {
+  const _SetupStep({
+    required this.number,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String number;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Container(
+        padding: const EdgeInsets.all(11),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE1EFFC),
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Text(
+          number,
+          style: const TextStyle(
+            color: Color(0xFF075AA7),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
