@@ -52,6 +52,5 @@ void main() {
     expect(find.text('Register this device'), findsOneWidget);
     expect(find.text('POS'), findsNothing);
     expect(find.text('Stock'), findsNothing);
-
   });
 }
