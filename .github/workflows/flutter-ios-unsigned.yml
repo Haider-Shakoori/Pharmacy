@@ -1,9 +1,12 @@
 name: Flutter iOS Unsigned IPA
 
-# Final unsigned release is operator-triggered after feature and API migration QA.
-# Ordinary commits should not publish a new IPA prematurely.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/darmaltoon-android-ui
+    paths:
+      - '.github/workflows/flutter-ios-unsigned.yml'
 
 permissions:
   contents: read
