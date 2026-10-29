@@ -1,3 +1,5 @@
+import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
+import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
 import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
@@ -27,6 +29,50 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
+    final AsyncValue<MobileRegistration?> deviceRegistration = ref.watch(
+      mobileRegistrationProvider,
+    );
+
+    // A new installation must configure its server and register before
+    // accessing any tenant-scoped pharmacy features.
+    if (deviceRegistration.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (deviceRegistration.hasError) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Darmaltoon')),
+        body: Center(child: Text(deviceRegistration.error.toString())),
+      );
+    }
+    if (deviceRegistration.value == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Darmaltoon  درملتون')),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: <Widget>[
+              Text(
+                'Connect your pharmacy',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'First enter your pharmacy server link and save it. Then enter your device registration credentials to activate this device.',
+              ),
+              const SizedBox(height: 16),
+              ConnectionModeCard(
+                defaultCloudUri: AppEnvironment.current.apiBaseUri,
+              ),
+              const SizedBox(height: 16),
+              const MobileRegistrationCard(),
+            ],
+          ),
+        ),
+      );
+    }
+
 
     final List<_ShellDestination> destinations = <_ShellDestination>[
       _ShellDestination(
