@@ -44,18 +44,13 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.text('Stock').last);
-    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(
-      find.text(
-        'Device registration is required before transactional POS is enabled.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.textContaining('No network link'), findsOneWidget);
-    expect(find.text('POS'), findsWidgets);
-    expect(find.text('Sync'), findsWidgets);
+    // An unregistered installation must show onboarding, not tenant data.
+    expect(find.text('Connect your pharmacy to get started'), findsOneWidget);
+    expect(find.text('Pharmacy server link'), findsOneWidget);
+    expect(find.text('Register this device'), findsOneWidget);
+    expect(find.text('POS'), findsNothing);
+    expect(find.text('Stock'), findsNothing);
   });
 }

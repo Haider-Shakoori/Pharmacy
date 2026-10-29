@@ -1,0 +1,34 @@
+name: Format Android branch
+on:
+  push:
+    branches:
+      - feature/darmaltoon-android-ui
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/android-branch-format.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/darmaltoon-android-ui
+          persist-credentials: true
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+      - name: Format Flutter source
+        run: dart format mobile/lib mobile/test
+      - name: Commit formatting only
+        run: |
+          if ! git diff --quiet -- mobile/lib mobile/test; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add mobile/lib mobile/test
+            git commit -m "style(android): apply Dart formatter"
+            git push origin HEAD:feature/darmaltoon-android-ui
+          fi

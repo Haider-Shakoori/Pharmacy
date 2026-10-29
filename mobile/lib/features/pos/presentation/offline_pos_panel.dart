@@ -10,6 +10,7 @@ import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_catalog_repository.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_checkout_service.dart';
 import 'package:businessos_pharmacy/features/pos/domain/offline_pos_models.dart';
+import 'package:businessos_pharmacy/features/pos/presentation/barcode_scan_page.dart';
 import 'package:businessos_pharmacy/features/receipt/data/offline_receipt_repository.dart';
 import 'package:businessos_pharmacy/features/receipt/domain/offline_receipt.dart';
 import 'package:businessos_pharmacy/features/receipt/presentation/receipt_print_sheet.dart';
@@ -195,6 +196,17 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         _error = error.toString();
       });
     }
+  }
+
+  Future<void> _scanBarcode() async {
+    final String? barcode = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (BuildContext context) => const BarcodeScanPage(),
+      ),
+    );
+    if (!mounted || barcode == null) return;
+    _searchController.text = barcode;
+    await _search();
   }
 
   void _add(OfflinePosCatalogItem item) {
@@ -467,9 +479,19 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                   decoration: InputDecoration(
                     labelText: strings.posSearch,
                     hintText: strings.posSearchHint,
-                    suffixIcon: IconButton(
-                      onPressed: _search,
-                      icon: const Icon(Icons.search_rounded),
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        IconButton(
+                          tooltip: 'Scan barcode',
+                          onPressed: _scanBarcode,
+                          icon: const Icon(Icons.qr_code_scanner_rounded),
+                        ),
+                        IconButton(
+                          onPressed: _search,
+                          icon: const Icon(Icons.search_rounded),
+                        ),
+                      ],
                     ),
                   ),
                   onSubmitted: (_) => _search(),

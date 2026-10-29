@@ -1,9 +1,10 @@
 name: Flutter iOS Unsigned IPA
 
-# Final unsigned release is operator-triggered after feature and API migration QA.
-# Ordinary commits should not publish a new IPA prematurely.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/darmaltoon-android-ui
 
 permissions:
   contents: read
@@ -36,6 +37,13 @@ jobs:
           # Remove only the generated sample; repository tests remain unchanged.
           rm -f test/widget_test.dart
           flutter pub get
+
+      - name: Set Darmaltoon iOS display name and official launcher icon
+        run: |
+          /usr/libexec/PlistBuddy -c 'Set :CFBundleDisplayName Darmaltoon' ios/Runner/Info.plist || /usr/libexec/PlistBuddy -c 'Add :CFBundleDisplayName string Darmaltoon' ios/Runner/Info.plist
+          brew install librsvg
+          rsvg-convert -w 1024 -h 1024 assets/brand/darmaltoon-mark.svg -o assets/brand/darmaltoon-launcher.png
+          dart run flutter_launcher_icons -f flutter_launcher_icons_ios.yaml
 
       - name: Generate Drift database code
         run: dart run build_runner build --delete-conflicting-outputs
