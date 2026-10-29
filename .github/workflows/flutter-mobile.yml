@@ -53,7 +53,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y librsvg2-bin
           rsvg-convert -w 1024 -h 1024 assets/brand/darmaltoon-mark.svg -o assets/brand/darmaltoon-launcher.png
-          dart run flutter_launcher_icons
+          dart run flutter_launcher_icons -f flutter_launcher_icons_android.yaml
 
       - name: Generate Drift database code
         run: dart run build_runner build --delete-conflicting-outputs
