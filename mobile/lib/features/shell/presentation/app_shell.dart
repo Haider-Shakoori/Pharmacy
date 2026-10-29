@@ -36,9 +36,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     // A new installation must configure its server and register before
     // accessing any tenant-scoped pharmacy features.
     if (deviceRegistration.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (deviceRegistration.hasError) {
       return Scaffold(
@@ -72,7 +70,6 @@ class _AppShellState extends ConsumerState<AppShell> {
         ),
       );
     }
-
 
     final List<_ShellDestination> destinations = <_ShellDestination>[
       _ShellDestination(
