@@ -2,7 +2,7 @@ name: Flutter Mobile CI
 
 on:
   push:
-    branches: [main, 'feat/**']
+    branches: [main, 'feat/**', 'feature/darmaltoon-android-ui']
     paths:
       - 'mobile/**'
       - '.github/workflows/flutter-mobile.yml'
