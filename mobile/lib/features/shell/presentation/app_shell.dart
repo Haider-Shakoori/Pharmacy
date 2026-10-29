@@ -120,10 +120,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                         'برای شروع دواخانه خود را وصل کنید',
                         'د پیل لپاره خپل درملتون وصل کړئ',
                       ),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 15),
                     ),
                   ],
                 ),
@@ -320,10 +317,7 @@ class _SetupStep extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
       ),
