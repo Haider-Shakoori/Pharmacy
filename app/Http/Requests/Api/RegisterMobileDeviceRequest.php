@@ -16,7 +16,7 @@ class RegisterMobileDeviceRequest extends FormRequest
         return [
             'license_key' => ['required', 'string', 'max:120'],
             'device_id' => ['required', 'uuid'],
-            'platform' => ['nullable', 'string', 'in:android,windows'],
+            'platform' => ['nullable', 'string', 'in:android,ios,windows'],
             'device_name' => ['nullable', 'string', 'max:160'],
             'device_model' => ['nullable', 'string', 'max:160'],
             'os_version' => ['nullable', 'string', 'max:80'],
