@@ -16,7 +16,7 @@ class RegisterTrialDeviceRequest extends FormRequest
         return [
             'pharmacy_code' => ['required', 'alpha_dash:ascii', 'max:100'],
             'device_id' => ['required', 'uuid'],
-            'platform' => ['nullable', 'string', 'in:android,windows'],
+            'platform' => ['nullable', 'string', 'in:android,ios,windows'],
             'device_name' => ['nullable', 'string', 'max:160'],
             'device_model' => ['nullable', 'string', 'max:160'],
             'os_version' => ['nullable', 'string', 'max:80'],
