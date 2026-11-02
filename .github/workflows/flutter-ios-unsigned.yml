@@ -36,6 +36,10 @@ jobs:
           # Remove only the generated sample; repository tests remain unchanged.
           rm -f test/widget_test.dart
           flutter pub get
+          # iOS terminates the process if a camera-using plugin opens without this key.
+          /usr/libexec/PlistBuddy -c 'Add :NSCameraUsageDescription string Scan QR codes and medicine barcodes with the camera.' ios/Runner/Info.plist || \
+            /usr/libexec/PlistBuddy -c 'Set :NSCameraUsageDescription Scan QR codes and medicine barcodes with the camera.' ios/Runner/Info.plist
+          /usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' ios/Runner/Info.plist
 
       - name: Generate Drift database code
         run: dart run build_runner build --delete-conflicting-outputs
