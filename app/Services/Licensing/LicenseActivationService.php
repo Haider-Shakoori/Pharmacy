@@ -64,7 +64,7 @@ class LicenseActivationService
         ?string $buildNumber = null,
         string $platform = 'android',
     ): array {
-        $platform = in_array($platform, ['android', 'windows'], true)
+        $platform = in_array($platform, ['android', 'ios', 'windows'], true)
             ? $platform
             : 'android';
 
@@ -94,7 +94,11 @@ class LicenseActivationService
             $deviceLimit = $platform === 'windows'
                 ? $plan->max_windows_devices
                 : $plan->max_android_devices;
-            $platformLabel = $platform === 'windows' ? 'Windows PC' : 'Android device';
+            $platformLabel = match ($platform) {
+                'windows' => 'Windows PC',
+                'ios' => 'iOS device',
+                default => 'Android device',
+            };
 
             if ($activation === null) {
                 $activeDeviceCount = LicenseActivation::query()
