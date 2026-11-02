@@ -15,6 +15,7 @@ import 'package:businessos_pharmacy/features/receipt/domain/offline_receipt.dart
 import 'package:businessos_pharmacy/features/receipt/presentation/receipt_print_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class OfflinePosPanel extends ConsumerWidget {
   const OfflinePosPanel({super.key});
@@ -195,6 +196,17 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         _error = error.toString();
       });
     }
+  }
+
+  Future<void> _scanBarcode() async {
+    final String? code = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (BuildContext context) => const _PosBarcodeScanner(),
+      ),
+    );
+    if (!mounted || code == null || code.isEmpty) return;
+    _searchController.text = code;
+    await _search();
   }
 
   void _add(OfflinePosCatalogItem item) {
@@ -467,9 +479,19 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                   decoration: InputDecoration(
                     labelText: strings.posSearch,
                     hintText: strings.posSearchHint,
-                    suffixIcon: IconButton(
-                      onPressed: _search,
-                      icon: const Icon(Icons.search_rounded),
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        IconButton(
+                          tooltip: 'Scan barcode or QR code',
+                          onPressed: _scanBarcode,
+                          icon: const Icon(Icons.qr_code_scanner_rounded),
+                        ),
+                        IconButton(
+                          onPressed: _search,
+                          icon: const Icon(Icons.search_rounded),
+                        ),
+                      ],
                     ),
                   ),
                   onSubmitted: (_) => _search(),
@@ -622,4 +644,67 @@ class _CartEntry {
   String quantity;
   String unitPrice;
   String discount;
+}
+
+class _PosBarcodeScanner extends StatefulWidget {
+  const _PosBarcodeScanner();
+
+  @override
+  State<_PosBarcodeScanner> createState() => _PosBarcodeScannerState();
+}
+
+class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
+  final MobileScannerController _controller = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+  );
+  bool _handled = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_handled || capture.barcodes.isEmpty) return;
+    String? value;
+    for (final Barcode barcode in capture.barcodes) {
+      final String? candidate = barcode.rawValue;
+      if (candidate != null && candidate.trim().isNotEmpty) {
+        value = candidate.trim();
+        break;
+      }
+    }
+    if (value == null) return;
+    _handled = true;
+    Navigator.of(context).pop(value);
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Scan medicine code')),
+    body: Stack(children: <Widget>[
+      MobileScanner(
+        controller: _controller,
+        onDetect: _onDetect,
+        errorBuilder: (BuildContext context, MobileScannerException error) =>
+            Center(child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text('Camera unavailable: ${error.errorCode.name}. Check camera permissions in iOS Settings.'),
+            )),
+      ),
+      const Align(
+        alignment: Alignment.bottomCenter,
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Card(child: Padding(
+              padding: EdgeInsets.all(14),
+              child: Text('Align the medicine barcode or QR code within the camera view.'),
+            )),
+          ),
+        ),
+      ),
+    ]),
+  );
 }
