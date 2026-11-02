@@ -21,21 +21,29 @@ class OfflineSalesSummaryRepository {
   final PharmacyDatabase database;
 
   Future<OfflineSalesSummary> forBusinessDate(String date) async {
-    final QueryRow row = await database.customSelect(
+    // Sum fixed-decimal strings in Dart to avoid floating-point currency drift.
+    final List<QueryRow> rows = await database.customSelect(
       '''
-      SELECT COUNT(*) AS sales_count,
-             COALESCE(SUM(CAST(total AS REAL)), 0) AS sales_total,
-             COALESCE(SUM(CASE WHEN sync_state != 'synced' THEN 1 ELSE 0 END), 0) AS pending_sync
+      SELECT total, sync_state
       FROM local_sales
       WHERE status = 'completed' AND business_date = ?
       ''',
       variables: <Variable<Object>>[Variable<String>(date)],
-    ).getSingle();
+    ).get();
+
+    FixedDecimal total = FixedDecimal.zero;
+    int pendingSync = 0;
+    for (final QueryRow row in rows) {
+      total += FixedDecimal.parse(row.read<String>('total'));
+      if (row.read<String>('sync_state') != 'synced') {
+        pendingSync++;
+      }
+    }
 
     return OfflineSalesSummary(
-      salesCount: row.read<int>('sales_count'),
-      total: FixedDecimal.parse(row.read<double>('sales_total').toStringAsFixed(4)),
-      pendingSync: row.read<int>('pending_sync'),
+      salesCount: rows.length,
+      total: total,
+      pendingSync: pendingSync,
     );
   }
 }
