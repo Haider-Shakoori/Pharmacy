@@ -95,6 +95,7 @@ class _StockBrowserState extends State<_StockBrowser> {
   String? _error;
   bool _loading = true;
   bool _expiryOnly = false;
+  int _page = 0;
 
   @override
   void initState() {
@@ -122,6 +123,7 @@ class _StockBrowserState extends State<_StockBrowser> {
       final List<StockMedicineSnapshot> medicines = await browser.medicines(
         search: _search.text,
         locationId: _location,
+        page: _page,
       );
       if (!mounted) {
         return;
@@ -196,7 +198,7 @@ class _StockBrowserState extends State<_StockBrowser> {
           ),
           const SizedBox(height: 5),
           Text(
-            'Summary counts include all locally synced active medicines, with the selected location filter. The list below displays up to 100 medicines.',
+            'Summary counts include all locally synced active medicines, with the selected location filter. Browse the medicine list in pages of up to 100.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -214,7 +216,10 @@ class _StockBrowserState extends State<_StockBrowser> {
             ),
           ),
           textInputAction: TextInputAction.search,
-          onSubmitted: (String value) => _load(),
+          onSubmitted: (String value) {
+            _page = 0;
+            _load();
+          },
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
@@ -232,9 +237,30 @@ class _StockBrowserState extends State<_StockBrowser> {
           ],
           onChanged: (String? value) {
             _location = value == null || value.isEmpty ? null : value;
+            _page = 0;
             _load();
           },
         ),
+        if (!_loading && _error == null)
+          Row(children: <Widget>[
+            IconButton(
+              tooltip: 'Previous 100 medicines',
+              onPressed: _page == 0 ? null : () {
+                _page--;
+                _load();
+              },
+              icon: const Icon(Icons.chevron_left),
+            ),
+            Text('Page ${_page + 1}'),
+            IconButton(
+              tooltip: 'Next 100 medicines',
+              onPressed: _medicines.length < 100 ? null : () {
+                _page++;
+                _load();
+              },
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ]),
         if (_loading)
           const Padding(
             padding: EdgeInsets.all(28),
