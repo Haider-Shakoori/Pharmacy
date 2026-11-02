@@ -151,6 +151,38 @@ class _StockBrowserState extends State<_StockBrowser> {
           strings.catalogReadOnly,
           style: Theme.of(context).textTheme.bodySmall,
         ),
+        if (!_loading && _error == null) ...<Widget>[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              _InventoryMetric(
+                icon: Icons.medication_outlined,
+                label: 'Medicines',
+                value: '${_medicines.length}',
+                color: const Color(0xFFDDEAFF),
+              ),
+              _InventoryMetric(
+                icon: Icons.event_busy_outlined,
+                label: 'Expired batches',
+                value: '${_medicines.fold<int>(0, (int count, StockMedicineSnapshot medicine) => count + medicine.batches.where((StockBatchSnapshot batch) => batch.expired).length)}',
+                color: const Color(0xFFFFE6DF),
+              ),
+              _InventoryMetric(
+                icon: Icons.inventory_2_outlined,
+                label: 'Out of stock',
+                value: '${_medicines.where((StockMedicineSnapshot medicine) => !medicine.available.isPositive).length}',
+                color: const Color(0xFFFFEED4),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Counts reflect the currently loaded catalog and location filter.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
         const SizedBox(height: 12),
         TextField(
           controller: _search,
@@ -359,4 +391,35 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
       ],
     );
   }
+}
+
+class _InventoryMetric extends StatelessWidget {
+  const _InventoryMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
+      Icon(icon, size: 19, color: const Color(0xFF1557C0)),
+      const SizedBox(width: 8),
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+        Text(label, style: const TextStyle(fontSize: 11)),
+      ]),
+    ]),
+  );
 }
