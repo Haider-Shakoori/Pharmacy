@@ -241,15 +241,16 @@ class _ReportsPanel extends ConsumerStatefulWidget {
 
 class _ReportsPanelState extends ConsumerState<_ReportsPanel> {
   int _days = 1;
+  int _refreshVersion = 0;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final registration = ref.watch(mobileRegistrationProvider);
     final database = registration.value == null ? null : ref.watch(pharmacyDatabaseProvider);
     final now = DateTime.now();
     String formatDate(DateTime value) => '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
     final date = formatDate(now);
-    final startDate = formatDate(now.subtract(Duration(days: _days - 1)));
+    final startDate = formatDate(DateTime(now.year, now.month, now.day - _days + 1));
     final reports = <({IconData icon, String title, String detail})>[
       (icon: Icons.show_chart, title: 'Sales Report', detail: 'Daily, weekly and monthly sales'),
       (icon: Icons.trending_up, title: 'Profit & Loss', detail: 'Revenue, cost and expenses'),
@@ -264,6 +265,14 @@ class _ReportsPanelState extends ConsumerState<_ReportsPanel> {
       const SizedBox(height: 8),
       const Text('Local device totals are separate from company-wide reporting.'),
       const SizedBox(height: 12),
+      Row(children: <Widget>[
+        const Expanded(child: Text('Sales period')),
+        IconButton(
+          tooltip: 'Refresh sales totals',
+          onPressed: () => setState(() => _refreshVersion++),
+          icon: const Icon(Icons.refresh_rounded),
+        ),
+      ]),
       SegmentedButton<int>(
         segments: const <ButtonSegment<int>>[
           ButtonSegment<int>(value: 1, label: Text('Today')),
@@ -278,6 +287,7 @@ class _ReportsPanelState extends ConsumerState<_ReportsPanel> {
         loading: () => const LinearProgressIndicator(),
         error: (Object error, StackTrace trace) => const Text('Local reports unavailable'),
         data: (db) => FutureBuilder<OfflineSalesSummary>(
+          key: ValueKey('${db.hashCode}-${startDate}-${date}-$_refreshVersion'),
           future: OfflineSalesSummaryRepository(db).forBusinessDateRange(startDate, date),
           builder: (context, snapshot) {
             if (snapshot.hasError) return const Text('Unable to read local sales');
