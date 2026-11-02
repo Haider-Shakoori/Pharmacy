@@ -110,7 +110,9 @@ class OfflineCatalogBrowser {
     String search = '',
     String? locationId,
     DateTime? now,
+    int page = 0,
   }) async {
+    if (page < 0) throw ArgumentError.value(page, 'page');
     final String needle = '%${search.trim()}%';
     final List<QueryRow> medicines = await _database
         .customSelect(
@@ -122,12 +124,13 @@ class OfflineCatalogBrowser {
         AND (brand_name LIKE ? OR COALESCE(generic_name, '') LIKE ?
              OR COALESCE(medicine_code, '') LIKE ?)
       ORDER BY brand_name COLLATE NOCASE, id
-      LIMIT 100
+      LIMIT 100 OFFSET ?
       ''',
           variables: <Variable<Object>>[
             Variable<String>(needle),
             Variable<String>(needle),
             Variable<String>(needle),
+            Variable<int>(page * 100),
           ],
         )
         .get();
