@@ -20,15 +20,28 @@ class OfflineSalesSummaryRepository {
 
   final PharmacyDatabase database;
 
-  Future<OfflineSalesSummary> forBusinessDate(String date) async {
+  Future<OfflineSalesSummary> forBusinessDate(String date) =>
+      forBusinessDateRange(date, date);
+
+  /// Inclusive date range using the same YYYY-MM-DD business date as POS.
+  Future<OfflineSalesSummary> forBusinessDateRange(
+    String startDate,
+    String endDate,
+  ) async {
+    if (startDate.compareTo(endDate) > 0) {
+      throw ArgumentError('Start date must not be after end date');
+    }
     // Sum fixed-decimal strings in Dart to avoid floating-point currency drift.
     final List<QueryRow> rows = await database.customSelect(
       '''
       SELECT total, sync_state
       FROM local_sales
-      WHERE status = 'completed' AND business_date = ?
+      WHERE status = 'completed' AND business_date >= ? AND business_date <= ?
       ''',
-      variables: <Variable<Object>>[Variable<String>(date)],
+      variables: <Variable<Object>>[
+        Variable<String>(startDate),
+        Variable<String>(endDate),
+      ],
     ).get();
 
     FixedDecimal total = FixedDecimal.zero;
