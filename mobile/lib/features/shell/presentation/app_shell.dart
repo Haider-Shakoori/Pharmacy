@@ -37,7 +37,11 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(strings.appName),
+        title: const Row(children: <Widget>[
+          Icon(Icons.medication_rounded, color: Color(0xFF1557C0)),
+          SizedBox(width: 9),
+          Text('Darmaltoon', style: TextStyle(fontWeight: FontWeight.w800)),
+        ]),
         actions: <Widget>[
           PopupMenuButton<AppLocale>(
             tooltip: strings.language,
@@ -125,40 +129,106 @@ class _ShellDestination {
 
 class _HomePanel extends StatelessWidget {
   const _HomePanel({required this.onNavigate});
-
   final ValueChanged<int> onNavigate;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Text('Pharmacy overview', style: Theme.of(context).textTheme.headlineSmall),
-      const SizedBox(height: 8),
-      const Text('Choose a workspace. Live sales and profit analytics will appear when the reporting API is connected.'),
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final entries = <({IconData icon, String title, String detail, int tab, Color color})>[
+      (icon: Icons.point_of_sale_rounded, title: 'POS (Sales)', detail: 'Offline checkout', tab: 1, color: const Color(0xFFDAF5E6)),
+      (icon: Icons.medication_rounded, title: 'Medicines', detail: 'Catalog & stock', tab: 2, color: const Color(0xFFDDEAFF)),
+      (icon: Icons.inventory_2_rounded, title: 'Inventory', detail: 'Batches & expiry', tab: 2, color: const Color(0xFFE8E1FF)),
+      (icon: Icons.people_alt_rounded, title: 'Customers', detail: 'Accounts', tab: 4, color: const Color(0xFFDDEAFF)),
+      (icon: Icons.bar_chart_rounded, title: 'Reports', detail: 'Business insights', tab: 3, color: const Color(0xFFE8E1FF)),
+      (icon: Icons.notifications_active_outlined, title: 'Alerts', detail: 'Stock & expiry', tab: 4, color: const Color(0xFFFFE9D6)),
+      (icon: Icons.sync_rounded, title: 'Sync', detail: 'Offline-first', tab: 4, color: const Color(0xFFDAF5E6)),
+      (icon: Icons.settings_outlined, title: 'Settings', detail: 'Device & access', tab: 4, color: const Color(0xFFE9EDF4)),
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+      Text('Dashboard', style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+      const SizedBox(height: 5),
+      Text('Your pharmacy at a glance', style: text.bodyMedium?.copyWith(color: Colors.blueGrey)),
       const SizedBox(height: 16),
-      Card(child: Column(children: <Widget>[
-        ListTile(leading: const Icon(Icons.point_of_sale), title: const Text('New sale'), subtitle: const Text('Offline-ready checkout'), onTap: () => onNavigate(1)),
-        const Divider(height: 1),
-        ListTile(leading: const Icon(Icons.inventory_2_outlined), title: const Text('Medicines & stock'), subtitle: const Text('Browse local inventory'), onTap: () => onNavigate(2)),
-        const Divider(height: 1),
-        ListTile(leading: const Icon(Icons.bar_chart), title: const Text('Reports'), subtitle: const Text('Reporting workspace'), onTap: () => onNavigate(3)),
-        const Divider(height: 1),
-        ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('More tools'), subtitle: const Text('Customers, alerts, sync and device settings'), onTap: () => onNavigate(4)),
-      ])),
-    ],
-  );
+      Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: <Color>[Color(0xFF0C3274), Color(0xFF1768D1)]),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Row(children: <Widget>[
+          Icon(Icons.storefront_rounded, size: 36, color: Colors.white),
+          SizedBox(width: 14),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+            Text('Pharmacy workspace', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+            SizedBox(height: 5),
+            Text('Live financial KPIs will appear when reporting is connected.', style: TextStyle(color: Colors.white70)),
+          ])),
+        ]),
+      ),
+      const SizedBox(height: 20),
+      Text('Quick access', style: text.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+      const SizedBox(height: 12),
+      GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: entries.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 1.48,
+        ),
+        itemBuilder: (BuildContext context, int index) {
+          final entry = entries[index];
+          return Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () => onNavigate(entry.tab),
+              child: Padding(padding: const EdgeInsets.all(12), child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Container(padding: const EdgeInsets.all(9), decoration: BoxDecoration(color: entry.color, borderRadius: BorderRadius.circular(12)), child: Icon(entry.icon, color: const Color(0xFF1557C0), size: 23)),
+                  const SizedBox(height: 8),
+                  Text(entry.title, maxLines: 1, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(entry.detail, maxLines: 1, style: const TextStyle(fontSize: 11, color: Colors.blueGrey)),
+                ],
+              )),
+            ),
+          );
+        },
+      ),
+    ]);
+  }
 }
 
 class _ReportsPanel extends StatelessWidget {
   const _ReportsPanel();
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Text('Reports', style: Theme.of(context).textTheme.headlineSmall),
-      const SizedBox(height: 12),
-      const Card(child: ListTile(leading: Icon(Icons.info_outline), title: Text('Reporting integration pending'), subtitle: Text('Sales, profit, expiry and stock reports will be connected to the existing Darmaltoon API. No sample figures are displayed as live data.'))),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final reports = <({IconData icon, String title, String detail})>[
+      (icon: Icons.show_chart, title: 'Sales Report', detail: 'Daily, weekly and monthly sales'),
+      (icon: Icons.trending_up, title: 'Profit & Loss', detail: 'Revenue, cost and expenses'),
+      (icon: Icons.inventory_2_outlined, title: 'Inventory Report', detail: 'Stock levels and valuation'),
+      (icon: Icons.alarm_rounded, title: 'Expiry Report', detail: 'Batches nearing expiry'),
+      (icon: Icons.local_shipping_outlined, title: 'Purchase Report', detail: 'Supplier purchase history'),
+      (icon: Icons.people_outline, title: 'Customer Report', detail: 'Balances and sales history'),
+      (icon: Icons.account_balance_wallet_outlined, title: 'Financial Report', detail: 'Receivables and payables'),
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+      Text('Reports', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      const Text('Reports are being connected to the existing pharmacy backend.'),
+      const SizedBox(height: 14),
+      ...reports.map((report) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Card(child: ListTile(
+          leading: CircleAvatar(backgroundColor: const Color(0xFFDDEAFF), child: Icon(report.icon, color: const Color(0xFF1557C0))),
+          title: Text(report.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+          subtitle: Text(report.detail),
+          trailing: const Icon(Icons.lock_clock_outlined, size: 19),
+        )),
+      )),
+    ]);
+  }
 }
