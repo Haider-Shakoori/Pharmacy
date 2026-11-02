@@ -5,6 +5,7 @@ import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
+import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.dart';
@@ -195,6 +196,54 @@ class _HomePanel extends ConsumerWidget {
                 ]),
               ]),
             ));
+          },
+        ),
+      ),
+      const SizedBox(height: 12),
+      if (database != null) database.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (Object error, StackTrace trace) =>
+            const Text('Inventory alerts unavailable'),
+        data: (db) => FutureBuilder<InventoryOverview>(
+          key: ValueKey('inventory-alerts-${db.hashCode}-$date'),
+          future: OfflineCatalogBrowser(db).inventoryOverview(now: now),
+          builder: (BuildContext context,
+              AsyncSnapshot<InventoryOverview> snapshot) {
+            if (snapshot.hasError) {
+              return const Text('Unable to load inventory alerts');
+            }
+            if (!snapshot.hasData) return const LinearProgressIndicator();
+            final InventoryOverview overview = snapshot.data!;
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(children: <Widget>[
+                      const Expanded(child: Text('Inventory alerts — local catalog',
+                          style: TextStyle(fontWeight: FontWeight.bold))),
+                      TextButton(
+                        onPressed: () => onNavigate(2),
+                        child: const Text('View stock'),
+                      ),
+                    ]),
+                    const SizedBox(height: 8),
+                    Wrap(spacing: 18, runSpacing: 12, children: <Widget>[
+                      _HomeStat(label: 'Out of stock',
+                          value: '${overview.outOfStock}'),
+                      _HomeStat(label: 'Expired batches',
+                          value: '${overview.expiredBatches}'),
+                      _HomeStat(label: 'Expiring in 30 days',
+                          value: '${overview.expiringBatches}'),
+                    ]),
+                    const SizedBox(height: 8),
+                    Text('Based on ${overview.medicines} locally synced active medicines.',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+            );
           },
         ),
       ),
