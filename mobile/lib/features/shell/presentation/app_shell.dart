@@ -232,15 +232,24 @@ class _HomePanel extends ConsumerWidget {
   }
 }
 
-class _ReportsPanel extends ConsumerWidget {
+class _ReportsPanel extends ConsumerStatefulWidget {
   const _ReportsPanel();
+
+  @override
+  ConsumerState<_ReportsPanel> createState() => _ReportsPanelState();
+}
+
+class _ReportsPanelState extends ConsumerState<_ReportsPanel> {
+  int _days = 1;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final registration = ref.watch(mobileRegistrationProvider);
     final database = registration.value == null ? null : ref.watch(pharmacyDatabaseProvider);
     final now = DateTime.now();
-    final date = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    String formatDate(DateTime value) => '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+    final date = formatDate(now);
+    final startDate = formatDate(now.subtract(Duration(days: _days - 1)));
     final reports = <({IconData icon, String title, String detail})>[
       (icon: Icons.show_chart, title: 'Sales Report', detail: 'Daily, weekly and monthly sales'),
       (icon: Icons.trending_up, title: 'Profit & Loss', detail: 'Revenue, cost and expenses'),
@@ -255,11 +264,21 @@ class _ReportsPanel extends ConsumerWidget {
       const SizedBox(height: 8),
       const Text('Local device totals are separate from company-wide reporting.'),
       const SizedBox(height: 12),
+      SegmentedButton<int>(
+        segments: const <ButtonSegment<int>>[
+          ButtonSegment<int>(value: 1, label: Text('Today')),
+          ButtonSegment<int>(value: 7, label: Text('7 days')),
+          ButtonSegment<int>(value: 30, label: Text('30 days')),
+        ],
+        selected: <int>{_days},
+        onSelectionChanged: (Set<int> selection) => setState(() => _days = selection.first),
+      ),
+      const SizedBox(height: 12),
       if (database != null) database.when(
         loading: () => const LinearProgressIndicator(),
         error: (Object error, StackTrace trace) => const Text('Local reports unavailable'),
         data: (db) => FutureBuilder<OfflineSalesSummary>(
-          future: OfflineSalesSummaryRepository(db).forBusinessDate(date),
+          future: OfflineSalesSummaryRepository(db).forBusinessDateRange(startDate, date),
           builder: (context, snapshot) {
             if (snapshot.hasError) return const Text('Unable to read local sales');
             if (!snapshot.hasData) return const LinearProgressIndicator();
@@ -267,7 +286,7 @@ class _ReportsPanel extends ConsumerWidget {
             return Card(child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-                const Text('Today on this device', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('Last $_days day(s) on this device', style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 Wrap(spacing: 18, runSpacing: 12, children: <Widget>[
                   _HomeStat(label: 'Sales', value: '${summary.salesCount}'),
