@@ -1,4 +1,7 @@
 import 'package:businessos_pharmacy/core/config/app_environment.dart';
+import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
+import 'package:businessos_pharmacy/core/database/database_providers.dart';
+import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.dart';
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
@@ -127,13 +130,17 @@ class _ShellDestination {
   final String label;
 }
 
-class _HomePanel extends StatelessWidget {
+class _HomePanel extends ConsumerWidget {
   const _HomePanel({required this.onNavigate});
   final ValueChanged<int> onNavigate;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
+    final registration = ref.watch(mobileRegistrationProvider);
+    final database = registration.value == null ? null : ref.watch(pharmacyDatabaseProvider);
+    final now = DateTime.now();
+    final date = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final entries = <({IconData icon, String title, String detail, int tab, Color color})>[
       (icon: Icons.point_of_sale_rounded, title: 'POS (Sales)', detail: 'Offline checkout', tab: 1, color: const Color(0xFFDAF5E6)),
       (icon: Icons.medication_rounded, title: 'Medicines', detail: 'Catalog & stock', tab: 2, color: const Color(0xFFDDEAFF)),
@@ -164,6 +171,30 @@ class _HomePanel extends StatelessWidget {
             Text('Live financial KPIs will appear when reporting is connected.', style: TextStyle(color: Colors.white70)),
           ])),
         ]),
+      ),
+      const SizedBox(height: 14),
+      if (database != null) database.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (Object error, StackTrace trace) => const Text('Local sales summary unavailable'),
+        data: (db) => FutureBuilder<OfflineSalesSummary>(
+          future: OfflineSalesSummaryRepository(db).forBusinessDate(date),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const SizedBox.shrink();
+            final summary = snapshot.data!;
+            return Card(child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                const Text('Today on this device', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Wrap(spacing: 18, runSpacing: 12, children: <Widget>[
+                  _HomeStat(label: 'Sales', value: '${summary.salesCount}'),
+                  _HomeStat(label: 'Revenue', value: '${summary.total.compact} AFN'),
+                  _HomeStat(label: 'Pending sync', value: '${summary.pendingSync}'),
+                ]),
+              ]),
+            ));
+          },
+        ),
       ),
       const SizedBox(height: 20),
       Text('Quick access', style: text.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
@@ -231,4 +262,19 @@ class _ReportsPanel extends StatelessWidget {
       )),
     ]);
   }
+}
+
+class _HomeStat extends StatelessWidget {
+  const _HomeStat({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+      Text(label, style: Theme.of(context).textTheme.bodySmall),
+    ],
+  );
 }
