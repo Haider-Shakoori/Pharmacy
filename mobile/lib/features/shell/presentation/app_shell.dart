@@ -311,6 +311,65 @@ class _ReportsPanelState extends ConsumerState<_ReportsPanel> {
         ),
       ),
       const SizedBox(height: 14),
+      if (database != null && _days > 1)
+        database.when(
+          loading: () => const LinearProgressIndicator(),
+          error: (Object error, StackTrace trace) =>
+              const Text('Sales trend unavailable'),
+          data: (db) => FutureBuilder<List<OfflineDailySales>>(
+            key: ValueKey('trend-${db.hashCode}-$startDate-$date-$_refreshVersion'),
+            future: OfflineSalesSummaryRepository(db).dailyTrend(startDate, date),
+            builder: (BuildContext context,
+                AsyncSnapshot<List<OfflineDailySales>> snapshot) {
+              if (snapshot.hasError) {
+                return const Text('Unable to load daily sales trend');
+              }
+              if (!snapshot.hasData) {
+                return const LinearProgressIndicator();
+              }
+              final List<OfflineDailySales> days = snapshot.data!;
+              final int peak = days.fold<int>(
+                0,
+                (int max, OfflineDailySales day) =>
+                    day.salesCount > max ? day.salesCount : max,
+              );
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const Text('Daily sales count — this device',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      ...days.map((OfflineDailySales day) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(children: <Widget>[
+                          SizedBox(
+                            width: 48,
+                            child: Text(day.businessDate.substring(5),
+                                style: Theme.of(context).textTheme.bodySmall),
+                          ),
+                          Expanded(child: LinearProgressIndicator(
+                            value: peak == 0 ? 0 : day.salesCount / peak,
+                            minHeight: 9,
+                            borderRadius: BorderRadius.circular(6),
+                          )),
+                          SizedBox(
+                            width: 32,
+                            child: Text('${day.salesCount}',
+                                textAlign: TextAlign.end),
+                          ),
+                        ]),
+                      )),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      const SizedBox(height: 14),
       ...reports.map((report) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Card(child: ListTile(
