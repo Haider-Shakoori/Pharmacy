@@ -93,6 +93,7 @@ class _StockBrowserState extends State<_StockBrowser> {
   String? _location;
   String? _error;
   bool _loading = true;
+  bool _expiryOnly = false;
 
   @override
   void initState() {
@@ -177,6 +178,19 @@ class _StockBrowserState extends State<_StockBrowser> {
               ),
             ],
           ),
+          _InventoryMetric(
+            icon: Icons.schedule_outlined,
+            label: 'Expiring in 30 days',
+            value: '${_medicines.fold<int>(0, (int count, StockMedicineSnapshot medicine) => count + medicine.batches.where((StockBatchSnapshot batch) { final DateTime? expiry = batch.expiresAt; if (expiry == null || batch.expired || !batch.quantity.isPositive || batch.status != 'active') return false; final DateTime today = DateTime.now(); final DateTime cutoff = DateTime(today.year, today.month, today.day + 31); return expiry.isBefore(cutoff); }).length)}',
+            color: const Color(0xFFFFF3D9),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Show expired / expiring medicines only'),
+            subtitle: const Text('Expired or due within 30 days'),
+            value: _expiryOnly,
+            onChanged: (bool value) => setState(() => _expiryOnly = value),
+          ),
           const SizedBox(height: 5),
           Text(
             'Counts reflect the currently loaded catalog and location filter.',
@@ -228,7 +242,15 @@ class _StockBrowserState extends State<_StockBrowser> {
         else if (_medicines.isEmpty)
           _InfoCard(message: strings.catalogEmptyStock)
         else
-          ..._medicines.map(
+          ..._medicines.where((StockMedicineSnapshot medicine) {
+            if (!_expiryOnly) return true;
+            final DateTime today = DateTime.now();
+            final DateTime cutoff = DateTime(today.year, today.month, today.day + 31);
+            return medicine.batches.any((StockBatchSnapshot batch) =>
+                batch.expired || (batch.expiresAt != null &&
+                batch.quantity.isPositive && batch.status == 'active' &&
+                batch.expiresAt!.isBefore(cutoff)));
+          }).map(
             (StockMedicineSnapshot item) => Card(
               child: ExpansionTile(
                 title: Text(item.name),
