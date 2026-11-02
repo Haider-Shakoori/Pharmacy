@@ -138,7 +138,7 @@ class _HomePanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
     final registration = ref.watch(mobileRegistrationProvider);
-    final database = registration.value == null ? null : ref.watch(pharmacyDatabaseProvider);
+    final database = registration.asData?.value == null ? null : ref.watch(pharmacyDatabaseProvider);
     final now = DateTime.now();
     final date = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final entries = <({IconData icon, String title, String detail, int tab, Color color})>[
@@ -168,7 +168,7 @@ class _HomePanel extends ConsumerWidget {
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
             Text('Pharmacy workspace', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
             SizedBox(height: 5),
-            Text('Live financial KPIs will appear when reporting is connected.', style: TextStyle(color: Colors.white70)),
+            Text('Offline sales and inventory workspace', style: TextStyle(color: Colors.white70)),
           ])),
         ]),
       ),
@@ -177,9 +177,11 @@ class _HomePanel extends ConsumerWidget {
         loading: () => const LinearProgressIndicator(),
         error: (Object error, StackTrace trace) => const Text('Local sales summary unavailable'),
         data: (db) => FutureBuilder<OfflineSalesSummary>(
+          key: ValueKey('${db.hashCode}-${date}'),
           future: OfflineSalesSummaryRepository(db).forBusinessDate(date),
           builder: (context, snapshot) {
-            if (!snapshot.hasData) return const SizedBox.shrink();
+            if (snapshot.hasError) return const Text('Unable to load today\'s local sales');
+            if (!snapshot.hasData) return const LinearProgressIndicator();
             final summary = snapshot.data!;
             return Card(child: Padding(
               padding: const EdgeInsets.all(16),
