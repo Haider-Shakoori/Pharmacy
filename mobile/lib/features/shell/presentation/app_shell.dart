@@ -1,13 +1,13 @@
-import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
+import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
-import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.dart';
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
 import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
+import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.dart';
 import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
@@ -177,7 +177,7 @@ class _HomePanel extends ConsumerWidget {
         loading: () => const LinearProgressIndicator(),
         error: (Object error, StackTrace trace) => const Text('Local sales summary unavailable'),
         data: (db) => FutureBuilder<OfflineSalesSummary>(
-          key: ValueKey('${db.hashCode}-${date}'),
+          key: ValueKey('${db.hashCode}-$date'),
           future: OfflineSalesSummaryRepository(db).forBusinessDate(date),
           builder: (context, snapshot) {
             if (snapshot.hasError) return const Text('Unable to load today\'s local sales');
@@ -289,7 +289,7 @@ class _ReportsPanelState extends ConsumerState<_ReportsPanel> {
         loading: () => const LinearProgressIndicator(),
         error: (Object error, StackTrace trace) => const Text('Local reports unavailable'),
         data: (db) => FutureBuilder<OfflineSalesSummary>(
-          key: ValueKey('${db.hashCode}-${startDate}-${date}-$_refreshVersion'),
+          key: ValueKey('${db.hashCode}-$startDate-$date-$_refreshVersion'),
           future: OfflineSalesSummaryRepository(db).forBusinessDateRange(startDate, date),
           builder: (context, snapshot) {
             if (snapshot.hasError) return const Text('Unable to read local sales');
