@@ -90,6 +90,7 @@ class _StockBrowserState extends State<_StockBrowser> {
   final TextEditingController _search = TextEditingController();
   List<String> _locations = <String>[];
   List<StockMedicineSnapshot> _medicines = <StockMedicineSnapshot>[];
+  InventoryOverview? _overview;
   String? _location;
   String? _error;
   bool _loading = true;
@@ -117,6 +118,7 @@ class _StockBrowserState extends State<_StockBrowser> {
         widget.database,
       );
       final List<String> locations = await browser.stockLocations();
+      final InventoryOverview overview = await browser.inventoryOverview(locationId: _location);
       final List<StockMedicineSnapshot> medicines = await browser.medicines(
         search: _search.text,
         locationId: _location,
@@ -126,6 +128,7 @@ class _StockBrowserState extends State<_StockBrowser> {
       }
       setState(() {
         _locations = locations;
+        _overview = overview;
         _medicines = medicines;
         _loading = false;
       });
@@ -161,19 +164,19 @@ class _StockBrowserState extends State<_StockBrowser> {
               _InventoryMetric(
                 icon: Icons.medication_outlined,
                 label: 'Medicines',
-                value: '${_medicines.length}',
+                value: '${_overview?.medicines ?? 0}',
                 color: const Color(0xFFDDEAFF),
               ),
               _InventoryMetric(
                 icon: Icons.event_busy_outlined,
                 label: 'Expired batches',
-                value: '${_medicines.fold<int>(0, (int count, StockMedicineSnapshot medicine) => count + medicine.batches.where((StockBatchSnapshot batch) => batch.expired).length)}',
+                value: '${_overview?.expiredBatches ?? 0}',
                 color: const Color(0xFFFFE6DF),
               ),
               _InventoryMetric(
                 icon: Icons.inventory_2_outlined,
                 label: 'Out of stock',
-                value: '${_medicines.where((StockMedicineSnapshot medicine) => !medicine.available.isPositive).length}',
+                value: '${_overview?.outOfStock ?? 0}',
                 color: const Color(0xFFFFEED4),
               ),
             ],
@@ -181,7 +184,7 @@ class _StockBrowserState extends State<_StockBrowser> {
           _InventoryMetric(
             icon: Icons.schedule_outlined,
             label: 'Expiring in 30 days',
-            value: '${_medicines.fold<int>(0, (int count, StockMedicineSnapshot medicine) => count + medicine.batches.where((StockBatchSnapshot batch) { final DateTime? expiry = batch.expiresAt; if (expiry == null || batch.expired || !batch.quantity.isPositive || batch.status != 'active') return false; final DateTime today = DateTime.now(); final DateTime cutoff = DateTime(today.year, today.month, today.day + 31); return expiry.isBefore(cutoff); }).length)}',
+            value: '${_overview?.expiringBatches ?? 0}',
             color: const Color(0xFFFFF3D9),
           ),
           SwitchListTile(
@@ -193,7 +196,7 @@ class _StockBrowserState extends State<_StockBrowser> {
           ),
           const SizedBox(height: 5),
           Text(
-            'Counts reflect the currently loaded catalog and location filter.',
+            'Summary counts include all locally synced active medicines, with the selected location filter. The list below displays up to 100 medicines.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
