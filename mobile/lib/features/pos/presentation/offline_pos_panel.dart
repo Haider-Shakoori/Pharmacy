@@ -659,6 +659,41 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
   );
   bool _handled = false;
 
+  Future<void> _enterCodeManually() async {
+    final TextEditingController input = TextEditingController();
+    final String? code = await showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Enter medicine code'),
+        content: TextField(
+          controller: input,
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          decoration: const InputDecoration(
+            labelText: 'Barcode or QR value',
+          ),
+          onSubmitted: (String value) =>
+              Navigator.of(dialogContext).pop(value.trim()),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(input.text.trim()),
+            child: const Text('Search'),
+          ),
+        ],
+      ),
+    );
+    input.dispose();
+    if (!mounted || _handled || code == null || code.isEmpty) return;
+    _handled = true;
+    Navigator.of(context).pop(code);
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -682,7 +717,21 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Scan medicine code')),
+    appBar: AppBar(
+      title: const Text('Scan medicine code'),
+      actions: <Widget>[
+        IconButton(
+          tooltip: 'Toggle flashlight',
+          onPressed: () => _controller.toggleTorch(),
+          icon: const Icon(Icons.flashlight_on_outlined),
+        ),
+        IconButton(
+          tooltip: 'Enter code manually',
+          onPressed: _enterCodeManually,
+          icon: const Icon(Icons.keyboard_outlined),
+        ),
+      ],
+    ),
     body: Stack(children: <Widget>[
       MobileScanner(
         controller: _controller,
