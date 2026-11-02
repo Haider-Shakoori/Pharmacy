@@ -4,10 +4,95 @@ import 'package:drift/drift.dart';
 
 /// Read-only, tenant-scoped catalog snapshots. All writes are handled by the
 /// existing sync engine and POS service, never by a catalog browsing screen.
+class InventoryOverview {
+  const InventoryOverview({
+    required this.medicines,
+    required this.outOfStock,
+    required this.expiredBatches,
+    required this.expiringBatches,
+  });
+
+  final int medicines;
+  final int outOfStock;
+  final int expiredBatches;
+  final int expiringBatches;
+}
+
 class OfflineCatalogBrowser {
   const OfflineCatalogBrowser(this._database);
 
   final PharmacyDatabase _database;
+
+  /// Counts the entire locally synced catalog, not the 100-row browser page.
+  Future<InventoryOverview> inventoryOverview({
+    String? locationId,
+    DateTime? now,
+  }) async {
+    final DateTime timestamp = now ?? DateTime.now();
+    final DateTime today = DateTime(
+      timestamp.year, timestamp.month, timestamp.day,
+    );
+    final DateTime cutoff = DateTime(
+      today.year, today.month, today.day + 31,
+    );
+    final List<Variable<Object>> variables = <Variable<Object>>[];
+    final String locationFilter = locationId == null
+        ? ''
+        : 'AND b.stock_location_id = ?';
+    if (locationId != null) {
+      variables.add(Variable<String>(locationId));
+    }
+    final List<QueryRow> rows = await _database.customSelect(
+      '''
+      SELECT m.id AS medicine_id, b.available_quantity,
+             b.status, b.expires_at
+      FROM local_medicines m
+      LEFT JOIN local_inventory_batches b
+        ON b.medicine_id = m.id AND b.is_deleted = 0
+        $locationFilter
+      WHERE m.is_deleted = 0 AND m.is_active = 1
+      ORDER BY m.id
+      ''',
+      variables: variables,
+    ).get();
+    int medicines = 0;
+    int outOfStock = 0;
+    int expiredBatches = 0;
+    int expiringBatches = 0;
+    String? previousId;
+    bool hasSellableStock = false;
+    for (final QueryRow row in rows) {
+      final String id = row.read<String>('medicine_id');
+      if (id != previousId) {
+        if (previousId != null && !hasSellableStock) outOfStock++;
+        previousId = id;
+        medicines++;
+        hasSellableStock = false;
+      }
+      final String? quantityText = row.readNullable<String>('available_quantity');
+      if (quantityText == null) continue;
+      final FixedDecimal quantity = FixedDecimal.parse(quantityText);
+      if (!quantity.isPositive) continue;
+      final int? seconds = row.readNullable<int>('expires_at');
+      final DateTime? expiry = seconds == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+      final bool expired = expiry != null && expiry.isBefore(today);
+      if (expired) expiredBatches++;
+      if (row.readNullable<String>('status') != 'active') continue;
+      if (!expired) hasSellableStock = true;
+      if (expiry != null && !expired && expiry.isBefore(cutoff)) {
+        expiringBatches++;
+      }
+    }
+    if (previousId != null && !hasSellableStock) outOfStock++;
+    return InventoryOverview(
+      medicines: medicines,
+      outOfStock: outOfStock,
+      expiredBatches: expiredBatches,
+      expiringBatches: expiringBatches,
+    );
+  }
 
   Future<List<String>> stockLocations() async {
     final List<QueryRow> rows = await _database.customSelect('''
