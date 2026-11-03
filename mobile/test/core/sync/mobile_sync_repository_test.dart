@@ -63,6 +63,60 @@ void main() {
     await database.close();
   });
 
+  test('supplier and purchase order pull pages persist for offline browsing', () async {
+    await repository.applyPullPage(const SyncPullPage(
+      stream: 'suppliers',
+      nextCursor: 'supplier-cursor',
+      hasMore: false,
+      data: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'supplier-1',
+          'code': 'SUP-1',
+          'name': 'Afghan Medical',
+          'phone': '0700000000',
+          'contact_person': 'Sales',
+          'is_active': true,
+          'is_deleted': false,
+          'server_updated_at': '2026-11-03T00:00:00Z',
+        },
+      ],
+    ));
+    await repository.applyPullPage(const SyncPullPage(
+      stream: 'purchase_orders',
+      nextCursor: 'orders-cursor',
+      hasMore: false,
+      data: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'order-1',
+          'supplier_id': 'supplier-1',
+          'number': 'PO-001',
+          'status': 'draft',
+          'currency': 'AFN',
+          'grand_total': '150.0000',
+          'lines': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'medicine_id': 'med-1',
+              'ordered_quantity': '3.0000',
+              'line_total': '150.0000',
+            },
+          ],
+          'is_deleted': false,
+          'server_updated_at': '2026-11-03T00:00:00Z',
+        },
+      ],
+    ));
+    final supplier = await database.customSelect(
+      "SELECT name FROM local_suppliers WHERE id = 'supplier-1'",
+    ).getSingle();
+    expect(supplier.read<String>('name'), 'Afghan Medical');
+    final order = await database.customSelect(
+      "SELECT lines_json FROM local_purchase_orders WHERE id = 'order-1'",
+    ).getSingle();
+    final lines = jsonDecode(order.read<String>('lines_json')) as List<dynamic>;
+    expect(lines.single['ordered_quantity'], '3.0000');
+    expect(await repository.checkpoint('purchase_orders'), 'orders-cursor');
+  });
+
   test(
     'server acknowledgement marks sale synced then removes outbox',
     () async {
