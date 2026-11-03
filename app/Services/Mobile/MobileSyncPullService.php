@@ -201,9 +201,12 @@ class MobileSyncPullService
         object $updatedAt,
         string $id,
     ): void {
-        // Preserve microseconds: binding a Carbon instance truncates precision
-        // to the connection's date format and can replay the cursor row.
-        $cursorTimestamp = $updatedAt->format('Y-m-d H:i:s.u');
+        // Tenant timestamps are stored in the application timezone, while
+        // cursor timestamps are ISO-8601 UTC. Compare in the database timezone
+        // to avoid replaying the previous page when the offset is nonzero.
+        $cursorTimestamp = $updatedAt
+            ->setTimezone(config('app.timezone'))
+            ->format('Y-m-d H:i:s');
         $query->where(function (Builder $query) use ($cursorTimestamp, $id): void {
             $query
                 ->where('updated_at', '>', $cursorTimestamp)
