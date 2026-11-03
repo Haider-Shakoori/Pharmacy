@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
+import 'package:businessos_pharmacy/core/decimal/fixed_decimal.dart';
 import 'package:businessos_pharmacy/features/purchasing/data/goods_receipt_draft.dart';
 
 /// Durable offline outbox: the server must validate before any stock changes.
@@ -39,7 +40,7 @@ class OfflineGoodsReceiptQueue {
       'purchase_order_id': purchaseOrderId,
       'received_at': receivedAt.toUtc().toIso8601String(),
       'lines': lines
-          .where((line) => line.receivedQuantity.trim() != '0')
+          .where((line) => FixedDecimal.parse(line.receivedQuantity).isPositive)
           .map((line) => line.toPayload())
           .toList(),
     };
