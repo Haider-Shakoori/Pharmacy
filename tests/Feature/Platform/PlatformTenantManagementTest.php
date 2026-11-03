@@ -96,6 +96,40 @@ class PlatformTenantManagementTest extends TestCase
             ->assertDontSee('Kabul Pharmacy');
     }
 
+
+    public function test_pharmacy_list_shows_latest_user_login(): void
+    {
+        $this->post('/platform/tenants', [
+            'name' => 'Login Tracking Pharmacy',
+            'slug' => 'login-tracking',
+            'contact_person' => 'Contact',
+            'phone_whatsapp' => '+93700000000',
+            'location' => 'Kabul',
+            'timezone' => 'Asia/Kabul',
+            'currency' => 'AFN',
+            'locale' => 'en',
+            'owner_name' => 'Owner',
+            'owner_email' => 'owner@login.test',
+            'owner_password' => 'password123',
+        ])->assertRedirect();
+
+        $tenant = Tenant::query()->whereHas('business', fn ($query) => $query->where('slug', 'login-tracking'))->firstOrFail();
+
+        $this->get('/platform/tenants')
+            ->assertOk()
+            ->assertSee('Never logged in');
+
+        $tenant->run(function (): void {
+            User::query()->where('email', 'owner@login.test')->firstOrFail()
+                ->forceFill(['last_login_at' => now()])->save();
+        });
+
+        $this->get('/platform/tenants')
+            ->assertOk()
+            ->assertSee('owner@login.test')
+            ->assertSee('Asia/Kabul');
+    }
+
     public function test_reserved_or_dns_invalid_subdomain_cannot_be_assigned_to_a_pharmacy(): void
     {
         $payload = [
