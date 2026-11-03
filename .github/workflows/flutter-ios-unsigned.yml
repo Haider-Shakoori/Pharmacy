@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   ios:
+    if: ${{ false }} # Disabled until explicit final-release authorization.
     name: Build unsigned iOS IPA
     # connectivity_plus 7.x needs the iOS 26 SDK (NWPath.isUltraConstrained).
     runs-on: macos-26
