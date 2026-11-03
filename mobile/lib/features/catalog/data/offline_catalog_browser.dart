@@ -193,8 +193,27 @@ class OfflineCatalogBrowser {
     String? locationId,
     DateTime? now,
     int page = 0,
+    bool expiringOnly = false,
   }) async {
     if (page < 0) throw ArgumentError.value(page, 'page');
+    final DateTime timestamp = now ?? DateTime.now();
+    final DateTime today = DateTime(
+      timestamp.year, timestamp.month, timestamp.day,
+    );
+    final DateTime cutoff = DateTime(today.year, today.month, today.day + 31);
+    final String expiryFilter = expiringOnly
+        ? '''
+        AND EXISTS (
+          SELECT 1 FROM local_inventory_batches eb
+          WHERE eb.medicine_id = local_medicines.id
+            AND eb.is_deleted = 0
+            AND eb.available_quantity != '0'
+            AND eb.expires_at IS NOT NULL
+            AND eb.expires_at < ?
+            ${locationId == null ? '' : 'AND eb.stock_location_id = ?'}
+        )
+        '''
+        : '';
     final String needle = '%${search.trim()}%';
     final List<QueryRow> medicines = await _database
         .customSelect(
@@ -205,6 +224,7 @@ class OfflineCatalogBrowser {
         AND is_active = 1
         AND (brand_name LIKE ? OR COALESCE(generic_name, '') LIKE ?
              OR COALESCE(medicine_code, '') LIKE ?)
+        $expiryFilter
       ORDER BY brand_name COLLATE NOCASE, id
       LIMIT 100 OFFSET ?
       ''',
@@ -212,17 +232,13 @@ class OfflineCatalogBrowser {
             Variable<String>(needle),
             Variable<String>(needle),
             Variable<String>(needle),
+            if (expiringOnly) Variable<int>(cutoff.millisecondsSinceEpoch ~/ 1000),
+            if (expiringOnly && locationId != null) Variable<String>(locationId),
             Variable<int>(page * 100),
           ],
         )
         .get();
 
-    final DateTime timestamp = now ?? DateTime.now();
-    final DateTime today = DateTime(
-      timestamp.year,
-      timestamp.month,
-      timestamp.day,
-    );
     final List<StockMedicineSnapshot> results = <StockMedicineSnapshot>[];
 
     for (final QueryRow medicine in medicines) {
