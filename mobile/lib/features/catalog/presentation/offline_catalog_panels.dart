@@ -445,21 +445,22 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
         else
           ..._customers.map(
             (CustomerSnapshot customer) => Card(
-              child: ListTile(
+              child: ExpansionTile(
                 leading: const CircleAvatar(child: Icon(Icons.person_outline)),
                 title: Text(customer.name),
                 subtitle: Text(customer.phone.isEmpty ? '—' : customer.phone),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: <Widget>[
-                    Text(
-                      strings.catalogBalance,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    Text('AFN ${customer.balance}'),
-                  ],
-                ),
+                children: <Widget>[
+                  ListTile(
+                    leading: const Icon(Icons.account_balance_wallet_outlined),
+                    title: Text(strings.catalogBalance),
+                    trailing: Text('AFN ${customer.balance}'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.phone_outlined),
+                    title: Text(customer.phone.isEmpty ? 'No phone recorded' : customer.phone),
+                    subtitle: const Text('Synced customer contact'),
+                  ),
+                ],
               ),
             ),
           ),
