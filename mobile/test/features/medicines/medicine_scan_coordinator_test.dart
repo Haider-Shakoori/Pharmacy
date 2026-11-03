@@ -2,7 +2,8 @@ import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coor
 import 'package:flutter_test/flutter_test.dart';
 
 class FakeNativeOcr implements NativeMedicineOcr {
-  FakeNativeOcr({this.available = true});
+  FakeNativeOcr({this.available = true, this.lines = const ['ExampleMed', '250 mg Tablets', 'LOT: B1234']});
+  final List<String> lines;
   final bool available;
   int calls = 0;
 
@@ -12,7 +13,7 @@ class FakeNativeOcr implements NativeMedicineOcr {
   @override
   Future<List<String>> recognizeLocalImage(String imagePath) async {
     calls++;
-    return ['ExampleMed', '250 mg Tablets', 'LOT: B1234'];
+    return lines;
   }
 }
 
@@ -34,6 +35,15 @@ void main() {
       throwsStateError,
     );
     expect(ocr.calls, 0);
+  });
+
+  test('rejects images without recognized text', () async {
+    final ocr = FakeNativeOcr(lines: [' ', '']);
+    await expectLater(
+      MedicineScanCoordinator(ocr: ocr).scanLocalImage('/local/blank.jpg'),
+      throwsStateError,
+    );
+    expect(ocr.calls, 1);
   });
 
   test('rejects empty image path without invoking OCR', () async {
