@@ -6,6 +6,8 @@ use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\Medicine;
 use App\Models\ProductBatch;
+use App\Models\PurchaseOrder;
+use App\Models\Supplier;
 use App\Models\Sale;
 use App\Models\StockLocation;
 use App\Models\Supplier;
@@ -311,6 +313,50 @@ class MobileSyncApiTest extends TestCase
             $first->json('data.data.0.id'),
             $second->json('data.data.0.id'),
         );
+    }
+
+    public function test_purchase_order_pull_includes_lines_and_amounts(): void
+    {
+        $this->tenant->run(function (): void {
+            $supplier = Supplier::query()->create([
+                'code' => 'PO-SUP',
+                'name' => 'Purchase Test Supplier',
+                'is_active' => true,
+            ]);
+            $order = PurchaseOrder::query()->create([
+                'supplier_id' => $supplier->id,
+                'number' => 'PO-MOBILE-001',
+                'status' => 'draft',
+                'order_date' => today(),
+                'currency' => 'AFN',
+                'subtotal' => '100.0000',
+                'discount_total' => '0.0000',
+                'landed_cost_total' => '0.0000',
+                'grand_total' => '100.0000',
+            ]);
+            $order->lines()->create([
+                'medicine_id' => Medicine::query()->where('medicine_code', 'SYNC-001')->value('id'),
+                'description' => 'Sync Medicine',
+                'ordered_quantity' => '10.0000',
+                'received_quantity' => '0.0000',
+                'unit_cost' => '10.0000',
+                'discount_amount' => '0.0000',
+                'landed_cost_allocated' => '0.0000',
+                'line_total' => '100.0000',
+            ]);
+        });
+
+        $response = $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/sync/pull/purchase_orders?limit=10')
+            ->assertOk()
+            ->assertJsonPath('data.stream', 'purchase_orders');
+
+        $orders = collect($response->json('data.data'));
+        $order = $orders->firstWhere('number', 'PO-MOBILE-001');
+        $this->assertNotNull($order);
+        $this->assertSame('100.0000', $order['grand_total']);
+        $this->assertCount(1, $order['lines']);
+        $this->assertSame('10.0000', $order['lines'][0]['ordered_quantity']);
     }
 
     public function test_session_refresh_renews_access_without_plaintext_license_key(): void
