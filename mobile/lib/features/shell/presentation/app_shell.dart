@@ -126,8 +126,18 @@ class _AppShellState extends ConsumerState<AppShell> {
                     if (_reviewedScan != null)
                       ListTile(
                         title: Text(_reviewedScan!.brandName),
-                        subtitle: const Text(
-                          'Reviewed draft only. No medicine or stock saved.',
+                        subtitle: Text(
+                          [
+                            if (_reviewedScan!.genericName != null)
+                              'Generic: ${_reviewedScan!.genericName}',
+                            if (_reviewedScan!.strength != null)
+                              'Strength: ${_reviewedScan!.strength}',
+                            if (_reviewedScan!.dosageForm != null)
+                              'Form: ${_reviewedScan!.dosageForm}',
+                            if (_reviewedScan!.barcode != null)
+                              'Barcode: ${_reviewedScan!.barcode}',
+                            'Reviewed draft only. No medicine or stock saved.',
+                          ].join('\n'),
                         ),
                         trailing: IconButton(
                           tooltip: 'Clear reviewed draft',
