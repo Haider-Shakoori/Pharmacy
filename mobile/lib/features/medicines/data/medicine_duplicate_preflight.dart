@@ -7,7 +7,10 @@ import 'package:http/http.dart' as http;
 
 /// Online, read-only server preflight. Never creates or queues a medicine.
 class MedicineDuplicatePreflight {
-  const MedicineDuplicatePreflight({required this.environment, required this.client});
+  const MedicineDuplicatePreflight({
+    required this.environment,
+    required this.client,
+  });
 
   final AppEnvironment environment;
   final http.Client client;
@@ -37,7 +40,9 @@ class MedicineDuplicatePreflight {
       }),
     );
     if (response.statusCode != 200) {
-      throw StateError('Server duplicate validation failed (${response.statusCode})');
+      throw StateError(
+        'Server duplicate validation failed (${response.statusCode})',
+      );
     }
     final decoded = jsonDecode(response.body);
     if (decoded is! Map || decoded['data'] is! Map) {
