@@ -76,7 +76,7 @@ class GoodsReceiptDraftValidator {
           errors.add('Quantities and costs cannot be negative.');
           continue;
         }
-        if (previous + received > ordered) {
+        if ((previous + received).compareTo(ordered) > 0) {
           errors.add('Received quantity exceeds the remaining order quantity.');
         }
         if (received.isPositive) {
