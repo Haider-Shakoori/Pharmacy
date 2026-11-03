@@ -51,6 +51,13 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
     }
   }
 
+  void _confirm(ReviewedMedicineScan reviewed) {
+    widget.onConfirmed(reviewed);
+    if (mounted) {
+      setState(() => _draft = null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -81,12 +88,18 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
             _error!,
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
-        if (_draft != null)
+        if (_draft != null) ...[
           MedicineScanReviewPanel(
             key: ValueKey(_draft),
             draft: _draft!,
-            onConfirmed: widget.onConfirmed,
+            onConfirmed: _confirm,
           ),
+          TextButton.icon(
+            onPressed: () => setState(() => _draft = null),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Discard scan'),
+          ),
+        ],
       ],
     );
   }
