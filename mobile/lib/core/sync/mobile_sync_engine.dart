@@ -101,6 +101,8 @@ class MobileSyncEngine {
       'medicines',
       'inventory',
       'customers',
+      'suppliers',
+      'purchase_orders',
     ]) {
       String? cursor = await repository.checkpoint(stream);
       int pageCount = 0;
