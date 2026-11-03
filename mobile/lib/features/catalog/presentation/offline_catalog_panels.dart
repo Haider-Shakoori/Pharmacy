@@ -91,6 +91,7 @@ class _StockBrowserState extends State<_StockBrowser> {
   List<String> _locations = <String>[];
   List<StockMedicineSnapshot> _medicines = <StockMedicineSnapshot>[];
   InventoryOverview? _overview;
+  List<StockSaleMovement> _movements = <StockSaleMovement>[];
   String? _location;
   String? _error;
   bool _loading = true;
@@ -125,10 +126,14 @@ class _StockBrowserState extends State<_StockBrowser> {
         locationId: _location,
         page: _page,
       );
+      final List<StockSaleMovement> movements = await browser.recentSaleMovements(
+        locationId: _location,
+      );
       if (!mounted) {
         return;
       }
       setState(() {
+        _movements = movements;
         _locations = locations;
         _overview = overview;
         _medicines = medicines;
@@ -188,6 +193,22 @@ class _StockBrowserState extends State<_StockBrowser> {
             label: 'Expiring in 30 days',
             value: '${_overview?.expiringBatches ?? 0}',
             color: const Color(0xFFFFF3D9),
+          ),
+          ExpansionTile(
+            title: const Text('Recent POS stock deductions'),
+            subtitle: Text('${_movements.length} recent batch allocations · read only'),
+            children: _movements.isEmpty
+                ? <Widget>[
+                    const ListTile(title: Text('No completed POS batch deductions recorded locally')),
+                  ]
+                : _movements.map((StockSaleMovement movement) => ListTile(
+                    dense: true,
+                    title: Text(movement.medicineName),
+                    subtitle: Text(
+                      'Batch: ${movement.batchNumber.isEmpty ? '—' : movement.batchNumber} · ${movement.locationId}',
+                    ),
+                    trailing: Text('−${movement.quantity}'),
+                  )).toList(growable: false),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
