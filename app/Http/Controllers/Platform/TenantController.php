@@ -55,13 +55,35 @@ class TenantController extends Controller
                         'at' => $user->last_login_at,
                     ] : null;
                 });
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 report($exception);
                 $lastLogins[$tenant->id] = ['unavailable' => true];
             }
         }
 
         return view('platform.tenants.index', compact('tenants', 'search', 'status', 'lastLogins'));
+    }
+
+    public function logins(Tenant $tenant): View
+    {
+        $tenant->load('business');
+
+        $users = collect();
+        $unavailable = false;
+
+        if ($tenant->provisioning_status === 'application_ready') {
+            try {
+                $users = $tenant->run(fn () => User::query()
+                    ->select(['name', 'email', 'last_login_at'])
+                    ->orderByDesc('last_login_at')
+                    ->get());
+            } catch (\Throwable $exception) {
+                report($exception);
+                $unavailable = true;
+            }
+        }
+
+        return view('platform.tenants.logins', compact('tenant', 'users', 'unavailable'));
     }
 
     public function create(): View
