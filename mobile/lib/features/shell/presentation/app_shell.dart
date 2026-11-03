@@ -6,21 +6,21 @@ import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
-import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coordinator.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/picker_medicine_image_source.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/platform_medicine_ocr.dart';
 import 'package:businessos_pharmacy/features/medicines/presentation/medicine_scan_flow.dart';
+import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
 import 'package:businessos_pharmacy/features/purchasing/presentation/offline_purchasing_panel.dart';
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.dart';
 import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({required this.localeNotifier, super.key});
