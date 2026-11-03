@@ -37,6 +37,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   int _selectedIndex = 0;
   ReviewedMedicineScan? _reviewedScan;
   Future<List<String>>? _duplicateLookup;
+  bool _registrationApproval = false;
 
   Future<List<String>> _checkDuplicates(ReviewedMedicineScan draft) async {
     final database = await ref.read(pharmacyDatabaseProvider.future);
@@ -56,7 +57,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             .asData
             ?.value
             ?.permissions
-            .contains('inventory.manage') ==
+            .contains('medicines.manage') ==
         true;
     final List<_ShellDestination> destinations = <_ShellDestination>[
       const _ShellDestination(icon: Icons.dashboard_outlined, label: 'Home'),
@@ -134,6 +135,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                       onConfirmed: (ReviewedMedicineScan reviewed) {
                         setState(() {
                           _reviewedScan = reviewed;
+                          _registrationApproval = false;
                           _duplicateLookup = _checkDuplicates(reviewed);
                         });
                       },
@@ -173,6 +175,19 @@ class _AppShellState extends ConsumerState<AppShell> {
                           );
                         },
                       ),
+                    if (_reviewedScan != null)
+                      CheckboxListTile(
+                        title: const Text('Approve registration handoff'),
+                        subtitle: const Text(
+                          'I have checked the reviewed details. This does not authorize saving to the server.',
+                        ),
+                        value: _registrationApproval,
+                        onChanged: (value) {
+                          setState(() {
+                            _registrationApproval = value ?? false;
+                          });
+                        },
+                      ),
                     if (_reviewedScan != null && _duplicateLookup != null)
                       FutureBuilder<List<String>>(
                         future: _duplicateLookup,
@@ -182,7 +197,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                                   ConnectionState.done &&
                               !snapshot.hasError &&
                               snapshot.hasData &&
-                              snapshot.data!.isEmpty;
+                              snapshot.data!.isEmpty &&
+                              _registrationApproval;
                           return ListTile(
                             title: const Text('Prepare registration handoff'),
                             subtitle: const Text(
