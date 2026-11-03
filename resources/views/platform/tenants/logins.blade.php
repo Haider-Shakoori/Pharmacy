@@ -25,11 +25,11 @@
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($users as $user)
                         <tr>
-                            <td class="px-4 py-3 font-semibold">{{ $user->name }}</td>
-                            <td class="px-4 py-3">{{ $user->email }}</td>
+                            <td class="px-4 py-3 font-semibold">{{ $user['name'] }}</td>
+                            <td class="px-4 py-3">{{ $user['email'] }}</td>
                             <td class="px-4 py-3">
-                                @if ($user->last_login_at)
-                                    {{ $user->last_login_at->timezone($tenant->timezone)->format('d M Y, h:i A') }}
+                                @if ($user['at'])
+                                    {{ \Carbon\CarbonImmutable::parse($user['at'])->timezone($tenant->timezone)->format('d M Y, h:i A') }}
                                     <span class="text-xs text-slate-500">({{ $tenant->timezone }})</span>
                                 @else
                                     <span class="text-slate-500">Never logged in</span>
