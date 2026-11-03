@@ -20,6 +20,7 @@ class MobileSyncPushService
 {
     public function __construct(
         private readonly PosSaleService $sales,
+        private readonly MobileGoodsReceiptService $goodsReceipts,
     ) {}
 
     public function push(
@@ -59,6 +60,10 @@ class MobileSyncPushService
                 $payload,
                 $idempotencyKey,
             );
+        }
+
+        if ($eventType === 'goods_receipt.create') {
+            return $this->pushGoodsReceipt($context, $payload, $idempotencyKey);
         }
 
         if ($eventType !== 'sale.completed') {
@@ -174,6 +179,47 @@ class MobileSyncPushService
                 'The server could not process this event.',
                 retryable: true,
             );
+        }
+    }
+
+    private function pushGoodsReceipt(
+        SyncAccessContext $context,
+        array $payload,
+        string $idempotencyKey,
+    ): array {
+        if (! in_array('purchases.manage', $context->permissions, true)) {
+            return $this->rejected($idempotencyKey, 'permission_denied', 'Purchasing permission is required.');
+        }
+
+        if ($idempotencyKey === '' || strlen($idempotencyKey) > 120 ||
+            ($payload['idempotency_key'] ?? null) !== $idempotencyKey) {
+            return $this->rejected($idempotencyKey, 'idempotency_mismatch', 'A matching idempotency key is required.');
+        }
+
+        try {
+            return $context->tenant->run(function () use ($context, $payload, $idempotencyKey): array {
+                $user = User::query()->whereKey($context->userId)->where('is_active', true)->firstOrFail();
+                $receipt = $this->goodsReceipts->capture($user, $payload, $idempotencyKey);
+
+                return [
+                    'idempotency_key' => $idempotencyKey,
+                    'status' => 'accepted',
+                    'aggregate_type' => 'goods_receipt',
+                    'local_id' => $payload['local_id'] ?? null,
+                    'server_id' => $receipt->id,
+                    'receipt_number' => $receipt->receipt_number,
+                    'inventory_status' => $receipt->status,
+                    'server_updated_at' => $receipt->updated_at?->toISOString(),
+                ];
+            });
+        } catch (ValidationException $exception) {
+            return $this->rejected($idempotencyKey, 'validation_failed',
+                (string) (collect($exception->errors())->flatten()->first() ?? 'Invalid receipt.'));
+        } catch (ModelNotFoundException $exception) {
+            return $this->rejected($idempotencyKey, 'reference_missing', 'The user or purchase order no longer exists.');
+        } catch (Throwable $exception) {
+            report($exception);
+            return $this->rejected($idempotencyKey, 'server_error', 'Could not capture receipt.', retryable: true);
         }
     }
 
