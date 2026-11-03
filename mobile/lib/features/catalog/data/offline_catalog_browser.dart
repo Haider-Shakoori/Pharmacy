@@ -313,7 +313,8 @@ class OfflineCatalogBrowser {
     int page = 0,
   }) async {
     if (page < 0) throw ArgumentError.value(page, 'page');
-    final String pattern = '%${search.trim().replaceAll('!', '!!').replaceAll('%', '!%').replaceAll('_', '!_')}%';
+    final String pattern =
+        '%${search.trim().replaceAll('!', '!!').replaceAll('%', '!%').replaceAll('_', '!_')}%';
     final List<QueryRow> rows = await _database
         .customSelect(
           '''
@@ -424,4 +425,3 @@ class StockCostOverview {
 
   final int batchCount;
   final FixedDecimal acquisitionValue;
-}
