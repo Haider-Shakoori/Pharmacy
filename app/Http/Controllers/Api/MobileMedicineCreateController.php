@@ -40,7 +40,15 @@ class MobileMedicineCreateController extends Controller
             ])->validate();
 
             $brand = trim($data['brand_name']);
-            if ($brand === '' || Medicine::query()->whereRaw('LOWER(TRIM(brand_name)) = ?', [mb_strtolower($brand)])->exists()) {
+            $barcode = trim((string) ($data['barcode'] ?? ''));
+            $data['barcode'] = $barcode === '' ? null : $barcode;
+            $duplicate = Medicine::query()->where(function ($query) use ($brand, $barcode): void {
+                $query->whereRaw('LOWER(TRIM(brand_name)) = ?', [mb_strtolower($brand)]);
+                if ($barcode !== '') {
+                    $query->orWhere('barcode', $barcode);
+                }
+            })->exists();
+            if ($brand === '' || $duplicate) {
                 throw ValidationException::withMessages(['brand_name' => 'Brand name is empty or already exists.']);
             }
 
