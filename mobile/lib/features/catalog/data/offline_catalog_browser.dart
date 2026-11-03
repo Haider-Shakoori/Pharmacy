@@ -94,6 +94,47 @@ class OfflineCatalogBrowser {
     );
   }
 
+  /// Snapshot of remaining batch acquisition cost; not a purchase ledger.
+  Future<StockCostOverview> stockCostOverview({String? locationId}) async {
+    final List<Variable<Object>> args = <Variable<Object>>[];
+    final String locationFilter = locationId == null
+        ? ''
+        : 'AND b.stock_location_id = ?';
+    if (locationId != null) args.add(Variable<String>(locationId));
+    final List<QueryRow> rows = await _database.customSelect(
+      '''
+      SELECT b.available_quantity, b.purchase_cost, b.expires_at
+      FROM local_inventory_batches b
+      JOIN local_medicines m ON m.id = b.medicine_id
+      WHERE b.is_deleted = 0 AND m.is_deleted = 0
+        AND m.is_active = 1 AND b.status = 'active'
+        $locationFilter
+      ''',
+      variables: args,
+    ).get();
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    FixedDecimal cost = FixedDecimal.zero;
+    int batches = 0;
+    for (final QueryRow row in rows) {
+      final int? seconds = row.readNullable<int>('expires_at');
+      if (seconds != null &&
+          DateTime.fromMillisecondsSinceEpoch(seconds * 1000).isBefore(today)) {
+        continue;
+      }
+      final FixedDecimal quantity = FixedDecimal.parse(
+        row.read<String>('available_quantity'),
+      );
+      if (!quantity.isPositive) continue;
+      final FixedDecimal unitCost = FixedDecimal.parse(
+        row.read<String>('purchase_cost'),
+      );
+      cost += quantity * unitCost;
+      batches++;
+    }
+    return StockCostOverview(batchCount: batches, acquisitionValue: cost);
+  }
+
   /// Recent recorded POS batch deductions. Purchase receipts and transfers
   /// are not yet synchronized into the mobile database.
   Future<List<StockSaleMovement>> recentSaleMovements({
@@ -353,4 +394,14 @@ class StockSaleMovement {
   final String locationId;
   final String quantity;
   final DateTime createdAt;
+}
+
+class StockCostOverview {
+  const StockCostOverview({
+    required this.batchCount,
+    required this.acquisitionValue,
+  });
+
+  final int batchCount;
+  final FixedDecimal acquisitionValue;
 }
