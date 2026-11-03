@@ -23,9 +23,11 @@ class OfflineCatalogBrowser {
 
   final PharmacyDatabase _database;
 
-  /// Searches the full local catalog for a potential duplicate before a
-  /// pharmacist starts registration. This is advisory, never a save operation.
-  /// A stale offline snapshot cannot guarantee server-side uniqueness.
+  /// Finds exact brand-name matches in the locally synced catalog.
+  /// The local schema has no barcode column: medicine_code is an internal
+  /// identifier and must never be mistaken for a scanned product barcode.
+  /// Generic names alone are not duplicates (many brands share an ingredient).
+  /// This advisory lookup does not replace server-side duplicate validation.
   Future<List<String>> possibleDuplicateMedicineNames({
     required String brandName,
     String? genericName,
@@ -35,30 +37,12 @@ class OfflineCatalogBrowser {
     if (brand.isEmpty) {
       throw ArgumentError.value(brandName, 'brandName', 'Required');
     }
-    final code = barcode?.trim();
-    final rows = await _database
-        .customSelect(
-          '''
-      SELECT DISTINCT brand_name
-      FROM local_medicines
-      WHERE is_deleted = 0
-        AND (
-          LOWER(TRIM(brand_name)) = LOWER(?)
-          OR (? <> '' AND LOWER(TRIM(COALESCE(generic_name, ''))) = LOWER(?))
-          OR (? <> '' AND TRIM(COALESCE(medicine_code, '')) = ?)
-        )
-      ORDER BY brand_name COLLATE NOCASE
-      LIMIT 20
-      ''',
-          variables: <Variable<Object>>[
-            Variable<String>(brand),
-            Variable<String>(genericName?.trim() ?? ''),
-            Variable<String>(genericName?.trim() ?? ''),
-            Variable<String>(code ?? ''),
-            Variable<String>(code ?? ''),
-          ],
-        )
-        .get();
+    final rows = await _database.customSelect(
+      'SELECT DISTINCT brand_name FROM local_medicines '
+      'WHERE is_deleted = 0 AND LOWER(TRIM(brand_name)) = LOWER(?) '
+      'ORDER BY brand_name COLLATE NOCASE LIMIT 20',
+      variables: <Variable<Object>>[Variable<String>(brand)],
+    ).get();
     return rows
         .map((QueryRow row) => row.read<String>('brand_name'))
         .toList(growable: false);
