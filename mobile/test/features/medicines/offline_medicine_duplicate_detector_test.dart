@@ -11,11 +11,7 @@ void main() {
       strength: '500 mg',
       barcode: '0123456789012',
     ),
-    LocalMedicineIdentity(
-      id: '2',
-      brandName: 'Other Med',
-      strength: '250 mg',
-    ),
+    LocalMedicineIdentity(id: '2', brandName: 'Other Med', strength: '250 mg'),
   ];
 
   test('matches existing barcode without creating a record', () {
