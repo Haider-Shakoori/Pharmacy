@@ -34,6 +34,7 @@
                         <th class="px-4 py-3 text-start">Provisioning</th>
                         <th class="px-4 py-3 text-start">Domain</th>
                         <th class="px-4 py-3 text-start">Locale</th>
+                        <th class="px-4 py-3 text-start">Last login</th>
                         <th class="px-4 py-3 text-end">Actions</th>
                     </tr>
                 </thead>
@@ -48,6 +49,18 @@
                             <td class="px-4 py-3">{{ str_replace('_', ' ', $tenant->provisioning_status) }}</td>
                             <td class="px-4 py-3 text-xs">{{ $tenant->domains->first()?->domain ?? '—' }}</td>
                             <td class="px-4 py-3">{{ strtoupper($tenant->locale) }}</td>
+                            <td class="px-4 py-3 text-xs">
+                                @php($login = $lastLogins[$tenant->id] ?? null)
+                                @if (is_array($login) && isset($login['at']))
+                                    <p class="font-semibold text-slate-800">{{ $login['at']->timezone($tenant->timezone)->format('d M Y, h:i A') }}</p>
+                                    <p class="text-slate-500">{{ $login['name'] }} ({{ $login['email'] }})</p>
+                                    <p class="text-slate-400">{{ $tenant->timezone }}</p>
+                                @elseif (is_array($login) && !empty($login['unavailable']))
+                                    <span class="text-amber-700">Unavailable</span>
+                                @else
+                                    <span class="text-slate-500">Never logged in</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-2">
                                     <a href="{{ route('platform.tenants.edit', $tenant) }}" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold">Edit</a>
@@ -64,7 +77,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-4 py-10 text-center text-slate-500">No pharmacies match this filter.</td></tr>
+                        <tr><td colspan="7" class="px-4 py-10 text-center text-slate-500">No pharmacies match this filter.</td></tr>
                     @endforelse
                 </tbody>
             </table>
