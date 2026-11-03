@@ -129,7 +129,7 @@ class OfflineCatalogBrowser {
       final FixedDecimal unitCost = FixedDecimal.parse(
         row.read<String>('purchase_cost'),
       );
-      cost += quantity * unitCost;
+      cost += quantity.multiply(unitCost);
       batches++;
     }
     return StockCostOverview(batchCount: batches, acquisitionValue: cost);
