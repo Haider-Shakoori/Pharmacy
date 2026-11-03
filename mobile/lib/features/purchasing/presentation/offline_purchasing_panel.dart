@@ -6,7 +6,7 @@ import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/features/purchasing/data/purchase_receiving_summary.dart';
 import 'package:businessos_pharmacy/features/purchasing/presentation/goods_receipt_worksheet.dart';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
