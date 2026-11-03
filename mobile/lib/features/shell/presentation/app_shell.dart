@@ -6,6 +6,7 @@ import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
+import 'package:businessos_pharmacy/features/medicines/data/medicine_duplicate_preflight.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_registration_handoff.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coordinator.dart';
@@ -23,6 +24,7 @@ import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({required this.localeNotifier, super.key});
