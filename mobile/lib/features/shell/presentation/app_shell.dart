@@ -6,6 +6,7 @@ import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
+import 'package:businessos_pharmacy/features/purchasing/presentation/offline_purchasing_panel.dart';
 import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.dart';
@@ -94,6 +95,8 @@ class _AppShellState extends ConsumerState<AppShell> {
             ],
             if (_selectedIndex == 4) ...<Widget>[
               const OfflineCustomersPanel(),
+              const SizedBox(height: 16),
+              const OfflinePurchasingPanel(),
               const SizedBox(height: 16),
               const OperationalAlertsCard(),
               const SizedBox(height: 16),
