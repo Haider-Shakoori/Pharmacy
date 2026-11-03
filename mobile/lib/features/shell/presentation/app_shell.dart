@@ -174,6 +174,26 @@ class _AppShellState extends ConsumerState<AppShell> {
                       ),
                     if (_reviewedScan != null)
                       ListTile(
+                        title: const Text('Medicine registration is not enabled'),
+                        subtitle: const Text(
+                          'A pharmacist must verify the current server catalog '
+                          'and resolve possible duplicates before saving. '
+                          'This scan remains a draft and does not change stock.',
+                        ),
+                        trailing: IconButton(
+                          tooltip: 'Recheck local catalog',
+                          icon: const Icon(Icons.refresh),
+                          onPressed: () {
+                            final draft = _reviewedScan;
+                            if (draft == null) return;
+                            setState(() {
+                              _duplicateLookup = _checkDuplicates(draft);
+                            });
+                          },
+                        ),
+                      ),
+                    if (_reviewedScan != null)
+                      ListTile(
                         title: Text(_reviewedScan!.brandName),
                         subtitle: Text(
                           [
