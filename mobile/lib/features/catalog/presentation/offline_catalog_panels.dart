@@ -98,6 +98,7 @@ class _StockBrowserState extends State<_StockBrowser> {
   bool _loading = true;
   bool _expiryOnly = false;
   int _page = 0;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -112,6 +113,10 @@ class _StockBrowserState extends State<_StockBrowser> {
   }
 
   Future<void> _load() async {
+    final int generation = ++_loadGeneration;
+    final String? location = _location;
+    final int page = _page;
+    final String search = _search.text;
     setState(() {
       _loading = true;
       _error = null;
@@ -123,17 +128,17 @@ class _StockBrowserState extends State<_StockBrowser> {
       final List<String> locations = await browser.stockLocations();
       final InventoryOverview overview = await browser.inventoryOverview(locationId: _location);
       final List<StockMedicineSnapshot> medicines = await browser.medicines(
-        search: _search.text,
-        locationId: _location,
-        page: _page,
+        search: search,
+        locationId: location,
+        page: page,
       );
       final StockCostOverview costOverview = await browser.stockCostOverview(
-        locationId: _location,
+        locationId: location,
       );
       final List<StockSaleMovement> movements = await browser.recentSaleMovements(
-        locationId: _location,
+        locationId: location,
       );
-      if (!mounted) {
+      if (!mounted || generation != _loadGeneration) {
         return;
       }
       setState(() {
@@ -145,7 +150,7 @@ class _StockBrowserState extends State<_StockBrowser> {
         _loading = false;
       });
     } on Object catch (error) {
-      if (!mounted) {
+      if (!mounted || generation != _loadGeneration) {
         return;
       }
       setState(() {
@@ -376,6 +381,7 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
   List<CustomerSnapshot> _customers = <CustomerSnapshot>[];
   bool _loading = true;
   int _page = 0;
+  int _loadGeneration = 0;
   String? _error;
 
   @override
@@ -391,6 +397,9 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
   }
 
   Future<void> _load() async {
+    final int generation = ++_loadGeneration;
+    final int page = _page;
+    final String search = _search.text;
     setState(() {
       _loading = true;
       _error = null;
@@ -398,8 +407,8 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
     try {
       final List<CustomerSnapshot> customers = await OfflineCatalogBrowser(
         widget.database,
-      ).customers(search: _search.text, page: _page);
-      if (!mounted) {
+      ).customers(search: search, page: page);
+      if (!mounted || generation != _loadGeneration) {
         return;
       }
       setState(() {
@@ -407,7 +416,7 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
         _loading = false;
       });
     } on Object catch (error) {
-      if (!mounted) {
+      if (!mounted || generation != _loadGeneration) {
         return;
       }
       setState(() {
