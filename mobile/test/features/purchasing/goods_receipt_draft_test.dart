@@ -25,56 +25,68 @@ GoodsReceiptDraftLine line({
 
 void main() {
   test('allows valid partial receipt for an approved order', () {
-    expect(GoodsReceiptDraftValidator.validate(
-      <GoodsReceiptDraftLine>[line(received: '2')],
-      orderStatus: 'approved',
-    ), isEmpty);
+    expect(
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        line(received: '2'),
+      ], orderStatus: 'approved'),
+      isEmpty,
+    );
   });
 
   test('rejects quantity beyond outstanding balance', () {
-    expect(GoodsReceiptDraftValidator.validate(
-      <GoodsReceiptDraftLine>[line(received: '7')],
-      orderStatus: 'approved',
-    ).join(' '), contains('exceeds'));
+    expect(
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        line(received: '7'),
+      ], orderStatus: 'approved').join(' '),
+      contains('exceeds'),
+    );
   });
 
   test('requires batch and expiry for tracked medicines', () {
-    final errors = GoodsReceiptDraftValidator.validate(
-      <GoodsReceiptDraftLine>[line(batch: '', expiry: '')],
-      orderStatus: 'approved',
-    ).join(' ');
+    final errors = GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+      line(batch: '', expiry: ''),
+    ], orderStatus: 'approved').join(' ');
     expect(errors, contains('batch number'));
     expect(errors, contains('expiry date'));
   });
 
   test('rejects duplicate order line IDs', () {
-    expect(GoodsReceiptDraftValidator.validate(
-      <GoodsReceiptDraftLine>[line(), line()],
-      orderStatus: 'approved',
-    ).join(' '), contains('distinct'));
+    expect(
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        line(),
+        line(),
+      ], orderStatus: 'approved').join(' '),
+      contains('distinct'),
+    );
   });
 
   test('rejects receipts for draft orders', () {
-    expect(GoodsReceiptDraftValidator.validate(
-      <GoodsReceiptDraftLine>[line()],
-      orderStatus: 'draft',
-    ).join(' '), contains('approved'));
+    expect(
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        line(),
+      ], orderStatus: 'draft').join(' '),
+      contains('approved'),
+    );
   });
 
   test('rejects empty receipt quantities and negative costs', () {
-    expect(GoodsReceiptDraftValidator.validate(
-      <GoodsReceiptDraftLine>[line(received: '0')],
-      orderStatus: 'approved',
-    ).join(' '), contains('positive'));
-    expect(GoodsReceiptDraftValidator.validate(
-      <GoodsReceiptDraftLine>[GoodsReceiptDraftLine(
-        purchaseOrderLineId: 'line-2',
-        orderedQuantity: '5',
-        previouslyReceivedQuantity: '0',
-        receivedQuantity: '1',
-        unitCost: '-1',
-      )],
-      orderStatus: 'approved',
-    ).join(' '), contains('negative'));
+    expect(
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        line(received: '0'),
+      ], orderStatus: 'approved').join(' '),
+      contains('positive'),
+    );
+    expect(
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        GoodsReceiptDraftLine(
+          purchaseOrderLineId: 'line-2',
+          orderedQuantity: '5',
+          previouslyReceivedQuantity: '0',
+          receivedQuantity: '1',
+          unitCost: '-1',
+        ),
+      ], orderStatus: 'approved').join(' '),
+      contains('negative'),
+    );
   });
 }
