@@ -4,6 +4,7 @@ import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
 import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
+import 'package:businessos_pharmacy/features/purchasing/data/purchase_receiving_summary.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -126,6 +127,9 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
     final lines = _orders
         ? (jsonDecode(row.read<String>('lines_json')) as List<dynamic>)
         : <dynamic>[];
+    final receiving = _orders
+        ? PurchaseReceivingSummary.fromLines(lines)
+        : null;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -154,6 +158,15 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
                   'Expected: ${row.readNullable<String>('expected_date') ?? '—'}',
                 ),
                 const Divider(),
+                if (receiving != null) ...<Widget>[
+                  Text('Ordered quantity: ${receiving.ordered.compact}'),
+                  Text('Received quantity: ${receiving.received.compact}'),
+                  Text('Outstanding quantity: ${receiving.outstanding.compact}'),
+                  Text('Lines awaiting receipt: ${receiving.linesOutstanding}'),
+                  if (receiving.overReceived.isPositive)
+                    Text('Over-received quantity: ${receiving.overReceived.compact}'),
+                  const SizedBox(height: 8),
+                ],
                 Text(
                   'Order lines',
                   style: Theme.of(context).textTheme.titleMedium,
