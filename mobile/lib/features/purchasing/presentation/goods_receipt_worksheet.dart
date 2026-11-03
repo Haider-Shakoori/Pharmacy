@@ -62,8 +62,8 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
             unitCost: line.cost.text.trim(),
             batchNumber: line.batch.text.trim(),
             expiresAt: line.expiry.text.trim(),
-            // Tracking requirements are not included in the current sync payload.
-            // The server must enforce these requirements before posting.
+            requiresBatch: line.data['batch_tracking_required'] == true,
+            requiresExpiry: line.data['expiry_tracking_required'] == true,
           ),
         )
         .toList();
