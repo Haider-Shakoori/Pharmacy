@@ -207,7 +207,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                             trailing: IconButton(
                               tooltip: 'Copy registration handoff',
                               icon: const Icon(Icons.assignment_outlined),
-                              onPressed: !ready
+                              onPressed: !ready || !canScanMedicines
                                   ? null
                                   : () async {
                                       final draft = _reviewedScan;
@@ -264,6 +264,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                             final draft = _reviewedScan;
                             if (draft == null) return;
                             setState(() {
+                              _registrationApproval = false;
                               _duplicateLookup = _checkDuplicates(draft);
                             });
                           },
@@ -323,6 +324,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                               icon: const Icon(Icons.delete_outline),
                               onPressed: () => setState(() {
                                 _reviewedScan = null;
+                                _registrationApproval = false;
                                 _duplicateLookup = null;
                               }),
                             ),
