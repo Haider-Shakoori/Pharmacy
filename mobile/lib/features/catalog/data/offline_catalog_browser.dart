@@ -36,8 +36,9 @@ class OfflineCatalogBrowser {
       throw ArgumentError.value(brandName, 'brandName', 'Required');
     }
     final code = barcode?.trim();
-    final rows = await _database.customSelect(
-      '''
+    final rows = await _database
+        .customSelect(
+          '''
       SELECT DISTINCT brand_name
       FROM local_medicines
       WHERE is_deleted = 0
@@ -49,14 +50,15 @@ class OfflineCatalogBrowser {
       ORDER BY brand_name COLLATE NOCASE
       LIMIT 20
       ''',
-      variables: <Variable<Object>>[
-        Variable<String>(brand),
-        Variable<String>(genericName?.trim() ?? ''),
-        Variable<String>(genericName?.trim() ?? ''),
-        Variable<String>(code ?? ''),
-        Variable<String>(code ?? ''),
-      ],
-    ).get();
+          variables: <Variable<Object>>[
+            Variable<String>(brand),
+            Variable<String>(genericName?.trim() ?? ''),
+            Variable<String>(genericName?.trim() ?? ''),
+            Variable<String>(code ?? ''),
+            Variable<String>(code ?? ''),
+          ],
+        )
+        .get();
     return rows
         .map((QueryRow row) => row.read<String>('brand_name'))
         .toList(growable: false);
