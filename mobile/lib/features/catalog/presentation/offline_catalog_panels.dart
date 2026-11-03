@@ -117,6 +117,7 @@ class _StockBrowserState extends State<_StockBrowser> {
     final String? location = _location;
     final int page = _page;
     final String search = _search.text;
+    final bool expiryOnly = _expiryOnly;
     setState(() {
       _loading = true;
       _error = null;
@@ -131,6 +132,7 @@ class _StockBrowserState extends State<_StockBrowser> {
         search: search,
         locationId: location,
         page: page,
+        expiringOnly: expiryOnly,
       );
       final StockCostOverview costOverview = await browser.stockCostOverview(
         locationId: location,
@@ -236,7 +238,13 @@ class _StockBrowserState extends State<_StockBrowser> {
             title: const Text('Show expired / expiring medicines only'),
             subtitle: const Text('Expired or due within 30 days'),
             value: _expiryOnly,
-            onChanged: (bool value) => setState(() => _expiryOnly = value),
+            onChanged: (bool value) {
+              setState(() {
+                _expiryOnly = value;
+                _page = 0;
+              });
+              _load();
+            },
           ),
           const SizedBox(height: 5),
           Text(
@@ -313,15 +321,7 @@ class _StockBrowserState extends State<_StockBrowser> {
         else if (_medicines.isEmpty)
           _InfoCard(message: strings.catalogEmptyStock)
         else
-          ..._medicines.where((StockMedicineSnapshot medicine) {
-            if (!_expiryOnly) return true;
-            final DateTime today = DateTime.now();
-            final DateTime cutoff = DateTime(today.year, today.month, today.day + 31);
-            return medicine.batches.any((StockBatchSnapshot batch) =>
-                batch.expired || (batch.expiresAt != null &&
-                batch.quantity.isPositive && batch.status == 'active' &&
-                batch.expiresAt!.isBefore(cutoff)));
-          }).map(
+          ..._medicines.map(
             (StockMedicineSnapshot item) => Card(
               child: ExpansionTile(
                 title: Text(item.name),
