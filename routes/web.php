@@ -37,6 +37,8 @@ $platformRoutes = static function (): void {
         Route::put('/account/password', [PlatformPasswordController::class, 'update'])
             ->name('account.password.update');
 
+        Route::get('/tenants/{tenant}/logins', [TenantController::class, 'logins'])
+            ->name('tenants.logins');
         Route::resource('tenants', TenantController::class)->except(['show', 'destroy']);
         Route::put('/tenants/{tenant}/status/{status}', TenantStatusController::class)
             ->whereIn('status', ['active', 'suspended', 'archived'])
