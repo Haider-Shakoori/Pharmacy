@@ -67,7 +67,9 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
               label: const Text('Camera'),
             ),
             OutlinedButton.icon(
-              onPressed: _busy ? null : () => _scan(MedicineImageOrigin.gallery),
+              onPressed: _busy
+                  ? null
+                  : () => _scan(MedicineImageOrigin.gallery),
               icon: const Icon(Icons.photo_library_outlined),
               label: const Text('Gallery'),
             ),
