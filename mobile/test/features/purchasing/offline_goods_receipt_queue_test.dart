@@ -26,7 +26,7 @@ void main() {
           purchaseOrderLineId: '01KABCDEABCDEABCDEABCDEABD',
           orderedQuantity: '10',
           previouslyReceivedQuantity: '2',
-          receivedQuantity: '3',
+          receivedQuantity: '3.0000',
           unitCost: '12.5',
         ),
       ],
