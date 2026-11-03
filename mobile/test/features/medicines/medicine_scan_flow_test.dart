@@ -74,9 +74,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(confirmed, isEmpty);
 
-    await tester.ensureVisible(
-      find.text('I have checked the medicine label and details'),
-    );
+    await tester.ensureVisible(find.text('I have checked the medicine label and details'));
     await tester.tap(find.text('I have checked the medicine label and details'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Use reviewed details'));
@@ -88,5 +86,4 @@ void main() {
     expect(find.text('Review scanned medicine details'), findsNothing);
     expect(find.text('Use reviewed details'), findsNothing);
   });
-
 }
