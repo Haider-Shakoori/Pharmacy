@@ -9,6 +9,7 @@ use App\Models\Permission;
 use App\Models\ProductBatch;
 use App\Models\Role;
 use App\Models\StockLocation;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -99,6 +100,23 @@ class MobileSyncPullService
                     'purchase_cost',
                     'status',
                     'last_movement_at',
+                    'created_at',
+                    'updated_at',
+                ]),
+                'suppliers' => Supplier::query()->select([
+                    'id',
+                    'code',
+                    'name',
+                    'contact_person',
+                    'phone',
+                    'whatsapp',
+                    'email',
+                    'address',
+                    'city',
+                    'province',
+                    'payment_terms_days',
+                    'is_active',
+                    'notes',
                     'created_at',
                     'updated_at',
                 ]),
@@ -265,6 +283,24 @@ class MobileSyncPullService
                     'purchase_cost' => (string) $row->purchase_cost,
                     'status' => $row->status,
                     'last_movement_at' => $row->last_movement_at?->toISOString(),
+                    'is_deleted' => false,
+                    'server_created_at' => $row->created_at->toISOString(),
+                    'server_updated_at' => $row->updated_at->toISOString(),
+                ],
+                'suppliers' => [
+                    'id' => $row->id,
+                    'code' => $row->code,
+                    'name' => $row->name,
+                    'contact_person' => $row->contact_person,
+                    'phone' => $row->phone,
+                    'whatsapp' => $row->whatsapp,
+                    'email' => $row->email,
+                    'address' => $row->address,
+                    'city' => $row->city,
+                    'province' => $row->province,
+                    'payment_terms_days' => $row->payment_terms_days,
+                    'is_active' => (bool) $row->is_active,
+                    'notes' => $row->notes,
                     'is_deleted' => false,
                     'server_created_at' => $row->created_at->toISOString(),
                     'server_updated_at' => $row->updated_at->toISOString(),
