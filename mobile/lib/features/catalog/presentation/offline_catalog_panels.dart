@@ -91,6 +91,7 @@ class _StockBrowserState extends State<_StockBrowser> {
   List<String> _locations = <String>[];
   List<StockMedicineSnapshot> _medicines = <StockMedicineSnapshot>[];
   InventoryOverview? _overview;
+  StockCostOverview? _costOverview;
   List<StockSaleMovement> _movements = <StockSaleMovement>[];
   String? _location;
   String? _error;
@@ -126,6 +127,9 @@ class _StockBrowserState extends State<_StockBrowser> {
         locationId: _location,
         page: _page,
       );
+      final StockCostOverview costOverview = await browser.stockCostOverview(
+        locationId: _location,
+      );
       final List<StockSaleMovement> movements = await browser.recentSaleMovements(
         locationId: _location,
       );
@@ -133,6 +137,7 @@ class _StockBrowserState extends State<_StockBrowser> {
         return;
       }
       setState(() {
+        _costOverview = costOverview;
         _movements = movements;
         _locations = locations;
         _overview = overview;
@@ -193,6 +198,17 @@ class _StockBrowserState extends State<_StockBrowser> {
             label: 'Expiring in 30 days',
             value: '${_overview?.expiringBatches ?? 0}',
             color: const Color(0xFFFFF3D9),
+          ),
+          ListTile(
+            leading: const Icon(Icons.payments_outlined),
+            title: const Text('Remaining stock acquisition value'),
+            subtitle: Text(
+              '${_costOverview?.batchCount ?? 0} active, non-expired batches · based on recorded unit costs',
+            ),
+            trailing: Text(
+              'AFN ${_costOverview?.acquisitionValue.compact ?? '0'}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           ExpansionTile(
             title: const Text('Recent POS stock deductions'),
