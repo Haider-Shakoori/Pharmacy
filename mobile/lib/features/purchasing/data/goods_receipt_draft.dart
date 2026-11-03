@@ -52,7 +52,9 @@ class GoodsReceiptDraftValidator {
   }) {
     final errors = <String>[];
     if (orderStatus != 'approved' && orderStatus != 'partially_received') {
-      errors.add('Only approved or partially received orders can receive goods.');
+      errors.add(
+        'Only approved or partially received orders can receive goods.',
+      );
     }
     if (lines.isEmpty || lines.length > 250) {
       errors.add('A receipt must contain between 1 and 250 order lines.');
@@ -71,8 +73,11 @@ class GoodsReceiptDraftValidator {
         final received = FixedDecimal.parse(line.receivedQuantity);
         final bonus = FixedDecimal.parse(line.bonusQuantity);
         final cost = FixedDecimal.parse(line.unitCost);
-        if (ordered.isNegative || previous.isNegative ||
-            received.isNegative || bonus.isNegative || cost.isNegative) {
+        if (ordered.isNegative ||
+            previous.isNegative ||
+            received.isNegative ||
+            bonus.isNegative ||
+            cost.isNegative) {
           errors.add('Quantities and costs cannot be negative.');
           continue;
         }
@@ -81,21 +86,25 @@ class GoodsReceiptDraftValidator {
         }
         if (received.isPositive) {
           hasReceived = true;
-          if (line.requiresBatch && (line.batchNumber?.trim().isEmpty ?? true)) {
+          if (line.requiresBatch &&
+              (line.batchNumber?.trim().isEmpty ?? true)) {
             errors.add('A batch number is required for tracked medicine.');
           }
           if (line.requiresExpiry && (line.expiresAt?.trim().isEmpty ?? true)) {
             errors.add('An expiry date is required for tracked medicine.');
           }
-          if (line.expiresAt != null && line.expiresAt!.isNotEmpty &&
+          if (line.expiresAt != null &&
+              line.expiresAt!.isNotEmpty &&
               DateTime.tryParse(line.expiresAt!) == null) {
             errors.add('Expiry date is invalid.');
           }
-          if (line.manufacturedAt != null && line.manufacturedAt!.isNotEmpty &&
+          if (line.manufacturedAt != null &&
+              line.manufacturedAt!.isNotEmpty &&
               DateTime.tryParse(line.manufacturedAt!) == null) {
             errors.add('Manufacturing date is invalid.');
           }
-          if (line.salePrice != null && line.salePrice!.isNotEmpty &&
+          if (line.salePrice != null &&
+              line.salePrice!.isNotEmpty &&
               FixedDecimal.parse(line.salePrice!).isNegative) {
             errors.add('Sale price cannot be negative.');
           }
