@@ -19,8 +19,8 @@ import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.
 import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({required this.localeNotifier, super.key});
