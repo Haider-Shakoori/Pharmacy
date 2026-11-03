@@ -219,6 +219,7 @@ class MobileSyncPushService
             return $this->rejected($idempotencyKey, 'reference_missing', 'The user or purchase order no longer exists.');
         } catch (Throwable $exception) {
             report($exception);
+
             return $this->rejected($idempotencyKey, 'server_error', 'Could not capture receipt.', retryable: true);
         }
     }
