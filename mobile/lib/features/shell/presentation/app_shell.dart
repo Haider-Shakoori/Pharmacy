@@ -132,8 +132,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                         trailing: IconButton(
                           tooltip: 'Clear reviewed draft',
                           icon: const Icon(Icons.delete_outline),
-                          onPressed: () =>
-                              setState(() => _reviewedScan = null),
+                          onPressed: () => setState(() => _reviewedScan = null),
                         ),
                       ),
                   ],
