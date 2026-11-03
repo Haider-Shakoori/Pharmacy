@@ -5,6 +5,7 @@ import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/features/purchasing/data/purchase_receiving_summary.dart';
+import 'package:businessos_pharmacy/features/purchasing/presentation/goods_receipt_worksheet.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -175,6 +176,25 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
                   'Order lines',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
+                if (lines.isNotEmpty &&
+                    (row.read<String>('subtitle') == 'approved' ||
+                     row.read<String>('subtitle') == 'partially_received'))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => GoodsReceiptWorksheet(
+                            orderNumber: row.read<String>('title'),
+                            orderStatus: row.read<String>('subtitle'),
+                            lines: lines,
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.inventory_outlined),
+                      label: const Text('Open receiving worksheet'),
+                    ),
+                  ),
                 if (lines.isEmpty) const Text('No lines synced.'),
                 for (final raw in lines)
                   if (raw is Map)
