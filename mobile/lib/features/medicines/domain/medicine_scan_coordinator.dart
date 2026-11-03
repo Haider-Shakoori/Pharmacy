@@ -33,6 +33,16 @@ class MedicineScanCoordinator {
     if (imagePath.trim().isEmpty) {
       throw ArgumentError.value(imagePath, 'imagePath', 'Image path required');
     }
+    final uri = Uri.tryParse(imagePath.trim());
+    if (uri == null ||
+        (uri.hasScheme && uri.scheme != 'file') ||
+        (uri.scheme == 'file' && uri.host.isNotEmpty)) {
+      throw ArgumentError.value(
+        imagePath,
+        'imagePath',
+        'Only local image paths are permitted',
+      );
+    }
     if (!await ocr.isAvailable) {
       throw StateError('Native offline OCR is unavailable on this device');
     }
