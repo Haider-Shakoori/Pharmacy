@@ -9,6 +9,7 @@ import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalo
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coordinator.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/medicine_registration_handoff.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/picker_medicine_image_source.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/platform_medicine_ocr.dart';
 import 'package:businessos_pharmacy/features/medicines/presentation/medicine_scan_flow.dart';
@@ -168,6 +169,62 @@ class _AppShellState extends ConsumerState<AppShell> {
                               matches.isEmpty
                                   ? 'Server-side verification is still required.'
                                   : matches.join(', '),
+                            ),
+                          );
+                        },
+                      ),
+                    if (_reviewedScan != null && _duplicateLookup != null)
+                      FutureBuilder<List<String>>(
+                        future: _duplicateLookup,
+                        builder: (context, snapshot) {
+                          final ready =
+                              snapshot.connectionState == ConnectionState.done &&
+                              !snapshot.hasError &&
+                              snapshot.hasData &&
+                              snapshot.data!.isEmpty;
+                          return ListTile(
+                            title: const Text('Prepare registration handoff'),
+                            subtitle: const Text(
+                              'Copies verified draft fields only. No server submission.',
+                            ),
+                            trailing: IconButton(
+                              tooltip: 'Copy registration handoff',
+                              icon: const Icon(Icons.assignment_outlined),
+                              onPressed: !ready
+                                  ? null
+                                  : () async {
+                                      final draft = _reviewedScan;
+                                      if (draft == null) return;
+                                      final handoff =
+                                          MedicineRegistrationHandoff.prepare(
+                                            reviewed: draft,
+                                            duplicateCheckCompleted: true,
+                                            possibleDuplicates: snapshot.data!,
+                                          );
+                                      await Clipboard.setData(
+                                        ClipboardData(
+                                          text: [
+                                            'Brand: ${handoff.brandName}',
+                                            if (handoff.genericName != null)
+                                              'Generic: ${handoff.genericName}',
+                                            if (handoff.strength != null)
+                                              'Strength: ${handoff.strength}',
+                                            if (handoff.dosageForm != null)
+                                              'Form: ${handoff.dosageForm}',
+                                            if (handoff.barcode != null)
+                                              'Barcode: ${handoff.barcode}',
+                                          ].join('\\n'),
+                                        ),
+                                      );
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Handoff copied. Server validation and pharmacist registration are still required.',
+                                          ),
+                                        ),
+                                      );
+                                    },
                             ),
                           );
                         },
