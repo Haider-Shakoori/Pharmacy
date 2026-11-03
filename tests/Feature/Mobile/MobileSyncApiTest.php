@@ -8,6 +8,7 @@ use App\Models\Medicine;
 use App\Models\ProductBatch;
 use App\Models\Sale;
 use App\Models\StockLocation;
+use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Inventory\StockMovementService;
@@ -268,6 +269,45 @@ class MobileSyncApiTest extends TestCase
             $this->assertCount(1, $response->json('data.data'));
             $this->assertNotEmpty($response->json('data.next_cursor'));
         }
+    }
+
+    public function test_supplier_sync_pull_is_tenant_scoped_and_cursor_paginated(): void
+    {
+        $this->tenant->run(function (): void {
+            Supplier::query()->create([
+                'code' => 'SUP-A',
+                'name' => 'Alpha Medical',
+                'phone' => '0700000001',
+                'is_active' => true,
+            ]);
+            Supplier::query()->create([
+                'code' => 'SUP-B',
+                'name' => 'Beta Medical',
+                'is_active' => false,
+            ]);
+        });
+
+        $first = $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/sync/pull/suppliers?limit=1')
+            ->assertOk()
+            ->assertJsonPath('data.stream', 'suppliers')
+            ->assertJsonPath('data.has_more', true);
+
+        $this->assertCount(1, $first->json('data.data'));
+        $this->assertArrayHasKey('is_active', $first->json('data.data.0'));
+        $cursor = $first->json('data.next_cursor');
+        $this->assertNotEmpty($cursor);
+
+        $second = $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/sync/pull/suppliers?limit=1&cursor='.urlencode($cursor))
+            ->assertOk()
+            ->assertJsonPath('data.has_more', false);
+
+        $this->assertCount(1, $second->json('data.data'));
+        $this->assertNotSame(
+            $first->json('data.data.0.id'),
+            $second->json('data.data.0.id'),
+        );
     }
 
     public function test_session_refresh_renews_access_without_plaintext_license_key(): void
