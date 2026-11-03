@@ -2,7 +2,11 @@
 
 namespace Tests\Feature\Pharmacy;
 
+use App\Models\Branch;
 use App\Models\GoodsReceipt;
+use App\Models\ProductBatch;
+use App\Models\StockLocation;
+use App\Models\StockMovement;
 use App\Models\Medicine;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseOrder;
@@ -10,6 +14,7 @@ use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Mobile\MobileGoodsReceiptService;
+use App\Services\Inventory\PostGoodsReceiptToInventory;
 use App\Services\Purchasing\PurchaseTotalsCalculator;
 use App\Services\Purchasing\RecordSupplierPayment;
 use App\Services\Subscriptions\TrialProvisioner;
@@ -267,6 +272,38 @@ class PurchasingTest extends TestCase
             $this->assertSame('pending_inventory', $first->fresh()->status);
             $this->assertSame('4.0000', $first->lines()->firstOrFail()->received_quantity);
             $this->assertSame('1.0000', $first->lines()->firstOrFail()->bonus_quantity);
+
+            $branch = Branch::query()->create([
+                'code' => 'MOBILE-RECEIVE',
+                'name' => 'Mobile Receiving Branch',
+                'is_active' => true,
+            ]);
+            $location = StockLocation::query()->create([
+                'branch_id' => $branch->id,
+                'code' => 'MOBILE-STOCK',
+                'name' => 'Mobile Receiving Stock',
+                'kind' => 'store',
+                'is_active' => true,
+            ]);
+            $poster = app(PostGoodsReceiptToInventory::class);
+            $posted = $poster->post($first, $location, $user->id);
+            $postedAgain = $poster->post($first, $location, $user->id);
+
+            $this->assertSame($posted->id, $postedAgain->id);
+            $this->assertSame('posted', $postedAgain->status);
+            $this->assertNotNull($postedAgain->inventory_posted_at);
+            $this->assertSame('4.0000', $line->fresh()->received_quantity);
+            $this->assertSame('partially_received', $order->fresh()->status);
+            $this->assertDatabaseCount('product_batches', 1);
+            $this->assertDatabaseCount('stock_movements', 1);
+            $batch = ProductBatch::query()->firstOrFail();
+            $this->assertSame('5.0000', $batch->received_quantity);
+            $this->assertSame('5.0000', $batch->available_quantity);
+            $this->assertSame('MOBILE-BATCH-001', $batch->batch_number);
+            $this->assertSame(
+                'purchase_receipt',
+                StockMovement::query()->firstOrFail()->movement_type,
+            );
         });
     }
 
