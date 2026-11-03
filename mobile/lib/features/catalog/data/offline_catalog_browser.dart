@@ -425,3 +425,4 @@ class StockCostOverview {
 
   final int batchCount;
   final FixedDecimal acquisitionValue;
+}
