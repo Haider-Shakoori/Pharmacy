@@ -63,6 +63,7 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-2">
+                                    <a href="{{ route('platform.tenants.logins', $tenant) }}" class="rounded-lg border border-teal-300 px-2.5 py-1.5 text-xs font-semibold text-teal-800">User logins</a>
                                     <a href="{{ route('platform.tenants.edit', $tenant) }}" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold">Edit</a>
                                     @foreach (['active', 'suspended', 'archived'] as $nextStatus)
                                         @if ($tenant->status->value !== $nextStatus)
