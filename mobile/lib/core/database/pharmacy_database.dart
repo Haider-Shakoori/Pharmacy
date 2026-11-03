@@ -184,11 +184,40 @@ final class PharmacyDatabase extends _$PharmacyDatabase {
       );
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 3) {
+        await customStatement('''
+          CREATE TABLE IF NOT EXISTS local_suppliers (
+            id TEXT PRIMARY KEY NOT NULL,
+            code TEXT,
+            name TEXT NOT NULL,
+            phone TEXT,
+            contact_person TEXT,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            server_updated_at INTEGER
+          )
+        ''');
+        await customStatement('''
+          CREATE TABLE IF NOT EXISTS local_purchase_orders (
+            id TEXT PRIMARY KEY NOT NULL,
+            supplier_id TEXT NOT NULL,
+            number TEXT NOT NULL,
+            status TEXT NOT NULL,
+            order_date TEXT,
+            expected_date TEXT,
+            currency TEXT NOT NULL,
+            grand_total TEXT NOT NULL,
+            lines_json TEXT NOT NULL DEFAULT '[]',
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            server_updated_at INTEGER
+          )
+        ''');
+      }
       if (from < 2) {
         await m.addColumn(
           localInventoryBatches,
@@ -198,6 +227,23 @@ final class PharmacyDatabase extends _$PharmacyDatabase {
       }
     },
     beforeOpen: (OpeningDetails details) async {
+      await customStatement('''
+        CREATE TABLE IF NOT EXISTS local_suppliers (
+          id TEXT PRIMARY KEY NOT NULL, code TEXT, name TEXT NOT NULL,
+          phone TEXT, contact_person TEXT,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          is_deleted INTEGER NOT NULL DEFAULT 0, server_updated_at INTEGER
+        )
+      ''');
+      await customStatement('''
+        CREATE TABLE IF NOT EXISTS local_purchase_orders (
+          id TEXT PRIMARY KEY NOT NULL, supplier_id TEXT NOT NULL,
+          number TEXT NOT NULL, status TEXT NOT NULL,
+          order_date TEXT, expected_date TEXT, currency TEXT NOT NULL,
+          grand_total TEXT NOT NULL, lines_json TEXT NOT NULL DEFAULT '[]',
+          is_deleted INTEGER NOT NULL DEFAULT 0, server_updated_at INTEGER
+        )
+      ''');
       await customStatement('PRAGMA foreign_keys = ON');
       await customStatement('PRAGMA journal_mode = WAL');
     },
