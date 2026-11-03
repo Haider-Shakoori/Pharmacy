@@ -141,9 +141,12 @@ class _AppShellState extends ConsumerState<AppShell> {
                       FutureBuilder<List<String>>(
                         future: _duplicateLookup,
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState != ConnectionState.done) {
+                          if (snapshot.connectionState !=
+                              ConnectionState.done) {
                             return const ListTile(
-                              title: Text('Checking local catalog for duplicates...'),
+                              title: Text(
+                                'Checking local catalog for duplicates...',
+                              ),
                             );
                           }
                           if (snapshot.hasError) {
