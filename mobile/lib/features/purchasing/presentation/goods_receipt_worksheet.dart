@@ -109,8 +109,9 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
       );
       Navigator.of(context).pop();
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() => errors = <String>['Unable to queue receipt: $error']);
+      }
     } finally {
       if (mounted) setState(() => saving = false);
     }
