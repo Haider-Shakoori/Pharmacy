@@ -1,5 +1,5 @@
 name: offline_medicine_ocr
-description: Bundled Android Latin OCR for Darmaltoon medicine labels.
+description: Offline Android and iOS OCR for Darmaltoon medicine labels.
 version: 0.1.0
 publish_to: none
 
@@ -16,4 +16,6 @@ flutter:
     platforms:
       android:
         package: af.businessos.offline_medicine_ocr
+        pluginClass: OfflineMedicineOcrPlugin
+      ios:
         pluginClass: OfflineMedicineOcrPlugin
