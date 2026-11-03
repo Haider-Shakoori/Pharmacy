@@ -2,6 +2,7 @@ package af.businessos.offline_medicine_ocr
 
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.exifinterface.media.ExifInterface
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -51,7 +52,7 @@ class OfflineMedicineOcrPlugin : FlutterPlugin, MethodChannel.MethodCallHandler 
         } else {
             raw
         }
-        if (path.isNullOrBlank() || raw.contains("://") && !raw.startsWith("file://")) {
+        if (path.isNullOrBlank() || (raw.contains("://") && !raw.startsWith("file://"))) {
             result.error("invalid_path", "Remote image sources are forbidden", null)
             return
         }
@@ -80,7 +81,21 @@ class OfflineMedicineOcrPlugin : FlutterPlugin, MethodChannel.MethodCallHandler 
         }
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         try {
-            val image = InputImage.fromBitmap(bitmap, 0)
+            val orientation = try {
+                ExifInterface(file.path).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL,
+                )
+            } catch (_: Exception) {
+                ExifInterface.ORIENTATION_NORMAL
+            }
+            val rotation = when (orientation) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                else -> 0
+            }
+            val image = InputImage.fromBitmap(bitmap, rotation)
             recognizer.process(image)
                 .addOnSuccessListener { text ->
                     result.success(text.textBlocks.flatMap { block ->
