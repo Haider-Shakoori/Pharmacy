@@ -258,6 +258,90 @@ class PurchasingTest extends TestCase
                 $this->assertArrayHasKey('lines', $exception->errors());
             }
             $this->assertDatabaseCount('goods_receipts', 1);
+
+            // Different receipt keys must still respect quantities reserved by
+            // an unposted receipt, even when the order itself is unchanged.
+            $this->assertSame('0.0000', $line->fresh()->received_quantity);
+            $this->assertSame('pending_inventory', $first->fresh()->status);
+            $this->assertSame('4.0000', $first->lines()->firstOrFail()->received_quantity);
+            $this->assertSame('1.0000', $first->lines()->firstOrFail()->bonus_quantity);
+        });
+    }
+
+    public function test_mobile_receipt_rejects_missing_tracking_and_duplicate_lines_without_stock_changes(): void
+    {
+        $tenant = $this->createTenant(['name' => 'Tracked Pharmacy', 'slug' => 'tracked-receiving']);
+        app(TenantContext::class)->run($tenant, function (): void {
+            $user = User::query()->create([
+                'name' => 'Receiver',
+                'email' => 'tracked-receiver@example.test',
+                'password' => 'password123',
+                'is_active' => true,
+            ]);
+            $supplier = Supplier::query()->create(['code' => 'SUP-TRACK', 'name' => 'Tracked Supplier']);
+            $medicine = Medicine::query()->create([
+                'medicine_code' => 'MED-TRACK',
+                'brand_name' => 'Tracked Medicine',
+                'purchase_unit' => 'box',
+                'sale_unit' => 'tablet',
+                'units_per_purchase_unit' => 1,
+                'batch_tracking_required' => true,
+                'expiry_tracking_required' => true,
+            ]);
+            $order = PurchaseOrder::query()->create([
+                'supplier_id' => $supplier->id,
+                'number' => 'PO-TRACK-001',
+                'status' => 'approved',
+                'order_date' => today()->toDateString(),
+                'currency' => 'AFN',
+                'created_by' => $user->id,
+            ]);
+            $line = $order->lines()->create([
+                'medicine_id' => $medicine->id,
+                'description' => 'Tracked Medicine',
+                'ordered_quantity' => '10.0000',
+                'received_quantity' => '0.0000',
+                'unit_cost' => '5.0000',
+                'line_total' => '50.0000',
+            ]);
+            $data = [
+                'purchase_order_id' => $order->id,
+                'received_at' => now()->toDateTimeString(),
+                'lines' => [[
+                    'purchase_order_line_id' => $line->id,
+                    'received_quantity' => '2.0000',
+                    'unit_cost' => '5.0000',
+                ]],
+            ];
+            $service = app(MobileGoodsReceiptService::class);
+
+            try {
+                $service->capture($user, $data, 'missing-tracking');
+                $this->fail('Missing batch tracking must reject receipt.');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('lines', $exception->errors());
+            }
+
+            $tracked = $data;
+            $tracked['lines'][0]['batch_number'] = 'TRACK-001';
+            try {
+                $service->capture($user, $tracked, 'missing-expiry');
+                $this->fail('Missing expiry tracking must reject receipt.');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('lines', $exception->errors());
+            }
+
+            $tracked['lines'][0]['expires_at'] = now()->addYear()->toDateString();
+            $tracked['lines'][] = $tracked['lines'][0];
+            try {
+                $service->capture($user, $tracked, 'duplicate-lines');
+                $this->fail('Duplicate purchase-order lines must reject receipt.');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('lines', $exception->errors());
+            }
+
+            $this->assertDatabaseCount('goods_receipts', 0);
+            $this->assertSame('0.0000', $line->fresh()->received_quantity);
         });
     }
 }
