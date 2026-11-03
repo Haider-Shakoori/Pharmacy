@@ -7,6 +7,8 @@ use App\Models\Medicine;
 use App\Services\Mobile\MobileAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -44,7 +46,13 @@ class MobileMedicineCreateController extends Controller
 
             unset($data['pharmacist_approved']);
             $data['brand_name'] = $brand;
-            $medicine = Medicine::query()->create($data);
+            try {
+                $medicine = DB::transaction(fn () => Medicine::query()->create($data));
+            } catch (UniqueConstraintViolationException $exception) {
+                throw ValidationException::withMessages([
+                    'medicine_code' => 'Medicine code or barcode already exists.',
+                ]);
+            }
 
             return response()->json(['data' => ['id' => $medicine->id]], 201);
         });
