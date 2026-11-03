@@ -29,8 +29,10 @@ class MedicineRegistrationFields {
     if (code.isEmpty || code.length > 80) {
       throw ArgumentError('A medicine code (max 80 characters) is required');
     }
-    if (purchase.isEmpty || purchase.length > 50 ||
-        sale.isEmpty || sale.length > 50) {
+    if (purchase.isEmpty ||
+        purchase.length > 50 ||
+        sale.isEmpty ||
+        sale.length > 50) {
       throw ArgumentError('Valid purchase and sale units are required');
     }
     if (!unitsPerPurchaseUnit.isFinite ||
@@ -38,7 +40,9 @@ class MedicineRegistrationFields {
         unitsPerPurchaseUnit > 99999999) {
       throw ArgumentError('Units per purchase unit must be positive');
     }
-    if (!reorderLevel.isFinite || reorderLevel < 0 || reorderLevel > 999999999) {
+    if (!reorderLevel.isFinite ||
+        reorderLevel < 0 ||
+        reorderLevel > 999999999) {
       throw ArgumentError('Reorder level must be nonnegative');
     }
     return <String, Object?>{
