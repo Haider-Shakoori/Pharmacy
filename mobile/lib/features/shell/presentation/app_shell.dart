@@ -220,6 +220,37 @@ class _AppShellState extends ConsumerState<AppShell> {
                                             duplicateCheckCompleted: true,
                                             possibleDuplicates: snapshot.data!,
                                           );
+                                      final registration = ref
+                                          .read(mobileRegistrationProvider)
+                                          .asData
+                                          ?.value;
+                                      if (registration == null) return;
+                                      final client = http.Client();
+                                      try {
+                                        final matches = await MedicineDuplicatePreflight(
+                                          environment: AppEnvironment.current,
+                                          client: client,
+                                        ).check(
+                                          registration: registration,
+                                          handoff: handoff,
+                                        );
+                                        if (matches.isNotEmpty) {
+                                          throw StateError(
+                                            'Possible server duplicates: ${matches.join(', ')}',
+                                          );
+                                        }
+                                      } catch (error) {
+                                        if (!context.mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Handoff blocked: $error')),
+                                        );
+                                        return;
+                                      } finally {
+                                        client.close();
+                                      }
+                                      if (!context.mounted || !_registrationApproval) {
+                                        return;
+                                      }
                                       await Clipboard.setData(
                                         ClipboardData(
                                           text: [
