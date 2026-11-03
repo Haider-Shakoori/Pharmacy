@@ -32,10 +32,10 @@ void main() {
           throw MissingPluginException();
         });
     expect(await ocr.isAvailable, isTrue);
-    expect(
-      await ocr.recognizeLocalImage('/local/medicine.jpg'),
-      <String>['ExampleMed', '250 mg'],
-    );
+    expect(await ocr.recognizeLocalImage('/local/medicine.jpg'), <String>[
+      'ExampleMed',
+      '250 mg',
+    ]);
     expect(capturedPath, '/local/medicine.jpg');
   });
 
