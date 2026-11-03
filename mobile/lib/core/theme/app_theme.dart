@@ -22,7 +22,9 @@ abstract final class AppTheme {
         clipBehavior: Clip.antiAlias,
         elevation: 0,
         color: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(18))),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+        ),
       ),
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(),
