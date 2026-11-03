@@ -49,6 +49,16 @@ void main() {
     expect(ocr.calls, 1);
   });
 
+  test('rejects remote URLs before invoking OCR', () async {
+    final ocr = FakeNativeOcr();
+    await expectLater(
+      MedicineScanCoordinator(ocr: ocr)
+          .scanLocalImage('https://example.com/medicine.jpg'),
+      throwsArgumentError,
+    );
+    expect(ocr.calls, 0);
+  });
+
   test('rejects empty image path without invoking OCR', () async {
     final ocr = FakeNativeOcr();
     await expectLater(
