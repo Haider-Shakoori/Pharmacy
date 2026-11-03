@@ -24,9 +24,8 @@ class FakeImageSource implements LocalMedicineImageSource {
 void main() {
   test('camera returns local image without calling gallery', () async {
     final source = FakeImageSource(cameraPath: '/local/medicine.jpg');
-    final result = await MedicineImageAcquisition(
-      source,
-    ).acquire(MedicineImageOrigin.camera);
+    final result = await MedicineImageAcquisition(source)
+        .acquire(MedicineImageOrigin.camera);
     expect(result?.localPath, '/local/medicine.jpg');
     expect(result?.origin, MedicineImageOrigin.camera);
     expect(source.cameraCalls, 1);
@@ -36,9 +35,8 @@ void main() {
   test('cancelled gallery selection does not create a draft', () async {
     final source = FakeImageSource();
     expect(
-      await MedicineImageAcquisition(
-        source,
-      ).acquire(MedicineImageOrigin.gallery),
+      await MedicineImageAcquisition(source)
+          .acquire(MedicineImageOrigin.gallery),
       isNull,
     );
   });
