@@ -338,6 +338,7 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
   final TextEditingController _search = TextEditingController();
   List<CustomerSnapshot> _customers = <CustomerSnapshot>[];
   bool _loading = true;
+  int _page = 0;
   String? _error;
 
   @override
@@ -360,7 +361,7 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
     try {
       final List<CustomerSnapshot> customers = await OfflineCatalogBrowser(
         widget.database,
-      ).customers(search: _search.text);
+      ).customers(search: _search.text, page: _page);
       if (!mounted) {
         return;
       }
@@ -407,8 +408,31 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
             ),
           ),
           textInputAction: TextInputAction.search,
-          onSubmitted: (String value) => _load(),
+          onSubmitted: (String value) {
+            _page = 0;
+            _load();
+          },
         ),
+        if (!_loading && _error == null)
+          Row(children: <Widget>[
+            IconButton(
+              tooltip: 'Previous 100 customers',
+              onPressed: _page == 0 ? null : () {
+                _page--;
+                _load();
+              },
+              icon: const Icon(Icons.chevron_left),
+            ),
+            Text('Page ${_page + 1}'),
+            IconButton(
+              tooltip: 'Next 100 customers',
+              onPressed: _customers.length < 100 ? null : () {
+                _page++;
+                _load();
+              },
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ]),
         if (_loading)
           const Padding(
             padding: EdgeInsets.all(28),
