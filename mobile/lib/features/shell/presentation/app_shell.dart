@@ -267,9 +267,12 @@ class _HomePanel extends ConsumerWidget {
               key: ValueKey('${db.hashCode}-$date'),
               future: OfflineSalesSummaryRepository(db).forBusinessDate(date),
               builder: (context, snapshot) {
-                if (snapshot.hasError)
+                if (snapshot.hasError) {
                   return const Text('Unable to load today\'s local sales');
-                if (!snapshot.hasData) return const LinearProgressIndicator();
+                }
+                if (!snapshot.hasData) {
+                  return const LinearProgressIndicator();
+                }
                 final summary = snapshot.data!;
                 return Card(
                   child: Padding(
@@ -324,8 +327,9 @@ class _HomePanel extends ConsumerWidget {
                     if (snapshot.hasError) {
                       return const Text('Unable to load inventory alerts');
                     }
-                    if (!snapshot.hasData)
+                    if (!snapshot.hasData) {
                       return const LinearProgressIndicator();
+                    }
                     final InventoryOverview overview = snapshot.data!;
                     return Card(
                       child: Padding(
@@ -553,8 +557,9 @@ class _ReportsPanelState extends ConsumerState<_ReportsPanel> {
               future: OfflineSalesSummaryRepository(db)
                   .forBusinessDateRange(startDate, date),
               builder: (context, snapshot) {
-                if (snapshot.hasError)
+                if (snapshot.hasError) {
                   return const Text('Unable to read local sales');
+                }
                 if (!snapshot.hasData) return const LinearProgressIndicator();
                 final summary = snapshot.data!;
                 return Card(
