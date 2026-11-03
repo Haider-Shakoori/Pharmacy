@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/offline_medicine_text_parser.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const parser = OfflineMedicineTextParser();
