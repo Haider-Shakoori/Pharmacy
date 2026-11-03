@@ -45,13 +45,18 @@ class OfflineMedicineDuplicateDetector {
     final results = <MedicineDuplicateMatch>[];
     for (final medicine in catalog) {
       if (barcode.isNotEmpty && normalize(medicine.barcode) == barcode) {
-        results.add(MedicineDuplicateMatch(medicine, MedicineDuplicateReason.barcode));
+        results.add(
+          MedicineDuplicateMatch(medicine, MedicineDuplicateReason.barcode),
+        );
       } else if (brand.isNotEmpty &&
           strength.isNotEmpty &&
           normalize(medicine.brandName) == brand &&
           normalize(medicine.strength) == strength) {
         results.add(
-          MedicineDuplicateMatch(medicine, MedicineDuplicateReason.brandAndStrength),
+          MedicineDuplicateMatch(
+            medicine,
+            MedicineDuplicateReason.brandAndStrength,
+          ),
         );
       }
     }
