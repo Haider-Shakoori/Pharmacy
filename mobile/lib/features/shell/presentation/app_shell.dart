@@ -141,7 +141,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                           ].join('\n'),
                         ),
                         trailing: Wrap(
-                          mainAxisSize: MainAxisSize.min,
+                          spacing: 0,
                           children: [
                             IconButton(
                               tooltip: 'Copy reviewed medicine details',
