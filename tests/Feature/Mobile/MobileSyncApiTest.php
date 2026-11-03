@@ -280,11 +280,14 @@ class MobileSyncApiTest extends TestCase
                 'phone' => '0700000001',
                 'is_active' => true,
             ]);
-            Supplier::query()->create([
+            $second = Supplier::query()->create([
                 'code' => 'SUP-B',
                 'name' => 'Beta Medical',
                 'is_active' => false,
             ]);
+            $second->timestamps = false;
+            $second->updated_at = now()->addMinutes(5);
+            $second->save();
         });
 
         $first = $this->withToken($this->accessToken)
