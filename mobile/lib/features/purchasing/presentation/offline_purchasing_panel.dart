@@ -178,7 +178,7 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
                 ),
                 if (lines.isNotEmpty &&
                     (row.read<String>('subtitle') == 'approved' ||
-                     row.read<String>('subtitle') == 'partially_received'))
+                        row.read<String>('subtitle') == 'partially_received'))
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: OutlinedButton.icon(
