@@ -185,6 +185,8 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) => GoodsReceiptWorksheet(
+                            database: widget.database,
+                            purchaseOrderId: row.read<String>('id'),
                             orderNumber: row.read<String>('title'),
                             orderStatus: row.read<String>('subtitle'),
                             lines: lines,
