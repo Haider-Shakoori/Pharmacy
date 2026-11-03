@@ -1,15 +1,21 @@
+import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/features/purchasing/data/goods_receipt_draft.dart';
+import 'package:businessos_pharmacy/features/purchasing/data/offline_goods_receipt_queue.dart';
 import 'package:flutter/material.dart';
 
 /// A local, non-posting receiving worksheet. Closing it discards entries.
 class GoodsReceiptWorksheet extends StatefulWidget {
   const GoodsReceiptWorksheet({
     super.key,
+    required this.database,
+    required this.purchaseOrderId,
     required this.orderNumber,
     required this.orderStatus,
     required this.lines,
   });
 
+  final PharmacyDatabase database;
+  final String purchaseOrderId;
   final String orderNumber;
   final String orderStatus;
   final List<dynamic> lines;
@@ -21,6 +27,7 @@ class GoodsReceiptWorksheet extends StatefulWidget {
 class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
   late final List<_LineInputs> inputs;
   List<String> errors = <String>[];
+  bool saving = false;
 
   @override
   void initState() {
@@ -49,7 +56,7 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
     super.dispose();
   }
 
-  void _validate() {
+  List<GoodsReceiptDraftLine> _draftLines() {
     final drafts = inputs
         .map(
           (line) => GoodsReceiptDraftLine(
@@ -67,19 +74,37 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
           ),
         )
         .toList();
-    setState(() {
-      errors = GoodsReceiptDraftValidator.validate(
-        drafts,
+    return drafts;
+  }
+
+  Future<void> _queueReceipt() async {
+    if (saving) return;
+    final drafts = _draftLines();
+    final validation = GoodsReceiptDraftValidator.validate(
+      drafts, orderStatus: widget.orderStatus,
+    );
+    if (validation.isNotEmpty) {
+      setState(() => errors = validation);
+      return;
+    }
+    setState(() { saving = true; errors = <String>[]; });
+    try {
+      await OfflineGoodsReceiptQueue(widget.database).enqueue(
+        purchaseOrderId: widget.purchaseOrderId,
         orderStatus: widget.orderStatus,
+        lines: drafts,
+        receivedAt: DateTime.now(),
       );
-      if (errors.isEmpty) {
-        errors = <String>[
-          'Worksheet validated locally. Submission is unavailable until '
-              'authenticated receipt synchronization and server-side checks '
-              'are implemented. No inventory was changed.',
-        ];
-      }
-    });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Receipt queued offline. Stock is unchanged until server inventory posting.')),
+      );
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (mounted) setState(() => errors = <String>['Unable to queue receipt: $error']);
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
   }
 
   @override
@@ -90,8 +115,8 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
         padding: const EdgeInsets.all(16),
         children: <Widget>[
           const Text(
-            'Local worksheet only. Entries are discarded on exit; '
-            'no goods receipt or stock update will be submitted.',
+            'Save this receipt to the offline sync queue. The server will '
+            'validate it before inventory can be posted.',
           ),
           const SizedBox(height: 12),
           for (final line in inputs)
@@ -163,9 +188,9 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
             ),
           const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: _validate,
-            icon: const Icon(Icons.fact_check_outlined),
-            label: const Text('Validate worksheet'),
+            onPressed: saving ? null : _queueReceipt,
+            icon: const Icon(Icons.save_outlined),
+            label: Text(saving ? 'Saving...' : 'Queue goods receipt'),
           ),
         ],
       ),
