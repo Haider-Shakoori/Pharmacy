@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Platform\StoreTenantRequest;
 use App\Http\Requests\Platform\UpdateTenantRequest;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\Tenancy\TenantProvisioningService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,32 @@ class TenantController extends Controller
             ->paginate(config('pharmacy.performance.default_page_size'))
             ->withQueryString();
 
-        return view('platform.tenants.index', compact('tenants', 'search', 'status'));
+        $lastLogins = [];
+        foreach ($tenants->getCollection() as $tenant) {
+            if ($tenant->provisioning_status !== 'application_ready') {
+                continue;
+            }
+
+            try {
+                $lastLogins[$tenant->id] = $tenant->run(function (): ?array {
+                    $user = User::query()
+                        ->whereNotNull('last_login_at')
+                        ->orderByDesc('last_login_at')
+                        ->first(['name', 'email', 'last_login_at']);
+
+                    return $user ? [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'at' => $user->last_login_at,
+                    ] : null;
+                });
+            } catch (\\Throwable $exception) {
+                report($exception);
+                $lastLogins[$tenant->id] = ['unavailable' => true];
+            }
+        }
+
+        return view('platform.tenants.index', compact('tenants', 'search', 'status', 'lastLogins'));
     }
 
     public function create(): View
