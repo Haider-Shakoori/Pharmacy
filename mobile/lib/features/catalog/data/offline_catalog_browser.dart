@@ -207,7 +207,8 @@ class OfflineCatalogBrowser {
           SELECT 1 FROM local_inventory_batches eb
           WHERE eb.medicine_id = local_medicines.id
             AND eb.is_deleted = 0
-            AND eb.available_quantity != '0'
+            AND CAST(eb.available_quantity AS REAL) > 0
+            AND (eb.status = 'active' OR eb.expires_at < ?)
             AND eb.expires_at IS NOT NULL
             AND eb.expires_at < ?
             ${locationId == null ? '' : 'AND eb.stock_location_id = ?'}
@@ -232,6 +233,7 @@ class OfflineCatalogBrowser {
             Variable<String>(needle),
             Variable<String>(needle),
             Variable<String>(needle),
+            if (expiringOnly) Variable<int>(today.millisecondsSinceEpoch ~/ 1000),
             if (expiringOnly) Variable<int>(cutoff.millisecondsSinceEpoch ~/ 1000),
             if (expiringOnly && locationId != null) Variable<String>(locationId),
             Variable<int>(page * 100),
