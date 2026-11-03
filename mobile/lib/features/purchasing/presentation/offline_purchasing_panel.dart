@@ -36,7 +36,10 @@ class OfflinePurchasingPanel extends ConsumerWidget {
             .when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Text('Offline database error: $error'),
-              data: (PharmacyDatabase db) => _PurchasingBrowser(database: db),
+              data: (PharmacyDatabase db) => _PurchasingBrowser(
+                database: db,
+                canReceive: user.permissions.contains('purchases.manage'),
+              ),
             );
       },
     );
@@ -44,8 +47,12 @@ class OfflinePurchasingPanel extends ConsumerWidget {
 }
 
 class _PurchasingBrowser extends StatefulWidget {
-  const _PurchasingBrowser({required this.database});
+  const _PurchasingBrowser({
+    required this.database,
+    required this.canReceive,
+  });
   final PharmacyDatabase database;
+  final bool canReceive;
 
   @override
   State<_PurchasingBrowser> createState() => _PurchasingBrowserState();
@@ -176,7 +183,8 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
                   'Order lines',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                if (lines.isNotEmpty &&
+                if (widget.canReceive &&
+                    lines.isNotEmpty &&
                     (row.read<String>('subtitle') == 'approved' ||
                         row.read<String>('subtitle') == 'partially_received'))
                   Padding(
