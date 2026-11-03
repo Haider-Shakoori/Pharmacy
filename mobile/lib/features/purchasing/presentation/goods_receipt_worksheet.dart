@@ -50,19 +50,23 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
   }
 
   void _validate() {
-    final drafts = inputs.map((line) => GoodsReceiptDraftLine(
-      purchaseOrderLineId: line.data['id']?.toString() ?? '',
-      orderedQuantity: line.data['ordered_quantity']?.toString() ?? '0',
-      previouslyReceivedQuantity:
-          line.data['received_quantity']?.toString() ?? '0',
-      receivedQuantity: line.quantity.text.trim(),
-      bonusQuantity: line.bonus.text.trim(),
-      unitCost: line.cost.text.trim(),
-      batchNumber: line.batch.text.trim(),
-      expiresAt: line.expiry.text.trim(),
-      // Tracking requirements are not included in the current sync payload.
-      // The server must enforce these requirements before posting.
-    )).toList();
+    final drafts = inputs
+        .map(
+          (line) => GoodsReceiptDraftLine(
+            purchaseOrderLineId: line.data['id']?.toString() ?? '',
+            orderedQuantity: line.data['ordered_quantity']?.toString() ?? '0',
+            previouslyReceivedQuantity:
+                line.data['received_quantity']?.toString() ?? '0',
+            receivedQuantity: line.quantity.text.trim(),
+            bonusQuantity: line.bonus.text.trim(),
+            unitCost: line.cost.text.trim(),
+            batchNumber: line.batch.text.trim(),
+            expiresAt: line.expiry.text.trim(),
+            // Tracking requirements are not included in the current sync payload.
+            // The server must enforce these requirements before posting.
+          ),
+        )
+        .toList();
     setState(() {
       errors = GoodsReceiptDraftValidator.validate(
         drafts,
@@ -71,8 +75,8 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
       if (errors.isEmpty) {
         errors = <String>[
           'Worksheet validated locally. Submission is unavailable until '
-          'authenticated receipt synchronization and server-side checks '
-          'are implemented. No inventory was changed.',
+              'authenticated receipt synchronization and server-side checks '
+              'are implemented. No inventory was changed.',
         ];
       }
     });
@@ -85,8 +89,10 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
-          const Text('Local worksheet only. Entries are discarded on exit; '
-              'no goods receipt or stock update will be submitted.'),
+          const Text(
+            'Local worksheet only. Entries are discarded on exit; '
+            'no goods receipt or stock update will be submitted.',
+          ),
           const SizedBox(height: 12),
           for (final line in inputs)
             Card(
@@ -95,34 +101,53 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(line.data['description']?.toString() ??
-                        line.data['medicine_id']?.toString() ?? 'Medicine',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    Text('Ordered: ${line.data['ordered_quantity']} • '
-                        'Previously received: ${line.data['received_quantity']}'),
+                    Text(
+                      line.data['description']?.toString() ??
+                          line.data['medicine_id']?.toString() ??
+                          'Medicine',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      'Ordered: ${line.data['ordered_quantity']} • '
+                      'Previously received: ${line.data['received_quantity']}',
+                    ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: line.quantity,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(labelText: 'Received quantity'),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Received quantity',
+                      ),
                     ),
                     TextField(
                       controller: line.bonus,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(labelText: 'Bonus quantity'),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Bonus quantity',
+                      ),
                     ),
                     TextField(
                       controller: line.cost,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       decoration: const InputDecoration(labelText: 'Unit cost'),
                     ),
                     TextField(
                       controller: line.batch,
-                      decoration: const InputDecoration(labelText: 'Batch number'),
+                      decoration: const InputDecoration(
+                        labelText: 'Batch number',
+                      ),
                     ),
                     TextField(
                       controller: line.expiry,
-                      decoration: const InputDecoration(labelText: 'Expiry date (YYYY-MM-DD)'),
+                      decoration: const InputDecoration(
+                        labelText: 'Expiry date (YYYY-MM-DD)',
+                      ),
                     ),
                   ],
                 ),
@@ -131,9 +156,10 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
           for (final error in errors)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text(error, style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-              )),
+              child: Text(
+                error,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ),
           const SizedBox(height: 12),
           FilledButton.icon(
