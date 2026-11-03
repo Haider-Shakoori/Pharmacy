@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Medicine;
 use App\Models\Permission;
 use App\Models\ProductBatch;
+use App\Models\PurchaseOrder;
 use App\Models\Role;
 use App\Models\StockLocation;
 use App\Models\Supplier;
@@ -103,6 +104,14 @@ class MobileSyncPullService
                     'created_at',
                     'updated_at',
                 ]),
+                'purchase_orders' => PurchaseOrder::query()
+                    ->with('lines:id,purchase_order_id,medicine_id,description,ordered_quantity,received_quantity,unit_cost,discount_amount,landed_cost_allocated,line_total')
+                    ->select([
+                        'id', 'supplier_id', 'number', 'status', 'order_date',
+                        'expected_date', 'currency', 'subtotal', 'discount_total',
+                        'landed_cost_total', 'grand_total', 'notes', 'created_at',
+                        'updated_at',
+                    ]),
                 'suppliers' => Supplier::query()->select([
                     'id',
                     'code',
@@ -289,6 +298,34 @@ class MobileSyncPullService
                     'purchase_cost' => (string) $row->purchase_cost,
                     'status' => $row->status,
                     'last_movement_at' => $row->last_movement_at?->toISOString(),
+                    'is_deleted' => false,
+                    'server_created_at' => $row->created_at->toISOString(),
+                    'server_updated_at' => $row->updated_at->toISOString(),
+                ],
+                'purchase_orders' => [
+                    'id' => $row->id,
+                    'supplier_id' => $row->supplier_id,
+                    'number' => $row->number,
+                    'status' => $row->status,
+                    'order_date' => $row->order_date?->toDateString(),
+                    'expected_date' => $row->expected_date?->toDateString(),
+                    'currency' => $row->currency,
+                    'subtotal' => (string) $row->subtotal,
+                    'discount_total' => (string) $row->discount_total,
+                    'landed_cost_total' => (string) $row->landed_cost_total,
+                    'grand_total' => (string) $row->grand_total,
+                    'notes' => $row->notes,
+                    'lines' => $row->lines->map(fn ($line): array => [
+                        'id' => $line->id,
+                        'medicine_id' => $line->medicine_id,
+                        'description' => $line->description,
+                        'ordered_quantity' => (string) $line->ordered_quantity,
+                        'received_quantity' => (string) $line->received_quantity,
+                        'unit_cost' => (string) $line->unit_cost,
+                        'discount_amount' => (string) $line->discount_amount,
+                        'landed_cost_allocated' => (string) $line->landed_cost_allocated,
+                        'line_total' => (string) $line->line_total,
+                    ])->all(),
                     'is_deleted' => false,
                     'server_created_at' => $row->created_at->toISOString(),
                     'server_updated_at' => $row->updated_at->toISOString(),
