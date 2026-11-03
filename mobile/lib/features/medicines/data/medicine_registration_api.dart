@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
 import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_registration_form_state.dart';
+import 'medicine_duplicate_preflight.dart';
 import 'package:http/http.dart' as http;
 
 /// Online-only catalog creation. Never writes to the offline sync queue.
@@ -27,6 +28,13 @@ class MedicineRegistrationApi {
       throw StateError('Medicine management permission is required');
     }
     final payload = form.validatedSubmission();
+    final duplicates = await MedicineDuplicatePreflight(
+      environment: environment,
+      client: client,
+    ).check(registration: registration, handoff: form.handoff);
+    if (duplicates.isNotEmpty) {
+      throw StateError('Potential duplicate medicines must be resolved');
+    }
     final response = await client.post(
       base.resolve('api/v1/mobile/medicines'),
       headers: <String, String>{
