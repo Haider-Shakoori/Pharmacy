@@ -301,7 +301,7 @@ class MobileSyncApiTest extends TestCase
         $second = $this->withToken($this->accessToken)
             ->getJson('/api/v1/mobile/sync/pull/suppliers?limit=1&cursor='.urlencode($cursor))
             ->assertOk()
-            ->assertJsonPath('data.has_more', false);
+            ->assertJsonPath('data.stream', 'suppliers');
 
         $this->assertCount(1, $second->json('data.data'));
         $this->assertNotSame(
