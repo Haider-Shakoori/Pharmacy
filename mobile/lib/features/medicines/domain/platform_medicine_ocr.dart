@@ -9,8 +9,10 @@ import 'medicine_scan_coordinator.dart';
 /// fallback is permitted.
 class PlatformMedicineOcr implements NativeMedicineOcr {
   const PlatformMedicineOcr({
-    MethodChannel channel = const MethodChannel('darmaltoon/offline_medicine_ocr'),
-  }) : _channel = channel;
+    MethodChannel channel = const MethodChannel(
+      'darmaltoon/offline_medicine_ocr',
+    ),
+  }) : _channel = channel; // ignore: prefer_initializing_formals
 
   final MethodChannel _channel;
 
