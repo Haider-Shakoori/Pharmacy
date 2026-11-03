@@ -127,7 +127,13 @@ class PlatformTenantManagementTest extends TestCase
         $this->get('/platform/tenants')
             ->assertOk()
             ->assertSee('owner@login.test')
-            ->assertSee('Asia/Kabul');
+            ->assertSee('Asia/Kabul')
+            ->assertSee('User logins');
+
+        $this->get("/platform/tenants/{$tenant->id}/logins")
+            ->assertOk()
+            ->assertSee('owner@login.test')
+            ->assertSee('Most recent successful login per user');
     }
 
     public function test_reserved_or_dns_invalid_subdomain_cannot_be_assigned_to_a_pharmacy(): void
