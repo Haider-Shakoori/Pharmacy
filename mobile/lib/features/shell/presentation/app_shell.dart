@@ -174,7 +174,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                       ),
                     if (_reviewedScan != null)
                       ListTile(
-                        title: const Text('Medicine registration is not enabled'),
+                        title: const Text(
+                          'Medicine registration is not enabled',
+                        ),
                         subtitle: const Text(
                           'A pharmacist must verify the current server catalog '
                           'and resolve possible duplicates before saving. '
