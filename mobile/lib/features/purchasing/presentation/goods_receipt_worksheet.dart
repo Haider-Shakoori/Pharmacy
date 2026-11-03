@@ -25,7 +25,7 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
   @override
   void initState() {
     super.initState();
-    inputs = widget.lines.whereType<Map>().map((line) {
+    inputs = widget.lines.whereType<Map<dynamic, dynamic>>().map((line) {
       return _LineInputs(
         data: line,
         quantity: TextEditingController(text: '0'),
@@ -156,7 +156,7 @@ class _LineInputs {
     required this.expiry,
     required this.cost,
   });
-  final Map data;
+  final Map<dynamic, dynamic> data;
   final TextEditingController quantity;
   final TextEditingController bonus;
   final TextEditingController batch;
