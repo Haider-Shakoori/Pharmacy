@@ -96,7 +96,6 @@ class PlatformTenantManagementTest extends TestCase
             ->assertDontSee('Kabul Pharmacy');
     }
 
-
     public function test_pharmacy_list_shows_latest_user_login(): void
     {
         $this->post('/platform/tenants', [
