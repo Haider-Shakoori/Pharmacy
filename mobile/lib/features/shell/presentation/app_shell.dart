@@ -20,6 +20,7 @@ import 'package:businessos_pharmacy/features/settings/presentation/connection_mo
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -139,10 +140,46 @@ class _AppShellState extends ConsumerState<AppShell> {
                             'Reviewed draft only. No medicine or stock saved.',
                           ].join('\n'),
                         ),
-                        trailing: IconButton(
-                          tooltip: 'Clear reviewed draft',
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () => setState(() => _reviewedScan = null),
+                        trailing: Wrap(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Copy reviewed medicine details',
+                              icon: const Icon(Icons.copy_outlined),
+                              onPressed: () async {
+                                final draft = _reviewedScan;
+                                if (draft == null) return;
+                                final fields = [
+                                  'Brand: ${draft.brandName}',
+                                  if (draft.genericName != null)
+                                    'Generic: ${draft.genericName}',
+                                  if (draft.strength != null)
+                                    'Strength: ${draft.strength}',
+                                  if (draft.dosageForm != null)
+                                    'Form: ${draft.dosageForm}',
+                                  if (draft.barcode != null)
+                                    'Barcode: ${draft.barcode}',
+                                ];
+                                await Clipboard.setData(
+                                  ClipboardData(text: fields.join('\n')),
+                                );
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Reviewed details copied. Register medicine manually; nothing was saved.',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              tooltip: 'Clear reviewed draft',
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () =>
+                                  setState(() => _reviewedScan = null),
+                            ),
+                          ],
                         ),
                       ),
                   ],
