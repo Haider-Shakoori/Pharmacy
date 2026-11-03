@@ -7,7 +7,6 @@ use App\Models\Customer;
 use App\Models\Medicine;
 use App\Models\ProductBatch;
 use App\Models\PurchaseOrder;
-use App\Models\Supplier;
 use App\Models\Sale;
 use App\Models\StockLocation;
 use App\Models\Supplier;
