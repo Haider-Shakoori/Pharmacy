@@ -30,11 +30,11 @@ class OfflineCatalogBrowser {
   }) async {
     final DateTime timestamp = now ?? DateTime.now();
     final DateTime today = DateTime(
-      timestamp.year, timestamp.month, timestamp.day,
+      timestamp.year,
+      timestamp.month,
+      timestamp.day,
     );
-    final DateTime cutoff = DateTime(
-      today.year, today.month, today.day + 31,
-    );
+    final DateTime cutoff = DateTime(today.year, today.month, today.day + 31);
     final List<Variable<Object>> variables = <Variable<Object>>[];
     final String locationFilter = locationId == null
         ? ''
@@ -42,8 +42,7 @@ class OfflineCatalogBrowser {
     if (locationId != null) {
       variables.add(Variable<String>(locationId));
     }
-    final List<QueryRow> rows = await _database.customSelect(
-      '''
+    final List<QueryRow> rows = await _database.customSelect('''
       SELECT m.id AS medicine_id, b.available_quantity,
              b.status, b.expires_at
       FROM local_medicines m
@@ -52,9 +51,7 @@ class OfflineCatalogBrowser {
         $locationFilter
       WHERE m.is_deleted = 0 AND m.is_active = 1
       ORDER BY m.id
-      ''',
-      variables: variables,
-    ).get();
+      ''', variables: variables).get();
     int medicines = 0;
     int outOfStock = 0;
     int expiredBatches = 0;
@@ -69,7 +66,9 @@ class OfflineCatalogBrowser {
         medicines++;
         hasSellableStock = false;
       }
-      final String? quantityText = row.readNullable<String>('available_quantity');
+      final String? quantityText = row.readNullable<String>(
+        'available_quantity',
+      );
       if (quantityText == null) continue;
       final FixedDecimal quantity = FixedDecimal.parse(quantityText);
       if (!quantity.isPositive) continue;
@@ -101,17 +100,14 @@ class OfflineCatalogBrowser {
         ? ''
         : 'AND b.stock_location_id = ?';
     if (locationId != null) args.add(Variable<String>(locationId));
-    final List<QueryRow> rows = await _database.customSelect(
-      '''
+    final List<QueryRow> rows = await _database.customSelect('''
       SELECT b.available_quantity, b.purchase_cost, b.expires_at
       FROM local_inventory_batches b
       JOIN local_medicines m ON m.id = b.medicine_id
       WHERE b.is_deleted = 0 AND m.is_deleted = 0
         AND m.is_active = 1 AND b.status = 'active'
         $locationFilter
-      ''',
-      variables: args,
-    ).get();
+      ''', variables: args).get();
     final DateTime now = DateTime.now();
     final DateTime today = DateTime(now.year, now.month, now.day);
     FixedDecimal cost = FixedDecimal.zero;
@@ -150,8 +146,7 @@ class OfflineCatalogBrowser {
         : 'AND s.stock_location_id = ?';
     if (locationId != null) args.add(Variable<String>(locationId));
     args.add(Variable<int>(limit));
-    final List<QueryRow> rows = await _database.customSelect(
-      '''
+    final List<QueryRow> rows = await _database.customSelect('''
       SELECT a.local_id, a.quantity, a.unit_cost, a.created_at,
              m.brand_name, b.batch_number, s.stock_location_id
       FROM local_sale_batch_allocations a
@@ -162,18 +157,20 @@ class OfflineCatalogBrowser {
       WHERE s.status = 'completed' $locationFilter
       ORDER BY a.created_at DESC, a.local_id DESC
       LIMIT ?
-      ''',
-      variables: args,
-    ).get();
-    return rows.map((QueryRow row) => StockSaleMovement(
-      medicineName: row.read<String>('brand_name'),
-      batchNumber: row.readNullable<String>('batch_number') ?? '',
-      locationId: row.read<String>('stock_location_id'),
-      quantity: row.read<String>('quantity'),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(
-        row.read<int>('created_at') * 1000,
-      ),
-    )).toList(growable: false);
+      ''', variables: args).get();
+    return rows
+        .map(
+          (QueryRow row) => StockSaleMovement(
+            medicineName: row.read<String>('brand_name'),
+            batchNumber: row.readNullable<String>('batch_number') ?? '',
+            locationId: row.read<String>('stock_location_id'),
+            quantity: row.read<String>('quantity'),
+            createdAt: DateTime.fromMillisecondsSinceEpoch(
+              row.read<int>('created_at') * 1000,
+            ),
+          ),
+        )
+        .toList(growable: false);
   }
 
   Future<List<String>> stockLocations() async {
@@ -198,7 +195,9 @@ class OfflineCatalogBrowser {
     if (page < 0) throw ArgumentError.value(page, 'page');
     final DateTime timestamp = now ?? DateTime.now();
     final DateTime today = DateTime(
-      timestamp.year, timestamp.month, timestamp.day,
+      timestamp.year,
+      timestamp.month,
+      timestamp.day,
     );
     final DateTime cutoff = DateTime(today.year, today.month, today.day + 31);
     final String expiryFilter = expiringOnly
@@ -233,9 +232,12 @@ class OfflineCatalogBrowser {
             Variable<String>(needle),
             Variable<String>(needle),
             Variable<String>(needle),
-            if (expiringOnly) Variable<int>(today.millisecondsSinceEpoch ~/ 1000),
-            if (expiringOnly) Variable<int>(cutoff.millisecondsSinceEpoch ~/ 1000),
-            if (expiringOnly && locationId != null) Variable<String>(locationId),
+            if (expiringOnly)
+              Variable<int>(today.millisecondsSinceEpoch ~/ 1000),
+            if (expiringOnly)
+              Variable<int>(cutoff.millisecondsSinceEpoch ~/ 1000),
+            if (expiringOnly && locationId != null)
+              Variable<String>(locationId),
             Variable<int>(page * 100),
           ],
         )
