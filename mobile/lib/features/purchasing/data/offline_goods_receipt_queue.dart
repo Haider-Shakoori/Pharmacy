@@ -28,9 +28,10 @@ class OfflineGoodsReceiptQueue {
     }
 
     final random = Random.secure();
-    final nonce = List<int>.generate(16, (_) => random.nextInt(256))
-        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-        .join();
+    final nonce = List<int>.generate(
+      16,
+      (_) => random.nextInt(256),
+    ).map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
     final key = 'grn:${DateTime.now().microsecondsSinceEpoch}:$nonce';
     final payload = <String, Object?>{
       'local_id': key,
