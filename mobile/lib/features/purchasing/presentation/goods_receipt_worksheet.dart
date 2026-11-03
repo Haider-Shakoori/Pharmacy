@@ -81,13 +81,17 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
     if (saving) return;
     final drafts = _draftLines();
     final validation = GoodsReceiptDraftValidator.validate(
-      drafts, orderStatus: widget.orderStatus,
+      drafts,
+      orderStatus: widget.orderStatus,
     );
     if (validation.isNotEmpty) {
       setState(() => errors = validation);
       return;
     }
-    setState(() { saving = true; errors = <String>[]; });
+    setState(() {
+      saving = true;
+      errors = <String>[];
+    });
     try {
       await OfflineGoodsReceiptQueue(widget.database).enqueue(
         purchaseOrderId: widget.purchaseOrderId,
@@ -97,11 +101,16 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Receipt queued offline. Stock is unchanged until server inventory posting.')),
+        const SnackBar(
+          content: Text(
+            'Receipt queued offline. Stock is unchanged until server inventory posting.',
+          ),
+        ),
       );
       Navigator.of(context).pop();
     } catch (error) {
-      if (mounted) setState(() => errors = <String>['Unable to queue receipt: $error']);
+      if (mounted)
+        setState(() => errors = <String>['Unable to queue receipt: $error']);
     } finally {
       if (mounted) setState(() => saving = false);
     }
