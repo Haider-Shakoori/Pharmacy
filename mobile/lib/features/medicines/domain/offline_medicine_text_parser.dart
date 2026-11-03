@@ -28,7 +28,10 @@ class OfflineMedicineTextParser {
   const OfflineMedicineTextParser();
 
   MedicineScanDraft parse(List<String> lines, {String? barcode}) {
-    final cleaned = lines.map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
+    final cleaned = lines
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
     final text = cleaned.join('\n');
     final strength = RegExp(
       r'\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|g|ml|iu|%)\b',
@@ -47,9 +50,14 @@ class OfflineMedicineTextParser {
       caseSensitive: false,
     ).firstMatch(text)?.group(0);
     // The first non-metadata line is a candidate, never a verified brand.
-    final brandCandidates = cleaned.where((line) =>
-      !RegExp(r'^(?:batch|lot|exp|expiry|mfg|manufactured|ingredients?)\b', caseSensitive: false).hasMatch(line)
-      && RegExp(r'[\p{L}]', unicode: true).hasMatch(line));
+    final brandCandidates = cleaned.where(
+      (line) =>
+          !RegExp(
+            r'^(?:batch|lot|exp|expiry|mfg|manufactured|ingredients?)\b',
+            caseSensitive: false,
+          ).hasMatch(line) &&
+          RegExp(r'[\p{L}]', unicode: true).hasMatch(line),
+    );
     return MedicineScanDraft(
       brandName: brandCandidates.isEmpty ? null : brandCandidates.first,
       strength: strength,
