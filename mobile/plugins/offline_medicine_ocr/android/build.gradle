@@ -1,0 +1,44 @@
+group 'af.businessos.offline_medicine_ocr'
+version '1.0'
+
+buildscript {
+    ext.kotlin_version = '2.1.0'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.7.3'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace 'af.businessos.offline_medicine_ocr'
+    compileSdk 35
+
+    defaultConfig {
+        minSdk 23
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    // Bundled Latin recognition model: not the Play Services download-on-demand variant.
+    implementation 'com.google.mlkit:text-recognition:16.0.1'
+}
