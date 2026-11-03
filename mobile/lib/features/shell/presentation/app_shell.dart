@@ -8,8 +8,8 @@ import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browse
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coordinator.dart';
-import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_registration_handoff.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/picker_medicine_image_source.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/platform_medicine_ocr.dart';
 import 'package:businessos_pharmacy/features/medicines/presentation/medicine_scan_flow.dart';
@@ -178,7 +178,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                         future: _duplicateLookup,
                         builder: (context, snapshot) {
                           final ready =
-                              snapshot.connectionState == ConnectionState.done &&
+                              snapshot.connectionState ==
+                                  ConnectionState.done &&
                               !snapshot.hasError &&
                               snapshot.hasData &&
                               snapshot.data!.isEmpty;
@@ -217,13 +218,14 @@ class _AppShellState extends ConsumerState<AppShell> {
                                         ),
                                       );
                                       if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Handoff copied. Server validation and pharmacist registration are still required.',
-                                          ),
-                                        ),
-                                      );
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Handoff copied. Server validation and pharmacist registration are still required.',
+                                              ),
+                                            ),
+                                          );
                                     },
                             ),
                           );
