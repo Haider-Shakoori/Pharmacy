@@ -10,10 +10,7 @@ abstract interface class LocalMedicineImageSource {
 enum MedicineImageOrigin { camera, gallery }
 
 class MedicineImageSelection {
-  const MedicineImageSelection({
-    required this.localPath,
-    required this.origin,
-  });
+  const MedicineImageSelection({required this.localPath, required this.origin});
 
   final String localPath;
   final MedicineImageOrigin origin;
