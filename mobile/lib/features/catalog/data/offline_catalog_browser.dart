@@ -214,7 +214,7 @@ class OfflineCatalogBrowser {
         )
         '''
         : '';
-    final String needle = '%${search.trim()}%';
+    final String needle = '%${search.trim().replaceAll('!', '!!').replaceAll('%', '!%').replaceAll('_', '!_')}%';
     final List<QueryRow> medicines = await _database
         .customSelect(
           '''
@@ -223,7 +223,7 @@ class OfflineCatalogBrowser {
       WHERE is_deleted = 0
         AND is_active = 1
         AND (brand_name LIKE ? OR COALESCE(generic_name, '') LIKE ?
-             OR COALESCE(medicine_code, '') LIKE ?)
+             OR COALESCE(medicine_code, '') LIKE ?) ESCAPE '!'
         $expiryFilter
       ORDER BY brand_name COLLATE NOCASE, id
       LIMIT 100 OFFSET ?
@@ -313,14 +313,14 @@ class OfflineCatalogBrowser {
     int page = 0,
   }) async {
     if (page < 0) throw ArgumentError.value(page, 'page');
-    final String pattern = '%${search.trim()}%';
+    final String pattern = '%${search.trim().replaceAll('!', '!!').replaceAll('%', '!%').replaceAll('_', '!_')}%';
     final List<QueryRow> rows = await _database
         .customSelect(
           '''
       SELECT id, name, phone, balance
       FROM local_customers
       WHERE is_deleted = 0
-        AND (name LIKE ? OR COALESCE(phone, '') LIKE ?)
+        AND (name LIKE ? OR COALESCE(phone, '') LIKE ?) ESCAPE '!'
       ORDER BY name COLLATE NOCASE, id
       LIMIT 100 OFFSET ?
       ''',
