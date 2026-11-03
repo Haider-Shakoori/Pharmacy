@@ -201,12 +201,15 @@ class MobileSyncPullService
         object $updatedAt,
         string $id,
     ): void {
-        $query->where(function (Builder $query) use ($updatedAt, $id): void {
+        // Preserve microseconds: binding a Carbon instance truncates precision
+        // to the connection's date format and can replay the cursor row.
+        $cursorTimestamp = $updatedAt->format('Y-m-d H:i:s.u');
+        $query->where(function (Builder $query) use ($cursorTimestamp, $id): void {
             $query
-                ->where('updated_at', '>', $updatedAt)
-                ->orWhere(function (Builder $query) use ($updatedAt, $id): void {
+                ->where('updated_at', '>', $cursorTimestamp)
+                ->orWhere(function (Builder $query) use ($cursorTimestamp, $id): void {
                     $query
-                        ->where('updated_at', '=', $updatedAt)
+                        ->where('updated_at', '=', $cursorTimestamp)
                         ->where('id', '>', $id);
                 });
         });
