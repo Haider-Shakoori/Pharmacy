@@ -3,7 +3,6 @@
 namespace Tests\Feature\Pharmacy;
 
 use App\Models\GoodsReceipt;
-use App\Models\StockLocation;
 use App\Services\Mobile\MobileGoodsReceiptService;
 use Illuminate\Validation\ValidationException;
 use App\Models\Medicine;
