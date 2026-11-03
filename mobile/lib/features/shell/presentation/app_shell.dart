@@ -99,7 +99,9 @@ class _AppShellState extends ConsumerState<AppShell> {
               const SizedBox(height: 16),
               ExpansionTile(
                 title: const Text('Scan medicine label'),
-                subtitle: const Text('Offline draft — pharmacist review required'),
+                subtitle: const Text(
+                  'Offline draft — pharmacist review required',
+                ),
                 children: [
                   MedicineScanFlow(
                     images: MedicineImageAcquisition(
