@@ -35,6 +35,16 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   int _selectedIndex = 0;
   ReviewedMedicineScan? _reviewedScan;
+  Future<List<String>>? _duplicateLookup;
+
+  Future<List<String>> _checkDuplicates(ReviewedMedicineScan draft) async {
+    final database = await ref.read(pharmacyDatabaseProvider.future);
+    return OfflineCatalogBrowser(database).possibleDuplicateMedicineNames(
+      brandName: draft.brandName,
+      genericName: draft.genericName,
+      barcode: draft.barcode,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,9 +131,44 @@ class _AppShellState extends ConsumerState<AppShell> {
                         ocr: PlatformMedicineOcr(),
                       ),
                       onConfirmed: (ReviewedMedicineScan reviewed) {
-                        setState(() => _reviewedScan = reviewed);
+                        setState(() {
+                          _reviewedScan = reviewed;
+                          _duplicateLookup = _checkDuplicates(reviewed);
+                        });
                       },
                     ),
+                    if (_reviewedScan != null && _duplicateLookup != null)
+                      FutureBuilder<List<String>>(
+                        future: _duplicateLookup,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState != ConnectionState.done) {
+                            return const ListTile(
+                              title: Text('Checking local catalog for duplicates...'),
+                            );
+                          }
+                          if (snapshot.hasError) {
+                            return const ListTile(
+                              title: Text('Duplicate check unavailable'),
+                              subtitle: Text(
+                                'Do not register until catalog duplicates are checked.',
+                              ),
+                            );
+                          }
+                          final matches = snapshot.data ?? <String>[];
+                          return ListTile(
+                            title: Text(
+                              matches.isEmpty
+                                  ? 'No matches in locally synced catalog'
+                                  : 'Possible duplicates: ${matches.length}',
+                            ),
+                            subtitle: Text(
+                              matches.isEmpty
+                                  ? 'Server-side verification is still required.'
+                                  : matches.join(', '),
+                            ),
+                          );
+                        },
+                      ),
                     if (_reviewedScan != null)
                       ListTile(
                         title: Text(_reviewedScan!.brandName),
@@ -176,8 +221,10 @@ class _AppShellState extends ConsumerState<AppShell> {
                             IconButton(
                               tooltip: 'Clear reviewed draft',
                               icon: const Icon(Icons.delete_outline),
-                              onPressed: () =>
-                                  setState(() => _reviewedScan = null),
+                              onPressed: () => setState(() {
+                                _reviewedScan = null;
+                                _duplicateLookup = null;
+                              }),
                             ),
                           ],
                         ),
