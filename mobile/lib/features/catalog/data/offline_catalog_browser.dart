@@ -94,6 +94,47 @@ class OfflineCatalogBrowser {
     );
   }
 
+  /// Recent recorded POS batch deductions. Purchase receipts and transfers
+  /// are not yet synchronized into the mobile database.
+  Future<List<StockSaleMovement>> recentSaleMovements({
+    String? locationId,
+    int limit = 30,
+  }) async {
+    if (limit < 1 || limit > 100) {
+      throw ArgumentError.value(limit, 'limit');
+    }
+    final List<Variable<Object>> args = <Variable<Object>>[];
+    final String locationFilter = locationId == null
+        ? ''
+        : 'AND s.stock_location_id = ?';
+    if (locationId != null) args.add(Variable<String>(locationId));
+    args.add(Variable<int>(limit));
+    final List<QueryRow> rows = await _database.customSelect(
+      '''
+      SELECT a.local_id, a.quantity, a.unit_cost, a.created_at,
+             m.brand_name, b.batch_number, s.stock_location_id
+      FROM local_sale_batch_allocations a
+      JOIN local_sale_lines l ON l.local_id = a.sale_line_local_id
+      JOIN local_sales s ON s.local_id = l.sale_local_id
+      JOIN local_medicines m ON m.id = l.medicine_id
+      LEFT JOIN local_inventory_batches b ON b.id = a.product_batch_id
+      WHERE s.status = 'completed' $locationFilter
+      ORDER BY a.created_at DESC, a.local_id DESC
+      LIMIT ?
+      ''',
+      variables: args,
+    ).get();
+    return rows.map((QueryRow row) => StockSaleMovement(
+      medicineName: row.read<String>('brand_name'),
+      batchNumber: row.readNullable<String>('batch_number') ?? '',
+      locationId: row.read<String>('stock_location_id'),
+      quantity: row.read<String>('quantity'),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        row.read<int>('created_at') * 1000,
+      ),
+    )).toList(growable: false);
+  }
+
   Future<List<String>> stockLocations() async {
     final List<QueryRow> rows = await _database.customSelect('''
       SELECT DISTINCT stock_location_id
@@ -296,4 +337,20 @@ class CustomerSnapshot {
   final String name;
   final String phone;
   final String balance;
+}
+
+class StockSaleMovement {
+  const StockSaleMovement({
+    required this.medicineName,
+    required this.batchNumber,
+    required this.locationId,
+    required this.quantity,
+    required this.createdAt,
+  });
+
+  final String medicineName;
+  final String batchNumber;
+  final String locationId;
+  final String quantity;
+  final DateTime createdAt;
 }
