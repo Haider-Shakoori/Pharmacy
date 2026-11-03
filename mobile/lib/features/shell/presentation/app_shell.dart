@@ -33,6 +33,7 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   int _selectedIndex = 0;
+  ReviewedMedicineScan? _reviewedScan;
 
   @override
   Widget build(BuildContext context) {
@@ -119,15 +120,22 @@ class _AppShellState extends ConsumerState<AppShell> {
                         ocr: PlatformMedicineOcr(),
                       ),
                       onConfirmed: (ReviewedMedicineScan reviewed) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Medicine details reviewed. Registration is not yet connected; no record was saved.',
-                            ),
-                          ),
-                        );
+                        setState(() => _reviewedScan = reviewed);
                       },
                     ),
+                    if (_reviewedScan != null)
+                      ListTile(
+                        title: Text(_reviewedScan!.brandName),
+                        subtitle: const Text(
+                          'Reviewed draft only. No medicine or stock saved.',
+                        ),
+                        trailing: IconButton(
+                          tooltip: 'Clear reviewed draft',
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () =>
+                              setState(() => _reviewedScan = null),
+                        ),
+                      ),
                   ],
                 ),
               const SizedBox(height: 16),
