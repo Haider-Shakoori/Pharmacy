@@ -669,9 +669,7 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
           controller: input,
           autofocus: true,
           textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(
-            labelText: 'Barcode or QR value',
-          ),
+          decoration: const InputDecoration(labelText: 'Barcode or QR value'),
           onSubmitted: (String value) =>
               Navigator.of(dialogContext).pop(value.trim()),
         ),
@@ -681,8 +679,7 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(input.text.trim()),
+            onPressed: () => Navigator.of(dialogContext).pop(input.text.trim()),
             child: const Text('Search'),
           ),
         ],
@@ -732,28 +729,38 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
         ),
       ],
     ),
-    body: Stack(children: <Widget>[
-      MobileScanner(
-        controller: _controller,
-        onDetect: _onDetect,
-        errorBuilder: (BuildContext context, MobileScannerException error) =>
-            Center(child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text('Camera unavailable: ${error.errorCode.name}. Check camera permissions in iOS Settings.'),
-            )),
-      ),
-      const Align(
-        alignment: Alignment.bottomCenter,
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Card(child: Padding(
-              padding: EdgeInsets.all(14),
-              child: Text('Align the medicine barcode or QR code within the camera view.'),
-            )),
+    body: Stack(
+      children: <Widget>[
+        MobileScanner(
+          controller: _controller,
+          onDetect: _onDetect,
+          errorBuilder: (BuildContext context, MobileScannerException error) =>
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Camera unavailable: ${error.errorCode.name}. Check camera permissions in iOS Settings.',
+                  ),
+                ),
+              ),
+        ),
+        const Align(
+          alignment: Alignment.bottomCenter,
+          child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(14),
+                  child: Text(
+                    'Align the medicine barcode or QR code within the camera view.',
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
-      ),
-    ]),
+      ],
+    ),
   );
 }
