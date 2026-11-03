@@ -127,7 +127,9 @@ class _StockBrowserState extends State<_StockBrowser> {
         widget.database,
       );
       final List<String> locations = await browser.stockLocations();
-      final InventoryOverview overview = await browser.inventoryOverview(locationId: _location);
+      final InventoryOverview overview = await browser.inventoryOverview(
+        locationId: _location,
+      );
       final List<StockMedicineSnapshot> medicines = await browser.medicines(
         search: search,
         locationId: location,
@@ -137,9 +139,8 @@ class _StockBrowserState extends State<_StockBrowser> {
       final StockCostOverview costOverview = await browser.stockCostOverview(
         locationId: location,
       );
-      final List<StockSaleMovement> movements = await browser.recentSaleMovements(
-        locationId: location,
-      );
+      final List<StockSaleMovement> movements = await browser
+          .recentSaleMovements(locationId: location);
       if (!mounted || generation != _loadGeneration) {
         return;
       }
@@ -219,19 +220,29 @@ class _StockBrowserState extends State<_StockBrowser> {
           ),
           ExpansionTile(
             title: const Text('Recent POS stock deductions'),
-            subtitle: Text('${_movements.length} recent batch allocations · read only'),
+            subtitle: Text(
+              '${_movements.length} recent batch allocations · read only',
+            ),
             children: _movements.isEmpty
                 ? <Widget>[
-                    const ListTile(title: Text('No completed POS batch deductions recorded locally')),
-                  ]
-                : _movements.map((StockSaleMovement movement) => ListTile(
-                    dense: true,
-                    title: Text(movement.medicineName),
-                    subtitle: Text(
-                      'Batch: ${movement.batchNumber.isEmpty ? '—' : movement.batchNumber} · ${movement.locationId}',
+                    const ListTile(
+                      title: Text(
+                        'No completed POS batch deductions recorded locally',
+                      ),
                     ),
-                    trailing: Text('−${movement.quantity}'),
-                  )).toList(growable: false),
+                  ]
+                : _movements
+                      .map(
+                        (StockSaleMovement movement) => ListTile(
+                          dense: true,
+                          title: Text(movement.medicineName),
+                          subtitle: Text(
+                            'Batch: ${movement.batchNumber.isEmpty ? '—' : movement.batchNumber} · ${movement.locationId}',
+                          ),
+                          trailing: Text('−${movement.quantity}'),
+                        ),
+                      )
+                      .toList(growable: false),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -292,25 +303,31 @@ class _StockBrowserState extends State<_StockBrowser> {
           },
         ),
         if (!_loading && _error == null)
-          Row(children: <Widget>[
-            IconButton(
-              tooltip: 'Previous 100 medicines',
-              onPressed: _page == 0 ? null : () {
-                _page--;
-                _load();
-              },
-              icon: const Icon(Icons.chevron_left),
-            ),
-            Text('Page ${_page + 1}'),
-            IconButton(
-              tooltip: 'Next 100 medicines',
-              onPressed: _medicines.length < 100 ? null : () {
-                _page++;
-                _load();
-              },
-              icon: const Icon(Icons.chevron_right),
-            ),
-          ]),
+          Row(
+            children: <Widget>[
+              IconButton(
+                tooltip: 'Previous 100 medicines',
+                onPressed: _page == 0
+                    ? null
+                    : () {
+                        _page--;
+                        _load();
+                      },
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Text('Page ${_page + 1}'),
+              IconButton(
+                tooltip: 'Next 100 medicines',
+                onPressed: _medicines.length < 100
+                    ? null
+                    : () {
+                        _page++;
+                        _load();
+                      },
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
         if (_loading)
           const Padding(
             padding: EdgeInsets.all(28),
@@ -460,25 +477,31 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
           },
         ),
         if (!_loading && _error == null)
-          Row(children: <Widget>[
-            IconButton(
-              tooltip: 'Previous 100 customers',
-              onPressed: _page == 0 ? null : () {
-                _page--;
-                _load();
-              },
-              icon: const Icon(Icons.chevron_left),
-            ),
-            Text('Page ${_page + 1}'),
-            IconButton(
-              tooltip: 'Next 100 customers',
-              onPressed: _customers.length < 100 ? null : () {
-                _page++;
-                _load();
-              },
-              icon: const Icon(Icons.chevron_right),
-            ),
-          ]),
+          Row(
+            children: <Widget>[
+              IconButton(
+                tooltip: 'Previous 100 customers',
+                onPressed: _page == 0
+                    ? null
+                    : () {
+                        _page--;
+                        _load();
+                      },
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Text('Page ${_page + 1}'),
+              IconButton(
+                tooltip: 'Next 100 customers',
+                onPressed: _customers.length < 100
+                    ? null
+                    : () {
+                        _page++;
+                        _load();
+                      },
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
         if (_loading)
           const Padding(
             padding: EdgeInsets.all(28),
@@ -503,7 +526,11 @@ class _CustomerBrowserState extends State<_CustomerBrowser> {
                   ),
                   ListTile(
                     leading: const Icon(Icons.phone_outlined),
-                    title: Text(customer.phone.isEmpty ? 'No phone recorded' : customer.phone),
+                    title: Text(
+                      customer.phone.isEmpty
+                          ? 'No phone recorded'
+                          : customer.phone,
+                    ),
                     subtitle: const Text('Synced customer contact'),
                   ),
                 ],
@@ -535,13 +562,22 @@ class _InventoryMetric extends StatelessWidget {
       color: color,
       borderRadius: BorderRadius.circular(14),
     ),
-    child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
-      Icon(icon, size: 19, color: const Color(0xFF1557C0)),
-      const SizedBox(width: 8),
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-        Text(label, style: const TextStyle(fontSize: 11)),
-      ]),
-    ]),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(icon, size: 19, color: const Color(0xFF1557C0)),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              value,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            Text(label, style: const TextStyle(fontSize: 11)),
+          ],
+        ),
+      ],
+    ),
   );
 }
