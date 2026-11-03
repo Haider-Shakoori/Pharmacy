@@ -51,6 +51,20 @@ class GoodsReceiptController extends Controller
         }
 
         $receipt = DB::transaction(function () use ($data, $receiptLines, $purchaseOrder, $request): GoodsReceipt {
+            // Lock the same order row as mobile receipt capture, so simultaneous
+            // web and mobile receipts cannot both consume the same balance.
+            $purchaseOrder = PurchaseOrder::query()->lockForUpdate()->findOrFail($purchaseOrder->id);
+            abort_unless(in_array($purchaseOrder->status, self::RECEIVABLE_STATUSES, true), 422, 'This purchase order cannot receive more goods.');
+
+            if (! empty($data['idempotency_key'])) {
+                $existing = GoodsReceipt::query()->where('idempotency_key', $data['idempotency_key'])->first();
+                if ($existing) {
+                    abort_unless($existing->purchase_order_id === $purchaseOrder->id, 409, 'Idempotency key already belongs to another purchase order.');
+
+                    return $existing;
+                }
+            }
+
             $orderLines = $purchaseOrder->lines()->with('medicine')->get()->keyBy('id');
 
             foreach ($receiptLines as $line) {
