@@ -206,7 +206,11 @@ class OfflineCatalogBrowser {
     return results;
   }
 
-  Future<List<CustomerSnapshot>> customers({String search = ''}) async {
+  Future<List<CustomerSnapshot>> customers({
+    String search = '',
+    int page = 0,
+  }) async {
+    if (page < 0) throw ArgumentError.value(page, 'page');
     final String pattern = '%${search.trim()}%';
     final List<QueryRow> rows = await _database
         .customSelect(
@@ -216,11 +220,12 @@ class OfflineCatalogBrowser {
       WHERE is_deleted = 0
         AND (name LIKE ? OR COALESCE(phone, '') LIKE ?)
       ORDER BY name COLLATE NOCASE, id
-      LIMIT 100
+      LIMIT 100 OFFSET ?
       ''',
           variables: <Variable<Object>>[
             Variable<String>(pattern),
             Variable<String>(pattern),
+            Variable<int>(page * 100),
           ],
         )
         .get();
