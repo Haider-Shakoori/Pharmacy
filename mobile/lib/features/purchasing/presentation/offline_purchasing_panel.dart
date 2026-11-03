@@ -47,10 +47,7 @@ class OfflinePurchasingPanel extends ConsumerWidget {
 }
 
 class _PurchasingBrowser extends StatefulWidget {
-  const _PurchasingBrowser({
-    required this.database,
-    required this.canReceive,
-  });
+  const _PurchasingBrowser({required this.database, required this.canReceive});
   final PharmacyDatabase database;
   final bool canReceive;
 
