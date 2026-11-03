@@ -52,7 +52,7 @@ class TenantController extends Controller
                     return $user ? [
                         'name' => $user->name,
                         'email' => $user->email,
-                        'at' => $user->last_login_at,
+                        'at' => $user->last_login_at?->toIso8601String(),
                     ] : null;
                 });
             } catch (\Throwable $exception) {
@@ -76,7 +76,13 @@ class TenantController extends Controller
                 $users = $tenant->run(fn () => User::query()
                     ->select(['name', 'email', 'last_login_at'])
                     ->orderByDesc('last_login_at')
-                    ->get());
+                    ->get()
+                    ->map(fn (User $user): array => [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'at' => $user->last_login_at?->toIso8601String(),
+                    ])
+                    ->all());
             } catch (\Throwable $exception) {
                 report($exception);
                 $unavailable = true;
