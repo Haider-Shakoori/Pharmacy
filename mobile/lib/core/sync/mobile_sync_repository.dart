@@ -12,6 +12,16 @@ class MobileSyncRepository {
 
   Future<List<SyncOutboxEvent>> pendingOutbox({int limit = 25}) async {
     final int now = _seconds(DateTime.now());
+    // A process may terminate after marking events as sending. Reclaim only
+    // stale leases; idempotency keys remain unchanged across retries.
+    await _database.customStatement(
+      '''
+      UPDATE sync_outbox_entries
+      SET status = 'retry', next_attempt_at = NULL, updated_at = ?
+      WHERE status = 'sending' AND updated_at <= ?
+      ''',
+      <Object?>[now, now - 300],
+    );
     final List<QueryRow> rows = await _database
         .customSelect(
           '''
