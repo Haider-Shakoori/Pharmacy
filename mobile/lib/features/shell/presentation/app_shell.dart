@@ -37,6 +37,11 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
+    final bool canScanMedicines =
+        ref.watch(mobileRegistrationProvider).asData?.value?.permissions.contains(
+          'inventory.manage',
+        ) ==
+        true;
 
     final List<_ShellDestination> destinations = <_ShellDestination>[
       const _ShellDestination(icon: Icons.dashboard_outlined, label: 'Home'),
@@ -97,8 +102,8 @@ class _AppShellState extends ConsumerState<AppShell> {
               const _ReportsPanel(),
             if (_selectedIndex == 2) ...<Widget>[
               const SizedBox(height: 16),
-              if (ref.watch(mobileRegistrationProvider).asData?.value?.permissions.contains('inventory.manage') == true)
-              ExpansionTile(
+              if (canScanMedicines)
+                ExpansionTile(
                 title: const Text('Scan medicine label'),
                 subtitle: const Text(
                   'Offline draft — pharmacist review required',
