@@ -19,9 +19,8 @@ class FakeNativeOcr implements NativeMedicineOcr {
 void main() {
   test('uses native OCR and returns an unconfirmed draft', () async {
     final ocr = FakeNativeOcr();
-    final draft = await MedicineScanCoordinator(
-      ocr: ocr,
-    ).scanLocalImage('/local/medicine.jpg');
+    final draft = await MedicineScanCoordinator(ocr: ocr)
+        .scanLocalImage('/local/medicine.jpg');
     expect(ocr.calls, 1);
     expect(draft.brandName, 'ExampleMed');
     expect(draft.strength, '250 mg');
@@ -31,9 +30,7 @@ void main() {
   test('does not invoke OCR when unavailable', () async {
     final ocr = FakeNativeOcr(available: false);
     await expectLater(
-      MedicineScanCoordinator(
-        ocr: ocr,
-      ).scanLocalImage('/local/medicine.jpg'),
+      MedicineScanCoordinator(ocr: ocr).scanLocalImage('/local/medicine.jpg'),
       throwsStateError,
     );
     expect(ocr.calls, 0);
