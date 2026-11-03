@@ -124,7 +124,7 @@ void main() {
           .getSingle();
       final lines =
           jsonDecode(order.read<String>('lines_json')) as List<dynamic>;
-      expect(lines.single['ordered_quantity'], '3.0000');
+      expect((lines.single as Map<String, dynamic>)['ordered_quantity'], '3.0000');
       expect(await repository.checkpoint('purchase_orders'), 'orders-cursor');
     },
   );
