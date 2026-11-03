@@ -3,6 +3,9 @@
 namespace Tests\Feature\Pharmacy;
 
 use App\Models\GoodsReceipt;
+use App\Models\StockLocation;
+use App\Services\Mobile\MobileGoodsReceiptService;
+use Illuminate\Validation\ValidationException;
 use App\Models\Medicine;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseOrder;
@@ -188,4 +191,74 @@ class PurchasingTest extends TestCase
             $this->assertSame('0.0000', $line->fresh()->received_quantity);
         });
     }
+    public function test_mobile_goods_receipt_capture_is_idempotent_and_does_not_post_stock(): void
+    {
+        $tenant = $this->createTenant(['name' => 'Receiving Pharmacy', 'slug' => 'mobile-receiving']);
+        app(TenantContext::class)->run($tenant, function (): void {
+            $user = User::query()->create([
+                'name' => 'Receiver',
+                'email' => 'receiver@example.test',
+                'password' => 'password123',
+                'is_active' => true,
+            ]);
+            $supplier = Supplier::query()->create(['code' => 'SUP-MOBILE', 'name' => 'Mobile Supplier']);
+            $medicine = Medicine::query()->create([
+                'medicine_code' => 'MED-MOBILE',
+                'brand_name' => 'Mobile Medicine',
+                'purchase_unit' => 'box',
+                'sale_unit' => 'tablet',
+                'units_per_purchase_unit' => 1,
+            ]);
+            $order = PurchaseOrder::query()->create([
+                'supplier_id' => $supplier->id,
+                'number' => 'PO-MOBILE-001',
+                'status' => 'approved',
+                'order_date' => today()->toDateString(),
+                'currency' => 'AFN',
+                'created_by' => $user->id,
+            ]);
+            $line = $order->lines()->create([
+                'medicine_id' => $medicine->id,
+                'description' => 'Mobile Medicine',
+                'ordered_quantity' => '10.0000',
+                'received_quantity' => '0.0000',
+                'unit_cost' => '5.0000',
+                'line_total' => '50.0000',
+            ]);
+            $payload = [
+                'purchase_order_id' => $order->id,
+                'received_at' => now()->toDateTimeString(),
+                'lines' => [[
+                    'purchase_order_line_id' => $line->id,
+                    'received_quantity' => '4.0000',
+                    'bonus_quantity' => '1.0000',
+                    'unit_cost' => '5.0000',
+                ]],
+            ];
+
+            $service = app(MobileGoodsReceiptService::class);
+            $first = $service->capture($user, $payload, 'mobile-receipt-001');
+            $second = $service->capture($user, $payload, 'mobile-receipt-001');
+            $this->assertSame($first->id, $second->id);
+            $this->assertDatabaseCount('goods_receipts', 1);
+            $this->assertSame('pending_inventory', $first->status);
+            $this->assertNull($first->inventory_posted_at);
+            $this->assertSame('0.0000', $line->fresh()->received_quantity);
+
+            try {
+                $service->capture($user, [
+                    ...$payload,
+                    'lines' => [[
+                        ...$payload['lines'][0],
+                        'received_quantity' => '7.0000',
+                    ]],
+                ], 'mobile-receipt-002');
+                $this->fail('Pending receipts must count against outstanding quantity.');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('lines', $exception->errors());
+            }
+            $this->assertDatabaseCount('goods_receipts', 1);
+        });
+    }
+
 }
