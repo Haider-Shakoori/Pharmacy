@@ -325,6 +325,7 @@ class MobileSyncApiTest extends TestCase
             $order = PurchaseOrder::query()->create([
                 'supplier_id' => $supplier->id,
                 'number' => 'PO-MOBILE-001',
+                'created_by' => User::query()->where('email', 'mobile@sync.test')->value('id'),
                 'status' => 'draft',
                 'order_date' => today(),
                 'currency' => 'AFN',
