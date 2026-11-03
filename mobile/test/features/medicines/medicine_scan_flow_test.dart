@@ -52,4 +52,41 @@ void main() {
     expect(find.text('Review scanned medicine details'), findsNothing);
     expect(confirmed, isEmpty);
   });
+  testWidgets('confirmed scan is emitted once and draft is cleared', (
+    WidgetTester tester,
+  ) async {
+    final confirmed = <ReviewedMedicineScan>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: MedicineScanFlow(
+              images: MedicineImageAcquisition(_LocalImages()),
+              scanner: MedicineScanCoordinator(ocr: _OfflineOcr()),
+              onConfirmed: confirmed.add,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Gallery'));
+    await tester.pumpAndSettle();
+    expect(confirmed, isEmpty);
+
+    await tester.ensureVisible(
+      find.text('I have checked the medicine label and details'),
+    );
+    await tester.tap(find.text('I have checked the medicine label and details'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Use reviewed details'));
+    await tester.tap(find.text('Use reviewed details'));
+    await tester.pumpAndSettle();
+
+    expect(confirmed, hasLength(1));
+    expect(confirmed.single.brandName, isNotEmpty);
+    expect(find.text('Review scanned medicine details'), findsNothing);
+    expect(find.text('Use reviewed details'), findsNothing);
+  });
+
 }
