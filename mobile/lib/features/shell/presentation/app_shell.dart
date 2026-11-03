@@ -97,6 +97,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               const _ReportsPanel(),
             if (_selectedIndex == 2) ...<Widget>[
               const SizedBox(height: 16),
+              if (ref.watch(mobileRegistrationProvider).asData?.value?.permissions.contains('inventory.manage') == true)
               ExpansionTile(
                 title: const Text('Scan medicine label'),
                 subtitle: const Text(
