@@ -3,20 +3,20 @@
 namespace Tests\Feature\Pharmacy;
 
 use App\Models\GoodsReceipt;
-use App\Services\Mobile\MobileGoodsReceiptService;
-use Illuminate\Validation\ValidationException;
 use App\Models\Medicine;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
+use App\Services\Mobile\MobileGoodsReceiptService;
 use App\Services\Purchasing\PurchaseTotalsCalculator;
 use App\Services\Purchasing\RecordSupplierPayment;
 use App\Services\Subscriptions\TrialProvisioner;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class PurchasingTest extends TestCase
@@ -190,6 +190,7 @@ class PurchasingTest extends TestCase
             $this->assertSame('0.0000', $line->fresh()->received_quantity);
         });
     }
+
     public function test_mobile_goods_receipt_capture_is_idempotent_and_does_not_post_stock(): void
     {
         $tenant = $this->createTenant(['name' => 'Receiving Pharmacy', 'slug' => 'mobile-receiving']);
@@ -259,5 +260,4 @@ class PurchasingTest extends TestCase
             $this->assertDatabaseCount('goods_receipts', 1);
         });
     }
-
 }
