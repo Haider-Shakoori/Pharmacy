@@ -44,13 +44,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
   @override
   void dispose() {
     _brand.removeListener(_refreshBrandValidation);
-    for (final controller in [
-      _brand,
-      _generic,
-      _strength,
-      _dosage,
-      _barcode,
-    ]) {
+    for (final controller in [_brand, _generic, _strength, _dosage, _barcode]) {
       controller.dispose();
     }
     super.dispose();
@@ -83,8 +77,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           controller: _barcode,
           decoration: const InputDecoration(labelText: 'Barcode'),
         ),
-        if (widget.draft.batchNumber != null ||
-            widget.draft.expiresAt != null)
+        if (widget.draft.batchNumber != null || widget.draft.expiresAt != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
@@ -94,14 +87,11 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           ),
         ExpansionTile(
           title: const Text('Recognized source text'),
-          children: [
-            SelectableText(widget.draft.sourceText),
-          ],
+          children: [SelectableText(widget.draft.sourceText)],
         ),
         CheckboxListTile(
           value: _confirmed,
-          onChanged: (value) =>
-              setState(() => _confirmed = value ?? false),
+          onChanged: (value) => setState(() => _confirmed = value ?? false),
           title: const Text('I have checked the medicine label and details'),
         ),
         FilledButton(
