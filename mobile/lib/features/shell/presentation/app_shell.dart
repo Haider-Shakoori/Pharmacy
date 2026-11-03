@@ -7,6 +7,12 @@ import 'package:businessos_pharmacy/features/alerts/presentation/operational_ale
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
 import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coordinator.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/picker_medicine_image_source.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/platform_medicine_ocr.dart';
+import 'package:businessos_pharmacy/features/medicines/presentation/medicine_scan_flow.dart';
 import 'package:businessos_pharmacy/features/purchasing/presentation/offline_purchasing_panel.dart';
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.dart';
@@ -90,6 +96,30 @@ class _AppShellState extends ConsumerState<AppShell> {
             else if (_selectedIndex == 3)
               const _ReportsPanel(),
             if (_selectedIndex == 2) ...<Widget>[
+              const SizedBox(height: 16),
+              ExpansionTile(
+                title: const Text('Scan medicine label'),
+                subtitle: const Text('Offline draft — pharmacist review required'),
+                children: [
+                  MedicineScanFlow(
+                    images: MedicineImageAcquisition(
+                      PickerMedicineImageSource(),
+                    ),
+                    scanner: const MedicineScanCoordinator(
+                      ocr: PlatformMedicineOcr(),
+                    ),
+                    onConfirmed: (ReviewedMedicineScan reviewed) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Medicine details reviewed. Registration is not yet connected; no record was saved.',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
               const OperationalAlertsCard(),
             ],
