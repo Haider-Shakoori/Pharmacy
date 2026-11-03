@@ -1,0 +1,55 @@
+import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coordinator.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
+import 'package:businessos_pharmacy/features/medicines/presentation/medicine_scan_flow.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+class _LocalImages implements LocalMedicineImageSource {
+  @override
+  Future<String?> captureImage() async => '/tmp/medicine.jpg';
+
+  @override
+  Future<String?> chooseLocalImage() async => '/tmp/medicine.jpg';
+}
+
+class _OfflineOcr implements NativeMedicineOcr {
+  @override
+  Future<bool> get isAvailable async => true;
+
+  @override
+  Future<List<String>> recognizeLocalImage(String imagePath) async =>
+      ['Paracetamol 500mg tablets'];
+}
+
+void main() {
+  testWidgets('scan requires review and can be discarded without saving', (
+    WidgetTester tester,
+  ) async {
+    final confirmed = <ReviewedMedicineScan>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: MedicineScanFlow(
+              images: MedicineImageAcquisition(_LocalImages()),
+              scanner: MedicineScanCoordinator(ocr: _OfflineOcr()),
+              onConfirmed: confirmed.add,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Gallery'));
+    await tester.pumpAndSettle();
+    expect(find.text('Review scanned medicine details'), findsOneWidget);
+    expect(confirmed, isEmpty);
+
+    await tester.ensureVisible(find.text('Discard scan'));
+    await tester.tap(find.text('Discard scan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Review scanned medicine details'), findsNothing);
+    expect(confirmed, isEmpty);
+  });
+}
