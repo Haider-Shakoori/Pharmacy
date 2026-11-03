@@ -23,6 +23,45 @@ class OfflineCatalogBrowser {
 
   final PharmacyDatabase _database;
 
+  /// Searches the full local catalog for a potential duplicate before a
+  /// pharmacist starts registration. This is advisory, never a save operation.
+  /// A stale offline snapshot cannot guarantee server-side uniqueness.
+  Future<List<String>> possibleDuplicateMedicineNames({
+    required String brandName,
+    String? genericName,
+    String? barcode,
+  }) async {
+    final brand = brandName.trim();
+    if (brand.isEmpty) {
+      throw ArgumentError.value(brandName, 'brandName', 'Required');
+    }
+    final code = barcode?.trim();
+    final rows = await _database.customSelect(
+      '''
+      SELECT DISTINCT brand_name
+      FROM local_medicines
+      WHERE is_deleted = 0
+        AND (
+          LOWER(TRIM(brand_name)) = LOWER(?)
+          OR (? <> '' AND LOWER(TRIM(COALESCE(generic_name, ''))) = LOWER(?))
+          OR (? <> '' AND TRIM(COALESCE(medicine_code, '')) = ?)
+        )
+      ORDER BY brand_name COLLATE NOCASE
+      LIMIT 20
+      ''',
+      variables: <Variable<Object>>[
+        Variable<String>(brand),
+        Variable<String>(genericName?.trim() ?? ''),
+        Variable<String>(genericName?.trim() ?? ''),
+        Variable<String>(code ?? ''),
+        Variable<String>(code ?? ''),
+      ],
+    ).get();
+    return rows
+        .map((QueryRow row) => row.read<String>('brand_name'))
+        .toList(growable: false);
+  }
+
   /// Counts the entire locally synced catalog, not the 100-row browser page.
   Future<InventoryOverview> inventoryOverview({
     String? locationId,
