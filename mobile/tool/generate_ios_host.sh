@@ -10,8 +10,19 @@ if [[ -d ios ]]; then
 fi
 
 flutter create --platforms=ios --project-name businessos_pharmacy --org af.businessos --no-pub .
-echo "Review ios/Runner/Info.plist and add these entries before using the picker:"
-echo "NSCameraUsageDescription: Capture medicine labels for offline scanning"
-echo "NSPhotoLibraryUsageDescription: Select medicine label photos for offline scanning"
+# Configure native privacy strings without compiling or signing anything.
+python3 - <<'PY'
+from pathlib import Path
+import plistlib
+
+path = Path('ios/Runner/Info.plist')
+with path.open('rb') as source:
+    data = plistlib.load(source)
+data['NSCameraUsageDescription'] = 'Capture medicine labels for offline scanning.'
+data['NSPhotoLibraryUsageDescription'] = 'Select medicine label photos for offline scanning.'
+with path.open('wb') as destination:
+    plistlib.dump(data, destination, sort_keys=False)
+print('iOS camera and photo-library privacy descriptions configured.')
+PY
 echo "Review signing, deployment target and bundle identifier before committing."
 echo "Do not run flutter build or produce an IPA."
