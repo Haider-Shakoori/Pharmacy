@@ -232,6 +232,8 @@ class PurchasingTest extends TestCase
                     'purchase_order_line_id' => $line->id,
                     'received_quantity' => '4.0000',
                     'bonus_quantity' => '1.0000',
+                    'batch_number' => 'MOBILE-BATCH-001',
+                    'expires_at' => now()->addYear()->toDateString(),
                     'unit_cost' => '5.0000',
                 ]],
             ];
