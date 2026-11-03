@@ -34,10 +34,16 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
     _strength = TextEditingController(text: widget.draft.strength);
     _dosage = TextEditingController(text: widget.draft.dosageForm);
     _barcode = TextEditingController(text: widget.draft.barcode);
+    _brand.addListener(_refreshBrandValidation);
+  }
+
+  void _refreshBrandValidation() {
+    setState(() {});
   }
 
   @override
   void dispose() {
+    _brand.removeListener(_refreshBrandValidation);
     for (final controller in [
       _brand,
       _generic,
