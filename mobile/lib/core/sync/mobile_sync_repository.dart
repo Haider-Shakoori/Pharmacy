@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/core/decimal/fixed_decimal.dart';
 import 'package:businessos_pharmacy/core/sync/sync_models.dart';
@@ -176,6 +178,12 @@ class MobileSyncRepository {
           case 'customers':
             await _applyCustomer(item);
             break;
+          case 'suppliers':
+            await _applySupplier(item);
+            break;
+          case 'purchase_orders':
+            await _applyPurchaseOrder(item);
+            break;
           default:
             throw const FormatException(
               'Unsupported local synchronization stream.',
@@ -244,6 +252,62 @@ class MobileSyncRepository {
   int _retryDelaySeconds(int attempt) {
     final int exponent = attempt < 0 ? 0 : (attempt > 6 ? 6 : attempt);
     return 30 * (1 << exponent);
+  }
+
+  Future<void> _applySupplier(Map<String, dynamic> item) {
+    return _database.customStatement(
+      '''
+      INSERT INTO local_suppliers
+        (id, code, name, phone, contact_person, is_active, is_deleted, server_updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        code = excluded.code, name = excluded.name,
+        phone = excluded.phone, contact_person = excluded.contact_person,
+        is_active = excluded.is_active, is_deleted = excluded.is_deleted,
+        server_updated_at = excluded.server_updated_at
+      ''',
+      <Object?>[
+        item['id'].toString(),
+        item['code']?.toString(),
+        item['name'].toString(),
+        item['phone']?.toString(),
+        item['contact_person']?.toString(),
+        item['is_active'] == true ? 1 : 0,
+        item['is_deleted'] == true ? 1 : 0,
+        _serverSeconds(item),
+      ],
+    );
+  }
+
+  Future<void> _applyPurchaseOrder(Map<String, dynamic> item) {
+    return _database.customStatement(
+      '''
+      INSERT INTO local_purchase_orders
+        (id, supplier_id, number, status, order_date, expected_date,
+         currency, grand_total, lines_json, is_deleted, server_updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        supplier_id = excluded.supplier_id, number = excluded.number,
+        status = excluded.status, order_date = excluded.order_date,
+        expected_date = excluded.expected_date, currency = excluded.currency,
+        grand_total = excluded.grand_total, lines_json = excluded.lines_json,
+        is_deleted = excluded.is_deleted,
+        server_updated_at = excluded.server_updated_at
+      ''',
+      <Object?>[
+        item['id'].toString(),
+        item['supplier_id'].toString(),
+        item['number'].toString(),
+        item['status'].toString(),
+        item['order_date']?.toString(),
+        item['expected_date']?.toString(),
+        item['currency']?.toString() ?? 'AFN',
+        item['grand_total']?.toString() ?? '0',
+        jsonEncode(item['lines'] ?? <Object>[]),
+        item['is_deleted'] == true ? 1 : 0,
+        _serverSeconds(item),
+      ],
+    );
   }
 
   Future<void> _applyMedicine(Map<String, dynamic> item) {
