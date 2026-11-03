@@ -52,7 +52,7 @@
                             <td class="px-4 py-3 text-xs">
                                 @php($login = $lastLogins[$tenant->id] ?? null)
                                 @if (is_array($login) && isset($login['at']))
-                                    <p class="font-semibold text-slate-800">{{ $login['at']->timezone($tenant->timezone)->format('d M Y, h:i A') }}</p>
+                                    <p class="font-semibold text-slate-800">{{ \Carbon\CarbonImmutable::parse($login['at'])->timezone($tenant->timezone)->format('d M Y, h:i A') }}</p>
                                     <p class="text-slate-500">{{ $login['name'] }} ({{ $login['email'] }})</p>
                                     <p class="text-slate-400">{{ $tenant->timezone }}</p>
                                 @elseif (is_array($login) && !empty($login['unavailable']))
