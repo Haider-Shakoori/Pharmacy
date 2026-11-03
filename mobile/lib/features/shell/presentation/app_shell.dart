@@ -38,11 +38,13 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
     final bool canScanMedicines =
-        ref.watch(mobileRegistrationProvider).asData?.value?.permissions.contains(
-          'inventory.manage',
-        ) ==
+        ref
+            .watch(mobileRegistrationProvider)
+            .asData
+            ?.value
+            ?.permissions
+            .contains('inventory.manage') ==
         true;
-
     final List<_ShellDestination> destinations = <_ShellDestination>[
       const _ShellDestination(icon: Icons.dashboard_outlined, label: 'Home'),
       _ShellDestination(icon: Icons.point_of_sale_rounded, label: strings.pos),
@@ -104,30 +106,30 @@ class _AppShellState extends ConsumerState<AppShell> {
               const SizedBox(height: 16),
               if (canScanMedicines)
                 ExpansionTile(
-                title: const Text('Scan medicine label'),
-                subtitle: const Text(
-                  'Offline draft — pharmacist review required',
-                ),
-                children: [
-                  MedicineScanFlow(
-                    images: MedicineImageAcquisition(
-                      PickerMedicineImageSource(),
-                    ),
-                    scanner: const MedicineScanCoordinator(
-                      ocr: PlatformMedicineOcr(),
-                    ),
-                    onConfirmed: (ReviewedMedicineScan reviewed) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Medicine details reviewed. Registration is not yet connected; no record was saved.',
-                          ),
-                        ),
-                      );
-                    },
+                  title: const Text('Scan medicine label'),
+                  subtitle: const Text(
+                    'Offline draft — pharmacist review required',
                   ),
-                ],
-              ),
+                  children: [
+                    MedicineScanFlow(
+                      images: MedicineImageAcquisition(
+                        PickerMedicineImageSource(),
+                      ),
+                      scanner: const MedicineScanCoordinator(
+                        ocr: PlatformMedicineOcr(),
+                      ),
+                      onConfirmed: (ReviewedMedicineScan reviewed) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Medicine details reviewed. Registration is not yet connected; no record was saved.',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               const SizedBox(height: 16),
               const OperationalAlertsCard(),
             ],
