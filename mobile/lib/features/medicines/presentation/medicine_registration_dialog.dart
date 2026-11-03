@@ -50,8 +50,17 @@ class _MedicineRegistrationDialogState extends State<MedicineRegistrationDialog>
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(labelText: label),
-        validator: (value) =>
-            value == null || value.trim().isEmpty ? 'Required' : null,
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) return 'Required';
+          if (controller == _units || controller == _reorder) {
+            final number = double.tryParse(value.trim());
+            if (number == null || !number.isFinite ||
+                (controller == _units && number <= 0) || number < 0) {
+              return 'Enter a valid number';
+            }
+          }
+          return null;
+        },
       ),
     );
   }
