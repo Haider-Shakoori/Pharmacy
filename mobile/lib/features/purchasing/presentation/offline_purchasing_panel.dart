@@ -161,10 +161,14 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
                 if (receiving != null) ...<Widget>[
                   Text('Ordered quantity: ${receiving.ordered.compact}'),
                   Text('Received quantity: ${receiving.received.compact}'),
-                  Text('Outstanding quantity: ${receiving.outstanding.compact}'),
+                  Text(
+                    'Outstanding quantity: ${receiving.outstanding.compact}',
+                  ),
                   Text('Lines awaiting receipt: ${receiving.linesOutstanding}'),
                   if (receiving.overReceived.isPositive)
-                    Text('Over-received quantity: ${receiving.overReceived.compact}'),
+                    Text(
+                      'Over-received quantity: ${receiving.overReceived.compact}',
+                    ),
                   const SizedBox(height: 8),
                 ],
                 Text(
