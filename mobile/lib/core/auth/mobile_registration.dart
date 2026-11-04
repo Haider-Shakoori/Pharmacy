@@ -44,8 +44,8 @@ class MobileRegistration {
         : <String, dynamic>{};
 
     return MobileRegistration(
-      tenantId: tenant['id'].toString(),
-      tenantName: tenant['name'].toString(),
+      tenantId: _requiredString(tenant['id'], 'tenant.id'),
+      tenantName: _requiredString(tenant['name'], 'tenant.name'),
       activationId: _requiredString(data['activation_id'], 'activation_id'),
       deviceId: data['device_id']?.toString(),
       accessToken: _requiredString(data['access_token'], 'access_token'),
@@ -53,9 +53,9 @@ class MobileRegistration {
       leaseToken: _requiredString(lease['token'], 'offline_lease.token'),
       leaseExpiresAt: DateTime.parse(lease['expires_at'].toString()),
       leasePublicKey: lease['public_key']?.toString(),
-      userId: user['id'].toString(),
-      userName: user['name'].toString(),
-      userEmail: user['email'].toString(),
+      userId: _requiredString(user['id'], 'user.id'),
+      userName: _requiredString(user['name'], 'user.name'),
+      userEmail: _requiredString(user['email'], 'user.email'),
       permissions: (user['permissions'] as List<dynamic>? ?? <dynamic>[])
           .map((dynamic value) => value.toString())
           .toList(growable: false),
@@ -73,8 +73,8 @@ class MobileRegistration {
 
   factory MobileRegistration.fromJson(Map<String, dynamic> json) {
     return MobileRegistration(
-      tenantId: json['tenant_id'].toString(),
-      tenantName: json['tenant_name'].toString(),
+      tenantId: _requiredString(json['tenant_id'], 'tenant_id'),
+      tenantName: _requiredString(json['tenant_name'], 'tenant_name'),
       activationId: _requiredString(json['activation_id'], 'activation_id'),
       deviceId: json['device_id']?.toString(),
       accessToken: _requiredString(json['access_token'], 'access_token'),
@@ -82,9 +82,9 @@ class MobileRegistration {
       leaseToken: _requiredString(json['lease_token'], 'lease_token'),
       leaseExpiresAt: DateTime.parse(json['lease_expires_at'].toString()),
       leasePublicKey: json['lease_public_key']?.toString(),
-      userId: json['user_id'].toString(),
-      userName: json['user_name'].toString(),
-      userEmail: json['user_email'].toString(),
+      userId: _requiredString(json['user_id'], 'user_id'),
+      userName: _requiredString(json['user_name'], 'user_name'),
+      userEmail: _requiredString(json['user_email'], 'user_email'),
       permissions: (json['permissions'] as List<dynamic>? ?? <dynamic>[])
           .map((dynamic value) => value.toString())
           .toList(growable: false),
