@@ -303,6 +303,7 @@ class MobileSyncRepository {
         grand_total = excluded.grand_total, lines_json = excluded.lines_json,
         is_deleted = excluded.is_deleted,
         server_updated_at = excluded.server_updated_at
+      WHERE excluded.server_updated_at >= local_purchase_orders.server_updated_at
       ''',
       <Object?>[
         item['id'].toString(),
@@ -383,6 +384,7 @@ class MobileSyncRepository {
         is_deleted = excluded.is_deleted,
         server_created_at = excluded.server_created_at,
         server_updated_at = excluded.server_updated_at
+      WHERE excluded.server_updated_at >= local_inventory_batches.server_updated_at
       ''',
       <Object?>[
         batchId,
