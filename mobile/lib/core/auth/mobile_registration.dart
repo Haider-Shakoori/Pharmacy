@@ -51,7 +51,10 @@ class MobileRegistration {
   factory MobileRegistration.fromApi(Map<String, dynamic> data) {
     final Map<String, dynamic> tenant = _requiredMap(data['tenant'], 'tenant');
     final Map<String, dynamic> user = _requiredMap(data['user'], 'user');
-    final Map<String, dynamic> lease = _requiredMap(data['offline_lease'], 'offline_lease');
+    final Map<String, dynamic> lease = _requiredMap(
+      data['offline_lease'],
+      'offline_lease',
+    );
     final Map<String, dynamic> inventoryPolicy = data['inventory_policy'] is Map
         ? Map<String, dynamic>.from(data['inventory_policy'] as Map)
         : <String, dynamic>{};
@@ -107,9 +110,9 @@ class MobileRegistration {
 
   MobileRegistration withRefreshedSession(Map<String, dynamic> data) {
     final Map<String, dynamic> lease = _requiredMap(data['offline_lease'], 'offline_lease');
-    final Map<String, dynamic>? user = data['user'] is Map
-        ? Map<String, dynamic>.from(data['user'] as Map)
-        : null;
+    final Map<String, dynamic>? user = data['user'] == null
+        ? null
+        : _requiredMap(data['user'], 'user');
     final Map<String, dynamic> inventoryPolicy = data['inventory_policy'] is Map
         ? Map<String, dynamic>.from(data['inventory_policy'] as Map)
         : <String, dynamic>{};
