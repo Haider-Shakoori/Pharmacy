@@ -397,6 +397,47 @@ void main() {
   });
 
 
+  test('missing inventory identifiers roll back the entire pull page', () async {
+    for (final invalid in <Map<String, dynamic>>[
+      <String, dynamic>{
+        'medicine_id': 'med-1',
+        'stock_location_id': 'main',
+      },
+      <String, dynamic>{
+        'id': 'batch-missing-medicine',
+        'stock_location_id': 'main',
+      },
+      <String, dynamic>{
+        'id': 'batch-missing-location',
+        'medicine_id': 'med-1',
+      },
+    ]) {
+      await expectLater(
+        repository.applyPullPage(
+          SyncPullPage(
+            stream: 'inventory',
+            nextCursor: 'invalid-identifiers',
+            hasMore: false,
+            data: <Map<String, dynamic>>[
+              <String, dynamic>{
+                ...invalid,
+                'available_quantity': '5.0000',
+                'server_updated_at': '2026-11-04T00:00:00Z',
+              },
+            ],
+          ),
+        ),
+        throwsFormatException,
+      );
+    }
+    expect(await repository.checkpoint('inventory'), isNull);
+    final count = await database.customSelect(
+      'SELECT COUNT(*) AS c FROM local_inventory_batches',
+    ).map((row) => row.read<int>('c')).getSingle();
+    expect(count, 0);
+  });
+
+
   test('older supplier snapshots cannot replace newer local data', () async {
     Future<void> apply(String name, String timestamp) {
       return repository.applyPullPage(
