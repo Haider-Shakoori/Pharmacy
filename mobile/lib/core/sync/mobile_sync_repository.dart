@@ -11,6 +11,9 @@ class MobileSyncRepository {
   final PharmacyDatabase _database;
 
   Future<List<SyncOutboxEvent>> pendingOutbox({int limit = 25}) async {
+    if (limit < 1 || limit > 500) {
+      throw const RangeError('Outbox limit must be between 1 and 500.');
+    }
     final int now = _seconds(DateTime.now());
     // A process may terminate after marking events as sending. Reclaim only
     // stale leases; idempotency keys remain unchanged across retries.
