@@ -12,7 +12,7 @@ class MobileSyncRepository {
 
   Future<List<SyncOutboxEvent>> pendingOutbox({int limit = 25}) async {
     if (limit < 1 || limit > 500) {
-      throw const RangeError('Outbox limit must be between 1 and 500.');
+      throw RangeError.range(limit, 1, 500, 'limit');
     }
     final int now = _seconds(DateTime.now());
     // A process may terminate after marking events as sending. Reclaim only
