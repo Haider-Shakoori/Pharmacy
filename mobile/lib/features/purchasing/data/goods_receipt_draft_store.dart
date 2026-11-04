@@ -11,7 +11,9 @@ class GoodsReceiptDraftStore {
 
   String _orderId(String value) {
     final id = value.trim();
-    if (id.isEmpty) throw const FormatException('Purchase order ID is required.');
+    if (id.isEmpty) {
+      throw const FormatException('Purchase order ID is required.');
+    }
     return id;
   }
 
@@ -71,6 +73,7 @@ class GoodsReceiptDraftStore {
   }
 
   Future<void> delete(String purchaseOrderId) async {
+    purchaseOrderId = _orderId(purchaseOrderId);
     await _ensureTable();
     await database.customStatement(
       'DELETE FROM local_goods_receipt_drafts WHERE purchase_order_id = ?',
