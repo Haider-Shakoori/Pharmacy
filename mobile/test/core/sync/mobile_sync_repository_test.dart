@@ -292,4 +292,33 @@ void main() {
     expect(medicine.read<String>('brand_name'), 'Synced Medicine');
     expect(await repository.checkpoint('medicines'), 'cursor-1');
   });
+  test('older supplier snapshots cannot replace newer local data', () async {
+    Future<void> apply(String name, String timestamp) {
+      return repository.applyPullPage(
+        SyncPullPage(
+          stream: 'suppliers',
+          nextCursor: timestamp,
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'supplier-versioned',
+              'name': name,
+              'is_active': true,
+              'is_deleted': false,
+              'server_updated_at': timestamp,
+            },
+          ],
+        ),
+      );
+    }
+
+    await apply('New supplier name', '2026-11-04T10:00:00Z');
+    await apply('Old supplier name', '2026-11-03T10:00:00Z');
+
+    final QueryRow supplier = await database.customSelect(
+      "SELECT name FROM local_suppliers WHERE id = 'supplier-versioned'",
+    ).getSingle();
+    expect(supplier.read<String>('name'), 'New supplier name');
+  });
+
 }
