@@ -47,7 +47,13 @@ class GoodsReceiptDraftValidator {
   const GoodsReceiptDraftValidator._();
 
   static bool _validDate(String value) {
-    final match = RegExp(r'^\\d{4}-\\d{2}-\\d{2}
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) return false;
+    final date = DateTime.tryParse(value);
+    if (date == null) return false;
+    return date.toIso8601String().startsWith(value);
+  }
+
+  static List<String> validate(
     List<GoodsReceiptDraftLine> lines, {
     required String orderStatus,
   }) {
