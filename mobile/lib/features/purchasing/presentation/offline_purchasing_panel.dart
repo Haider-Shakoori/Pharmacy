@@ -62,6 +62,41 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
   static const int _pageSize = 30;
   late Future<List<QueryRow>> _rows;
   late Future<List<QueryRow>> _receipts;
+  bool _retryingReceipt = false;
+
+  Future<void> _retryReceipt(String key) async {
+    if (_retryingReceipt || !widget.canReceive) return;
+    setState(() => _retryingReceipt = true);
+    try {
+      await widget.database.customStatement('''
+        UPDATE sync_outbox_entries
+        SET status = 'retry', next_attempt_at = NULL,
+            updated_at = ?
+        WHERE idempotency_key = ?
+          AND event_type = 'goods_receipt.create'
+          AND status = 'retry'
+      ''', <Object?>[
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        key,
+      ]);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Receipt is ready for the next synchronization.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to retry receipt: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() {
+        _retryingReceipt = false;
+        _refresh();
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -278,6 +313,18 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
                   ListTile(
                     dense: true,
                     title: Text('Receipt ${receipt.read<String>('idempotency_key')}'),
+                    trailing: widget.canReceive &&
+                            receipt.read<String>('status') == 'retry'
+                        ? IconButton(
+                            tooltip: 'Retry on next sync',
+                            icon: const Icon(Icons.refresh),
+                            onPressed: _retryingReceipt
+                                ? null
+                                : () => _retryReceipt(
+                                      receipt.read<String>('idempotency_key'),
+                                    ),
+                          )
+                        : null,
                     subtitle: Text(
                       'Status: ${receipt.read<String>('status')} • '
                       'Attempts: ${receipt.read<int>('attempt_count')}'
