@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
@@ -35,7 +36,9 @@ class MedicineRegistrationApi {
     if (duplicates.isNotEmpty) {
       throw StateError('Potential duplicate medicines must be resolved');
     }
-    final response = await client.post(
+    final http.Response response;
+    try {
+      response = await client.post(
       base.resolve('api/v1/mobile/medicines'),
       headers: <String, String>{
         'Authorization': 'Bearer ${registration.accessToken}',
@@ -43,13 +46,27 @@ class MedicineRegistrationApi {
         'Content-Type': 'application/json',
       },
       body: jsonEncode(payload),
-    );
+      ).timeout(const Duration(seconds: 25));
+    } on TimeoutException {
+      throw StateError(
+        'The server did not confirm registration. Check the catalog before retrying to avoid duplicates.',
+      );
+    } on http.ClientException {
+      throw StateError(
+        'The connection was interrupted. Check the catalog before retrying to avoid duplicates.',
+      );
+    }
     if (response.statusCode != 201) {
       if (response.statusCode == 401 || response.statusCode == 403) {
         throw StateError('Session expired or medicine permission denied');
       }
       if (response.statusCode == 422) {
-        final decoded = jsonDecode(response.body);
+        Object? decoded;
+        try {
+          decoded = jsonDecode(response.body);
+        } on FormatException {
+          decoded = null;
+        }
         if (decoded is Map && decoded['errors'] is Map) {
           final errors = decoded['errors'] as Map;
           final details = errors.values
