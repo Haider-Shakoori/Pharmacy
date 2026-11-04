@@ -7,6 +7,7 @@ import 'package:businessos_pharmacy/features/alerts/presentation/operational_ale
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
 import 'package:businessos_pharmacy/features/medicines/data/medicine_duplicate_preflight.dart';
+import 'package:businessos_pharmacy/features/medicines/data/medicine_registration_catalog_refresh.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_registration_handoff.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coordinator.dart';
@@ -195,13 +196,26 @@ class _AppShellState extends ConsumerState<AppShell> {
                                       _duplicateLookup = null;
                                       _registrationApproval = false;
                                     });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Medicine registered. Sync the catalog to see it offline.',
+                                    try {
+                                      await refreshRegisteredMedicineCatalog(ref);
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Medicine registered and catalog synchronized.',
+                                          ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    } catch (error) {
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Medicine saved online, but catalog sync failed: $error. Use Sync Now to retry.',
+                                          ),
+                                        ),
+                                      );
+                                    }
                                   },
                           );
                         },
