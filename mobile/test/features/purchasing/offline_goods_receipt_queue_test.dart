@@ -60,4 +60,33 @@ void main() {
     );
     expect(await MobileSyncRepository(database).pendingOutbox(), isEmpty);
   });
+  test('duplicate unresolved receipt is blocked even with padded order ID', () async {
+    final queue = OfflineGoodsReceiptQueue(database);
+    const lines = <GoodsReceiptDraftLine>[
+      GoodsReceiptDraftLine(
+        purchaseOrderLineId: 'line-1',
+        orderedQuantity: '10',
+        previouslyReceivedQuantity: '0',
+        receivedQuantity: '2',
+        unitCost: '12.5',
+      ),
+    ];
+    await queue.enqueue(
+      purchaseOrderId: 'order-1',
+      orderStatus: 'approved',
+      receivedAt: DateTime.utc(2026, 11, 3),
+      lines: lines,
+    );
+    await expectLater(
+      queue.enqueue(
+        purchaseOrderId: ' order-1 ',
+        orderStatus: 'approved',
+        receivedAt: DateTime.utc(2026, 11, 3),
+        lines: lines,
+      ),
+      throwsFormatException,
+    );
+    expect(await MobileSyncRepository(database).pendingOutbox(), hasLength(1));
+  });
+
 }
