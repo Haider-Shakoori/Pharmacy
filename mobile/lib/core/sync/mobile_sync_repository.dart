@@ -127,9 +127,17 @@ class MobileSyncRepository {
       }
 
       await _database.customStatement(
-        'DELETE FROM sync_outbox_entries WHERE idempotency_key = ?',
-        <Object?>[event.idempotencyKey],
+        'DELETE FROM sync_outbox_entries WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ?',
+        <Object?>[event.idempotencyKey, event.aggregateId, event.eventType],
       );
+      final QueryRow removed = await _database
+          .customSelect('SELECT changes() AS affected')
+          .getSingle();
+      if (removed.read<int>('affected') != 1) {
+        throw StateError(
+          'Sale acknowledgement could not remove exactly one matching outbox event.',
+        );
+      }
     });
   }
 
