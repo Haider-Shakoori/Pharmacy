@@ -51,7 +51,7 @@ void main() {
         });
         return http.Response(
           jsonEncode({
-            'data': {'registration_allowed': false, 'possible_duplicates': []},
+            'data': {'registration_allowed': false, 'possible_duplicates': <Object>[]},
           }),
           200,
         );
