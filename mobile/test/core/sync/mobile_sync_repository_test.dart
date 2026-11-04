@@ -350,6 +350,53 @@ void main() {
   });
 
 
+  test('missing inventory quantity cannot overwrite cached stock', () async {
+    await repository.applyPullPage(
+      const SyncPullPage(
+        stream: 'inventory',
+        nextCursor: 'valid-stock',
+        hasMore: false,
+        data: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'batch-protected',
+            'medicine_id': 'med-1',
+            'stock_location_id': 'main',
+            'available_quantity': '7.0000',
+            'sale_price': '10.0000',
+            'purchase_cost': '4.0000',
+            'server_updated_at': '2026-11-03T00:00:00Z',
+          },
+        ],
+      ),
+    );
+
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'inventory',
+          nextCursor: 'invalid-stock',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'batch-protected',
+              'medicine_id': 'med-1',
+              'stock_location_id': 'main',
+              'server_updated_at': '2026-11-04T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+
+    final row = await database.customSelect(
+      "SELECT available_quantity FROM local_inventory_batches WHERE id = 'batch-protected'",
+    ).getSingle();
+    expect(row.read<String>('available_quantity'), '7.0000');
+    expect(await repository.checkpoint('inventory'), 'valid-stock');
+  });
+
+
   test('older supplier snapshots cannot replace newer local data', () async {
     Future<void> apply(String name, String timestamp) {
       return repository.applyPullPage(
