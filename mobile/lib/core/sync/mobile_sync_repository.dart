@@ -391,7 +391,15 @@ class MobileSyncRepository {
   }
 
   Future<void> _applyInventory(Map<String, dynamic> item) async {
-    final String batchId = item['id'].toString();
+    final Object? rawId = item['id'];
+    final Object? rawMedicineId = item['medicine_id'];
+    final Object? rawLocationId = item['stock_location_id'];
+    if (rawId is! String || rawId.trim().isEmpty ||
+        rawMedicineId is! String || rawMedicineId.trim().isEmpty ||
+        rawLocationId is! String || rawLocationId.trim().isEmpty) {
+      throw const FormatException('Inventory snapshot is missing required identifiers.');
+    }
+    final String batchId = rawId.trim();
     final String? expiresAt = item['expires_at']?.toString();
     final String? serverCreatedAt = item['server_created_at']?.toString();
     final Object? rawAvailable = item['available_quantity'];
@@ -435,8 +443,8 @@ class MobileSyncRepository {
       ''',
       <Object?>[
         batchId,
-        item['medicine_id'].toString(),
-        item['stock_location_id'].toString(),
+        rawMedicineId.trim(),
+        rawLocationId.trim(),
         item['batch_number']?.toString() ?? '',
         expiresAt == null ? null : _seconds(DateTime.parse(expiresAt).toUtc()),
         available.toString(),
