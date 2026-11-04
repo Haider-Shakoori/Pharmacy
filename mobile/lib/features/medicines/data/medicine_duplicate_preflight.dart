@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
@@ -27,18 +28,31 @@ class MedicineDuplicatePreflight {
       throw StateError('Medicine management permission is required');
     }
     final uri = base.resolve('api/v1/mobile/medicines/duplicate-check');
-    final response = await client.post(
-      uri,
-      headers: <String, String>{
-        'Authorization': 'Bearer ${registration.accessToken}',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(<String, String>{
-        'brand_name': handoff.brandName,
-        if (handoff.barcode != null) 'barcode': handoff.barcode!,
-      }),
-    );
+    final http.Response response;
+    try {
+      response = await client
+          .post(
+            uri,
+            headers: <String, String>{
+              'Authorization': 'Bearer ${registration.accessToken}',
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(<String, String>{
+              'brand_name': handoff.brandName,
+              if (handoff.barcode != null) 'barcode': handoff.barcode!,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      throw StateError(
+        'Duplicate verification timed out. Registration was not submitted; retry when connected.',
+      );
+    } on http.ClientException {
+      throw StateError(
+        'Duplicate verification connection failed. Registration was not submitted; retry when connected.',
+      );
+    }
     if (response.statusCode != 200) {
       throw StateError(
         'Server duplicate validation failed (${response.statusCode})',
