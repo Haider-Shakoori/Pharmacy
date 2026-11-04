@@ -472,6 +472,38 @@ void main() {
   });
 
 
+  test('older inventory snapshots cannot replace newer cached stock', () async {
+    Future<void> apply(String quantity, String timestamp) {
+      return repository.applyPullPage(
+        SyncPullPage(
+          stream: 'inventory',
+          nextCursor: timestamp,
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'batch-versioned',
+              'medicine_id': 'med-1',
+              'stock_location_id': 'main',
+              'available_quantity': quantity,
+              'sale_price': '10.0000',
+              'purchase_cost': '4.0000',
+              'server_updated_at': timestamp,
+            },
+          ],
+        ),
+      );
+    }
+
+    await apply('9.0000', '2026-11-04T10:00:00Z');
+    await apply('20.0000', '2026-11-03T10:00:00Z');
+
+    final row = await database.customSelect(
+      "SELECT available_quantity FROM local_inventory_batches WHERE id = 'batch-versioned'",
+    ).getSingle();
+    expect(row.read<String>('available_quantity'), '9.0000');
+  });
+
+
   test('older supplier snapshots cannot replace newer local data', () async {
     Future<void> apply(String name, String timestamp) {
       return repository.applyPullPage(
