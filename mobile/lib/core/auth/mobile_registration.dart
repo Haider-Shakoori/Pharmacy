@@ -18,6 +18,17 @@ class MobileRegistration {
     this.cloudBaseUrl,
   });
 
+  static String _requiredString(Object? value, String field) {
+    if (value is! String && value is! num) {
+      throw FormatException('Invalid mobile registration field: $field');
+    }
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null') {
+      throw FormatException('Missing mobile registration field: $field');
+    }
+    return text;
+  }
+
   factory MobileRegistration.fromApi(Map<String, dynamic> data) {
     final Map<String, dynamic> tenant = Map<String, dynamic>.from(
       data['tenant'] as Map,
@@ -35,11 +46,11 @@ class MobileRegistration {
     return MobileRegistration(
       tenantId: tenant['id'].toString(),
       tenantName: tenant['name'].toString(),
-      activationId: data['activation_id'].toString(),
+      activationId: _requiredString(data['activation_id'], 'activation_id'),
       deviceId: data['device_id']?.toString(),
-      accessToken: data['access_token'].toString(),
+      accessToken: _requiredString(data['access_token'], 'access_token'),
       accessExpiresAt: DateTime.parse(data['access_expires_at'].toString()),
-      leaseToken: lease['token'].toString(),
+      leaseToken: _requiredString(lease['token'], 'offline_lease.token'),
       leaseExpiresAt: DateTime.parse(lease['expires_at'].toString()),
       leasePublicKey: lease['public_key']?.toString(),
       userId: user['id'].toString(),
@@ -64,11 +75,11 @@ class MobileRegistration {
     return MobileRegistration(
       tenantId: json['tenant_id'].toString(),
       tenantName: json['tenant_name'].toString(),
-      activationId: json['activation_id'].toString(),
+      activationId: _requiredString(json['activation_id'], 'activation_id'),
       deviceId: json['device_id']?.toString(),
-      accessToken: json['access_token'].toString(),
+      accessToken: _requiredString(json['access_token'], 'access_token'),
       accessExpiresAt: DateTime.parse(json['access_expires_at'].toString()),
-      leaseToken: json['lease_token'].toString(),
+      leaseToken: _requiredString(json['lease_token'], 'lease_token'),
       leaseExpiresAt: DateTime.parse(json['lease_expires_at'].toString()),
       leasePublicKey: json['lease_public_key']?.toString(),
       userId: json['user_id'].toString(),
@@ -101,9 +112,9 @@ class MobileRegistration {
       tenantName: tenantName,
       activationId: activationId,
       deviceId: data['device_id']?.toString() ?? deviceId,
-      accessToken: data['access_token'].toString(),
+      accessToken: _requiredString(data['access_token'], 'access_token'),
       accessExpiresAt: DateTime.parse(data['access_expires_at'].toString()),
-      leaseToken: lease['token'].toString(),
+      leaseToken: _requiredString(lease['token'], 'offline_lease.token'),
       leaseExpiresAt: DateTime.parse(lease['expires_at'].toString()),
       leasePublicKey: lease['public_key']?.toString() ?? leasePublicKey,
       userId: user?['id']?.toString() ?? userId,
