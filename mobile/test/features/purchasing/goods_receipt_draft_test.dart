@@ -77,6 +77,17 @@ void main() {
     expect(errors.join(' '), contains('distinct'));
   });
 
+  test('receipt payload normalizes the order line identifier', () {
+    const item = GoodsReceiptDraftLine(
+      purchaseOrderLineId: ' line-1 ',
+      orderedQuantity: '5',
+      previouslyReceivedQuantity: '0',
+      receivedQuantity: '2',
+      unitCost: '10',
+    );
+    expect(item.toPayload()['purchase_order_line_id'], 'line-1');
+  });
+
   test('rejects receipts for draft orders', () {
     expect(
       GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
