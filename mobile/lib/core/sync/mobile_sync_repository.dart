@@ -397,6 +397,9 @@ class MobileSyncRepository {
     final FixedDecimal serverAvailable = FixedDecimal.parse(
       item['available_quantity']?.toString() ?? '0',
     );
+    if (serverAvailable.isNegative) {
+      throw const FormatException('Inventory snapshot cannot contain negative available stock.');
+    }
     final FixedDecimal outstanding = await _outstandingAllocationQuantity(
       batchId,
     );
