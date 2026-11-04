@@ -92,4 +92,55 @@ void main() {
     expect(() => MobileRegistration.fromJson(json), throwsFormatException);
   });
 
+  test('session refresh rejects missing user identity', () {
+    final MobileRegistration existing = MobileRegistration(
+      tenantId: 'tenant-1',
+      tenantName: 'Pharmacy',
+      activationId: 'activation-1',
+      accessToken: 'old-access',
+      accessExpiresAt: DateTime.utc(2026, 11),
+      leaseToken: 'old-lease',
+      leaseExpiresAt: DateTime.utc(2026, 11),
+      userId: '7',
+      userName: 'Cashier',
+      userEmail: 'cashier@example.test',
+      permissions: const <String>['pos.sell'],
+    );
+
+    expect(
+      () => existing.withRefreshedSession(<String, dynamic>{
+        'access_token': 'new-access',
+        'access_expires_at': '2026-12-01T00:00:00Z',
+        'offline_lease': <String, dynamic>{
+          'token': 'new-lease',
+          'expires_at': '2026-12-01T00:00:00Z',
+        },
+        'user': <String, dynamic>{'id': 7, 'name': 'Cashier'},
+      }),
+      throwsFormatException,
+    );
+  });
+
+  test('rejects malformed permissions on restored session', () {
+    final MobileRegistration registration = MobileRegistration(
+      tenantId: 'tenant-1',
+      tenantName: 'Pharmacy',
+      activationId: 'activation-1',
+      accessToken: 'access',
+      accessExpiresAt: DateTime.utc(2026, 12),
+      leaseToken: 'lease',
+      leaseExpiresAt: DateTime.utc(2026, 12),
+      userId: '7',
+      userName: 'Cashier',
+      userEmail: 'cashier@example.test',
+      permissions: const <String>[],
+    );
+    final Map<String, Object?> snapshot = registration.toJson();
+    snapshot['permissions'] = <Object>['pos.sell', 123];
+    expect(
+      () => MobileRegistration.fromJson(snapshot),
+      throwsFormatException,
+    );
+  });
+
 }
