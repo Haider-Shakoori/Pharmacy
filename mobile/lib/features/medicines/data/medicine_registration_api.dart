@@ -39,13 +39,13 @@ class MedicineRegistrationApi {
     final http.Response response;
     try {
       response = await client.post(
-      base.resolve('api/v1/mobile/medicines'),
-      headers: <String, String>{
-        'Authorization': 'Bearer ${registration.accessToken}',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(payload),
+        base.resolve('api/v1/mobile/medicines'),
+        headers: <String, String>{
+          'Authorization': 'Bearer ${registration.accessToken}',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(payload),
       ).timeout(const Duration(seconds: 25));
     } on TimeoutException {
       throw StateError(
