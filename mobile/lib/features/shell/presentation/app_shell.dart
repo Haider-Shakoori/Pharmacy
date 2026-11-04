@@ -197,18 +197,23 @@ class _AppShellState extends ConsumerState<AppShell> {
                                       _registrationApproval = false;
                                     });
                                     try {
-                                      await refreshRegisteredMedicineCatalog(ref);
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Medicine registered and catalog synchronized.',
-                                          ),
-                                        ),
+                                      await refreshRegisteredMedicineCatalog(
+                                        ref,
                                       );
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Medicine registered and catalog synchronized.',
+                                              ),
+                                            ),
+                                          );
                                     } catch (error) {
                                       if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text(
                                             'Medicine saved online, but catalog sync failed: $error. Use Sync Now to retry.',
