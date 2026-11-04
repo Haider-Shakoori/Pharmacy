@@ -45,6 +45,38 @@ void main() {
     expect(items.single.medicineId, 'med-stock');
   });
 
+  test('search treats percent and underscore as literal characters', () async {
+    for (final item in <List<String>>[
+      <String>['med-percent', 'Vitamin 5%'],
+      <String>['med-underscore', 'Vitamin_5'],
+      <String>['med-plain', 'Vitamin 50'],
+    ]) {
+      await database.customStatement(
+        '''
+        INSERT INTO local_medicines (
+          id, medicine_code, brand_name, generic_name, sale_unit,
+          is_active, is_deleted
+        ) VALUES (?, ?, ?, 'Generic', 'box', 1, 0)
+        ''',
+        <Object?>[item[0], item[0], item[1]],
+      );
+      await database.customStatement(
+        '''
+        INSERT INTO local_inventory_batches (
+          id, medicine_id, stock_location_id, batch_number,
+          available_quantity, sale_price, purchase_cost, status, is_deleted
+        ) VALUES (?, ?, 'main', 'LOT', '2.0000', '10.0000', '5.0000', 'active', 0)
+        ''',
+        <Object?>['batch-${item[0]}', item[0]],
+      );
+    }
+    final percent = await catalog.search(stockLocationId: ' main ', query: '%');
+    expect(percent.map((item) => item.medicineId), <String>['med-percent']);
+    final underscore = await catalog.search(stockLocationId: 'main', query: '_');
+    expect(underscore.map((item) => item.medicineId), <String>['med-underscore']);
+  });
+
+
   test('catalog rejects invalid result limits and blank stock location', () async {
     await expectLater(
       catalog.search(stockLocationId: 'main', limit: 0),
