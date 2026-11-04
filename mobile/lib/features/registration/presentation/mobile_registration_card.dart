@@ -126,6 +126,14 @@ class _MobileRegistrationCardState
         _registering = false;
         _error = error.message.toString();
       });
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _registering = false;
+        _error = 'Unable to save registration. Please try again.';
+      });
     }
   }
 
@@ -199,6 +207,14 @@ class _MobileRegistrationCardState
         _registering = false;
         _error = error.message.toString();
       });
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _registering = false;
+        _error = 'Unable to save registration. Please try again.';
+      });
     }
   }
 
@@ -207,8 +223,8 @@ class _MobileRegistrationCardState
     required ConnectionProfileRepository profileRepository,
     required ConnectionProfile profile,
   }) async {
-    await ref.read(mobileRegistrationRepositoryProvider).save(registration);
-
+    // Validate the supplied endpoint before persisting credentials, so a
+    // malformed server response cannot leave a partially activated device.
     final String? cloudBaseUrl = registration.cloudBaseUrl;
     if (cloudBaseUrl != null && cloudBaseUrl.isNotEmpty) {
       final ServerEndpoint cloud = ServerEndpoint.fromInput(
@@ -223,6 +239,8 @@ class _MobileRegistrationCardState
         ),
       );
     }
+
+    await ref.read(mobileRegistrationRepositoryProvider).save(registration);
 
     ref.invalidate(mobileRegistrationProvider);
     ref.invalidate(localDatabaseScopeProvider);
