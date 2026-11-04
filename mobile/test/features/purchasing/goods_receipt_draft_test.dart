@@ -60,6 +60,23 @@ void main() {
     );
   });
 
+  test('rejects duplicate order line IDs with surrounding whitespace', () {
+    final errors = GoodsReceiptDraftValidator.validate(
+      <GoodsReceiptDraftLine>[
+        line(),
+        const GoodsReceiptDraftLine(
+          purchaseOrderLineId: ' po-line-1 ',
+          orderedQuantity: '10',
+          previouslyReceivedQuantity: '0',
+          receivedQuantity: '1',
+          unitCost: '10',
+        ),
+      ],
+      orderStatus: 'approved',
+    );
+    expect(errors.join(' '), contains('distinct'));
+  });
+
   test('rejects receipts for draft orders', () {
     expect(
       GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
