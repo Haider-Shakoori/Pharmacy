@@ -70,7 +70,8 @@ void main() {
         );
       }
       expect(request.method, 'POST');
-      expect(jsonDecode(request.body)['pharmacist_approved'], true);
+      final payload = jsonDecode(request.body) as Map<String, dynamic>;
+      expect(payload['pharmacist_approved'], true);
       return http.Response('{"data":{"id":"medicine-1"}}', 201);
     });
     addTearDown(client.close);
