@@ -116,6 +116,21 @@ class MobileSyncEngine {
           cursor: cursor,
         );
 
+        if (page.stream != stream) {
+          throw MobileSyncException(
+            'Synchronization returned the wrong stream for $stream.',
+          );
+        }
+        if (page.hasMore &&
+            (page.nextCursor == null ||
+                page.nextCursor!.isEmpty ||
+                page.nextCursor == cursor)) {
+          throw MobileSyncException(
+            'Synchronization returned an invalid continuation cursor for '
+            '$stream. Local data was not changed for this page.',
+          );
+        }
+
         await repository.applyPullPage(page);
         pulled += page.data.length;
         cursor = page.nextCursor;
