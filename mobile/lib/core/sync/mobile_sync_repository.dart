@@ -67,10 +67,18 @@ class MobileSyncRepository {
               attempt_count = attempt_count + 1,
               last_error = NULL,
               updated_at = ?
-          WHERE idempotency_key = ?
+          WHERE idempotency_key = ? AND status IN ('pending', 'retry')
           ''',
           <Object?>[now, event.idempotencyKey],
         );
+        final QueryRow changed = await _database
+            .customSelect('SELECT changes() AS affected')
+            .getSingle();
+        if (changed.read<int>('affected') != 1) {
+          throw StateError(
+            'Outbox event changed before it could be marked sending.',
+          );
+        }
       }
     });
   }
