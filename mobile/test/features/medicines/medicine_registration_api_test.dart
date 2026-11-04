@@ -181,13 +181,17 @@ void main() {
     });
     addTearDown(client.close);
     await expectLater(
-      MedicineRegistrationApi(environment: environment, client: client)
-          .create(registration: registration, form: form),
-      throwsA(isA<StateError>().having(
-        (error) => error.message,
-        'message',
-        contains('Session expired'),
-      )),
+      MedicineRegistrationApi(
+        environment: environment,
+        client: client,
+      ).create(registration: registration, form: form),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          contains('Session expired'),
+        ),
+      ),
     );
     expect(creationAttempts, 1);
   });
@@ -207,13 +211,17 @@ void main() {
     });
     addTearDown(client.close);
     await expectLater(
-      MedicineRegistrationApi(environment: environment, client: client)
-          .create(registration: registration, form: form),
-      throwsA(isA<StateError>().having(
-        (error) => error.message,
-        'message',
-        contains('Medicine code already exists'),
-      )),
+      MedicineRegistrationApi(
+        environment: environment,
+        client: client,
+      ).create(registration: registration, form: form),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          contains('Medicine code already exists'),
+        ),
+      ),
     );
   });
 
@@ -229,8 +237,10 @@ void main() {
     });
     addTearDown(client.close);
     await expectLater(
-      MedicineRegistrationApi(environment: environment, client: client)
-          .create(registration: registration, form: form),
+      MedicineRegistrationApi(
+        environment: environment,
+        client: client,
+      ).create(registration: registration, form: form),
       throwsFormatException,
     );
   });
