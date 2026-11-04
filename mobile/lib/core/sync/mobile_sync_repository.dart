@@ -151,6 +151,15 @@ class MobileSyncRepository {
     String message,
   ) async {
     for (final SyncOutboxEvent event in events) {
+      // Acknowledged events may already have been removed before a later
+      // database or transport operation failed. Never recreate them.
+      final row = await _database.customSelect(
+        'SELECT status FROM sync_outbox_entries WHERE idempotency_key = ?',
+        variables: <Variable<Object>>[
+          Variable<String>(event.idempotencyKey),
+        ],
+      ).getSingleOrNull();
+      if (row?.read<String>('status') != 'sending') continue;
       await reject(
         event,
         SyncPushResult(
