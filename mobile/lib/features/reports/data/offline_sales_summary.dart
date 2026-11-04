@@ -41,7 +41,8 @@ class OfflineSalesSummaryRepository {
     String endDate,
   ) async {
     final RegExp datePattern = RegExp(r'^\d{4}-\d{2}-\d{2}$');
-    if (!datePattern.hasMatch(startDate) || !datePattern.hasMatch(endDate)) {
+    if (!datePattern.hasMatch(startDate) || !datePattern.hasMatch(endDate) ||
+        !_isCalendarDate(startDate) || !_isCalendarDate(endDate)) {
       throw ArgumentError('Dates must use YYYY-MM-DD');
     }
     if (startDate.compareTo(endDate) > 0) {
@@ -80,6 +81,16 @@ class OfflineSalesSummaryRepository {
     );
   }
 
+  static bool _isCalendarDate(String value) {
+    if (value.length != 10) return false;
+    final date = DateTime.tryParse(value);
+    if (date == null) return false;
+    final normalized = date.year.toString().padLeft(4, '0') +
+        '-' + date.month.toString().padLeft(2, '0') +
+        '-' + date.day.toString().padLeft(2, '0');
+    return normalized == value;
+  }
+
   /// One point per calendar date, including zero-sale days, for device-local trends.
   Future<List<OfflineDailySales>> dailyTrend(
     String startDate,
@@ -89,6 +100,8 @@ class OfflineSalesSummaryRepository {
     final DateTime? end = DateTime.tryParse(endDate);
     if (start == null ||
         end == null ||
+        !_isCalendarDate(startDate) ||
+        !_isCalendarDate(endDate) ||
         startDate.length != 10 ||
         endDate.length != 10 ||
         start.isAfter(end) ||
