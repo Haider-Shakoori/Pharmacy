@@ -166,4 +166,72 @@ void main() {
     );
     expect(createRequests, 0);
   });
+
+  test('rejects unauthorized creation after successful preflight', () async {
+    var creationAttempts = 0;
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/duplicate-check')) {
+        return http.Response(
+          '{"data":{"registration_allowed":false,"possible_duplicates":[]}}',
+          200,
+        );
+      }
+      creationAttempts++;
+      return http.Response('Unauthorized', 401);
+    });
+    addTearDown(client.close);
+    await expectLater(
+      MedicineRegistrationApi(environment: environment, client: client)
+          .create(registration: registration, form: form),
+      throwsA(isA<StateError>().having(
+        (error) => error.message,
+        'message',
+        contains('Session expired'),
+      )),
+    );
+    expect(creationAttempts, 1);
+  });
+
+  test('surfaces server field validation errors', () async {
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/duplicate-check')) {
+        return http.Response(
+          '{"data":{"registration_allowed":false,"possible_duplicates":[]}}',
+          200,
+        );
+      }
+      return http.Response(
+        '{"errors":{"medicine_code":["Medicine code already exists"]}}',
+        422,
+      );
+    });
+    addTearDown(client.close);
+    await expectLater(
+      MedicineRegistrationApi(environment: environment, client: client)
+          .create(registration: registration, form: form),
+      throwsA(isA<StateError>().having(
+        (error) => error.message,
+        'message',
+        contains('Medicine code already exists'),
+      )),
+    );
+  });
+
+  test('rejects malformed successful creation response', () async {
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/duplicate-check')) {
+        return http.Response(
+          '{"data":{"registration_allowed":false,"possible_duplicates":[]}}',
+          200,
+        );
+      }
+      return http.Response('{"data":{"id":123}}', 201);
+    });
+    addTearDown(client.close);
+    await expectLater(
+      MedicineRegistrationApi(environment: environment, client: client)
+          .create(registration: registration, form: form),
+      throwsFormatException,
+    );
+  });
 }
