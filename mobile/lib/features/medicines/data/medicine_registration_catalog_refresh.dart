@@ -23,10 +23,7 @@ Future<void> refreshRegisteredMedicineCatalog(WidgetRef ref) async {
       defaultCloudUri: AppEnvironment.current.apiBaseUri,
     );
     final resolver = ConnectionRouteResolver((endpoint) async {
-      final state = await ServerReachabilityProbe(
-        client,
-        endpoint.uri,
-      ).check();
+      final state = await ServerReachabilityProbe(client, endpoint.uri).check();
       return state == ServerReachability.reachable;
     });
     final engine = MobileSyncEngine(
