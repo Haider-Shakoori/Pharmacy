@@ -230,17 +230,20 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => GoodsReceiptWorksheet(
-                            database: widget.database,
-                            purchaseOrderId: row.read<String>('id'),
-                            orderNumber: row.read<String>('title'),
-                            orderStatus: row.read<String>('subtitle'),
-                            lines: lines,
+                      onPressed: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => GoodsReceiptWorksheet(
+                              database: widget.database,
+                              purchaseOrderId: row.read<String>('id'),
+                              orderNumber: row.read<String>('title'),
+                              orderStatus: row.read<String>('subtitle'),
+                              lines: lines,
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                        if (mounted) setState(_refresh);
+                      },
                       icon: const Icon(Icons.inventory_outlined),
                       label: const Text('Open receiving worksheet'),
                     ),
