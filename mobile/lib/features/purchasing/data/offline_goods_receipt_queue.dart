@@ -28,6 +28,7 @@ class OfflineGoodsReceiptQueue {
       throw const FormatException('Purchase order ID is required.');
     }
 
+    final String normalizedOrderId = purchaseOrderId.trim();
     final random = Random.secure();
     final nonce = List<int>.generate(
       16,
@@ -37,7 +38,7 @@ class OfflineGoodsReceiptQueue {
     final payload = <String, Object?>{
       'local_id': key,
       'idempotency_key': key,
-      'purchase_order_id': purchaseOrderId,
+      'purchase_order_id': normalizedOrderId,
       'received_at': receivedAt.toUtc().toIso8601String(),
       'lines': lines
           .where((line) => FixedDecimal.parse(line.receivedQuantity).isPositive)
@@ -58,9 +59,21 @@ class OfflineGoodsReceiptQueue {
         ''',
       ).get();
       for (final row in outstanding) {
-        final existing = jsonDecode(row.read<String>('payload_json'));
-        if (existing is Map &&
-            existing['purchase_order_id']?.toString() == purchaseOrderId) {
+        final Object? existing;
+        try {
+          existing = jsonDecode(row.read<String>('payload_json'));
+        } on FormatException {
+          throw const FormatException(
+            'An existing offline receipt is corrupted. Resolve the local synchronization queue before adding another receipt.',
+          );
+        }
+        if (existing is! Map) {
+          throw const FormatException(
+            'An existing offline receipt has an invalid payload.',
+          );
+        }
+        if (existing['purchase_order_id']?.toString().trim() ==
+            normalizedOrderId) {
           throw const FormatException(
             'This purchase order already has an unresolved offline receipt. '
             'Synchronize or resolve that receipt before queuing another.',
