@@ -378,10 +378,22 @@ class OfflinePosCheckoutService {
         '''
         UPDATE local_inventory_batches
         SET available_quantity = ?
-        WHERE id = ?
+        WHERE id = ? AND available_quantity = ?
         ''',
-        <Object?>[availableAfter.toString(), batch.id],
+        <Object?>[
+          availableAfter.toString(),
+          batch.id,
+          batch.available.toString(),
+        ],
       );
+      final changed = await _database.customSelect(
+        'SELECT changes() AS affected',
+      ).getSingle();
+      if (changed.read<int>('affected') != 1) {
+        throw const OfflinePosException(
+          'Stock changed during checkout. Refresh the catalog and retry.',
+        );
+      }
 
       await _database.customStatement(
         '''
