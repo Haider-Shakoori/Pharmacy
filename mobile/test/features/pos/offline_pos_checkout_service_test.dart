@@ -338,4 +338,38 @@ void main() {
       expect(outboxCount, 0);
     },
   );
+  test('invalid cashier and calendar date cannot create offline sales', () async {
+    for (final request in <OfflinePosCheckoutRequest>[
+      const OfflinePosCheckoutRequest(
+        stockLocationId: 'main-location',
+        cashierUserId: ' ',
+        permissions: <String>{'pos.sell'},
+        lines: <OfflinePosLineInput>[
+          OfflinePosLineInput(medicineId: 'medicine-1', quantity: '1', unitPrice: '12.5000'),
+        ],
+        payments: <OfflinePosPaymentInput>[
+          OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
+        ],
+      ),
+      const OfflinePosCheckoutRequest(
+        stockLocationId: 'main-location',
+        cashierUserId: '7',
+        businessDate: '2026-02-30',
+        permissions: <String>{'pos.sell'},
+        lines: <OfflinePosLineInput>[
+          OfflinePosLineInput(medicineId: 'medicine-1', quantity: '1', unitPrice: '12.5000'),
+        ],
+        payments: <OfflinePosPaymentInput>[
+          OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
+        ],
+      ),
+    ]) {
+      await expectLater(service.checkout(request), throwsA(isA<OfflinePosException>()));
+    }
+    final count = await database.customSelect(
+      'SELECT COUNT(*) AS c FROM sync_outbox_entries',
+    ).map((row) => row.read<int>('c')).getSingle();
+    expect(count, 0);
+  });
+
 }
