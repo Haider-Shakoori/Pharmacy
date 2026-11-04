@@ -100,6 +100,16 @@ class MobileSyncRepository {
             event.aggregateId,
           ],
         );
+        // Do not discard the outbox entry if its local sale was missing.
+        // Otherwise a successful remote write could become invisible locally.
+        final QueryRow updated = await _database
+            .customSelect('SELECT changes() AS affected')
+            .getSingle();
+        if (updated.read<int>('affected') != 1) {
+          throw const StateError(
+            'Sale acknowledgement could not update exactly one local sale.',
+          );
+        }
       }
 
       await _database.customStatement(
