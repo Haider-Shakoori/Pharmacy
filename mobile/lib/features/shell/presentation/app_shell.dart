@@ -13,6 +13,7 @@ import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coor
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/picker_medicine_image_source.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/platform_medicine_ocr.dart';
+import 'package:businessos_pharmacy/features/medicines/presentation/medicine_registration_dialog.dart';
 import 'package:businessos_pharmacy/features/medicines/presentation/medicine_scan_flow.dart';
 import 'package:businessos_pharmacy/features/pos/presentation/offline_pos_panel.dart';
 import 'package:businessos_pharmacy/features/purchasing/presentation/offline_purchasing_panel.dart';
@@ -142,6 +143,69 @@ class _AppShellState extends ConsumerState<AppShell> {
                         });
                       },
                     ),
+                    if (_reviewedScan != null && _duplicateLookup != null)
+                      FutureBuilder<List<String>>(
+                        future: _duplicateLookup,
+                        builder: (context, snapshot) {
+                          final ready =
+                              snapshot.connectionState ==
+                                  ConnectionState.done &&
+                              !snapshot.hasError &&
+                              snapshot.hasData &&
+                              snapshot.data!.isEmpty &&
+                              _registrationApproval &&
+                              canScanMedicines;
+                          return ListTile(
+                            title: const Text('Register reviewed medicine'),
+                            subtitle: const Text(
+                              'Online registration requires pharmacist approval.',
+                            ),
+                            trailing: const Icon(Icons.add_circle_outline),
+                            enabled: ready,
+                            onTap: !ready
+                                ? null
+                                : () async {
+                                    final draft = _reviewedScan;
+                                    final registration = ref
+                                        .read(mobileRegistrationProvider)
+                                        .asData
+                                        ?.value;
+                                    if (draft == null || registration == null) {
+                                      return;
+                                    }
+                                    final handoff =
+                                        MedicineRegistrationHandoff.prepare(
+                                          reviewed: draft,
+                                          duplicateCheckCompleted: true,
+                                          possibleDuplicates: snapshot.data!,
+                                        );
+                                    final createdId = await showDialog<String>(
+                                      context: context,
+                                      builder: (context) =>
+                                          MedicineRegistrationDialog(
+                                            handoff: handoff,
+                                            registration: registration,
+                                          ),
+                                    );
+                                    if (!context.mounted || createdId == null) {
+                                      return;
+                                    }
+                                    setState(() {
+                                      _reviewedScan = null;
+                                      _duplicateLookup = null;
+                                      _registrationApproval = false;
+                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Medicine registered. Sync the catalog to see it offline.',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                          );
+                        },
+                      ),
                     if (_reviewedScan != null && _duplicateLookup != null)
                       FutureBuilder<List<String>>(
                         future: _duplicateLookup,
