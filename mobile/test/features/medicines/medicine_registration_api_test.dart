@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
 import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/features/medicines/data/medicine_registration_api.dart';
+import 'package:businessos_pharmacy/features/medicines/data/medicine_registration_submission.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_registration_fields.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_registration_form_state.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_registration_handoff.dart';
@@ -243,5 +245,47 @@ void main() {
       ).create(registration: registration, form: form),
       throwsFormatException,
     );
+  });
+
+  test('submission rejects double taps while create is pending', () async {
+    final pending = Completer<http.Response>();
+    var createRequests = 0;
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/duplicate-check')) {
+        return http.Response(
+          '{"data":{"registration_allowed":false,"possible_duplicates":[]}}',
+          200,
+        );
+      }
+      createRequests++;
+      return pending.future;
+    });
+    addTearDown(client.close);
+    final submission = MedicineRegistrationSubmission(
+      MedicineRegistrationApi(environment: environment, client: client),
+    );
+    final first = submission.submit(registration: registration, form: form);
+    expect(submission.isSubmitting, isTrue);
+    await expectLater(
+      submission.submit(registration: registration, form: form),
+      throwsStateError,
+    );
+    pending.complete(http.Response('{"data":{"id":"created"}}', 201));
+    expect(await first, 'created');
+    expect(createRequests, 1);
+    expect(submission.isSubmitting, isFalse);
+  });
+
+  test('submission clears busy flag after failed preflight', () async {
+    final client = MockClient((_) async => http.Response('Unavailable', 503));
+    addTearDown(client.close);
+    final submission = MedicineRegistrationSubmission(
+      MedicineRegistrationApi(environment: environment, client: client),
+    );
+    await expectLater(
+      submission.submit(registration: registration, form: form),
+      throwsStateError,
+    );
+    expect(submission.isSubmitting, isFalse);
   });
 }
