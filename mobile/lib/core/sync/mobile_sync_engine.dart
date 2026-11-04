@@ -119,6 +119,9 @@ class MobileSyncEngine {
     ]) {
       String? cursor = await repository.checkpoint(stream);
       int pageCount = 0;
+      final Set<String> seenCursors = <String>{
+        if (cursor != null) cursor,
+      };
       const int maxPagesPerStream = 50;
 
       while (pageCount < maxPagesPerStream) {
@@ -137,7 +140,8 @@ class MobileSyncEngine {
         if (page.hasMore &&
             (page.nextCursor == null ||
                 page.nextCursor!.isEmpty ||
-                page.nextCursor == cursor)) {
+                page.nextCursor == cursor ||
+                seenCursors.contains(page.nextCursor))) {
           throw MobileSyncException(
             'Synchronization returned an invalid continuation cursor for '
             '$stream. Local data was not changed for this page.',
@@ -147,6 +151,7 @@ class MobileSyncEngine {
         await repository.applyPullPage(page);
         pulled += page.data.length;
         cursor = page.nextCursor;
+        if (cursor != null) seenCursors.add(cursor);
         pageCount += 1;
 
         if (!page.hasMore) {
