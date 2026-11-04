@@ -27,6 +27,12 @@ class OfflinePosCatalogRepository {
     String query = '',
     int limit = 30,
   }) async {
+    if (limit < 1 || limit > 500) {
+      throw RangeError.range(limit, 1, 500, 'limit');
+    }
+    if (stockLocationId.trim().isEmpty) {
+      throw const FormatException('Stock location is required.');
+    }
     final String needle = query.trim();
     final String pattern = '%$needle%';
 
