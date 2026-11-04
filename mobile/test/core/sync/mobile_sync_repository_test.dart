@@ -292,6 +292,30 @@ void main() {
     expect(medicine.read<String>('brand_name'), 'Synced Medicine');
     expect(await repository.checkpoint('medicines'), 'cursor-1');
   });
+  test('negative inventory snapshots do not advance the checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'inventory',
+          nextCursor: 'invalid-inventory',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'batch-negative',
+              'available_quantity': '-1.0000',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('inventory'), isNull);
+    final rows = await database.customSelect(
+      "SELECT COUNT(*) AS c FROM local_inventory_batches WHERE id = 'batch-negative'",
+    ).getSingle();
+    expect(rows.read<int>('c'), 0);
+  });
+
   test('older supplier snapshots cannot replace newer local data', () async {
     Future<void> apply(String name, String timestamp) {
       return repository.applyPullPage(
