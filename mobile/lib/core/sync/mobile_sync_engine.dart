@@ -106,8 +106,9 @@ class MobileSyncEngine {
     ]) {
       String? cursor = await repository.checkpoint(stream);
       int pageCount = 0;
+      const int maxPagesPerStream = 50;
 
-      while (pageCount < 50) {
+      while (pageCount < maxPagesPerStream) {
         final SyncPullPage page = await transport.pull(
           endpoint: endpoint,
           registration: registration,
@@ -122,6 +123,12 @@ class MobileSyncEngine {
 
         if (!page.hasMore) {
           break;
+        }
+        if (pageCount == maxPagesPerStream) {
+          throw MobileSyncException(
+            'Synchronization is incomplete for $stream after '
+            '$maxPagesPerStream pages. Run Sync Now again to continue.',
+          );
         }
       }
     }
