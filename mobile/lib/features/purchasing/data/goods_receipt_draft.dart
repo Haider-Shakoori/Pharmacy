@@ -70,7 +70,7 @@ class GoodsReceiptDraftValidator {
     final ids = <String>{};
     for (final line in lines) {
       if (line.purchaseOrderLineId.trim().isEmpty ||
-          !ids.add(line.purchaseOrderLineId)) {
+          !ids.add(line.purchaseOrderLineId.trim())) {
         errors.add('Receipt lines must have distinct order-line IDs.');
         continue;
       }
