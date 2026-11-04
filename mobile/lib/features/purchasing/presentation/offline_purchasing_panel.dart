@@ -61,6 +61,7 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
   int _page = 0;
   static const int _pageSize = 30;
   late Future<List<QueryRow>> _rows;
+  late Future<List<QueryRow>> _receipts;
 
   @override
   void initState() {
@@ -70,6 +71,13 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
 
   void _refresh() {
     _rows = _load();
+    _receipts = widget.database.customSelect('''
+      SELECT idempotency_key, status, attempt_count, last_error, created_at
+      FROM sync_outbox_entries
+      WHERE event_type = 'goods_receipt.create'
+      ORDER BY created_at DESC, idempotency_key DESC
+      LIMIT 30
+    ''').get();
   }
 
   Future<List<QueryRow>> _load() {
@@ -248,6 +256,43 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
         Text('Purchasing', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),
         const Text('Synced records available offline • read-only'),
+        const SizedBox(height: 12),
+        if (_orders) FutureBuilder<List<QueryRow>>(
+          future: _receipts,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Text('Unable to load queued receipts: ${snapshot.error}');
+            }
+            if (!snapshot.hasData) {
+              return const LinearProgressIndicator();
+            }
+            final receipts = snapshot.data!;
+            if (receipts.isEmpty) {
+              return const Text('No goods receipts awaiting synchronization.');
+            }
+            return ExpansionTile(
+              title: Text('Offline goods receipts (${receipts.length})'),
+              subtitle: const Text('Pending receipts do not change stock until server posting.'),
+              children: <Widget>[
+                for (final receipt in receipts)
+                  ListTile(
+                    dense: true,
+                    title: Text('Receipt ${receipt.read<String>('idempotency_key')}'),
+                    subtitle: Text(
+                      'Status: ${receipt.read<String>('status')} • '
+                      'Attempts: ${receipt.read<int>('attempt_count')}'
+                      '${receipt.readNullable<String>('last_error') == null ? '' : ' • ${receipt.readNullable<String>('last_error')}'}',
+                    ),
+                  ),
+                TextButton.icon(
+                  onPressed: () => setState(_refresh),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh queue'),
+                ),
+              ],
+            );
+          },
+        ),
         const SizedBox(height: 12),
         SegmentedButton<bool>(
           segments: const <ButtonSegment<bool>>[
