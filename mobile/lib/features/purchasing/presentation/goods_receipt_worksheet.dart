@@ -1,9 +1,10 @@
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/features/purchasing/data/goods_receipt_draft.dart';
+import 'package:businessos_pharmacy/features/purchasing/data/goods_receipt_draft_store.dart';
 import 'package:businessos_pharmacy/features/purchasing/data/offline_goods_receipt_queue.dart';
 import 'package:flutter/material.dart';
 
-/// A local, non-posting receiving worksheet. Closing it discards entries.
+/// A local, non-posting receiving worksheet with explicitly saved drafts.
 class GoodsReceiptWorksheet extends StatefulWidget {
   const GoodsReceiptWorksheet({
     super.key,
@@ -42,6 +43,56 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
         cost: TextEditingController(text: line['unit_cost']?.toString() ?? '0'),
       );
     }).toList();
+    _loadDraft();
+  }
+
+  Future<void> _loadDraft() async {
+    try {
+      final saved = await GoodsReceiptDraftStore(widget.database)
+          .load(widget.purchaseOrderId);
+      if (!mounted) return;
+      for (final line in inputs) {
+        final values = saved[line.data['id']?.toString() ?? ''];
+        if (values == null) continue;
+        line.quantity.text = values['quantity'] ?? '0';
+        line.bonus.text = values['bonus'] ?? '0';
+        line.cost.text = values['cost'] ?? '0';
+        line.batch.text = values['batch'] ?? '';
+        line.expiry.text = values['expiry'] ?? '';
+      }
+    } catch (error) {
+      if (mounted) setState(() => errors = <String>['Unable to load saved draft: $error']);
+    }
+  }
+
+  Future<void> _saveDraft() async {
+    if (saving) return;
+    setState(() => saving = true);
+    try {
+      await GoodsReceiptDraftStore(widget.database).save(
+        widget.purchaseOrderId,
+        <String, Map<String, String>>{
+          for (final line in inputs)
+            if ((line.data['id']?.toString() ?? '').isNotEmpty)
+              line.data['id'].toString(): <String, String>{
+                'quantity': line.quantity.text,
+                'bonus': line.bonus.text,
+                'cost': line.cost.text,
+                'batch': line.batch.text,
+                'expiry': line.expiry.text,
+              },
+        },
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Receiving draft saved on this device.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) setState(() => errors = <String>['Unable to save draft: $error']);
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
   }
 
   @override
@@ -99,6 +150,7 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
         lines: drafts,
         receivedAt: DateTime.now(),
       );
+      await GoodsReceiptDraftStore(widget.database).delete(widget.purchaseOrderId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -197,6 +249,11 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
               ),
             ),
           const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: saving ? null : _saveDraft,
+            icon: const Icon(Icons.save_outlined),
+            label: const Text('Save draft on device'),
+          ),
           FilledButton.icon(
             onPressed: saving ? null : _queueReceipt,
             icon: const Icon(Icons.save_outlined),
