@@ -31,4 +31,18 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('rejects URLs containing credentials or extra components', () {
+    for (final address in <String>[
+      'https://user:pass@demo.example.test',
+      'https://demo.example.test/api',
+      'https://demo.example.test/?key=value',
+      'https://demo.example.test/#section',
+    ]) {
+      expect(
+        () => ServerEndpoint.fromInput(address, ServerEndpointKind.cloud),
+        throwsFormatException,
+      );
+    }
+  });
 }
