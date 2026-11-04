@@ -41,10 +41,10 @@ class OfflinePosCatalogRepository {
                       table.genericName.like(pattern) |
                       table.medicineCode.like(pattern)),
       )
+      ..orderBy([(table) => OrderingTerm(expression: table.brandName)])
       ..limit(limit);
 
     final medicines = await medicineQuery.get();
-    medicines.sort((a, b) => a.brandName.compareTo(b.brandName));
     final List<OfflinePosCatalogItem> results = <OfflinePosCatalogItem>[];
 
     for (final medicine in medicines) {
