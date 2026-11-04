@@ -321,4 +321,23 @@ void main() {
     expect(supplier.read<String>('name'), 'New supplier name');
   });
 
+  test('outbox claims cannot overwrite an already sending event', () async {
+    final event = (await repository.pendingOutbox()).single;
+    await repository.markSending(<SyncOutboxEvent>[event]);
+    await expectLater(
+      repository.markSending(<SyncOutboxEvent>[event]),
+      throwsA(isA<StateError>()),
+    );
+    final row = await database.customSelect(
+      'SELECT status, attempt_count FROM sync_outbox_entries',
+    ).getSingle();
+    expect(row.read<String>('status'), 'sending');
+    expect(row.read<int>('attempt_count'), 1);
+  });
+
+  test('outbox rejects invalid batch sizes', () async {
+    await expectLater(repository.pendingOutbox(limit: 0), throwsRangeError);
+    await expectLater(repository.pendingOutbox(limit: 501), throwsRangeError);
+  });
+
 }
