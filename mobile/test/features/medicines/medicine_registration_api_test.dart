@@ -134,10 +134,7 @@ void main() {
     });
     addTearDown(client.close);
     await expectLater(
-      MedicineRegistrationApi(
-        environment: environment,
-        client: client,
-      ).create(
+      MedicineRegistrationApi(environment: environment, client: client).create(
         registration: registration,
         form: MedicineRegistrationFormState(
           handoff: handoff,
