@@ -302,6 +302,7 @@ class MobileSyncRepository {
         phone = excluded.phone, contact_person = excluded.contact_person,
         is_active = excluded.is_active, is_deleted = excluded.is_deleted,
         server_updated_at = excluded.server_updated_at
+      WHERE excluded.server_updated_at >= local_suppliers.server_updated_at
       ''',
       <Object?>[
         item['id'].toString(),
@@ -363,6 +364,7 @@ class MobileSyncRepository {
         is_active = excluded.is_active,
         is_deleted = excluded.is_deleted,
         server_updated_at = excluded.server_updated_at
+      WHERE excluded.server_updated_at >= local_medicines.server_updated_at
       ''',
       <Object?>[
         item['id'].toString(),
@@ -469,6 +471,7 @@ class MobileSyncRepository {
         balance = excluded.balance,
         is_deleted = excluded.is_deleted,
         server_updated_at = excluded.server_updated_at
+      WHERE excluded.server_updated_at >= local_customers.server_updated_at
       ''',
       <Object?>[
         item['id'].toString(),
