@@ -37,4 +37,59 @@ void main() {
     expect(registration.toJson()['low_stock_threshold'], 15);
     expect(registration.toJson()['near_expiry_days'], 45);
   });
+  test('rejects absent tenant and user identifiers', () {
+    final Map<String, dynamic> valid = <String, dynamic>{
+      'tenant': <String, dynamic>{'id': 'tenant-1', 'name': 'Pharmacy'},
+      'activation_id': 'activation-1',
+      'access_token': 'access-token',
+      'access_expires_at': '2026-12-01T00:00:00Z',
+      'offline_lease': <String, dynamic>{
+        'token': 'lease-token',
+        'expires_at': '2026-12-01T00:00:00Z',
+      },
+      'user': <String, dynamic>{
+        'id': 7,
+        'name': 'Cashier',
+        'email': 'cashier@example.test',
+      },
+    };
+
+    final Map<String, dynamic> missingTenant = <String, dynamic>{
+      ...valid,
+      'tenant': <String, dynamic>{'name': 'Pharmacy'},
+    };
+    expect(
+      () => MobileRegistration.fromApi(missingTenant),
+      throwsFormatException,
+    );
+
+    final Map<String, dynamic> missingUser = <String, dynamic>{
+      ...valid,
+      'user': <String, dynamic>{'id': 7, 'name': 'Cashier'},
+    };
+    expect(
+      () => MobileRegistration.fromApi(missingUser),
+      throwsFormatException,
+    );
+  });
+
+  test('rejects corrupt stored registration identity', () {
+    final MobileRegistration registration = MobileRegistration(
+      tenantId: 'tenant-1',
+      tenantName: 'Pharmacy',
+      activationId: 'activation-1',
+      accessToken: 'access-token',
+      accessExpiresAt: DateTime.utc(2026, 12),
+      leaseToken: 'lease-token',
+      leaseExpiresAt: DateTime.utc(2026, 12),
+      userId: '7',
+      userName: 'Cashier',
+      userEmail: 'cashier@example.test',
+      permissions: const <String>[],
+    );
+    final Map<String, Object?> json = registration.toJson();
+    json.remove('tenant_id');
+    expect(() => MobileRegistration.fromJson(json), throwsFormatException);
+  });
+
 }
