@@ -134,6 +134,9 @@ class MobileSyncRepository {
   }
 
   Future<void> reject(SyncOutboxEvent event, SyncPushResult result) async {
+    if (result.accepted || result.idempotencyKey != event.idempotencyKey) {
+      throw const FormatException('Invalid rejection for outbox event.');
+    }
     final DateTime now = DateTime.now();
     final int attempt = await _attemptCount(event.idempotencyKey);
     final int delaySeconds = _retryDelaySeconds(attempt);
