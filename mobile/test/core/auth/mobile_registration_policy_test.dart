@@ -143,4 +143,43 @@ void main() {
     );
   });
 
+  test('refresh rejects malformed offline lease and user objects', () {
+    final MobileRegistration registration = MobileRegistration(
+      tenantId: 'tenant-1',
+      tenantName: 'Pharmacy',
+      activationId: 'activation-1',
+      accessToken: 'old-access',
+      accessExpiresAt: DateTime.utc(2026, 11),
+      leaseToken: 'old-lease',
+      leaseExpiresAt: DateTime.utc(2026, 11),
+      userId: '7',
+      userName: 'Cashier',
+      userEmail: 'cashier@example.test',
+      permissions: const <String>[],
+    );
+    final Map<String, dynamic> response = <String, dynamic>{
+      'access_token': 'new-access',
+      'access_expires_at': '2026-12-01T00:00:00Z',
+      'offline_lease': <String, dynamic>{
+        'token': 'new-lease',
+        'expires_at': '2026-12-01T00:00:00Z',
+      },
+    };
+    expect(
+      () => registration.withRefreshedSession(<String, dynamic>{
+        ...response,
+        'offline_lease': 'invalid',
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => registration.withRefreshedSession(<String, dynamic>{
+        ...response,
+        'user': 'invalid',
+      }),
+      throwsFormatException,
+    );
+  });
+
+
 }
