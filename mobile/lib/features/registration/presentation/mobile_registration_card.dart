@@ -72,7 +72,7 @@ class _MobileRegistrationCardState
       MobileRegistrationException? lastError;
 
       try {
-          for (final ServerEndpoint endpoint in candidates) {
+        for (final ServerEndpoint endpoint in candidates) {
           try {
             registration = await client.register(
               endpoint: endpoint,
@@ -88,7 +88,7 @@ class _MobileRegistrationCardState
               rethrow;
             }
           }
-      }
+        }
       } finally {
         client.close();
       }
