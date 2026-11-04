@@ -18,6 +18,17 @@ class MobileRegistration {
     this.cloudBaseUrl,
   });
 
+  static Map<String, dynamic> _requiredMap(Object? value, String field) {
+    if (value is! Map) {
+      throw FormatException('Invalid mobile registration field: $field');
+    }
+    try {
+      return Map<String, dynamic>.from(value);
+    } on TypeError {
+      throw FormatException('Invalid mobile registration field: $field');
+    }
+  }
+
   static List<String> _permissions(Object? value) {
     if (value == null) return const <String>[];
     if (value is! List || value.any((item) => item is! String)) {
@@ -38,15 +49,9 @@ class MobileRegistration {
   }
 
   factory MobileRegistration.fromApi(Map<String, dynamic> data) {
-    final Map<String, dynamic> tenant = Map<String, dynamic>.from(
-      data['tenant'] as Map,
-    );
-    final Map<String, dynamic> user = Map<String, dynamic>.from(
-      data['user'] as Map,
-    );
-    final Map<String, dynamic> lease = Map<String, dynamic>.from(
-      data['offline_lease'] as Map,
-    );
+    final Map<String, dynamic> tenant = _requiredMap(data['tenant'], 'tenant');
+    final Map<String, dynamic> user = _requiredMap(data['user'], 'user');
+    final Map<String, dynamic> lease = _requiredMap(data['offline_lease'], 'offline_lease');
     final Map<String, dynamic> inventoryPolicy = data['inventory_policy'] is Map
         ? Map<String, dynamic>.from(data['inventory_policy'] as Map)
         : <String, dynamic>{};
@@ -101,9 +106,7 @@ class MobileRegistration {
   }
 
   MobileRegistration withRefreshedSession(Map<String, dynamic> data) {
-    final Map<String, dynamic> lease = Map<String, dynamic>.from(
-      data['offline_lease'] as Map,
-    );
+    final Map<String, dynamic> lease = _requiredMap(data['offline_lease'], 'offline_lease');
     final Map<String, dynamic>? user = data['user'] is Map
         ? Map<String, dynamic>.from(data['user'] as Map)
         : null;
