@@ -438,6 +438,40 @@ void main() {
   });
 
 
+  test('negative inventory prices and costs cannot advance stock', () async {
+    for (final prices in <Map<String, String>>[
+      <String, String>{'sale_price': '-1', 'purchase_cost': '2'},
+      <String, String>{'sale_price': '3', 'purchase_cost': '-2'},
+    ]) {
+      await expectLater(
+        repository.applyPullPage(
+          SyncPullPage(
+            stream: 'inventory',
+            nextCursor: 'invalid-price',
+            hasMore: false,
+            data: <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'batch-invalid-price',
+                'medicine_id': 'med-1',
+                'stock_location_id': 'main',
+                'available_quantity': '4.0000',
+                'server_updated_at': '2026-11-04T00:00:00Z',
+                ...prices,
+              },
+            ],
+          ),
+        ),
+        throwsFormatException,
+      );
+    }
+    expect(await repository.checkpoint('inventory'), isNull);
+    final count = await database.customSelect(
+      "SELECT COUNT(*) AS c FROM local_inventory_batches WHERE id = 'batch-invalid-price'",
+    ).map((row) => row.read<int>('c')).getSingle();
+    expect(count, 0);
+  });
+
+
   test('older supplier snapshots cannot replace newer local data', () async {
     Future<void> apply(String name, String timestamp) {
       return repository.applyPullPage(
