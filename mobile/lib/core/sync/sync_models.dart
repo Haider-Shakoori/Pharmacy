@@ -52,9 +52,16 @@ class SyncPushResult {
   });
 
   factory SyncPushResult.fromJson(Map<String, dynamic> json) {
+    final key = json['idempotency_key'];
+    final status = json['status'];
+    if (key is! String || key.isEmpty ||
+        status is! String ||
+        (status != 'accepted' && status != 'rejected')) {
+      throw const FormatException('Invalid synchronization acknowledgement.');
+    }
     return SyncPushResult(
-      idempotencyKey: json['idempotency_key'].toString(),
-      status: json['status'].toString(),
+      idempotencyKey: key,
+      status: status,
       serverId: json['server_id']?.toString(),
       code: json['code']?.toString(),
       message: json['message']?.toString(),
