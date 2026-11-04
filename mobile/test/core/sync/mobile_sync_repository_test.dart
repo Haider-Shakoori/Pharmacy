@@ -166,6 +166,35 @@ void main() {
     },
   );
 
+  test('invalid acknowledgements preserve the sale and outbox', () async {
+    final event = (await repository.pendingOutbox()).single;
+    for (final result in <SyncPushResult>[
+      const SyncPushResult(
+        idempotencyKey: 'another-event',
+        status: 'accepted',
+        serverId: 'server-sale-1',
+      ),
+      const SyncPushResult(
+        idempotencyKey: 'sale:sale-local-1:completed',
+        status: 'rejected',
+        serverId: 'server-sale-1',
+      ),
+    ]) {
+      await expectLater(
+        repository.acknowledge(event, result),
+        throwsFormatException,
+      );
+    }
+    final sale = await database.customSelect(
+      "SELECT sync_state, server_id FROM local_sales WHERE local_id = 'sale-local-1'",
+    ).getSingle();
+    expect(sale.read<String>('sync_state'), 'pending');
+    expect(sale.readNullable<String>('server_id'), isNull);
+    expect((await repository.pendingOutbox()).single.idempotencyKey,
+        event.idempotencyKey);
+  });
+
+
   test('non-retryable rejection preserves outbox and local sale', () async {
     final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
 
