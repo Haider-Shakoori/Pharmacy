@@ -309,6 +309,21 @@ class _MobileRegistrationCardState
                     'Access expires: ${current.accessExpiresAt.toLocal()}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  Text(
+                    'Offline lease expires: ${current.leaseExpiresAt.toLocal()}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (current.accessExpired || current.leaseExpired) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      current.leaseExpired
+                          ? 'Offline transactions are unavailable until the lease is renewed. Connect to the pharmacy server and synchronize.'
+                          : 'The online session has expired. Connect to the pharmacy server and synchronize to renew it.',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: _unregister,
