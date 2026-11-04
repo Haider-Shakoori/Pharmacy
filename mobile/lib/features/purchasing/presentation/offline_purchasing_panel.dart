@@ -10,8 +10,8 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Offline purchasing is read-only until the server supports idempotent
-/// purchase-order and goods-receipt push events.
+/// Synced purchasing records are read-only; receiving can be queued offline.
+/// The server remains authoritative for posting stock.
 class OfflinePurchasingPanel extends ConsumerWidget {
   const OfflinePurchasingPanel({super.key});
 
@@ -277,7 +277,8 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
               ],
               const SizedBox(height: 12),
               const Text(
-                'Read-only offline copy. Changes and goods receiving require server synchronization.',
+                'Purchase orders and stock reflect the last completed server pull. '
+                'Queued receipts do not update stock until the server accepts them and inventory is synchronized.',
               ),
             ],
           ),
@@ -293,8 +294,15 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
       children: <Widget>[
         Text('Purchasing', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),
-        const Text('Synced records available offline • read-only'),
-        const SizedBox(height: 12),
+        const Text('Synced orders and suppliers are read-only. Receipts can be queued offline; stock updates after server synchronization.'),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => setState(_refresh),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Refresh purchasing data'),
+          ),
+        ),
         if (_orders) FutureBuilder<List<QueryRow>>(
           future: _receipts,
           builder: (context, snapshot) {
