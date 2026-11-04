@@ -437,28 +437,7 @@ class OfflinePosCheckoutService {
   }
 
   bool _validBusinessDate(String value) {
-    final match = RegExp(r'^(\\d{4})-(\\d{2})-(\\d{2})
-    final String month = value.month.toString().padLeft(2, '0');
-    final String day = value.day.toString().padLeft(2, '0');
-
-    return '${value.year}-$month-$day';
-  }
-}
-
-class _OfflineBatchSnapshot {
-  const _OfflineBatchSnapshot({
-    required this.id,
-    required this.available,
-    required this.salePrice,
-    required this.purchaseCost,
-  });
-
-  final String id;
-  final FixedDecimal available;
-  final FixedDecimal salePrice;
-  final FixedDecimal purchaseCost;
-}
-).firstMatch(value);
+    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(value);
     if (match == null) return false;
     final year = int.parse(match.group(1)!);
     final month = int.parse(match.group(2)!);
@@ -473,7 +452,6 @@ class _OfflineBatchSnapshot {
   String _businessDate(DateTime value) {
     final String month = value.month.toString().padLeft(2, '0');
     final String day = value.day.toString().padLeft(2, '0');
-
     return '${value.year}-$month-$day';
   }
 }
