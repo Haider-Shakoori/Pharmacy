@@ -38,6 +38,9 @@ class OfflinePosCheckoutService {
         'This pharmacy user does not have POS sale permission.',
       );
     }
+    if (request.cashierUserId.trim().isEmpty) {
+      throw const OfflinePosException('A cashier identity is required.');
+    }
     if (request.stockLocationId.trim().isEmpty) {
       throw const OfflinePosException('A stock location is required.');
     }
@@ -54,6 +57,9 @@ class OfflinePosCheckoutService {
 
     final DateTime now = _clock();
     final String businessDate = request.businessDate ?? _businessDate(now);
+    if (!_validBusinessDate(businessDate)) {
+      throw const OfflinePosException('Business date must be a valid YYYY-MM-DD date.');
+    }
     final String saleId = _idGenerator();
     final String idempotencyKey = 'sale:$saleId:completed';
 
@@ -428,6 +434,40 @@ class OfflinePosCheckoutService {
     }
 
     return allocations;
+  }
+
+  bool _validBusinessDate(String value) {
+    final match = RegExp(r'^(\\d{4})-(\\d{2})-(\\d{2})
+    final String month = value.month.toString().padLeft(2, '0');
+    final String day = value.day.toString().padLeft(2, '0');
+
+    return '${value.year}-$month-$day';
+  }
+}
+
+class _OfflineBatchSnapshot {
+  const _OfflineBatchSnapshot({
+    required this.id,
+    required this.available,
+    required this.salePrice,
+    required this.purchaseCost,
+  });
+
+  final String id;
+  final FixedDecimal available;
+  final FixedDecimal salePrice;
+  final FixedDecimal purchaseCost;
+}
+).firstMatch(value);
+    if (match == null) return false;
+    final year = int.parse(match.group(1)!);
+    final month = int.parse(match.group(2)!);
+    final day = int.parse(match.group(3)!);
+    if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) {
+      return false;
+    }
+    final parsed = DateTime.utc(year, month, day);
+    return parsed.year == year && parsed.month == month && parsed.day == day;
   }
 
   String _businessDate(DateTime value) {
