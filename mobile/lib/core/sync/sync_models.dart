@@ -81,18 +81,27 @@ class SyncPullPage {
   });
 
   factory SyncPullPage.fromJson(Map<String, dynamic> json) {
-    final List<dynamic> raw = json['data'] as List<dynamic>? ?? <dynamic>[];
+    final stream = json['stream'];
+    final raw = json['data'];
+    final hasMore = json['has_more'];
+    final nextCursor = json['next_cursor'];
+
+    // A malformed page must never advance the local checkpoint. Otherwise
+    // stock or purchase-order rows could be silently skipped.
+    if (stream is! String ||
+        stream.isEmpty ||
+        raw is! List ||
+        hasMore is! bool ||
+        (nextCursor != null && nextCursor is! String) ||
+        raw.any((item) => item is! Map<String, dynamic>)) {
+      throw const FormatException('Invalid synchronization pull page.');
+    }
 
     return SyncPullPage(
-      stream: json['stream'].toString(),
-      data: raw
-          .whereType<Map<dynamic, dynamic>>()
-          .map(
-            (Map<dynamic, dynamic> value) => Map<String, dynamic>.from(value),
-          )
-          .toList(growable: false),
-      nextCursor: json['next_cursor']?.toString(),
-      hasMore: json['has_more'] == true,
+      stream: stream,
+      data: raw.cast<Map<String, dynamic>>(),
+      nextCursor: nextCursor as String?,
+      hasMore: hasMore,
     );
   }
 
