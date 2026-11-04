@@ -53,7 +53,7 @@ class MedicineRegistrationApi {
         if (decoded is Map && decoded['errors'] is Map) {
           final errors = decoded['errors'] as Map;
           final details = errors.values
-              .whereType<List>()
+              .whereType<List<dynamic>>()
               .expand((items) => items)
               .whereType<String>()
               .take(3)
