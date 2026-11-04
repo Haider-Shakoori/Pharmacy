@@ -48,7 +48,6 @@ class OfflinePosCatalogRepository {
                       table.medicineCode.like(pattern)),
       )
       ..orderBy([(table) => OrderingTerm(expression: table.brandName)])
-      ..limit(limit);
 
     final medicines = await medicineQuery.get();
     final List<OfflinePosCatalogItem> results = <OfflinePosCatalogItem>[];
@@ -122,6 +121,9 @@ class OfflinePosCatalogRepository {
           availableQuantity: available,
         ),
       );
+      if (results.length >= limit) {
+        break;
+      }
     }
 
     return results;
