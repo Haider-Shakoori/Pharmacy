@@ -9,6 +9,12 @@ class GoodsReceiptDraftStore {
 
   final PharmacyDatabase database;
 
+  String _orderId(String value) {
+    final id = value.trim();
+    if (id.isEmpty) throw const FormatException('Purchase order ID is required.');
+    return id;
+  }
+
   Future<void> _ensureTable() => database.customStatement('''
     CREATE TABLE IF NOT EXISTS local_goods_receipt_drafts (
       purchase_order_id TEXT PRIMARY KEY,
@@ -18,6 +24,7 @@ class GoodsReceiptDraftStore {
   ''');
 
   Future<Map<String, Map<String, String>>> load(String purchaseOrderId) async {
+    purchaseOrderId = _orderId(purchaseOrderId);
     await _ensureTable();
     final row = await database.customSelect(
       'SELECT lines_json FROM local_goods_receipt_drafts WHERE purchase_order_id = ?',
@@ -47,6 +54,7 @@ class GoodsReceiptDraftStore {
     String purchaseOrderId,
     Map<String, Map<String, String>> lines,
   ) async {
+    purchaseOrderId = _orderId(purchaseOrderId);
     await _ensureTable();
     await database.customStatement('''
       INSERT INTO local_goods_receipt_drafts
