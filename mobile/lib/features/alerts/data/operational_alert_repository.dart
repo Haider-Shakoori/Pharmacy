@@ -117,7 +117,7 @@ class OperationalAlertRepository {
     }
 
     final List<QueryRow> rejectedRows = await _database.customSelect('''
-      SELECT aggregate_id, last_error
+      SELECT aggregate_id, event_type, last_error
       FROM sync_outbox_entries
       WHERE status = 'rejected'
       ORDER BY updated_at DESC
@@ -129,10 +129,12 @@ class OperationalAlertRepository {
           (QueryRow row) => LocalOperationalAlert(
             kind: OperationalAlertKind.syncRejected,
             severity: OperationalAlertSeverity.critical,
-            title: 'Sale synchronization conflict',
+            title: row.read<String>('event_type') == 'goods_receipt.create'
+                ? 'Goods receipt synchronization conflict'
+                : 'Sale synchronization conflict',
             detail:
                 row.readNullable<String>('last_error') ??
-                'A completed offline sale needs reconciliation.',
+                'An offline transaction needs reconciliation.',
           ),
         )
         .toList(growable: false);
