@@ -39,39 +39,55 @@ void main() {
     possibleDuplicates: const [],
   );
 
-  test('allows registration preflight only when server confirms no matches', () async {
-    final client = MockClient((request) async {
-      expect(request.method, 'POST');
-      expect(request.url.path, '/api/v1/mobile/medicines/duplicate-check');
-      expect(request.headers['Authorization'], 'Bearer token');
-      expect(jsonDecode(request.body), {
-        'brand_name': 'Example',
-        'barcode': '12345678',
+  test(
+    'allows registration preflight only when server confirms no matches',
+    () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/mobile/medicines/duplicate-check');
+        expect(request.headers['Authorization'], 'Bearer token');
+        expect(jsonDecode(request.body), {
+          'brand_name': 'Example',
+          'barcode': '12345678',
+        });
+        return http.Response(
+          jsonEncode({
+            'data': {'registration_allowed': false, 'possible_duplicates': []},
+          }),
+          200,
+        );
       });
-      return http.Response(
-        jsonEncode({'data': {'registration_allowed': false, 'possible_duplicates': []}}),
-        200,
+      addTearDown(client.close);
+      expect(
+        await MedicineDuplicatePreflight(
+          environment: environment,
+          client: client,
+        ).check(registration: registration, handoff: handoff),
+        isEmpty,
       );
-    });
-    addTearDown(client.close);
-    expect(
-      await MedicineDuplicatePreflight(environment: environment, client: client)
-          .check(registration: registration, handoff: handoff),
-      isEmpty,
-    );
-  });
+    },
+  );
 
   test('returns server duplicate matches', () async {
-    final client = MockClient((_) async => http.Response(
-      jsonEncode({'data': {'registration_allowed': false, 'possible_duplicates': [
-        {'brand_name': 'Existing medicine'}
-      ]}}),
-      200,
-    ));
+    final client = MockClient(
+      (_) async => http.Response(
+        jsonEncode({
+          'data': {
+            'registration_allowed': false,
+            'possible_duplicates': [
+              {'brand_name': 'Existing medicine'},
+            ],
+          },
+        }),
+        200,
+      ),
+    );
     addTearDown(client.close);
     expect(
-      await MedicineDuplicatePreflight(environment: environment, client: client)
-          .check(registration: registration, handoff: handoff),
+      await MedicineDuplicatePreflight(
+        environment: environment,
+        client: client,
+      ).check(registration: registration, handoff: handoff),
       ['Existing medicine'],
     );
   });
@@ -80,18 +96,24 @@ void main() {
     final client = MockClient((_) async => http.Response('Unavailable', 503));
     addTearDown(client.close);
     await expectLater(
-      MedicineDuplicatePreflight(environment: environment, client: client)
-          .check(registration: registration, handoff: handoff),
+      MedicineDuplicatePreflight(
+        environment: environment,
+        client: client,
+      ).check(registration: registration, handoff: handoff),
       throwsStateError,
     );
   });
 
   test('fails closed when the connection fails', () async {
-    final client = MockClient((_) async => throw http.ClientException('offline'));
+    final client = MockClient(
+      (_) async => throw http.ClientException('offline'),
+    );
     addTearDown(client.close);
     await expectLater(
-      MedicineDuplicatePreflight(environment: environment, client: client)
-          .check(registration: registration, handoff: handoff),
+      MedicineDuplicatePreflight(
+        environment: environment,
+        client: client,
+      ).check(registration: registration, handoff: handoff),
       throwsStateError,
     );
   });
@@ -100,37 +122,44 @@ void main() {
     final client = MockClient((_) async => http.Response('{"data":{}}', 200));
     addTearDown(client.close);
     await expectLater(
-      MedicineDuplicatePreflight(environment: environment, client: client)
-          .check(registration: registration, handoff: handoff),
+      MedicineDuplicatePreflight(
+        environment: environment,
+        client: client,
+      ).check(registration: registration, handoff: handoff),
       throwsFormatException,
     );
   });
 
-  test('does not contact server without medicine management permission', () async {
-    final unauthorized = MobileRegistration(
-      tenantId: 'tenant',
-      tenantName: 'Test',
-      activationId: 'activation',
-      accessToken: 'token',
-      accessExpiresAt: DateTime.now().add(const Duration(hours: 1)),
-      leaseToken: 'lease',
-      leaseExpiresAt: DateTime.now().add(const Duration(hours: 1)),
-      userId: 'user',
-      userName: 'Pharmacist',
-      userEmail: 'test@example.test',
-      permissions: const [],
-    );
-    var requests = 0;
-    final client = MockClient((_) async {
-      requests++;
-      return http.Response('{}', 200);
-    });
-    addTearDown(client.close);
-    await expectLater(
-      MedicineDuplicatePreflight(environment: environment, client: client)
-          .check(registration: unauthorized, handoff: handoff),
-      throwsStateError,
-    );
-    expect(requests, 0);
-  });
+  test(
+    'does not contact server without medicine management permission',
+    () async {
+      final unauthorized = MobileRegistration(
+        tenantId: 'tenant',
+        tenantName: 'Test',
+        activationId: 'activation',
+        accessToken: 'token',
+        accessExpiresAt: DateTime.now().add(const Duration(hours: 1)),
+        leaseToken: 'lease',
+        leaseExpiresAt: DateTime.now().add(const Duration(hours: 1)),
+        userId: 'user',
+        userName: 'Pharmacist',
+        userEmail: 'test@example.test',
+        permissions: const [],
+      );
+      var requests = 0;
+      final client = MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      });
+      addTearDown(client.close);
+      await expectLater(
+        MedicineDuplicatePreflight(
+          environment: environment,
+          client: client,
+        ).check(registration: unauthorized, handoff: handoff),
+        throwsStateError,
+      );
+      expect(requests, 0);
+    },
+  );
 }
