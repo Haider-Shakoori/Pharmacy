@@ -36,7 +36,7 @@ class ConnectionRouteResolver {
 
   Future<ConnectionRoute> _resolveAutomatic(ConnectionProfile profile) async {
     final ServerEndpoint? local = profile.localEndpoint;
-    if (local != null && await _isReachable(local)) {
+    if (local != null && await _safeReachable(local)) {
       return ConnectionRoute(
         source: ConnectionRouteSource.local,
         endpoint: local,
@@ -44,7 +44,7 @@ class ConnectionRouteResolver {
     }
 
     final ServerEndpoint? cloud = profile.cloudEndpoint;
-    if (cloud != null && await _isReachable(cloud)) {
+    if (cloud != null && await _safeReachable(cloud)) {
       return ConnectionRoute(
         source: ConnectionRouteSource.cloud,
         endpoint: cloud,
@@ -54,11 +54,20 @@ class ConnectionRouteResolver {
     return const ConnectionRoute(source: ConnectionRouteSource.offline);
   }
 
+  Future<bool> _safeReachable(ServerEndpoint endpoint) async {
+    try {
+      return await _isReachable(endpoint);
+    } on Object {
+      // A LAN timeout must not prevent automatic cloud fallback.
+      return false;
+    }
+  }
+
   Future<ConnectionRoute> _resolveSingle(
     ServerEndpoint? endpoint,
     ConnectionRouteSource source,
   ) async {
-    if (endpoint != null && await _isReachable(endpoint)) {
+    if (endpoint != null && await _safeReachable(endpoint)) {
       return ConnectionRoute(source: source, endpoint: endpoint);
     }
 
