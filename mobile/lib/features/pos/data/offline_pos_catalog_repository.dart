@@ -33,8 +33,14 @@ class OfflinePosCatalogRepository {
     if (stockLocationId.trim().isEmpty) {
       throw const FormatException('Stock location is required.');
     }
+    final String locationId = stockLocationId.trim();
     final String needle = query.trim();
-    final String pattern = '%$needle%';
+    // Escape LIKE metacharacters so a literal search cannot become a wildcard.
+    final String escapedNeedle = needle
+        .replaceAll(r'\', r'\\')
+        .replaceAll('%', r'\%')
+        .replaceAll('_', r'\_');
+    final String pattern = '%$escapedNeedle%';
 
     final medicineQuery = _database.select(_database.localMedicines)
       ..where(
@@ -43,9 +49,9 @@ class OfflinePosCatalogRepository {
             table.isDeleted.equals(false) &
             (needle.isEmpty
                 ? const Constant<bool>(true)
-                : table.brandName.like(pattern) |
-                      table.genericName.like(pattern) |
-                      table.medicineCode.like(pattern)),
+                : table.brandName.like(pattern, escapeChar: r'\') |
+                      table.genericName.like(pattern, escapeChar: r'\') |
+                      table.medicineCode.like(pattern, escapeChar: r'\')),
       )
       ..orderBy([(table) => OrderingTerm(expression: table.brandName)]);
 
@@ -57,7 +63,7 @@ class OfflinePosCatalogRepository {
         ..where(
           (table) =>
               table.medicineId.equals(medicine.id) &
-              table.stockLocationId.equals(stockLocationId) &
+              table.stockLocationId.equals(locationId) &
               table.status.equals('active') &
               table.isDeleted.equals(false),
         );
@@ -116,7 +122,7 @@ class OfflinePosCatalogRepository {
           brandName: medicine.brandName,
           genericName: medicine.genericName,
           saleUnit: medicine.saleUnit,
-          stockLocationId: stockLocationId,
+          stockLocationId: locationId,
           salePrice: salePrice,
           availableQuantity: available,
         ),
