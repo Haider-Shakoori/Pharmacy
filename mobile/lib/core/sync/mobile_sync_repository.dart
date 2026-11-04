@@ -76,8 +76,16 @@ class MobileSyncRepository {
   }
 
   Future<void> acknowledge(SyncOutboxEvent event, SyncPushResult result) async {
+    // A sale cannot be considered synchronized without a durable server
+    // reference. Keep its outbox event so the original idempotency key retries.
+    if (event.eventType == 'sale.completed' &&
+        (result.serverId == null || result.serverId!.trim().isEmpty)) {
+      throw const FormatException(
+        'Accepted sale acknowledgement is missing its server ID.',
+      );
+    }
     await _database.transaction(() async {
-      if (event.eventType == 'sale.completed' && result.serverId != null) {
+      if (event.eventType == 'sale.completed') {
         await _database.customStatement(
           '''
           UPDATE local_sales
