@@ -111,15 +111,17 @@ class MobileRegistration {
       tenantId: tenantId,
       tenantName: tenantName,
       activationId: activationId,
-      deviceId: data['device_id']?.toString() ?? deviceId,
+      deviceId: data['device_id'] == null
+          ? deviceId
+          : _requiredString(data['device_id'], 'device_id'),
       accessToken: _requiredString(data['access_token'], 'access_token'),
       accessExpiresAt: DateTime.parse(data['access_expires_at'].toString()),
       leaseToken: _requiredString(lease['token'], 'offline_lease.token'),
       leaseExpiresAt: DateTime.parse(lease['expires_at'].toString()),
       leasePublicKey: lease['public_key']?.toString() ?? leasePublicKey,
-      userId: user?['id']?.toString() ?? userId,
-      userName: user?['name']?.toString() ?? userName,
-      userEmail: user?['email']?.toString() ?? userEmail,
+      userId: user == null ? userId : _requiredString(user['id'], 'user.id'),
+      userName: user == null ? userName : _requiredString(user['name'], 'user.name'),
+      userEmail: user == null ? userEmail : _requiredString(user['email'], 'user.email'),
       permissions: user == null
           ? permissions
           : (user['permissions'] as List<dynamic>? ?? <dynamic>[])
