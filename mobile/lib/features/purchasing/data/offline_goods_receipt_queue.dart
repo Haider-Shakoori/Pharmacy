@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/core/decimal/fixed_decimal.dart';
 import 'package:businessos_pharmacy/features/purchasing/data/goods_receipt_draft.dart';
-import 'package:drift/drift.dart';
 
 /// Durable offline outbox: the server must validate before any stock changes.
 class OfflineGoodsReceiptQueue {
