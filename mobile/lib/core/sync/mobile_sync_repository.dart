@@ -87,6 +87,9 @@ class MobileSyncRepository {
   }
 
   Future<void> acknowledge(SyncOutboxEvent event, SyncPushResult result) async {
+    if (!result.accepted || result.idempotencyKey != event.idempotencyKey) {
+      throw const FormatException('Invalid acknowledgement for outbox event.');
+    }
     // A sale cannot be considered synchronized without a durable server
     // reference. Keep its outbox event so the original idempotency key retries.
     if (event.eventType == 'sale.completed' &&
