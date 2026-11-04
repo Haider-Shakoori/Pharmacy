@@ -47,7 +47,7 @@ class OfflinePosCatalogRepository {
                       table.genericName.like(pattern) |
                       table.medicineCode.like(pattern)),
       )
-      ..orderBy([(table) => OrderingTerm(expression: table.brandName)])
+      ..orderBy([(table) => OrderingTerm(expression: table.brandName)]);
 
     final medicines = await medicineQuery.get();
     final List<OfflinePosCatalogItem> results = <OfflinePosCatalogItem>[];
