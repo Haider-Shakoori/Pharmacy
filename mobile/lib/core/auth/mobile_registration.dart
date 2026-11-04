@@ -18,6 +18,14 @@ class MobileRegistration {
     this.cloudBaseUrl,
   });
 
+  static List<String> _permissions(Object? value) {
+    if (value == null) return const <String>[];
+    if (value is! List || value.any((item) => item is! String)) {
+      throw const FormatException('Invalid mobile registration permissions.');
+    }
+    return List<String>.unmodifiable(value.cast<String>());
+  }
+
   static String _requiredString(Object? value, String field) {
     if (value is! String && value is! num) {
       throw FormatException('Invalid mobile registration field: $field');
@@ -56,9 +64,7 @@ class MobileRegistration {
       userId: _requiredString(user['id'], 'user.id'),
       userName: _requiredString(user['name'], 'user.name'),
       userEmail: _requiredString(user['email'], 'user.email'),
-      permissions: (user['permissions'] as List<dynamic>? ?? <dynamic>[])
-          .map((dynamic value) => value.toString())
-          .toList(growable: false),
+      permissions: _permissions(user['permissions']),
       lowStockThreshold:
           int.tryParse(
             inventoryPolicy['low_stock_threshold']?.toString() ?? '',
@@ -85,9 +91,7 @@ class MobileRegistration {
       userId: _requiredString(json['user_id'], 'user_id'),
       userName: _requiredString(json['user_name'], 'user_name'),
       userEmail: _requiredString(json['user_email'], 'user_email'),
-      permissions: (json['permissions'] as List<dynamic>? ?? <dynamic>[])
-          .map((dynamic value) => value.toString())
-          .toList(growable: false),
+      permissions: _permissions(json['permissions']),
       lowStockThreshold:
           int.tryParse(json['low_stock_threshold']?.toString() ?? '') ?? 10,
       nearExpiryDays:
@@ -124,9 +128,7 @@ class MobileRegistration {
       userEmail: user == null ? userEmail : _requiredString(user['email'], 'user.email'),
       permissions: user == null
           ? permissions
-          : (user['permissions'] as List<dynamic>? ?? <dynamic>[])
-                .map((dynamic value) => value.toString())
-                .toList(growable: false),
+          : _permissions(user['permissions']),
       lowStockThreshold:
           int.tryParse(
             inventoryPolicy['low_stock_threshold']?.toString() ?? '',
