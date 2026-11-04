@@ -45,6 +45,23 @@ class MedicineRegistrationApi {
       body: jsonEncode(payload),
     );
     if (response.statusCode != 201) {
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        throw StateError('Session expired or medicine permission denied');
+      }
+      if (response.statusCode == 422) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map && decoded['errors'] is Map) {
+          final errors = decoded['errors'] as Map;
+          final details = errors.values
+              .whereType<List>()
+              .expand((items) => items)
+              .whereType<String>()
+              .take(3)
+              .join('; ');
+          if (details.isNotEmpty) throw StateError(details);
+        }
+        throw StateError('Medicine details failed server validation');
+      }
       throw StateError('Medicine registration failed (${response.statusCode})');
     }
     final result = jsonDecode(response.body);
