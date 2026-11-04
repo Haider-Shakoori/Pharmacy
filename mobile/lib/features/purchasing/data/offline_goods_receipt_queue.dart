@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/core/decimal/fixed_decimal.dart';
 import 'package:businessos_pharmacy/features/purchasing/data/goods_receipt_draft.dart';
+import 'package:drift/drift.dart';
 
 /// Durable offline outbox: the server must validate before any stock changes.
 class OfflineGoodsReceiptQueue {
@@ -46,23 +47,45 @@ class OfflineGoodsReceiptQueue {
     };
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
-    await database.customStatement(
-      '''
-      INSERT INTO sync_outbox_entries (
-        idempotency_key, aggregate_type, aggregate_id, event_type,
-        payload_json, status, attempt_count, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?)
-      ''',
-      <Object?>[
-        key,
-        'goods_receipt',
-        key,
-        'goods_receipt.create',
-        jsonEncode(payload),
-        now,
-        now,
-      ],
-    );
+    // Do not allow two unresolved receipts for the same purchase order.
+    // Their quantities would each be based on the same cached stock state.
+    await database.transaction(() async {
+      final outstanding = await database.customSelect(
+        '''
+        SELECT payload_json
+        FROM sync_outbox_entries
+        WHERE event_type = 'goods_receipt.create'
+          AND status IN ('pending', 'retry', 'sending', 'rejected')
+        ''',
+      ).get();
+      for (final row in outstanding) {
+        final existing = jsonDecode(row.read<String>('payload_json'));
+        if (existing is Map &&
+            existing['purchase_order_id']?.toString() == purchaseOrderId) {
+          throw const FormatException(
+            'This purchase order already has an unresolved offline receipt. '
+            'Synchronize or resolve that receipt before queuing another.',
+          );
+        }
+      }
+      await database.customStatement(
+        '''
+        INSERT INTO sync_outbox_entries (
+          idempotency_key, aggregate_type, aggregate_id, event_type,
+          payload_json, status, attempt_count, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?)
+        ''',
+        <Object?>[
+          key,
+          'goods_receipt',
+          key,
+          'goods_receipt.create',
+          jsonEncode(payload),
+          now,
+          now,
+        ],
+      );
+    });
     return key;
   }
 }
