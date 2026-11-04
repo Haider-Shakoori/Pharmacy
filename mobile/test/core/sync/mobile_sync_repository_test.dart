@@ -316,6 +316,40 @@ void main() {
     expect(rows.read<int>('c'), 0);
   });
 
+  test('mixed inventory page rolls back earlier valid batches on error', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'inventory',
+          nextCursor: 'should-not-commit',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'valid-first',
+              'medicine_id': 'med-1',
+              'stock_location_id': 'main',
+              'available_quantity': '5.0000',
+              'sale_price': '10.0000',
+              'purchase_cost': '4.0000',
+              'server_updated_at': '2026-11-04T00:00:00Z',
+            },
+            <String, dynamic>{
+              'id': 'invalid-second',
+              'available_quantity': '-2.0000',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    final count = await database.customSelect(
+      "SELECT COUNT(*) AS c FROM local_inventory_batches WHERE id IN ('valid-first', 'invalid-second')",
+    ).map((row) => row.read<int>('c')).getSingle();
+    expect(count, 0);
+    expect(await repository.checkpoint('inventory'), isNull);
+  });
+
+
   test('older supplier snapshots cannot replace newer local data', () async {
     Future<void> apply(String name, String timestamp) {
       return repository.applyPullPage(
