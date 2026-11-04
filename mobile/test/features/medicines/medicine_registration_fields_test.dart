@@ -16,19 +16,17 @@ void main() {
     possibleDuplicates: const <String>[],
   );
 
-  MedicineRegistrationFields fields({
-    double units = 10,
-    double reorder = 0,
-  }) => MedicineRegistrationFields(
-    medicineCode: 'TEST-001',
-    purchaseUnit: 'pack',
-    saleUnit: 'unit',
-    unitsPerPurchaseUnit: units,
-    reorderLevel: reorder,
-    prescriptionRequired: false,
-    batchTrackingRequired: true,
-    expiryTrackingRequired: true,
-  );
+  MedicineRegistrationFields fields({double units = 10, double reorder = 0}) =>
+      MedicineRegistrationFields(
+        medicineCode: 'TEST-001',
+        purchaseUnit: 'pack',
+        saleUnit: 'unit',
+        unitsPerPurchaseUnit: units,
+        reorderLevel: reorder,
+        prescriptionRequired: false,
+        batchTrackingRequired: true,
+        expiryTrackingRequired: true,
+      );
 
   test('accepts server maximum numeric values', () {
     final payload = fields(
