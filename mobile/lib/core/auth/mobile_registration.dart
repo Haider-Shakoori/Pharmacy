@@ -160,6 +160,8 @@ class MobileRegistration {
 
   bool get accessExpired => !DateTime.now().isBefore(accessExpiresAt);
 
+  bool get leaseExpired => !DateTime.now().isBefore(leaseExpiresAt);
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'tenant_id': tenantId,
