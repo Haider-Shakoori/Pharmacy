@@ -28,10 +28,19 @@ class GoodsReceiptDraftStore {
     if (decoded is! Map<String, dynamic>) {
       throw const FormatException('Invalid saved receiving worksheet.');
     }
-    return decoded.map((key, value) => MapEntry(
-      key,
-      Map<String, String>.from(value as Map),
-    ));
+    final Map<String, Map<String, String>> restored =
+        <String, Map<String, String>>{};
+    for (final entry in decoded.entries) {
+      if (entry.value is! Map) {
+        throw const FormatException('Invalid saved receiving worksheet line.');
+      }
+      try {
+        restored[entry.key] = Map<String, String>.from(entry.value as Map);
+      } on TypeError {
+        throw const FormatException('Invalid saved receiving worksheet line.');
+      }
+    }
+    return restored;
   }
 
   Future<void> save(
