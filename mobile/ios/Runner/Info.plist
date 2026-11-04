@@ -11,6 +11,8 @@
     <key>CFBundleShortVersionString</key><string>$(FLUTTER_BUILD_NAME)</string>
     <key>CFBundleVersion</key><string>$(FLUTTER_BUILD_NUMBER)</string>
     <key>NSCameraUsageDescription</key><string>Darmaltoon uses the camera to scan medicine barcodes and QR codes.</string>
+    <key>NSPhotoLibraryUsageDescription</key><string>Darmaltoon uses selected photos for medicine and inventory records.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key><string>Darmaltoon saves selected pharmacy images when requested.</string>
     <key>NSLocalNetworkUsageDescription</key><string>Darmaltoon connects to your pharmacy server on the local network.</string>
     <key>NSAppTransportSecurity</key>
     <dict><key>NSAllowsLocalNetworking</key><true/></dict>
