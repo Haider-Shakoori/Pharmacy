@@ -67,15 +67,17 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
       },
     );
 
-    final List<dynamic> raw = data['results'] as List<dynamic>? ?? <dynamic>[];
-
-    return raw
-        .whereType<Map<dynamic, dynamic>>()
-        .map(
-          (Map<dynamic, dynamic> value) =>
-              SyncPushResult.fromJson(Map<String, dynamic>.from(value)),
-        )
-        .toList(growable: false);
+    final Object? raw = data['results'];
+    if (raw is! List || raw.any((item) => item is! Map)) {
+      throw const MobileSyncException(
+        'The pharmacy server returned invalid synchronization acknowledgements.',
+      );
+    }
+    return raw.map((item) {
+      return SyncPushResult.fromJson(
+        Map<String, dynamic>.from(item as Map),
+      );
+    }).toList(growable: false);
   }
 
   @override
