@@ -91,8 +91,11 @@ class MobileSyncEngine {
             }
           }
         }
-      } on MobileSyncException catch (error) {
-        await repository.retryTransportFailure(events, error.message);
+      } catch (error) {
+        // Do not leave outbox events in the sending state if the transport
+        // throws an unexpected exception. Preserve their idempotency keys
+        // and schedule a retry without posting inventory locally.
+        await repository.retryTransportFailure(events, error.toString());
         rethrow;
       }
     }
