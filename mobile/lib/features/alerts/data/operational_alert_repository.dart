@@ -116,6 +116,14 @@ class OperationalAlertRepository {
       }
     }
 
+    // The alert list is capped for readability, but the badge must report
+    // every rejected transaction, including those outside the first page.
+    final QueryRow rejectedCountRow = await _database.customSelect('''
+      SELECT COUNT(*) AS total
+      FROM sync_outbox_entries
+      WHERE status = 'rejected'
+      ''').getSingle();
+
     final List<QueryRow> rejectedRows = await _database.customSelect('''
       SELECT aggregate_id, event_type, last_error
       FROM sync_outbox_entries
@@ -149,7 +157,7 @@ class OperationalAlertRepository {
       lowStockCount: lowStock.length,
       nearExpiryCount: nearExpiry.length,
       expiredCount: expired.length,
-      syncRejectedCount: rejected.length,
+      syncRejectedCount: rejectedCountRow.read<int>('total'),
     );
   }
 
