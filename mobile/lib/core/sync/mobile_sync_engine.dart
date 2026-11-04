@@ -60,10 +60,20 @@ class MobileSyncEngine {
           registration: registration,
           events: events,
         );
-        final Map<String, SyncPushResult> byKey = <String, SyncPushResult>{
-          for (final SyncPushResult result in results)
-            result.idempotencyKey: result,
-        };
+        final Map<String, SyncPushResult> byKey = <String, SyncPushResult>{};
+        final Set<String> requestedKeys = events
+            .map((event) => event.idempotencyKey)
+            .toSet();
+        for (final SyncPushResult result in results) {
+          if (!requestedKeys.contains(result.idempotencyKey) ||
+              byKey.containsKey(result.idempotencyKey)) {
+            throw const MobileSyncException(
+              'The server returned duplicate or unexpected acknowledgements. '
+              'The pending transactions will be retried safely.',
+            );
+          }
+          byKey[result.idempotencyKey] = result;
+        }
 
         for (final SyncOutboxEvent event in events) {
           final SyncPushResult? result = byKey[event.idempotencyKey];
