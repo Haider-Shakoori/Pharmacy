@@ -412,6 +412,12 @@ class MobileSyncRepository {
     if (serverAvailable.isNegative) {
       throw const FormatException('Inventory snapshot cannot contain negative available stock.');
     }
+    final String salePrice = item['sale_price']?.toString() ?? '0';
+    final String purchaseCost = item['purchase_cost']?.toString() ?? '0';
+    if (FixedDecimal.parse(salePrice).isNegative ||
+        FixedDecimal.parse(purchaseCost).isNegative) {
+      throw const FormatException('Inventory prices cannot be negative.');
+    }
     final FixedDecimal outstanding = await _outstandingAllocationQuantity(
       batchId,
     );
@@ -448,8 +454,8 @@ class MobileSyncRepository {
         item['batch_number']?.toString() ?? '',
         expiresAt == null ? null : _seconds(DateTime.parse(expiresAt).toUtc()),
         available.toString(),
-        item['sale_price']?.toString() ?? '0',
-        item['purchase_cost']?.toString() ?? '0',
+        salePrice,
+        purchaseCost,
         item['status']?.toString() ?? 'active',
         item['is_deleted'] == true ? 1 : 0,
         serverCreatedAt == null
