@@ -23,7 +23,8 @@ class MedicineRegistrationDialog extends StatefulWidget {
       _MedicineRegistrationDialogState();
 }
 
-class _MedicineRegistrationDialogState extends State<MedicineRegistrationDialog> {
+class _MedicineRegistrationDialogState
+    extends State<MedicineRegistrationDialog> {
   final _key = GlobalKey<FormState>();
   final _code = TextEditingController();
   final _purchase = TextEditingController(text: 'pack');
@@ -54,8 +55,10 @@ class _MedicineRegistrationDialogState extends State<MedicineRegistrationDialog>
           if (value == null || value.trim().isEmpty) return 'Required';
           if (controller == _units || controller == _reorder) {
             final number = double.tryParse(value.trim());
-            if (number == null || !number.isFinite ||
-                (controller == _units && number <= 0) || number < 0) {
+            if (number == null ||
+                !number.isFinite ||
+                (controller == _units && number <= 0) ||
+                number < 0) {
               return 'Enter a valid number';
             }
           }
@@ -94,9 +97,9 @@ class _MedicineRegistrationDialogState extends State<MedicineRegistrationDialog>
       if (mounted) Navigator.of(context).pop(id);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registration failed: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Registration failed: $error')));
       }
     } finally {
       client.close();
