@@ -72,24 +72,23 @@ class _MobileRegistrationCardState
       MobileRegistrationException? lastError;
 
       try {
-      for (final ServerEndpoint endpoint in candidates) {
-        try {
-          registration = await client.register(
-            endpoint: endpoint,
-            device: device,
-            licenseKey: _licenseController.text,
-            email: _emailController.text,
-            password: _passwordController.text,
-          );
-          break;
-        } on MobileRegistrationException catch (error) {
-          lastError = error;
-          if (!error.retryable || profile.mode != DeploymentMode.automatic) {
-            rethrow;
+          for (final ServerEndpoint endpoint in candidates) {
+          try {
+            registration = await client.register(
+              endpoint: endpoint,
+              device: device,
+              licenseKey: _licenseController.text,
+              email: _emailController.text,
+              password: _passwordController.text,
+            );
+            break;
+          } on MobileRegistrationException catch (error) {
+            lastError = error;
+            if (!error.retryable || profile.mode != DeploymentMode.automatic) {
+              rethrow;
+            }
           }
-        }
       }
-
       } finally {
         client.close();
       }
