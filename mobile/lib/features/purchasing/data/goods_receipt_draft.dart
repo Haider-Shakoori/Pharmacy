@@ -32,7 +32,7 @@ class GoodsReceiptDraftLine {
   final bool requiresExpiry;
 
   Map<String, String?> toPayload() => <String, String?>{
-    'purchase_order_line_id': purchaseOrderLineId,
+    'purchase_order_line_id': purchaseOrderLineId.trim(),
     'received_quantity': receivedQuantity,
     'bonus_quantity': bonusQuantity,
     'unit_cost': unitCost,
