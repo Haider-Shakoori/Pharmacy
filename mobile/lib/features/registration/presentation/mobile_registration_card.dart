@@ -71,6 +71,7 @@ class _MobileRegistrationCardState
       MobileRegistration? registration;
       MobileRegistrationException? lastError;
 
+      try {
       for (final ServerEndpoint endpoint in candidates) {
         try {
           registration = await client.register(
@@ -87,6 +88,10 @@ class _MobileRegistrationCardState
             rethrow;
           }
         }
+      }
+
+      } finally {
+        client.close();
       }
 
       if (registration == null) {
@@ -165,14 +170,19 @@ class _MobileRegistrationCardState
           .read(deviceIdentityServiceProvider)
           .load();
 
-      final MobileRegistration registration = await MobileRegistrationClient()
-          .startTrial(
+      final MobileRegistrationClient client = MobileRegistrationClient();
+      late final MobileRegistration registration;
+      try {
+        registration = await client.startTrial(
             endpoint: licensingEndpoint,
             device: device,
             pharmacyCode: _pharmacyCodeController.text,
             email: _emailController.text,
             password: _passwordController.text,
           );
+      } finally {
+        client.close();
+      }
 
       await _persistRegistration(
         registration,
