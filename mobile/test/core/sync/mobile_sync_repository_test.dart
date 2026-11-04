@@ -195,6 +195,34 @@ void main() {
   });
 
 
+  test('invalid rejections cannot change pending sale or outbox', () async {
+    final event = (await repository.pendingOutbox()).single;
+    for (final result in <SyncPushResult>[
+      const SyncPushResult(
+        idempotencyKey: 'wrong-event',
+        status: 'rejected',
+        message: 'Wrong event.',
+      ),
+      const SyncPushResult(
+        idempotencyKey: 'sale:sale-local-1:completed',
+        status: 'accepted',
+        serverId: 'server-sale-1',
+      ),
+    ]) {
+      await expectLater(repository.reject(event, result), throwsFormatException);
+    }
+    final outbox = await database.customSelect(
+      'SELECT status, last_error FROM sync_outbox_entries',
+    ).getSingle();
+    expect(outbox.read<String>('status'), 'pending');
+    expect(outbox.readNullable<String>('last_error'), isNull);
+    final sale = await database.customSelect(
+      "SELECT sync_state FROM local_sales WHERE local_id = 'sale-local-1'",
+    ).getSingle();
+    expect(sale.read<String>('sync_state'), 'pending');
+  });
+
+
   test('non-retryable rejection preserves outbox and local sale', () async {
     final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
 
