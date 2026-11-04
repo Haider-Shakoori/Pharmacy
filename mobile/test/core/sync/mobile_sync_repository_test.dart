@@ -166,6 +166,30 @@ void main() {
     },
   );
 
+  test('acknowledgement rolls back if matching outbox entry is absent', () async {
+    final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
+    await database.customStatement(
+      'DELETE FROM sync_outbox_entries WHERE idempotency_key = ?',
+      <Object?>[event.idempotencyKey],
+    );
+    await expectLater(
+      repository.acknowledge(
+        event,
+        const SyncPushResult(
+          idempotencyKey: 'sale:sale-local-1:completed',
+          status: 'accepted',
+          serverId: 'server-sale-1',
+        ),
+      ),
+      throwsStateError,
+    );
+    final QueryRow sale = await database.customSelect(
+      "SELECT server_id, sync_state FROM local_sales WHERE local_id = 'sale-local-1'",
+    ).getSingle();
+    expect(sale.readNullable<String>('server_id'), isNull);
+    expect(sale.read<String>('sync_state'), 'pending');
+  });
+
   test('invalid acknowledgements preserve the sale and outbox', () async {
     final event = (await repository.pendingOutbox()).single;
     for (final result in <SyncPushResult>[
