@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
