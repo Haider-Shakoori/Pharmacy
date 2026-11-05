@@ -167,6 +167,37 @@ void main() {
     expect(payload['cashier_user_id'], '7');
   });
 
+  test('normalizes a supplied business date in sale and outbox', () async {
+    await service.checkout(
+      const OfflinePosCheckoutRequest(
+        stockLocationId: 'main-location',
+        cashierUserId: '7',
+        businessDate: ' 2026-09-28 ',
+        permissions: <String>{'pos.sell'},
+        lines: <OfflinePosLineInput>[
+          OfflinePosLineInput(
+            medicineId: 'medicine-1',
+            quantity: '1',
+            unitPrice: '12.5000',
+          ),
+        ],
+        payments: <OfflinePosPaymentInput>[
+          OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
+        ],
+      ),
+    );
+    final sale = await database.customSelect(
+      'SELECT business_date FROM local_sales',
+    ).getSingle();
+    expect(sale.read<String>('business_date'), '2026-09-28');
+    final event = await database.customSelect(
+      'SELECT payload_json FROM sync_outbox_entries',
+    ).getSingle();
+    final payload = jsonDecode(event.read<String>('payload_json'))
+        as Map<String, dynamic>;
+    expect(payload['business_date'], '2026-09-28');
+  });
+
   test('normalizes POS medicine, customer and payment fields', () async {
     await service.checkout(
       const OfflinePosCheckoutRequest(
