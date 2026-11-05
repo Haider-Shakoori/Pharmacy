@@ -430,19 +430,19 @@ class MobileSyncApiTest extends TestCase
                     'unit_cost' => '10',
                 ]],
             ];
-            $service = app(\\App\\Services\\Mobile\\MobileGoodsReceiptService::class);
+            $service = app(\App\Services\\Mobile\\MobileGoodsReceiptService::class);
             $before = ProductBatch::query()->where('medicine_id', $medicine->id)->sum('available_quantity');
             $first = $service->capture($user, $payload, 'grn:integration-001');
             $again = $service->capture($user, $payload, 'grn:integration-001');
             $this->assertSame($first->id, $again->id);
             $this->assertSame('pending_inventory', $first->status);
             $this->assertNull($first->inventory_posted_at);
-            $this->assertSame(1, \\App\\Models\\GoodsReceipt::query()->where('idempotency_key', 'grn:integration-001')->count());
+            $this->assertSame(1, \App\Models\\GoodsReceipt::query()->where('idempotency_key', 'grn:integration-001')->count());
             $this->assertEquals($before, ProductBatch::query()->where('medicine_id', $medicine->id)->sum('available_quantity'));
 
             $over = $payload;
             $over['lines'][0]['received_quantity'] = '7';
-            $this->expectException(\\Illuminate\\Validation\\ValidationException::class);
+            $this->expectException(\Illuminate\Validation\\ValidationException::class);
             $service->capture($user, $over, 'grn:integration-002');
         });
     }
