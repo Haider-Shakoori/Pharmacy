@@ -70,9 +70,9 @@ class MobileSyncRepository {
               attempt_count = attempt_count + 1,
               last_error = NULL,
               updated_at = ?
-          WHERE idempotency_key = ? AND status IN ('pending', 'retry')
+          WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ? AND status IN ('pending', 'retry')
           ''',
-          <Object?>[now, event.idempotencyKey],
+          <Object?>[now, event.idempotencyKey, event.aggregateId, event.eventType],
         );
         final QueryRow changed = await _database
             .customSelect('SELECT changes() AS affected')
