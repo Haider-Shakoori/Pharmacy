@@ -54,7 +54,7 @@ class SyncPushResult {
   factory SyncPushResult.fromJson(Map<String, dynamic> json) {
     final key = json['idempotency_key'];
     final status = json['status'];
-    if (key is! String || key.isEmpty ||
+    if (key is! String || key.trim().isEmpty ||
         status is! String ||
         (status != 'accepted' && status != 'rejected')) {
       throw const FormatException('Invalid synchronization acknowledgement.');
@@ -100,6 +100,8 @@ class SyncPullPage {
         raw is! List ||
         hasMore is! bool ||
         (nextCursor != null && nextCursor is! String) ||
+        (hasMore == true &&
+            (nextCursor is! String || nextCursor.trim().isEmpty)) ||
         raw.any((item) => item is! Map<String, dynamic>)) {
       throw const FormatException('Invalid synchronization pull page.');
     }
