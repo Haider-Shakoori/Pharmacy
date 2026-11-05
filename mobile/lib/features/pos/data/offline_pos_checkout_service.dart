@@ -61,9 +61,12 @@ class OfflinePosCheckoutService {
         ? null
         : request.customerId?.trim();
     final DateTime now = _clock();
-    final String businessDate = request.businessDate?.trim() ?? _businessDate(now);
+    final String businessDate =
+        request.businessDate?.trim() ?? _businessDate(now);
     if (!_validBusinessDate(businessDate)) {
-      throw const OfflinePosException('Business date must be a valid YYYY-MM-DD date.');
+      throw const OfflinePosException(
+        'Business date must be a valid YYYY-MM-DD date.',
+      );
     }
     final String saleId = _idGenerator();
     final String idempotencyKey = 'sale:$saleId:completed';
@@ -403,9 +406,9 @@ class OfflinePosCheckoutService {
           batch.available.toString(),
         ],
       );
-      final changed = await _database.customSelect(
-        'SELECT changes() AS affected',
-      ).getSingle();
+      final changed = await _database
+          .customSelect('SELECT changes() AS affected')
+          .getSingle();
       if (changed.read<int>('affected') != 1) {
         throw const OfflinePosException(
           'Stock changed during checkout. Refresh the catalog and retry.',
