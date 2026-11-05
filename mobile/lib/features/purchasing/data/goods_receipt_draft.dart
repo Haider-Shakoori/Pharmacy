@@ -110,6 +110,13 @@ class GoodsReceiptDraftValidator {
               !_validDate(line.manufacturedAt!)) {
             errors.add('Manufacturing date is invalid.');
           }
+          if (line.expiresAt != null &&
+              line.manufacturedAt != null &&
+              _validDate(line.expiresAt!) &&
+              _validDate(line.manufacturedAt!) &&
+              line.manufacturedAt!.compareTo(line.expiresAt!) > 0) {
+            errors.add('Manufacturing date cannot be after expiry date.');
+          }
           if (line.salePrice != null &&
               line.salePrice!.isNotEmpty &&
               FixedDecimal.parse(line.salePrice!).isNegative) {
