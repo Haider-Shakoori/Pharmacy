@@ -371,7 +371,7 @@ class MobileSyncRepository {
       <Object?>[
         _requiredSnapshotId(item, 'id'),
         item['code']?.toString(),
-        item['name'].toString(),
+        _requiredSnapshotId(item, 'name'),
         item['phone']?.toString(),
         item['contact_person']?.toString(),
         item['is_active'] == true ? 1 : 0,
@@ -400,7 +400,7 @@ class MobileSyncRepository {
       <Object?>[
         _requiredSnapshotId(item, 'id'),
         _requiredSnapshotId(item, 'supplier_id'),
-        item['number'].toString(),
+        _requiredSnapshotId(item, 'number'),
         item['status'].toString(),
         item['order_date']?.toString(),
         item['expected_date']?.toString(),
@@ -433,7 +433,7 @@ class MobileSyncRepository {
       <Object?>[
         _requiredSnapshotId(item, 'id'),
         item['medicine_code']?.toString(),
-        item['brand_name'].toString(),
+        _requiredSnapshotId(item, 'brand_name'),
         item['generic_name']?.toString(),
         item['sale_unit']?.toString() ?? 'unit',
         item['is_active'] == true ? 1 : 0,
