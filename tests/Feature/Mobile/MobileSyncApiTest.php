@@ -4,6 +4,7 @@ namespace Tests\Feature\Mobile;
 
 use App\Models\Branch;
 use App\Models\Customer;
+use App\Models\GoodsReceipt;
 use App\Models\Medicine;
 use App\Models\ProductBatch;
 use App\Models\PurchaseOrder;
@@ -11,6 +12,8 @@ use App\Models\Sale;
 use App\Models\StockLocation;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\Mobile\MobileGoodsReceiptService;
+use Illuminate\Validation\ValidationException;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Inventory\StockMovementService;
 use App\Services\Subscriptions\TrialProvisioner;
