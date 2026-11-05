@@ -1181,7 +1181,8 @@ void main() {
 
   test('outbox rejects invalid batch sizes', () async {
     await expectLater(repository.pendingOutbox(limit: 0), throwsRangeError);
-    await expectLater(repository.pendingOutbox(limit: 501), throwsRangeError);
+    await expectLater(repository.pendingOutbox(limit: 26), throwsRangeError);
+    expect((await repository.pendingOutbox(limit: 25)).length, lessThanOrEqualTo(25));
   });
 
 }
