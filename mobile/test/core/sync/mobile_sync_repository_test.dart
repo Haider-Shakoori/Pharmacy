@@ -162,6 +162,27 @@ void main() {
     expect(await repository.checkpoint('suppliers'), isNull);
   });
 
+  test('blank supplier name rolls back synchronization', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'suppliers',
+          nextCursor: 'invalid-name',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'supplier-1',
+              'name': ' ',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('suppliers'), isNull);
+  });
+
   test('invalid supplier identity rolls back entire pull page and checkpoint', () async {
     await expectLater(
       repository.applyPullPage(
