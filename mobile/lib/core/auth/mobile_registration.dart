@@ -117,7 +117,18 @@ class MobileRegistration {
         ? Map<String, dynamic>.from(data['inventory_policy'] as Map)
         : <String, dynamic>{};
 
+    final Map<String, dynamic>? tenant = data['tenant'] == null
+        ? null
+        : _requiredMap(data['tenant'], 'tenant');
+
     // A refresh must never silently change the identity that owns local data.
+    if (tenant != null && _requiredString(tenant['id'], 'tenant.id') != tenantId) {
+      throw const FormatException('Session refresh returned a different tenant.');
+    }
+    if (data['tenant_id'] != null &&
+        _requiredString(data['tenant_id'], 'tenant_id') != tenantId) {
+      throw const FormatException('Session refresh returned a different tenant.');
+    }
     if (user != null && _requiredString(user['id'], 'user.id') != userId) {
       throw const FormatException('Session refresh returned a different user.');
     }
