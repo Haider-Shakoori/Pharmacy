@@ -462,6 +462,9 @@ class MobileSyncRepository {
       throw const FormatException('Inventory snapshot is missing required identifiers.');
     }
     final String batchId = rawId.trim();
+    final String batchStatus = item['status'] == null
+        ? 'active'
+        : _requiredSnapshotId(item, 'status');
     final String? expiresAt = item['expires_at']?.toString();
     final String? serverCreatedAt = item['server_created_at']?.toString();
     final Object? rawAvailable = item['available_quantity'];
@@ -518,7 +521,7 @@ class MobileSyncRepository {
         available.toString(),
         salePrice,
         purchaseCost,
-        item['status']?.toString() ?? 'active',
+        batchStatus,
         item['is_deleted'] == true ? 1 : 0,
         serverCreatedAt == null
             ? null
