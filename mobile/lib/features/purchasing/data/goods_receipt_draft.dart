@@ -94,6 +94,13 @@ class GoodsReceiptDraftValidator {
           errors.add('Quantities and costs cannot be negative.');
           continue;
         }
+        if (received.compareTo(FixedDecimal.parse('999999999')) > 0 ||
+            bonus.compareTo(FixedDecimal.parse('999999999')) > 0) {
+          errors.add('Receipt quantities cannot exceed 999999999.');
+        }
+        if (cost.compareTo(FixedDecimal.parse('999999999999')) > 0) {
+          errors.add('Unit cost cannot exceed 999999999999.');
+        }
         if ((previous + received).compareTo(ordered) > 0) {
           errors.add('Received quantity exceeds the remaining order quantity.');
         }
@@ -127,10 +134,12 @@ class GoodsReceiptDraftValidator {
             line.manufacturedAt!.trim().compareTo(line.expiresAt!.trim()) > 0) {
           errors.add('Manufacturing date cannot be after expiry date.');
         }
-        if (line.salePrice != null &&
-            line.salePrice!.trim().isNotEmpty &&
-            FixedDecimal.parse(line.salePrice!.trim()).isNegative) {
-          errors.add('Sale price cannot be negative.');
+        if (line.salePrice != null && line.salePrice!.trim().isNotEmpty) {
+          final price = FixedDecimal.parse(line.salePrice!.trim());
+          if (price.isNegative ||
+              price.compareTo(FixedDecimal.parse('999999999999')) > 0) {
+            errors.add('Sale price must be between 0 and 999999999999.');
+          }
         }
       } on FormatException {
         errors.add('A receipt quantity, price, or date is invalid.');
