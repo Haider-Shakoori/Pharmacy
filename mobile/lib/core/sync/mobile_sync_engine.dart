@@ -89,10 +89,11 @@ class MobileSyncEngine {
           final SyncPushResult? result = byKey[event.idempotencyKey];
           if (result != null &&
               result.accepted &&
-              event.eventType == 'sale.completed' &&
+              (event.eventType == 'sale.completed' ||
+                  event.eventType == 'goods_receipt.create') &&
               (result.serverId == null || result.serverId!.trim().isEmpty)) {
             throw const MobileSyncException(
-              'An accepted sale acknowledgement is missing its server ID. '
+              'An accepted transaction acknowledgement is missing its server ID. '
               'Pending transactions will be retried safely.',
             );
           }
