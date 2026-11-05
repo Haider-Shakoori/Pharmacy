@@ -93,10 +93,11 @@ class MobileSyncRepository {
     }
     // A sale cannot be considered synchronized without a durable server
     // reference. Keep its outbox event so the original idempotency key retries.
-    if (event.eventType == 'sale.completed' &&
+    if ((event.eventType == 'sale.completed' ||
+            event.eventType == 'goods_receipt.create') &&
         (result.serverId == null || result.serverId!.trim().isEmpty)) {
       throw const FormatException(
-        'Accepted sale acknowledgement is missing its server ID.',
+        'Accepted transaction acknowledgement is missing its server ID.',
       );
     }
     await _database.transaction(() async {
