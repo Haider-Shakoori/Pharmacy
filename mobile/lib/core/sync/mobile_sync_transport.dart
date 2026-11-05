@@ -56,6 +56,9 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
     required MobileRegistration registration,
     required List<SyncOutboxEvent> events,
   }) async {
+    if (events.isEmpty || events.length > 25) {
+      throw const MobileSyncException('Invalid synchronization batch size.');
+    }
     final Map<String, dynamic> data = await _request(
       method: 'POST',
       uri: endpoint.uri.resolve('/api/v1/mobile/sync/push'),
