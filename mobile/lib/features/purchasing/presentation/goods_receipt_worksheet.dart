@@ -61,7 +61,8 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
         line.expiry.text = values['expiry'] ?? '';
       }
     } catch (error) {
-      if (mounted) setState(() => errors = <String>['Unable to load saved draft: $error']);
+      if (mounted)
+        setState(() => errors = <String>['Unable to load saved draft: $error']);
     }
   }
 
@@ -69,27 +70,28 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
     if (saving) return;
     setState(() => saving = true);
     try {
-      await GoodsReceiptDraftStore(widget.database).save(
-        widget.purchaseOrderId,
-        <String, Map<String, String>>{
-          for (final line in inputs)
-            if ((line.data['id']?.toString() ?? '').isNotEmpty)
-              line.data['id'].toString(): <String, String>{
-                'quantity': line.quantity.text,
-                'bonus': line.bonus.text,
-                'cost': line.cost.text,
-                'batch': line.batch.text,
-                'expiry': line.expiry.text,
-              },
-        },
-      );
+      await GoodsReceiptDraftStore(widget.database)
+          .save(widget.purchaseOrderId, <String, Map<String, String>>{
+            for (final line in inputs)
+              if ((line.data['id']?.toString() ?? '').isNotEmpty)
+                line.data['id'].toString(): <String, String>{
+                  'quantity': line.quantity.text,
+                  'bonus': line.bonus.text,
+                  'cost': line.cost.text,
+                  'batch': line.batch.text,
+                  'expiry': line.expiry.text,
+                },
+          });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Receiving draft saved on this device.')),
+          const SnackBar(
+            content: Text('Receiving draft saved on this device.'),
+          ),
         );
       }
     } catch (error) {
-      if (mounted) setState(() => errors = <String>['Unable to save draft: $error']);
+      if (mounted)
+        setState(() => errors = <String>['Unable to save draft: $error']);
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -150,7 +152,8 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
         lines: drafts,
         receivedAt: DateTime.now(),
       );
-      await GoodsReceiptDraftStore(widget.database).delete(widget.purchaseOrderId);
+      await GoodsReceiptDraftStore(widget.database)
+          .delete(widget.purchaseOrderId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
