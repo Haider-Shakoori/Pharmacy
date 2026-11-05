@@ -57,6 +57,9 @@ class OfflinePosCheckoutService {
 
     final String stockLocationId = request.stockLocationId.trim();
     final String cashierUserId = request.cashierUserId.trim();
+    final String? customerId = request.customerId?.trim().isEmpty == true
+        ? null
+        : request.customerId?.trim();
     final DateTime now = _clock();
     final String businessDate = request.businessDate ?? _businessDate(now);
     if (!_validBusinessDate(businessDate)) {
@@ -74,7 +77,7 @@ class OfflinePosCheckoutService {
         final medicine =
             await (_database.select(_database.localMedicines)..where(
                   (table) =>
-                      table.id.equals(input.medicineId) &
+                      table.id.equals(input.medicineId.trim()) &
                       table.isActive.equals(true) &
                       table.isDeleted.equals(false),
                 ))
@@ -188,7 +191,8 @@ class OfflinePosCheckoutService {
           <Map<String, Object?>>[];
 
       for (final OfflinePosPaymentInput input in request.payments) {
-        if (!_offlinePaymentMethods.contains(input.method)) {
+        final String paymentMethod = input.method.trim();
+        if (!_offlinePaymentMethods.contains(paymentMethod)) {
           throw const OfflinePosException(
             'Offline POS currently supports cash, bank and mobile payments.',
           );
@@ -202,7 +206,7 @@ class OfflinePosCheckoutService {
         }
 
         tendered += amount;
-        hasCash = hasCash || input.method == 'cash';
+        hasCash = hasCash || paymentMethod == 'cash';
         final String paymentId = _idGenerator();
 
         await _database.customStatement(
@@ -214,7 +218,7 @@ class OfflinePosCheckoutService {
           <Object?>[
             paymentId,
             saleId,
-            input.method,
+            paymentMethod,
             amount.toString(),
             input.reference,
           ],
@@ -222,7 +226,7 @@ class OfflinePosCheckoutService {
 
         paymentPayload.add(<String, Object?>{
           'local_id': paymentId,
-          'method': input.method,
+          'method': paymentMethod,
           'amount': amount.toString(),
           'reference': input.reference,
         });
@@ -253,7 +257,7 @@ class OfflinePosCheckoutService {
         ''',
         <Object?>[
           saleId,
-          request.customerId,
+          customerId,
           stockLocationId,
           businessDate,
           subtotal.toString(),
@@ -272,7 +276,7 @@ class OfflinePosCheckoutService {
         'local_id': saleId,
         'idempotency_key': idempotencyKey,
         'stock_location_id': stockLocationId,
-        'customer_id': request.customerId,
+        'customer_id': customerId,
         'cashier_user_id': cashierUserId,
         'business_date': businessDate,
         'currency': 'AFN',
