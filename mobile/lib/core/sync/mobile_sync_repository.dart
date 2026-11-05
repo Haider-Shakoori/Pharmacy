@@ -11,8 +11,9 @@ class MobileSyncRepository {
   final PharmacyDatabase _database;
 
   Future<List<SyncOutboxEvent>> pendingOutbox({int limit = 25}) async {
-    if (limit < 1 || limit > 500) {
-      throw RangeError.range(limit, 1, 500, 'limit');
+    if (limit < 1 || limit > 25) {
+      // Laravel's mobile sync push endpoint accepts at most 25 events.
+      throw RangeError.range(limit, 1, 25, 'limit');
     }
     final int now = _seconds(DateTime.now());
     // A process may terminate after marking events as sending. Reclaim only
