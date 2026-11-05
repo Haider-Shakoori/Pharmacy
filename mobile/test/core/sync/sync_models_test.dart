@@ -105,6 +105,18 @@ void main() {
       );
     });
 
+    test('rejects oversized server continuation cursor', () {
+      expect(
+        () => SyncPullPage.fromJson(<String, dynamic>{
+          'stream': 'inventory',
+          'data': <Object>[],
+          'has_more': true,
+          'next_cursor': 'x' * 1001,
+        }),
+        throwsFormatException,
+      );
+    });
+
     test('accepts a valid final page with no continuation cursor', () {
       final SyncPullPage page = SyncPullPage.fromJson(<String, dynamic>{
         'stream': 'inventory',
