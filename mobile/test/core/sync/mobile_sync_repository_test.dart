@@ -921,6 +921,33 @@ void main() {
   });
 
 
+  test('missing server update timestamp cannot advance supplier checkpoint', () async {
+    for (final invalid in <Object?>[null, '', ' ', 123]) {
+      await expectLater(
+        repository.applyPullPage(
+          SyncPullPage(
+            stream: 'suppliers',
+            nextCursor: 'invalid-update-time',
+            hasMore: false,
+            data: <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'supplier-1',
+                'name': 'Supplier',
+                'server_updated_at': invalid,
+              },
+            ],
+          ),
+        ),
+        throwsFormatException,
+      );
+    }
+    expect(await repository.checkpoint('suppliers'), isNull);
+    final count = await database.customSelect(
+      "SELECT COUNT(*) AS c FROM local_suppliers WHERE id = 'supplier-1'",
+    ).map((row) => row.read<int>('c')).getSingle();
+    expect(count, 0);
+  });
+
   test('blank inventory timestamps roll back pull pages', () async {
     for (final field in <String>['expires_at', 'server_created_at']) {
       await expectLater(
