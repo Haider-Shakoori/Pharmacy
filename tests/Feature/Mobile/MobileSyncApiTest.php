@@ -428,6 +428,8 @@ class MobileSyncApiTest extends TestCase
                     'received_quantity' => '4',
                     'bonus_quantity' => '0',
                     'unit_cost' => '10',
+                    'batch_number' => 'GRN-LOT',
+                    'expires_at' => today()->addMonths(6)->toDateString(),
                 ]],
             ];
             $service = app(\App\Services\Mobile\MobileGoodsReceiptService::class);
