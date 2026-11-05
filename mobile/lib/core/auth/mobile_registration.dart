@@ -125,6 +125,10 @@ class MobileRegistration {
         _requiredString(data['activation_id'], 'activation_id') != activationId) {
       throw const FormatException('Session refresh returned a different activation.');
     }
+    if (deviceId != null && data['device_id'] != null &&
+        _requiredString(data['device_id'], 'device_id') != deviceId) {
+      throw const FormatException('Session refresh returned a different device.');
+    }
 
     return MobileRegistration(
       tenantId: tenantId,
