@@ -921,6 +921,36 @@ void main() {
   });
 
 
+  test('blank inventory timestamps roll back pull pages', () async {
+    for (final field in <String>['expires_at', 'server_created_at']) {
+      await expectLater(
+        repository.applyPullPage(
+          SyncPullPage(
+            stream: 'inventory',
+            nextCursor: 'invalid-time',
+            hasMore: false,
+            data: <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'batch-blank-time',
+                'medicine_id': 'med-1',
+                'stock_location_id': 'main',
+                'available_quantity': '4',
+                'server_updated_at': '2026-11-04T00:00:00Z',
+                field: ' ',
+              },
+            ],
+          ),
+        ),
+        throwsFormatException,
+      );
+    }
+    expect(await repository.checkpoint('inventory'), isNull);
+    final count = await database.customSelect(
+      "SELECT COUNT(*) AS c FROM local_inventory_batches WHERE id = 'batch-blank-time'",
+    ).map((row) => row.read<int>('c')).getSingle();
+    expect(count, 0);
+  });
+
   test('negative inventory prices and costs cannot advance stock', () async {
     for (final prices in <Map<String, String>>[
       <String, String>{'sale_price': '-1', 'purchase_cost': '2'},
