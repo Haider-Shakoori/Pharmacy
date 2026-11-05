@@ -149,6 +149,48 @@ void main() {
     );
   });
 
+  test('validates metadata on zero-received lines in a mixed receipt', () {
+    const good = GoodsReceiptDraftLine(
+      purchaseOrderLineId: 'line-good',
+      orderedQuantity: '5',
+      previouslyReceivedQuantity: '0',
+      receivedQuantity: '1',
+      unitCost: '10',
+    );
+    for (final invalid in <GoodsReceiptDraftLine>[
+      const GoodsReceiptDraftLine(
+        purchaseOrderLineId: 'line-zero',
+        orderedQuantity: '5',
+        previouslyReceivedQuantity: '0',
+        receivedQuantity: '0',
+        unitCost: '10',
+        expiresAt: 'not-a-date',
+      ),
+      const GoodsReceiptDraftLine(
+        purchaseOrderLineId: 'line-zero',
+        orderedQuantity: '5',
+        previouslyReceivedQuantity: '0',
+        receivedQuantity: '0',
+        unitCost: '10',
+        manufacturedAt: 'invalid',
+      ),
+      const GoodsReceiptDraftLine(
+        purchaseOrderLineId: 'line-zero',
+        orderedQuantity: '5',
+        previouslyReceivedQuantity: '0',
+        receivedQuantity: '0',
+        unitCost: '10',
+        salePrice: '-1',
+      ),
+    ]) {
+      final errors = GoodsReceiptDraftValidator.validate(
+        <GoodsReceiptDraftLine>[good, invalid],
+        orderStatus: 'approved',
+      );
+      expect(errors, isNotEmpty);
+    }
+  });
+
   test('rejects receipts for draft orders', () {
     expect(
       GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
