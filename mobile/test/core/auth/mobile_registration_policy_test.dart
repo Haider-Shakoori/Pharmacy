@@ -219,6 +219,17 @@ void main() {
       }),
       throwsFormatException,
     );
+    for (final tenantMismatch in <Map<String, dynamic>>[
+      <String, dynamic>{'tenant_id': 'tenant-2'},
+      <String, dynamic>{'tenant': <String, dynamic>{'id': 'tenant-2'}},
+    ]) {
+      expect(
+        () => registration.withRefreshedSession(
+          <String, dynamic>{...response, ...tenantMismatch},
+        ),
+        throwsFormatException,
+      );
+    }
     expect(registration.withRefreshedSession(response).userId, '7');
   });
 
