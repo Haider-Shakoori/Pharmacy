@@ -204,6 +204,42 @@ void main() {
     expect((payments.single as Map<String, dynamic>)['method'], 'cash');
   });
 
+  test('mixed payments cannot refund more cash than received', () async {
+    await expectLater(
+      service.checkout(
+        const OfflinePosCheckoutRequest(
+          stockLocationId: 'main-location',
+          cashierUserId: '7',
+          permissions: <String>{'pos.sell'},
+          lines: <OfflinePosLineInput>[
+            OfflinePosLineInput(
+              medicineId: 'medicine-1',
+              quantity: '1',
+              unitPrice: '12.5000',
+            ),
+          ],
+          payments: <OfflinePosPaymentInput>[
+            OfflinePosPaymentInput(method: 'bank', amount: '20'),
+            OfflinePosPaymentInput(method: 'cash', amount: '1'),
+          ],
+        ),
+      ),
+      throwsA(isA<OfflinePosException>()),
+    );
+    final saleCount = await database.customSelect(
+      'SELECT COUNT(*) AS c FROM local_sales',
+    ).getSingle();
+    final outboxCount = await database.customSelect(
+      'SELECT COUNT(*) AS c FROM sync_outbox_entries',
+    ).getSingle();
+    final stock = await database.customSelect(
+      "SELECT available_quantity FROM local_inventory_batches WHERE id = 'batch-1'",
+    ).getSingle();
+    expect(saleCount.read<int>('c'), 0);
+    expect(outboxCount.read<int>('c'), 0);
+    expect(stock.read<String>('available_quantity'), '20.0000');
+  });
+
   test('FEFO spans batches and local oversell is rejected atomically', () async {
     final int firstExpiry =
         DateTime(2026, 10, 1).millisecondsSinceEpoch ~/ 1000;
