@@ -29,6 +29,20 @@ void main() {
       }
     });
 
+    test('rejects blank cursor even on final pull pages', () {
+      for (final String cursor in <String>['', '   ']) {
+        expect(
+          () => SyncPullPage.fromJson(<String, dynamic>{
+            'stream': 'inventory',
+            'data': <Object>[],
+            'has_more': false,
+            'next_cursor': cursor,
+          }),
+          throwsFormatException,
+        );
+      }
+    });
+
     test('rejects blank stream names', () {
       expect(
         () => SyncPullPage.fromJson(<String, dynamic>{
