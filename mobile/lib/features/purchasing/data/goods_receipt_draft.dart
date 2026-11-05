@@ -33,9 +33,9 @@ class GoodsReceiptDraftLine {
 
   Map<String, String?> toPayload() => <String, String?>{
     'purchase_order_line_id': purchaseOrderLineId.trim(),
-    'received_quantity': receivedQuantity,
-    'bonus_quantity': bonusQuantity,
-    'unit_cost': unitCost,
+    'received_quantity': receivedQuantity.trim(),
+    'bonus_quantity': bonusQuantity.trim(),
+    'unit_cost': unitCost.trim(),
     'batch_number': batchNumber?.trim(),
     'expires_at': expiresAt?.trim(),
     'manufactured_at': manufacturedAt?.trim(),
@@ -58,7 +58,8 @@ class GoodsReceiptDraftValidator {
     required String orderStatus,
   }) {
     final errors = <String>[];
-    if (orderStatus != 'approved' && orderStatus != 'partially_received') {
+    if (orderStatus.trim() != 'approved' &&
+        orderStatus.trim() != 'partially_received') {
       errors.add(
         'Only approved or partially received orders can receive goods.',
       );
