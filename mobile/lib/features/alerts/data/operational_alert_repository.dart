@@ -140,8 +140,8 @@ class OperationalAlertRepository {
             title: row.read<String>('event_type') == 'goods_receipt.create'
                 ? 'Goods receipt synchronization conflict'
                 : row.read<String>('event_type') == 'sale.completed'
-                    ? 'Sale synchronization conflict'
-                    : 'Transaction synchronization conflict',
+                ? 'Sale synchronization conflict'
+                : 'Transaction synchronization conflict',
             detail:
                 row.readNullable<String>('last_error') ??
                 'An offline transaction needs reconciliation.',
