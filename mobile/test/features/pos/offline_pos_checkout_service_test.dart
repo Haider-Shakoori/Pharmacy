@@ -204,6 +204,32 @@ void main() {
     expect((payments.single as Map<String, dynamic>)['method'], 'cash');
   });
 
+  test('mixed tender allows change fully covered by cash', () async {
+    final result = await service.checkout(
+      const OfflinePosCheckoutRequest(
+        stockLocationId: 'main-location',
+        cashierUserId: '7',
+        permissions: <String>{'pos.sell'},
+        lines: <OfflinePosLineInput>[
+          OfflinePosLineInput(
+            medicineId: 'medicine-1',
+            quantity: '1',
+            unitPrice: '12.5000',
+          ),
+        ],
+        payments: <OfflinePosPaymentInput>[
+          OfflinePosPaymentInput(method: 'bank', amount: '10'),
+          OfflinePosPaymentInput(method: 'cash', amount: '5'),
+        ],
+      ),
+    );
+    expect(result.changeAmount.toString(), '2.5000');
+    final sale = await database.customSelect(
+      'SELECT change_amount FROM local_sales',
+    ).getSingle();
+    expect(sale.read<String>('change_amount'), '2.5000');
+  });
+
   test('mixed payments cannot refund more cash than received', () async {
     await expectLater(
       service.checkout(
