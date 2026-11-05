@@ -108,7 +108,7 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
     if (limit < 1 || limit > 250) {
       throw const MobileSyncException('Invalid synchronization page size.');
     }
-    if (cursor != null && cursor.trim().isEmpty) {
+    if (cursor != null && (cursor.trim().isEmpty || cursor.length > 1000)) {
       throw const MobileSyncException('Invalid synchronization cursor.');
     }
     final Uri uri = endpoint.uri
