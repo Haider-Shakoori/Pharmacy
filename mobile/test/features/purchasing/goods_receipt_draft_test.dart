@@ -88,6 +88,25 @@ void main() {
     expect(item.toPayload()['purchase_order_line_id'], 'line-1');
   });
 
+  test('rejects manufacturing dates later than expiry', () {
+    const item = GoodsReceiptDraftLine(
+      purchaseOrderLineId: 'line-dated',
+      orderedQuantity: '5',
+      previouslyReceivedQuantity: '0',
+      receivedQuantity: '2',
+      unitCost: '10',
+      manufacturedAt: '2027-12-02',
+      expiresAt: '2027-12-01',
+    );
+    expect(
+      GoodsReceiptDraftValidator.validate(
+        <GoodsReceiptDraftLine>[item],
+        orderStatus: 'approved',
+      ).join(' '),
+      contains('Manufacturing date cannot be after expiry'),
+    );
+  });
+
   test('rejects receipts for draft orders', () {
     expect(
       GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
