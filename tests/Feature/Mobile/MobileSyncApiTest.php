@@ -12,12 +12,12 @@ use App\Models\Sale;
 use App\Models\StockLocation;
 use App\Models\Supplier;
 use App\Models\User;
-use App\Services\Mobile\MobileGoodsReceiptService;
-use Illuminate\Validation\ValidationException;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Inventory\StockMovementService;
+use App\Services\Mobile\MobileGoodsReceiptService;
 use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class MobileSyncApiTest extends TestCase
@@ -435,19 +435,19 @@ class MobileSyncApiTest extends TestCase
                     'expires_at' => today()->addMonths(6)->toDateString(),
                 ]],
             ];
-            $service = app(\App\Services\Mobile\MobileGoodsReceiptService::class);
+            $service = app(MobileGoodsReceiptService::class);
             $before = ProductBatch::query()->where('medicine_id', $medicine->id)->sum('available_quantity');
             $first = $service->capture($user, $payload, 'grn:integration-001');
             $again = $service->capture($user, $payload, 'grn:integration-001');
             $this->assertSame($first->id, $again->id);
             $this->assertSame('pending_inventory', $first->status);
             $this->assertNull($first->inventory_posted_at);
-            $this->assertSame(1, \App\Models\GoodsReceipt::query()->where('idempotency_key', 'grn:integration-001')->count());
+            $this->assertSame(1, GoodsReceipt::query()->where('idempotency_key', 'grn:integration-001')->count());
             $this->assertEquals($before, ProductBatch::query()->where('medicine_id', $medicine->id)->sum('available_quantity'));
 
             $over = $payload;
             $over['lines'][0]['received_quantity'] = '7';
-            $this->expectException(\Illuminate\Validation\ValidationException::class);
+            $this->expectException(ValidationException::class);
             $service->capture($user, $over, 'grn:integration-002');
         });
     }
