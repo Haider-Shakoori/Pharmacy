@@ -75,6 +75,22 @@ class MobileSyncEngine {
           byKey[result.idempotencyKey] = result;
         }
 
+        // Validate every acknowledgement before applying any local outcome.
+        // An incomplete response can be retried, but a malformed response
+        // must not partially acknowledge sales before failing validation.
+        for (final SyncOutboxEvent event in events) {
+          final SyncPushResult? result = byKey[event.idempotencyKey];
+          if (result != null &&
+              result.accepted &&
+              event.eventType == 'sale.completed' &&
+              (result.serverId == null || result.serverId!.trim().isEmpty)) {
+            throw const MobileSyncException(
+              'An accepted sale acknowledgement is missing its server ID. '
+              'Pending transactions will be retried safely.',
+            );
+          }
+        }
+
         for (final SyncOutboxEvent event in events) {
           final SyncPushResult? result = byKey[event.idempotencyKey];
           if (result == null) {
