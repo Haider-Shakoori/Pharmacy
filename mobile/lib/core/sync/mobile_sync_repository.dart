@@ -27,8 +27,9 @@ class MobileSyncRepository {
         ''',
         <Object?>[now, now - 300],
       );
-      final List<QueryRow> rows = await _database.customSelect(
-          '''
+      final List<QueryRow> rows = await _database
+          .customSelect(
+            '''
       SELECT idempotency_key, aggregate_id, event_type, payload_json
       FROM sync_outbox_entries
       WHERE status IN ('pending', 'retry')
@@ -36,22 +37,22 @@ class MobileSyncRepository {
       ORDER BY created_at, idempotency_key
       LIMIT ?
       ''',
-          variables: <Variable<Object>>[
-            Variable<int>(now),
-            Variable<int>(limit),
-          ],
-        )
-        .get();
+            variables: <Variable<Object>>[
+              Variable<int>(now),
+              Variable<int>(limit),
+            ],
+          )
+          .get();
       return rows
-        .map(
-          (QueryRow row) => SyncOutboxEvent.fromRow(
-            idempotencyKey: row.read<String>('idempotency_key'),
-            aggregateId: row.read<String>('aggregate_id'),
-            eventType: row.read<String>('event_type'),
-            payloadJson: row.read<String>('payload_json'),
-          ),
-        )
-        .toList(growable: false);
+          .map(
+            (QueryRow row) => SyncOutboxEvent.fromRow(
+              idempotencyKey: row.read<String>('idempotency_key'),
+              aggregateId: row.read<String>('aggregate_id'),
+              eventType: row.read<String>('event_type'),
+              payloadJson: row.read<String>('payload_json'),
+            ),
+          )
+          .toList(growable: false);
     });
   }
 
@@ -73,7 +74,12 @@ class MobileSyncRepository {
               updated_at = ?
           WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ? AND status IN ('pending', 'retry')
           ''',
-          <Object?>[now, event.idempotencyKey, event.aggregateId, event.eventType],
+          <Object?>[
+            now,
+            event.idempotencyKey,
+            event.aggregateId,
+            event.eventType,
+          ],
         );
         final QueryRow changed = await _database
             .customSelect('SELECT changes() AS affected')
@@ -179,7 +185,9 @@ class MobileSyncRepository {
           .customSelect('SELECT changes() AS affected')
           .getSingle();
       if (changed.read<int>('affected') != 1) {
-        throw StateError('Outbox rejection requires one matching sending event.');
+        throw StateError(
+          'Outbox rejection requires one matching sending event.',
+        );
       }
 
       if (event.eventType == 'sale.completed') {
@@ -215,14 +223,16 @@ class MobileSyncRepository {
     for (final SyncOutboxEvent event in events) {
       // Acknowledged events may already have been removed before a later
       // database or transport operation failed. Never recreate them.
-      final row = await _database.customSelect(
-        'SELECT status FROM sync_outbox_entries WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ?',
-        variables: <Variable<Object>>[
-          Variable<String>(event.idempotencyKey),
-          Variable<String>(event.aggregateId),
-          Variable<String>(event.eventType),
-        ],
-      ).getSingleOrNull();
+      final row = await _database
+          .customSelect(
+            'SELECT status FROM sync_outbox_entries WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ?',
+            variables: <Variable<Object>>[
+              Variable<String>(event.idempotencyKey),
+              Variable<String>(event.aggregateId),
+              Variable<String>(event.eventType),
+            ],
+          )
+          .getSingleOrNull();
       if (row?.read<String>('status') != 'sending') continue;
       await reject(
         event,
@@ -264,7 +274,9 @@ class MobileSyncRepository {
       throw const FormatException('Invalid synchronization cursor.');
     }
     if (page.hasMore && page.nextCursor == null) {
-      throw const FormatException('Missing synchronization continuation cursor.');
+      throw const FormatException(
+        'Missing synchronization continuation cursor.',
+      );
     }
     await _database.transaction(() async {
       for (final Map<String, dynamic> item in page.data) {
@@ -401,7 +413,9 @@ class MobileSyncRepository {
     final Object? rawLines = item['lines'];
     if (rawLines != null &&
         (rawLines is! List || rawLines.any((line) => line is! Map))) {
-      throw const FormatException('Purchase order lines must be a list of records.');
+      throw const FormatException(
+        'Purchase order lines must be a list of records.',
+      );
     }
     final String grandTotal = item['grand_total']?.toString() ?? '0';
     if (FixedDecimal.parse(grandTotal).isNegative) {
@@ -476,27 +490,38 @@ class MobileSyncRepository {
     final Object? rawId = item['id'];
     final Object? rawMedicineId = item['medicine_id'];
     final Object? rawLocationId = item['stock_location_id'];
-    if (rawId is! String || rawId.trim().isEmpty ||
-        rawMedicineId is! String || rawMedicineId.trim().isEmpty ||
-        rawLocationId is! String || rawLocationId.trim().isEmpty) {
-      throw const FormatException('Inventory snapshot is missing required identifiers.');
+    if (rawId is! String ||
+        rawId.trim().isEmpty ||
+        rawMedicineId is! String ||
+        rawMedicineId.trim().isEmpty ||
+        rawLocationId is! String ||
+        rawLocationId.trim().isEmpty) {
+      throw const FormatException(
+        'Inventory snapshot is missing required identifiers.',
+      );
     }
     final String batchId = rawId.trim();
     final String batchStatus = item['status'] == null
         ? 'active'
         : _requiredSnapshotId(item, 'status');
     final String? expiresAt = _optionalSnapshotTimestamp(item, 'expires_at');
-    final String? serverCreatedAt =
-        _optionalSnapshotTimestamp(item, 'server_created_at');
+    final String? serverCreatedAt = _optionalSnapshotTimestamp(
+      item,
+      'server_created_at',
+    );
     final Object? rawAvailable = item['available_quantity'];
     if (rawAvailable == null || rawAvailable.toString().trim().isEmpty) {
-      throw const FormatException('Inventory snapshot is missing available stock.');
+      throw const FormatException(
+        'Inventory snapshot is missing available stock.',
+      );
     }
     final FixedDecimal serverAvailable = FixedDecimal.parse(
       rawAvailable.toString(),
     );
     if (serverAvailable.isNegative) {
-      throw const FormatException('Inventory snapshot cannot contain negative available stock.');
+      throw const FormatException(
+        'Inventory snapshot cannot contain negative available stock.',
+      );
     }
     final String salePrice = item['sale_price']?.toString() ?? '0';
     final String purchaseCost = item['purchase_cost']?.toString() ?? '0';
@@ -618,7 +643,9 @@ class MobileSyncRepository {
   int _serverSeconds(Map<String, dynamic> item) {
     final Object? raw = item['server_updated_at'];
     if (raw is! String || raw.trim().isEmpty) {
-      throw const FormatException('Synchronization snapshot has no server update timestamp.');
+      throw const FormatException(
+        'Synchronization snapshot has no server update timestamp.',
+      );
     }
     return _seconds(DateTime.parse(raw.trim()).toUtc());
   }
