@@ -139,7 +139,7 @@ class MobileSyncEngine {
         }
         if (page.hasMore &&
             (page.nextCursor == null ||
-                page.nextCursor!.isEmpty ||
+                page.nextCursor!.trim().isEmpty ||
                 page.nextCursor == cursor ||
                 seenCursors.contains(page.nextCursor))) {
           throw MobileSyncException(
