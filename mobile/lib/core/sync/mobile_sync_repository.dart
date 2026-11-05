@@ -382,6 +382,11 @@ class MobileSyncRepository {
   }
 
   Future<void> _applyPurchaseOrder(Map<String, dynamic> item) {
+    final Object? rawLines = item['lines'];
+    if (rawLines != null &&
+        (rawLines is! List || rawLines.any((line) => line is! Map))) {
+      throw const FormatException('Purchase order lines must be a list of records.');
+    }
     return _database.customStatement(
       '''
       INSERT INTO local_purchase_orders
