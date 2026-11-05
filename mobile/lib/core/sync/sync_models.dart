@@ -62,7 +62,8 @@ class SyncPushResult {
     final status = json['status'];
     final retryable = json['retryable'];
     final serverId = json['server_id'];
-    if (key is! String || key.trim().isEmpty ||
+    if (key is! String ||
+        key.trim().isEmpty ||
         status is! String ||
         (status != 'accepted' && status != 'rejected') ||
         (retryable != null && retryable is! bool) ||
@@ -112,7 +113,9 @@ class SyncPullPage {
         raw is! List ||
         hasMore is! bool ||
         (nextCursor != null &&
-            (nextCursor is! String || nextCursor.trim().isEmpty || nextCursor.length > 1000)) ||
+            (nextCursor is! String ||
+                nextCursor.trim().isEmpty ||
+                nextCursor.length > 1000)) ||
         (hasMore == true &&
             (nextCursor is! String || nextCursor.trim().isEmpty)) ||
         raw.any((item) => item is! Map<String, dynamic>)) {
