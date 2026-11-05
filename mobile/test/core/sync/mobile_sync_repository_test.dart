@@ -948,6 +948,38 @@ void main() {
     expect(count, 0);
   });
 
+  test('invalid inventory timestamp types and dates preserve checkpoint', () async {
+    for (final field in <String>['expires_at', 'server_created_at']) {
+      for (final invalid in <Object>[123, 'not-a-date']) {
+        await expectLater(
+          repository.applyPullPage(
+            SyncPullPage(
+              stream: 'inventory',
+              nextCursor: 'invalid-inventory-date',
+              hasMore: false,
+              data: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'batch-invalid-date',
+                  'medicine_id': 'med-1',
+                  'stock_location_id': 'main',
+                  'available_quantity': '2',
+                  'server_updated_at': '2026-11-04T00:00:00Z',
+                  field: invalid,
+                },
+              ],
+            ),
+          ),
+          throwsFormatException,
+        );
+      }
+    }
+    expect(await repository.checkpoint('inventory'), isNull);
+    final count = await database.customSelect(
+      "SELECT COUNT(*) AS c FROM local_inventory_batches WHERE id = 'batch-invalid-date'",
+    ).map((row) => row.read<int>('c')).getSingle();
+    expect(count, 0);
+  });
+
   test('blank inventory timestamps roll back pull pages', () async {
     for (final field in <String>['expires_at', 'server_created_at']) {
       await expectLater(
