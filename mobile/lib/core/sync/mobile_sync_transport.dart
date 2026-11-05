@@ -101,7 +101,7 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
     if (!allowedStreams.contains(stream)) {
       throw const MobileSyncException('Unsupported synchronization stream.');
     }
-    if (limit < 1 || limit > 500) {
+    if (limit < 1 || limit > 250) {
       throw const MobileSyncException('Invalid synchronization page size.');
     }
     if (cursor != null && cursor.trim().isEmpty) {
