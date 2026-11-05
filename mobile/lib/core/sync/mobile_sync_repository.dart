@@ -158,7 +158,7 @@ class MobileSyncRepository {
             last_error = ?,
             next_attempt_at = ?,
             updated_at = ?
-        WHERE idempotency_key = ?
+        WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ? AND status = 'sending'
         ''',
         <Object?>[
           nextStatus,
@@ -168,8 +168,17 @@ class MobileSyncRepository {
               : null,
           _seconds(now),
           event.idempotencyKey,
+          event.aggregateId,
+          event.eventType,
         ],
       );
+
+      final QueryRow changed = await _database
+          .customSelect('SELECT changes() AS affected')
+          .getSingle();
+      if (changed.read<int>('affected') != 1) {
+        throw StateError('Outbox rejection requires one matching sending event.');
+      }
 
       if (event.eventType == 'sale.completed') {
         await _database.customStatement(
