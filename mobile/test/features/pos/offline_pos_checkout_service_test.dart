@@ -136,6 +136,37 @@ void main() {
     expect((line['batch_allocations'] as List<dynamic>).length, 1);
   });
 
+  test('checkout trims stock location and cashier identifiers consistently', () async {
+    await service.checkout(
+      const OfflinePosCheckoutRequest(
+        stockLocationId: ' main-location ',
+        cashierUserId: ' 7 ',
+        permissions: <String>{'pos.sell'},
+        lines: <OfflinePosLineInput>[
+          OfflinePosLineInput(
+            medicineId: 'medicine-1',
+            quantity: '1',
+            unitPrice: '12.5000',
+          ),
+        ],
+        payments: <OfflinePosPaymentInput>[
+          OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
+        ],
+      ),
+    );
+    final QueryRow sale = await database.customSelect(
+      'SELECT stock_location_id FROM local_sales',
+    ).getSingle();
+    expect(sale.read<String>('stock_location_id'), 'main-location');
+    final QueryRow event = await database.customSelect(
+      'SELECT payload_json FROM sync_outbox_entries',
+    ).getSingle();
+    final Map<String, dynamic> payload =
+        jsonDecode(event.read<String>('payload_json')) as Map<String, dynamic>;
+    expect(payload['stock_location_id'], 'main-location');
+    expect(payload['cashier_user_id'], '7');
+  });
+
   test('FEFO spans batches and local oversell is rejected atomically', () async {
     final int firstExpiry =
         DateTime(2026, 10, 1).millisecondsSinceEpoch ~/ 1000;
