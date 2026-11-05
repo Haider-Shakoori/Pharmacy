@@ -18,36 +18,6 @@ class MobileRegistration {
     this.cloudBaseUrl,
   });
 
-  static Map<String, dynamic> _requiredMap(Object? value, String field) {
-    if (value is! Map) {
-      throw FormatException('Invalid mobile registration field: $field');
-    }
-    try {
-      return Map<String, dynamic>.from(value);
-    } on TypeError {
-      throw FormatException('Invalid mobile registration field: $field');
-    }
-  }
-
-  static List<String> _permissions(Object? value) {
-    if (value == null) return const <String>[];
-    if (value is! List || value.any((item) => item is! String)) {
-      throw const FormatException('Invalid mobile registration permissions.');
-    }
-    return List<String>.unmodifiable(value.cast<String>());
-  }
-
-  static String _requiredString(Object? value, String field) {
-    if (value is! String && value is! num) {
-      throw FormatException('Invalid mobile registration field: $field');
-    }
-    final text = value.toString().trim();
-    if (text.isEmpty || text == 'null') {
-      throw FormatException('Missing mobile registration field: $field');
-    }
-    return text;
-  }
-
   factory MobileRegistration.fromApi(Map<String, dynamic> data) {
     final Map<String, dynamic> tenant = _requiredMap(data['tenant'], 'tenant');
     final Map<String, dynamic> user = _requiredMap(data['user'], 'user');
@@ -106,6 +76,36 @@ class MobileRegistration {
           int.tryParse(json['near_expiry_days']?.toString() ?? '') ?? 90,
       cloudBaseUrl: json['cloud_base_url']?.toString(),
     );
+  }
+
+  static Map<String, dynamic> _requiredMap(Object? value, String field) {
+    if (value is! Map) {
+      throw FormatException('Invalid mobile registration field: $field');
+    }
+    try {
+      return Map<String, dynamic>.from(value);
+    } on TypeError {
+      throw FormatException('Invalid mobile registration field: $field');
+    }
+  }
+
+  static List<String> _permissions(Object? value) {
+    if (value == null) return const <String>[];
+    if (value is! List || value.any((item) => item is! String)) {
+      throw const FormatException('Invalid mobile registration permissions.');
+    }
+    return List<String>.unmodifiable(value.cast<String>());
+  }
+
+  static String _requiredString(Object? value, String field) {
+    if (value is! String && value is! num) {
+      throw FormatException('Invalid mobile registration field: $field');
+    }
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null') {
+      throw FormatException('Missing mobile registration field: $field');
+    }
+    return text;
   }
 
   MobileRegistration withRefreshedSession(Map<String, dynamic> data) {
