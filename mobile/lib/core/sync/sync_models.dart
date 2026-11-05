@@ -19,6 +19,12 @@ class SyncOutboxEvent {
       throw const FormatException('Invalid synchronization outbox payload.');
     }
 
+    if (idempotencyKey.trim().isEmpty ||
+        aggregateId.trim().isEmpty ||
+        eventType.trim().isEmpty) {
+      throw const FormatException('Invalid synchronization outbox identity.');
+    }
+
     return SyncOutboxEvent(
       idempotencyKey: idempotencyKey,
       aggregateId: aggregateId,
