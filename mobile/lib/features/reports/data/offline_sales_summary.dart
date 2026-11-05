@@ -85,9 +85,9 @@ class OfflineSalesSummaryRepository {
     if (value.length != 10) return false;
     final date = DateTime.tryParse(value);
     if (date == null) return false;
-    final normalized = date.year.toString().padLeft(4, '0') +
-        '-' + date.month.toString().padLeft(2, '0') +
-        '-' + date.day.toString().padLeft(2, '0');
+    final normalized = '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
     return normalized == value;
   }
 
