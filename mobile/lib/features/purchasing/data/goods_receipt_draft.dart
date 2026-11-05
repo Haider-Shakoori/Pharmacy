@@ -101,7 +101,6 @@ class GoodsReceiptDraftValidator {
           if (line.requiresExpiry && (line.expiresAt?.trim().isEmpty ?? true)) {
             errors.add('An expiry date is required for tracked medicine.');
           }
-
         }
         if (line.expiresAt != null &&
             line.expiresAt!.trim().isNotEmpty &&
