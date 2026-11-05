@@ -105,7 +105,8 @@ class SyncPullPage {
         stream.trim().isEmpty ||
         raw is! List ||
         hasMore is! bool ||
-        (nextCursor != null && nextCursor is! String) ||
+        (nextCursor != null &&
+            (nextCursor is! String || nextCursor.trim().isEmpty)) ||
         (hasMore == true &&
             (nextCursor is! String || nextCursor.trim().isEmpty)) ||
         raw.any((item) => item is! Map<String, dynamic>)) {
