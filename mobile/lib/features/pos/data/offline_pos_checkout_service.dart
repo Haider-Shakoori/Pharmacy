@@ -186,7 +186,7 @@ class OfflinePosCheckoutService {
 
       final FixedDecimal total = subtotal - discountTotal;
       FixedDecimal tendered = FixedDecimal.zero;
-      bool hasCash = false;
+      FixedDecimal cashTendered = FixedDecimal.zero;
       final List<Map<String, Object?>> paymentPayload =
           <Map<String, Object?>>[];
 
@@ -206,7 +206,7 @@ class OfflinePosCheckoutService {
         }
 
         tendered += amount;
-        hasCash = hasCash || paymentMethod == 'cash';
+        if (paymentMethod == 'cash') cashTendered += amount;
         final String paymentId = _idGenerator();
 
         await _database.customStatement(
@@ -239,7 +239,7 @@ class OfflinePosCheckoutService {
       }
 
       final FixedDecimal change = tendered - total;
-      if (change.isPositive && !hasCash) {
+      if (change.isPositive && cashTendered.compareTo(change) < 0) {
         throw const OfflinePosException(
           'Offline overpayment can only be returned as cash change.',
         );
