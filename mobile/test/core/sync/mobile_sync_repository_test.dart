@@ -132,6 +132,46 @@ void main() {
     },
   );
 
+  test('malformed boolean flags roll back snapshots and checkpoints', () async {
+    for (final entry in <(String, String, Map<String, dynamic>)>[
+      ('suppliers', 'is_active', <String, dynamic>{
+        'id': 'supplier-invalid', 'name': 'Supplier',
+      }),
+      ('medicines', 'is_deleted', <String, dynamic>{
+        'id': 'medicine-invalid', 'brand_name': 'Medicine',
+      }),
+      ('inventory', 'is_deleted', <String, dynamic>{
+        'id': 'batch-invalid', 'medicine_id': 'medicine-invalid',
+        'stock_location_id': 'main', 'available_quantity': '1',
+      }),
+      ('customers', 'is_deleted', <String, dynamic>{
+        'id': 'customer-invalid', 'name': 'Customer',
+      }),
+      ('purchase_orders', 'is_deleted', <String, dynamic>{
+        'id': 'order-invalid', 'supplier_id': 'supplier-invalid',
+        'number': 'PO-1', 'status': 'approved',
+      }),
+    ]) {
+      final (stream, field, fields) = entry;
+      await expectLater(
+        repository.applyPullPage(SyncPullPage(
+          stream: stream,
+          nextCursor: 'bad-bool',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              ...fields,
+              field: 'false',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        )),
+        throwsFormatException,
+      );
+      expect(await repository.checkpoint(stream), isNull);
+    }
+  });
+
   test('empty unsupported pull page cannot create a checkpoint', () async {
     await expectLater(
       repository.applyPullPage(
