@@ -144,7 +144,7 @@ class MobileSyncEngine {
       String? cursor = await repository.checkpoint(stream);
       int pageCount = 0;
       final Set<String> seenCursors = <String>{
-        if (cursor != null) cursor,
+        ?cursor,
       };
       const int maxPagesPerStream = 50;
 
