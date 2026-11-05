@@ -270,6 +270,33 @@ void main() {
   });
 
 
+  test('rejection rolls back when the matching local sale is missing', () async {
+    final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
+    await repository.markSending(<SyncOutboxEvent>[event]);
+    await database.customStatement(
+      'DELETE FROM local_sales WHERE local_id = ?',
+      <Object?>[event.aggregateId],
+    );
+
+    await expectLater(
+      repository.reject(
+        event,
+        const SyncPushResult(
+          idempotencyKey: 'sale:sale-local-1:completed',
+          status: 'rejected',
+          message: 'Rejected remotely.',
+        ),
+      ),
+      throwsStateError,
+    );
+
+    final QueryRow outbox = await database.customSelect(
+      'SELECT status, last_error FROM sync_outbox_entries',
+    ).getSingle();
+    expect(outbox.read<String>('status'), 'sending');
+    expect(outbox.readNullable<String>('last_error'), isNull);
+  });
+
   test('stale rejection cannot alter a pending sale', () async {
     final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
     await expectLater(
