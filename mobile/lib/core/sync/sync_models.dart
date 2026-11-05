@@ -60,9 +60,11 @@ class SyncPushResult {
   factory SyncPushResult.fromJson(Map<String, dynamic> json) {
     final key = json['idempotency_key'];
     final status = json['status'];
+    final retryable = json['retryable'];
     if (key is! String || key.trim().isEmpty ||
         status is! String ||
-        (status != 'accepted' && status != 'rejected')) {
+        (status != 'accepted' && status != 'rejected') ||
+        (retryable != null && retryable is! bool)) {
       throw const FormatException('Invalid synchronization acknowledgement.');
     }
     return SyncPushResult(
@@ -71,7 +73,7 @@ class SyncPushResult {
       serverId: json['server_id']?.toString(),
       code: json['code']?.toString(),
       message: json['message']?.toString(),
-      retryable: json['retryable'] == true,
+      retryable: retryable == true,
     );
   }
 
