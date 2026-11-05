@@ -214,9 +214,11 @@ class MobileSyncRepository {
       // Acknowledged events may already have been removed before a later
       // database or transport operation failed. Never recreate them.
       final row = await _database.customSelect(
-        'SELECT status FROM sync_outbox_entries WHERE idempotency_key = ?',
+        'SELECT status FROM sync_outbox_entries WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ?',
         variables: <Variable<Object>>[
           Variable<String>(event.idempotencyKey),
+          Variable<String>(event.aggregateId),
+          Variable<String>(event.eventType),
         ],
       ).getSingleOrNull();
       if (row?.read<String>('status') != 'sending') continue;
