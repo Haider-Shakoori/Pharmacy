@@ -560,7 +560,7 @@ class MobileSyncRepository {
       ''',
       <Object?>[
         _requiredSnapshotId(item, 'id'),
-        item['name'].toString(),
+        _requiredSnapshotId(item, 'name'),
         item['phone']?.toString(),
         item['balance']?.toString() ?? '0.0000',
         item['is_deleted'] == true ? 1 : 0,
