@@ -185,7 +185,7 @@ void main() {
   test('session refresh cannot switch user or activation', () {
     final registration = MobileRegistration(
       tenantId: 'tenant-1', tenantName: 'Pharmacy',
-      activationId: 'activation-1', accessToken: 'old',
+      activationId: 'activation-1', deviceId: 'device-1', accessToken: 'old',
       accessExpiresAt: DateTime.utc(2026, 12), leaseToken: 'lease',
       leaseExpiresAt: DateTime.utc(2026, 12), userId: '7',
       userName: 'Cashier', userEmail: 'cashier@example.test',
@@ -210,6 +210,12 @@ void main() {
     expect(
       () => registration.withRefreshedSession(<String, dynamic>{
         ...response, 'activation_id': 'activation-2',
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => registration.withRefreshedSession(<String, dynamic>{
+        ...response, 'device_id': 'device-2',
       }),
       throwsFormatException,
     );
