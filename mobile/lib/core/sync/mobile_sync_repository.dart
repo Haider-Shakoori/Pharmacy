@@ -473,6 +473,10 @@ class MobileSyncRepository {
         : _requiredSnapshotId(item, 'status');
     final String? expiresAt = item['expires_at']?.toString();
     final String? serverCreatedAt = item['server_created_at']?.toString();
+    if ((expiresAt != null && expiresAt.trim().isEmpty) ||
+        (serverCreatedAt != null && serverCreatedAt.trim().isEmpty)) {
+      throw const FormatException('Inventory snapshot has a blank timestamp.');
+    }
     final Object? rawAvailable = item['available_quantity'];
     if (rawAvailable == null || rawAvailable.toString().trim().isEmpty) {
       throw const FormatException('Inventory snapshot is missing available stock.');
