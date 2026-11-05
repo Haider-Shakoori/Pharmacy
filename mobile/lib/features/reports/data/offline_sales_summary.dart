@@ -41,8 +41,10 @@ class OfflineSalesSummaryRepository {
     String endDate,
   ) async {
     final RegExp datePattern = RegExp(r'^\d{4}-\d{2}-\d{2}$');
-    if (!datePattern.hasMatch(startDate) || !datePattern.hasMatch(endDate) ||
-        !_isCalendarDate(startDate) || !_isCalendarDate(endDate)) {
+    if (!datePattern.hasMatch(startDate) ||
+        !datePattern.hasMatch(endDate) ||
+        !_isCalendarDate(startDate) ||
+        !_isCalendarDate(endDate)) {
       throw ArgumentError('Dates must use YYYY-MM-DD');
     }
     if (startDate.compareTo(endDate) > 0) {
@@ -85,7 +87,8 @@ class OfflineSalesSummaryRepository {
     if (value.length != 10) return false;
     final date = DateTime.tryParse(value);
     if (date == null) return false;
-    final normalized = '${date.year.toString().padLeft(4, '0')}-'
+    final normalized =
+        '${date.year.toString().padLeft(4, '0')}-'
         '${date.month.toString().padLeft(2, '0')}-'
         '${date.day.toString().padLeft(2, '0')}';
     return normalized == value;
