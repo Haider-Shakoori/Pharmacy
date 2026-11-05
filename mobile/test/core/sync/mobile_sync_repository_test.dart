@@ -184,6 +184,30 @@ void main() {
     expect(await repository.checkpoint('purchase_orders'), isNull);
   });
 
+  test('malformed order lines do not advance checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'purchase_orders',
+          nextCursor: 'bad-lines',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'po-1',
+              'supplier_id': 'supplier-1',
+              'number': 'PO-1',
+              'status': 'approved',
+              'lines': 'invalid',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('purchase_orders'), isNull);
+  });
+
   test('blank supplier name rolls back synchronization', () async {
     await expectLater(
       repository.applyPullPage(
