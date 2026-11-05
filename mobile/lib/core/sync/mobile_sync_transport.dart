@@ -88,6 +88,19 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
     required String? cursor,
     int limit = 100,
   }) async {
+    const allowedStreams = <String>{
+      'medicines',
+      'inventory',
+      'customers',
+      'suppliers',
+      'purchase_orders',
+    };
+    if (!allowedStreams.contains(stream)) {
+      throw const MobileSyncException('Unsupported synchronization stream.');
+    }
+    if (limit < 1 || limit > 500) {
+      throw const MobileSyncException('Invalid synchronization page size.');
+    }
     final Uri uri = endpoint.uri
         .resolve('/api/v1/mobile/sync/pull/$stream')
         .replace(
