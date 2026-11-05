@@ -97,6 +97,9 @@ class GoodsReceiptDraftValidator {
         if ((previous + received).compareTo(ordered) > 0) {
           errors.add('Received quantity exceeds the remaining order quantity.');
         }
+        if (line.batchNumber != null && line.batchNumber!.trim().length > 120) {
+          errors.add('Batch number cannot exceed 120 characters.');
+        }
         if (received.isPositive) {
           hasReceived = true;
           if (line.requiresBatch &&
