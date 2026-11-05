@@ -56,6 +56,9 @@ class OfflinePosCatalogRepository {
       ..orderBy([(table) => OrderingTerm(expression: table.brandName)]);
 
     final medicines = await medicineQuery.get();
+    // Use one expiry boundary for the whole search, including large catalogs.
+    final DateTime now = DateTime.now();
+    final DateTime startOfToday = DateTime(now.year, now.month, now.day);
     final List<OfflinePosCatalogItem> results = <OfflinePosCatalogItem>[];
 
     for (final medicine in medicines) {
@@ -83,18 +86,12 @@ class OfflinePosCatalogRepository {
           return -1;
         }
 
-        return left.compareTo(right);
+        final int byExpiry = left.compareTo(right);
+        return byExpiry != 0 ? byExpiry : a.id.compareTo(b.id);
       });
 
       FixedDecimal available = FixedDecimal.zero;
       FixedDecimal? salePrice;
-      final DateTime today = DateTime.now();
-      final DateTime startOfToday = DateTime(
-        today.year,
-        today.month,
-        today.day,
-      );
-
       for (final batch in batches) {
         final FixedDecimal quantity = FixedDecimal.parse(
           batch.availableQuantity,
