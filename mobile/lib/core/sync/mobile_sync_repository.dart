@@ -554,6 +554,8 @@ class MobileSyncRepository {
   }
 
   Future<void> _applyCustomer(Map<String, dynamic> item) {
+    final String balance = item['balance']?.toString() ?? '0.0000';
+    FixedDecimal.parse(balance);
     return _database.customStatement(
       '''
       INSERT INTO local_customers (
@@ -571,7 +573,7 @@ class MobileSyncRepository {
         _requiredSnapshotId(item, 'id'),
         _requiredSnapshotId(item, 'name'),
         item['phone']?.toString(),
-        item['balance']?.toString() ?? '0.0000',
+        balance,
         item['is_deleted'] == true ? 1 : 0,
         _serverSeconds(item),
       ],
