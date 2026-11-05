@@ -594,8 +594,11 @@ class MobileSyncRepository {
   }
 
   int _serverSeconds(Map<String, dynamic> item) {
-    final String value = item['server_updated_at'].toString();
-    return _seconds(DateTime.parse(value).toUtc());
+    final Object? raw = item['server_updated_at'];
+    if (raw is! String || raw.trim().isEmpty) {
+      throw const FormatException('Synchronization snapshot has no server update timestamp.');
+    }
+    return _seconds(DateTime.parse(raw.trim()).toUtc());
   }
 
   int _seconds(DateTime value) => value.millisecondsSinceEpoch ~/ 1000;
