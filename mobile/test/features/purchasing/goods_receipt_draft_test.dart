@@ -127,6 +127,28 @@ void main() {
       <GoodsReceiptDraftLine>[item], orderStatus: 'approved'), isEmpty);
   });
 
+  test('normalizes receipt numeric fields and padded order status', () {
+    const item = GoodsReceiptDraftLine(
+      purchaseOrderLineId: ' line-1 ',
+      orderedQuantity: '5',
+      previouslyReceivedQuantity: '0',
+      receivedQuantity: ' 2 ',
+      bonusQuantity: ' 1 ',
+      unitCost: ' 10.0000 ',
+    );
+    final payload = item.toPayload();
+    expect(payload['received_quantity'], '2');
+    expect(payload['bonus_quantity'], '1');
+    expect(payload['unit_cost'], '10.0000');
+    expect(
+      GoodsReceiptDraftValidator.validate(
+        <GoodsReceiptDraftLine>[item],
+        orderStatus: ' approved ',
+      ),
+      isEmpty,
+    );
+  });
+
   test('rejects receipts for draft orders', () {
     expect(
       GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
