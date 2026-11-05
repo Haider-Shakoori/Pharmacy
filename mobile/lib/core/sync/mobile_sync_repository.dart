@@ -146,11 +146,11 @@ class MobileSyncRepository {
       throw const FormatException('Invalid rejection for outbox event.');
     }
     final DateTime now = DateTime.now();
-    final int attempt = await _attemptCount(event.idempotencyKey);
-    final int delaySeconds = _retryDelaySeconds(attempt);
     final String nextStatus = result.retryable ? 'retry' : 'rejected';
 
     await _database.transaction(() async {
+      final int attempt = await _attemptCount(event.idempotencyKey);
+      final int delaySeconds = _retryDelaySeconds(attempt);
       await _database.customStatement(
         '''
         UPDATE sync_outbox_entries
