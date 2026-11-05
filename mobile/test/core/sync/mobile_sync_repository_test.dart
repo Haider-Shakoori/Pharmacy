@@ -1185,4 +1185,23 @@ void main() {
     expect((await repository.pendingOutbox(limit: 25)).length, lessThanOrEqualTo(25));
   });
 
+  test('accepted goods receipt requires durable server identifier', () async {
+    const event = SyncOutboxEvent(
+      idempotencyKey: 'grn:local-1',
+      aggregateId: 'grn:local-1',
+      eventType: 'goods_receipt.create',
+      payload: <String, dynamic>{},
+    );
+    await expectLater(
+      repository.acknowledge(
+        event,
+        const SyncPushResult(
+          idempotencyKey: 'grn:local-1',
+          status: 'accepted',
+        ),
+      ),
+      throwsFormatException,
+    );
+  });
+
 }
