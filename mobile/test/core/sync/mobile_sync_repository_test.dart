@@ -132,6 +132,59 @@ void main() {
     },
   );
 
+  test('invalid supplier identity rolls back entire pull page and checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'suppliers',
+          nextCursor: 'unsafe-cursor',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'supplier-valid',
+              'name': 'Valid supplier',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+            <String, dynamic>{
+              'id': '   ',
+              'name': 'Invalid supplier',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    final count = await database.customSelect(
+      'SELECT COUNT(*) AS total FROM local_suppliers',
+    ).getSingle();
+    expect(count.read<int>('total'), 0);
+    expect(await repository.checkpoint('suppliers'), isNull);
+  });
+
+  test('purchase order with missing supplier does not advance cursor', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'purchase_orders',
+          nextCursor: 'invalid-order-cursor',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'order-1',
+              'supplier_id': ' ',
+              'number': 'PO-1',
+              'status': 'approved',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('purchase_orders'), isNull);
+  });
+
   test(
     'server acknowledgement marks sale synced then removes outbox',
     () async {
