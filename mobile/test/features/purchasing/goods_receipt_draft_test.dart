@@ -149,6 +149,26 @@ void main() {
     );
   });
 
+  test('omits whitespace-only optional receipt fields', () {
+    const item = GoodsReceiptDraftLine(
+      purchaseOrderLineId: 'line-blank',
+      orderedQuantity: '2',
+      previouslyReceivedQuantity: '0',
+      receivedQuantity: '1',
+      unitCost: '10',
+      batchNumber: ' ',
+      expiresAt: '',
+      manufacturedAt: '   ',
+      salePrice: ' ',
+    );
+    final payload = item.toPayload();
+    for (final field in <String>[
+      'batch_number', 'expires_at', 'manufactured_at', 'sale_price',
+    ]) {
+      expect(payload[field], isNull);
+    }
+  });
+
   test('validates metadata on zero-received lines in a mixed receipt', () {
     const good = GoodsReceiptDraftLine(
       purchaseOrderLineId: 'line-good',
