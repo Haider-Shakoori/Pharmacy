@@ -173,12 +173,12 @@ class _MobileRegistrationCardState
       late final MobileRegistration registration;
       try {
         registration = await client.startTrial(
-            endpoint: licensingEndpoint,
-            device: device,
-            pharmacyCode: _pharmacyCodeController.text,
-            email: _emailController.text,
-            password: _passwordController.text,
-          );
+          endpoint: licensingEndpoint,
+          device: device,
+          pharmacyCode: _pharmacyCodeController.text,
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
       } finally {
         client.close();
       }
@@ -322,7 +322,8 @@ class _MobileRegistrationCardState
                     'Offline lease expires: ${current.leaseExpiresAt.toLocal()}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  if (current.accessExpired || current.leaseExpired) ...<Widget>[
+                  if (current.accessExpired ||
+                      current.leaseExpired) ...<Widget>[
                     const SizedBox(height: 8),
                     Text(
                       current.leaseExpired
