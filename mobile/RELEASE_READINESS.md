@@ -2,6 +2,19 @@
 
 Development changes are kept on the feature branch until the final review. Do not build, deploy, merge or trigger manual CI while feature development is in progress.
 
+## Development integration gates (before physical-device testing)
+
+The feature branch has passed all five automated GitHub workflows at commit `8edeaeb2`. These gates still need explicit integration evidence; do not mark them complete from CI alone.
+
+- [ ] **Goods receiving:** Enqueue a receipt offline, replay the same idempotency key twice, confirm one server receipt and accepted acknowledgments, and confirm stock does not change before separate authorized inventory posting. Test over-receiving and permissions.
+- [ ] **Offline POS:** Verify offline sale creation, batch/expiry stock allocation, duplicate push replay, and balanced payments across disconnect/reconnect.
+- [ ] **Medicine registration:** Verify local draft and offline OCR handoff, duplicate medicine/barcode conflict, and eventual server sync without data loss.
+- [ ] **Synchronization:** Exercise malformed, missing and duplicate acknowledgments, retryable errors, cursor loops, and interrupted pull recovery.
+- [ ] **Authentication:** Verify tenant-scoped storage, token refresh failure, device revocation, lease expiration, and Local/Cloud fallback.
+- [ ] **Localization:** Check English, Dari, Pashto, RTL layout and user-facing errors in all newly added flows.
+
+Do not claim these tests have passed until their results are recorded. The receiving validator intentionally rejects bonus-only receipts; support for that case would require coordinated mobile and server business-rule changes.
+
 ## Native configuration
 
 - Android application ID: `com.darmaltoon.businessos_pharmacy`.
