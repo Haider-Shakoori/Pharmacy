@@ -17,16 +17,16 @@ class MobileSyncRepository {
     final int now = _seconds(DateTime.now());
     // A process may terminate after marking events as sending. Reclaim only
     // stale leases; idempotency keys remain unchanged across retries.
-    await _database.customStatement(
-      '''
-      UPDATE sync_outbox_entries
-      SET status = 'retry', next_attempt_at = NULL, updated_at = ?
-      WHERE status = 'sending' AND updated_at <= ?
-      ''',
-      <Object?>[now, now - 300],
-    );
-    final List<QueryRow> rows = await _database
-        .customSelect(
+    final List<QueryRow> rows = await _database.transaction(() async {
+      await _database.customStatement(
+        '''
+        UPDATE sync_outbox_entries
+        SET status = 'retry', next_attempt_at = NULL, updated_at = ?
+        WHERE status = 'sending' AND updated_at <= ?
+        ''',
+        <Object?>[now, now - 300],
+      );
+      return _database.customSelect(
           '''
       SELECT idempotency_key, aggregate_id, event_type, payload_json
       FROM sync_outbox_entries
@@ -41,6 +41,7 @@ class MobileSyncRepository {
           ],
         )
         .get();
+    });
 
     return rows
         .map(
