@@ -240,4 +240,21 @@ void main() {
       contains('negative'),
     );
   });
+  test('enforces Laravel 120-character batch number limit', () {
+    expect(
+      GoodsReceiptDraftValidator.validate(
+        <GoodsReceiptDraftLine>[line(batch: 'B' * 120)],
+        orderStatus: 'approved',
+      ),
+      isEmpty,
+    );
+    expect(
+      GoodsReceiptDraftValidator.validate(
+        <GoodsReceiptDraftLine>[line(batch: 'B' * 121)],
+        orderStatus: 'approved',
+      ).join(' '),
+      contains('120 characters'),
+    );
+  });
+
 }
