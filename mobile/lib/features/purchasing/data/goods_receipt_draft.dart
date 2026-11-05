@@ -39,7 +39,7 @@ class GoodsReceiptDraftLine {
     'batch_number': batchNumber?.trim(),
     'expires_at': expiresAt?.trim(),
     'manufactured_at': manufacturedAt?.trim(),
-    'sale_price': salePrice,
+    'sale_price': salePrice?.trim(),
   };
 }
 
@@ -118,8 +118,8 @@ class GoodsReceiptDraftValidator {
             errors.add('Manufacturing date cannot be after expiry date.');
           }
           if (line.salePrice != null &&
-              line.salePrice!.isNotEmpty &&
-              FixedDecimal.parse(line.salePrice!).isNegative) {
+              line.salePrice!.trim().isNotEmpty &&
+              FixedDecimal.parse(line.salePrice!.trim()).isNegative) {
             errors.add('Sale price cannot be negative.');
           }
         }
