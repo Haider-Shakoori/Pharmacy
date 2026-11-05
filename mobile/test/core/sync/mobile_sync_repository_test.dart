@@ -184,6 +184,21 @@ void main() {
     expect(await repository.checkpoint('purchase_orders'), isNull);
   });
 
+  test('direct final pull page rejects blank checkpoint cursor', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'suppliers',
+          nextCursor: '  ',
+          hasMore: false,
+          data: <Map<String, dynamic>>[],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('suppliers'), isNull);
+  });
+
   test('malformed customer balance does not persist checkpoint', () async {
     await expectLater(
       repository.applyPullPage(
