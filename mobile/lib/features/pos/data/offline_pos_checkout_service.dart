@@ -55,6 +55,8 @@ class OfflinePosCheckoutService {
       );
     }
 
+    final String stockLocationId = request.stockLocationId.trim();
+    final String cashierUserId = request.cashierUserId.trim();
     final DateTime now = _clock();
     final String businessDate = request.businessDate ?? _businessDate(now);
     if (!_validBusinessDate(businessDate)) {
@@ -101,7 +103,7 @@ class OfflinePosCheckoutService {
 
         final List<_OfflineBatchSnapshot> batches = await _eligibleBatches(
           medicine.id,
-          request.stockLocationId,
+          stockLocationId,
           now,
         );
         if (batches.isEmpty) {
@@ -252,7 +254,7 @@ class OfflinePosCheckoutService {
         <Object?>[
           saleId,
           request.customerId,
-          request.stockLocationId,
+          stockLocationId,
           businessDate,
           subtotal.toString(),
           discountTotal.toString(),
@@ -269,9 +271,9 @@ class OfflinePosCheckoutService {
         'v': 1,
         'local_id': saleId,
         'idempotency_key': idempotencyKey,
-        'stock_location_id': request.stockLocationId,
+        'stock_location_id': stockLocationId,
         'customer_id': request.customerId,
-        'cashier_user_id': request.cashierUserId,
+        'cashier_user_id': cashierUserId,
         'business_date': businessDate,
         'currency': 'AFN',
         'subtotal': subtotal.toString(),
