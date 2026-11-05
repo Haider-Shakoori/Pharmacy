@@ -107,6 +107,26 @@ void main() {
     );
   });
 
+  test('trims receipt metadata before submission', () {
+    const item = GoodsReceiptDraftLine(
+      purchaseOrderLineId: ' line-1 ',
+      orderedQuantity: '5',
+      previouslyReceivedQuantity: '0',
+      receivedQuantity: '2',
+      unitCost: '10',
+      batchNumber: ' B-123 ',
+      expiresAt: ' 2027-12-01 ',
+      manufacturedAt: ' 2026-01-01 ',
+      salePrice: ' 15 ',
+    );
+    expect(item.toPayload()['batch_number'], 'B-123');
+    expect(item.toPayload()['expires_at'], '2027-12-01');
+    expect(item.toPayload()['manufactured_at'], '2026-01-01');
+    expect(item.toPayload()['sale_price'], '15');
+    expect(GoodsReceiptDraftValidator.validate(
+      <GoodsReceiptDraftLine>[item], orderStatus: 'approved'), isEmpty);
+  });
+
   test('rejects receipts for draft orders', () {
     expect(
       GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
