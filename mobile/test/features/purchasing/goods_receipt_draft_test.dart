@@ -257,4 +257,23 @@ void main() {
     );
   });
 
+  test('rejects receipt values above server numeric ceilings', () {
+    const item = GoodsReceiptDraftLine(
+      purchaseOrderLineId: 'line-limits',
+      orderedQuantity: '1000000001',
+      previouslyReceivedQuantity: '0',
+      receivedQuantity: '1000000000',
+      bonusQuantity: '1000000000',
+      unitCost: '1000000000000',
+      salePrice: '1000000000000',
+    );
+    final errors = GoodsReceiptDraftValidator.validate(
+      <GoodsReceiptDraftLine>[item],
+      orderStatus: 'approved',
+    ).join(' ');
+    expect(errors, contains('999999999'));
+    expect(errors, contains('Unit cost'));
+    expect(errors, contains('Sale price'));
+  });
+
 }
