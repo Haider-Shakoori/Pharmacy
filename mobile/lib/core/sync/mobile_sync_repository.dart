@@ -245,6 +245,20 @@ class MobileSyncRepository {
   }
 
   Future<void> applyPullPage(SyncPullPage page) async {
+    const supportedStreams = <String>{
+      'medicines',
+      'inventory',
+      'customers',
+      'suppliers',
+      'purchase_orders',
+    };
+    if (!supportedStreams.contains(page.stream)) {
+      throw const FormatException('Unsupported local synchronization stream.');
+    }
+    if (page.hasMore &&
+        (page.nextCursor == null || page.nextCursor!.trim().isEmpty)) {
+      throw const FormatException('Missing synchronization continuation cursor.');
+    }
     await _database.transaction(() async {
       for (final Map<String, dynamic> item in page.data) {
         switch (page.stream) {
