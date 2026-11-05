@@ -15,6 +15,27 @@ void main() {
       }
     });
 
+    test('rejects malformed acknowledgement retry flags', () {
+      for (final Object invalid in <Object>['true', 1, <String, Object>{}]) {
+        expect(
+          () => SyncPushResult.fromJson(<String, dynamic>{
+            'idempotency_key': 'event-1',
+            'status': 'rejected',
+            'retryable': invalid,
+          }),
+          throwsFormatException,
+        );
+      }
+      expect(
+        SyncPushResult.fromJson(<String, dynamic>{
+          'idempotency_key': 'event-1',
+          'status': 'rejected',
+          'retryable': true,
+        }).retryable,
+        isTrue,
+      );
+    });
+
     test('rejects continuation pages without a usable cursor', () {
       for (final Object? cursor in <Object?>[null, '', '  ']) {
         expect(
