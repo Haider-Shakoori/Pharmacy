@@ -415,7 +415,9 @@ class MobileSyncRepository {
         _requiredSnapshotId(item, 'status'),
         item['order_date']?.toString(),
         item['expected_date']?.toString(),
-        item['currency']?.toString() ?? 'AFN',
+        item['currency'] == null
+            ? 'AFN'
+            : _requiredSnapshotId(item, 'currency'),
         grandTotal,
         jsonEncode(item['lines'] ?? <Object>[]),
         item['is_deleted'] == true ? 1 : 0,
@@ -446,7 +448,9 @@ class MobileSyncRepository {
         item['medicine_code']?.toString(),
         _requiredSnapshotId(item, 'brand_name'),
         item['generic_name']?.toString(),
-        item['sale_unit']?.toString() ?? 'unit',
+        item['sale_unit'] == null
+            ? 'unit'
+            : _requiredSnapshotId(item, 'sale_unit'),
         item['is_active'] == true ? 1 : 0,
         item['is_deleted'] == true ? 1 : 0,
         _serverSeconds(item),
