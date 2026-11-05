@@ -247,9 +247,34 @@ void main() {
   });
 
 
+  test('stale rejection cannot alter a pending sale', () async {
+    final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
+    await expectLater(
+      repository.reject(
+        event,
+        const SyncPushResult(
+          idempotencyKey: 'sale:sale-local-1:completed',
+          status: 'rejected',
+          message: 'Late rejection.',
+        ),
+      ),
+      throwsStateError,
+    );
+    final QueryRow outbox = await database.customSelect(
+      'SELECT status, last_error FROM sync_outbox_entries',
+    ).getSingle();
+    final QueryRow sale = await database.customSelect(
+      'SELECT sync_state FROM local_sales',
+    ).getSingle();
+    expect(outbox.read<String>('status'), 'pending');
+    expect(outbox.readNullable<String>('last_error'), isNull);
+    expect(sale.read<String>('sync_state'), 'pending');
+  });
+
   test('non-retryable rejection preserves outbox and local sale', () async {
     final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
 
+    await repository.markSending(<SyncOutboxEvent>[event]);
     await repository.reject(
       event,
       const SyncPushResult(
