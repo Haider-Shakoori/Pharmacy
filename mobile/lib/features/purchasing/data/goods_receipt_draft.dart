@@ -101,28 +101,29 @@ class GoodsReceiptDraftValidator {
           if (line.requiresExpiry && (line.expiresAt?.trim().isEmpty ?? true)) {
             errors.add('An expiry date is required for tracked medicine.');
           }
-          if (line.expiresAt != null &&
-              line.expiresAt!.trim().isNotEmpty &&
-              !_validDate(line.expiresAt!.trim())) {
-            errors.add('Expiry date is invalid.');
-          }
-          if (line.manufacturedAt != null &&
-              line.manufacturedAt!.trim().isNotEmpty &&
-              !_validDate(line.manufacturedAt!.trim())) {
-            errors.add('Manufacturing date is invalid.');
-          }
-          if (line.expiresAt != null &&
-              line.manufacturedAt != null &&
-              _validDate(line.expiresAt!.trim()) &&
-              _validDate(line.manufacturedAt!.trim()) &&
-              line.manufacturedAt!.trim().compareTo(line.expiresAt!.trim()) > 0) {
-            errors.add('Manufacturing date cannot be after expiry date.');
-          }
-          if (line.salePrice != null &&
-              line.salePrice!.trim().isNotEmpty &&
-              FixedDecimal.parse(line.salePrice!.trim()).isNegative) {
-            errors.add('Sale price cannot be negative.');
-          }
+
+        }
+        if (line.expiresAt != null &&
+            line.expiresAt!.trim().isNotEmpty &&
+            !_validDate(line.expiresAt!.trim())) {
+          errors.add('Expiry date is invalid.');
+        }
+        if (line.manufacturedAt != null &&
+            line.manufacturedAt!.trim().isNotEmpty &&
+            !_validDate(line.manufacturedAt!.trim())) {
+          errors.add('Manufacturing date is invalid.');
+        }
+        if (line.expiresAt != null &&
+            line.manufacturedAt != null &&
+            _validDate(line.expiresAt!.trim()) &&
+            _validDate(line.manufacturedAt!.trim()) &&
+            line.manufacturedAt!.trim().compareTo(line.expiresAt!.trim()) > 0) {
+          errors.add('Manufacturing date cannot be after expiry date.');
+        }
+        if (line.salePrice != null &&
+            line.salePrice!.trim().isNotEmpty &&
+            FixedDecimal.parse(line.salePrice!.trim()).isNegative) {
+          errors.add('Sale price cannot be negative.');
         }
       } on FormatException {
         errors.add('A receipt quantity, price, or date is invalid.');
