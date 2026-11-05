@@ -184,6 +184,52 @@ void main() {
     expect(await repository.checkpoint('purchase_orders'), isNull);
   });
 
+  test('blank purchase order currency rolls back checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'purchase_orders',
+          nextCursor: 'bad-currency',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'po-1',
+              'supplier_id': 'supplier-1',
+              'number': 'PO-1',
+              'status': 'approved',
+              'currency': ' ',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('purchase_orders'), isNull);
+  });
+
+  test('blank medicine sale unit rolls back checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'medicines',
+          nextCursor: 'bad-unit',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'med-1',
+              'brand_name': 'Medicine',
+              'sale_unit': ' ',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('medicines'), isNull);
+  });
+
   test('direct final pull page rejects blank checkpoint cursor', () async {
     await expectLater(
       repository.applyPullPage(
