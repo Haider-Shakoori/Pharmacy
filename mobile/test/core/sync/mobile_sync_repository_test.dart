@@ -297,6 +297,20 @@ void main() {
     expect(outbox.readNullable<String>('last_error'), isNull);
   });
 
+  test('malformed queued payload rolls back expired lease recovery', () async {
+    final int expired = DateTime.now().millisecondsSinceEpoch ~/ 1000 - 600;
+    await database.customStatement(
+      "UPDATE sync_outbox_entries SET status = 'sending', updated_at = ?, payload_json = ?",
+      <Object?>[expired, 'not-json'],
+    );
+    await expectLater(repository.pendingOutbox(), throwsFormatException);
+    final QueryRow row = await database.customSelect(
+      'SELECT status, updated_at FROM sync_outbox_entries',
+    ).getSingle();
+    expect(row.read<String>('status'), 'sending');
+    expect(row.read<int>('updated_at'), expired);
+  });
+
   test('outbox claim rejects mismatched aggregate without changing status', () async {
     final SyncOutboxEvent original = (await repository.pendingOutbox()).single;
     final SyncOutboxEvent mismatched = SyncOutboxEvent(
