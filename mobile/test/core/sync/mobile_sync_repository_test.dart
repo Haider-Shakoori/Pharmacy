@@ -184,6 +184,52 @@ void main() {
     expect(await repository.checkpoint('purchase_orders'), isNull);
   });
 
+  test('malformed customer balance does not persist checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'customers',
+          nextCursor: 'bad-balance',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'customer-1',
+              'name': 'Test Customer',
+              'balance': 'not-a-number',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('customers'), isNull);
+  });
+
+  test('blank inventory status cannot persist checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'inventory',
+          nextCursor: 'bad-status',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'batch-1',
+              'medicine_id': 'medicine-1',
+              'stock_location_id': 'main',
+              'available_quantity': '1',
+              'status': ' ',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('inventory'), isNull);
+  });
+
   test('negative purchase order total rolls back checkpoint', () async {
     await expectLater(
       repository.applyPullPage(
