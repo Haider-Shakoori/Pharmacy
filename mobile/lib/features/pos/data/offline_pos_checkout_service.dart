@@ -61,7 +61,7 @@ class OfflinePosCheckoutService {
         ? null
         : request.customerId?.trim();
     final DateTime now = _clock();
-    final String businessDate = request.businessDate ?? _businessDate(now);
+    final String businessDate = request.businessDate?.trim() ?? _businessDate(now);
     if (!_validBusinessDate(businessDate)) {
       throw const OfflinePosException('Business date must be a valid YYYY-MM-DD date.');
     }
