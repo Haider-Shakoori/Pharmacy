@@ -91,10 +91,12 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
         );
       }
     } finally {
-      if (mounted) setState(() {
-        _retryingReceipt = false;
-        _refresh();
-      });
+      if (mounted) {
+        setState(() {
+          _retryingReceipt = false;
+          _refresh();
+        });
+      }
     }
   }
 
