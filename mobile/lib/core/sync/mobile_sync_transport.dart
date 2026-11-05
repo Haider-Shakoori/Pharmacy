@@ -80,11 +80,13 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
         'The pharmacy server returned invalid synchronization acknowledgements.',
       );
     }
-    return raw.map((item) {
-      return SyncPushResult.fromJson(
-        Map<String, dynamic>.from(item as Map),
-      );
-    }).toList(growable: false);
+    return raw
+        .map((item) {
+          return SyncPushResult.fromJson(
+            Map<String, dynamic>.from(item as Map),
+          );
+        })
+        .toList(growable: false);
   }
 
   @override
