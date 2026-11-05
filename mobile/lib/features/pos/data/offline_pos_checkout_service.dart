@@ -191,6 +191,11 @@ class OfflinePosCheckoutService {
           <Map<String, Object?>>[];
 
       for (final OfflinePosPaymentInput input in request.payments) {
+        if (input.reference != null && input.reference!.length > 160) {
+          throw const OfflinePosException(
+            'Payment references cannot exceed 160 characters.',
+          );
+        }
         final String paymentMethod = input.method.trim();
         if (!_offlinePaymentMethods.contains(paymentMethod)) {
           throw const OfflinePosException(
