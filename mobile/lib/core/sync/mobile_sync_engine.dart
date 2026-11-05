@@ -60,9 +60,8 @@ class MobileSyncEngine {
           'The local synchronization queue contains duplicate event keys.',
         );
       }
-      await repository.markSending(events);
-
       try {
+        await repository.markSending(events);
         final List<SyncPushResult> results = await transport.push(
           endpoint: endpoint,
           registration: registration,
