@@ -387,6 +387,10 @@ class MobileSyncRepository {
         (rawLines is! List || rawLines.any((line) => line is! Map))) {
       throw const FormatException('Purchase order lines must be a list of records.');
     }
+    final String grandTotal = item['grand_total']?.toString() ?? '0';
+    if (FixedDecimal.parse(grandTotal).isNegative) {
+      throw const FormatException('Purchase order total cannot be negative.');
+    }
     return _database.customStatement(
       '''
       INSERT INTO local_purchase_orders
@@ -410,7 +414,7 @@ class MobileSyncRepository {
         item['order_date']?.toString(),
         item['expected_date']?.toString(),
         item['currency']?.toString() ?? 'AFN',
-        item['grand_total']?.toString() ?? '0',
+        grandTotal,
         jsonEncode(item['lines'] ?? <Object>[]),
         item['is_deleted'] == true ? 1 : 0,
         _serverSeconds(item),
