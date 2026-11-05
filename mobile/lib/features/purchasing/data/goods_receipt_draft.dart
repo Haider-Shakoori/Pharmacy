@@ -101,20 +101,20 @@ class GoodsReceiptDraftValidator {
             errors.add('An expiry date is required for tracked medicine.');
           }
           if (line.expiresAt != null &&
-              line.expiresAt!.isNotEmpty &&
-              !_validDate(line.expiresAt!)) {
+              line.expiresAt!.trim().isNotEmpty &&
+              !_validDate(line.expiresAt!.trim())) {
             errors.add('Expiry date is invalid.');
           }
           if (line.manufacturedAt != null &&
-              line.manufacturedAt!.isNotEmpty &&
-              !_validDate(line.manufacturedAt!)) {
+              line.manufacturedAt!.trim().isNotEmpty &&
+              !_validDate(line.manufacturedAt!.trim())) {
             errors.add('Manufacturing date is invalid.');
           }
           if (line.expiresAt != null &&
               line.manufacturedAt != null &&
-              _validDate(line.expiresAt!) &&
-              _validDate(line.manufacturedAt!) &&
-              line.manufacturedAt!.compareTo(line.expiresAt!) > 0) {
+              _validDate(line.expiresAt!.trim()) &&
+              _validDate(line.manufacturedAt!.trim()) &&
+              line.manufacturedAt!.trim().compareTo(line.expiresAt!.trim()) > 0) {
             errors.add('Manufacturing date cannot be after expiry date.');
           }
           if (line.salePrice != null &&
