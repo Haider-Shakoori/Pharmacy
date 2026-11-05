@@ -349,6 +349,15 @@ class MobileSyncRepository {
     return 30 * (1 << exponent);
   }
 
+  bool _snapshotBool(Map<String, dynamic> item, String field) {
+    final Object? value = item[field];
+    if (value == null) return false;
+    if (value is! bool) {
+      throw FormatException('Synchronization snapshot has invalid $field.');
+    }
+    return value;
+  }
+
   String _requiredSnapshotId(Map<String, dynamic> item, String field) {
     final Object? value = item[field];
     if (value is! String || value.trim().isEmpty) {
@@ -376,8 +385,8 @@ class MobileSyncRepository {
         _requiredSnapshotId(item, 'name'),
         item['phone']?.toString(),
         item['contact_person']?.toString(),
-        item['is_active'] == true ? 1 : 0,
-        item['is_deleted'] == true ? 1 : 0,
+        _snapshotBool(item, 'is_active') ? 1 : 0,
+        _snapshotBool(item, 'is_deleted') ? 1 : 0,
         _serverSeconds(item),
       ],
     );
@@ -420,7 +429,7 @@ class MobileSyncRepository {
             : _requiredSnapshotId(item, 'currency'),
         grandTotal,
         jsonEncode(item['lines'] ?? <Object>[]),
-        item['is_deleted'] == true ? 1 : 0,
+        _snapshotBool(item, 'is_deleted') ? 1 : 0,
         _serverSeconds(item),
       ],
     );
@@ -451,8 +460,8 @@ class MobileSyncRepository {
         item['sale_unit'] == null
             ? 'unit'
             : _requiredSnapshotId(item, 'sale_unit'),
-        item['is_active'] == true ? 1 : 0,
-        item['is_deleted'] == true ? 1 : 0,
+        _snapshotBool(item, 'is_active') ? 1 : 0,
+        _snapshotBool(item, 'is_deleted') ? 1 : 0,
         _serverSeconds(item),
       ],
     );
@@ -529,7 +538,7 @@ class MobileSyncRepository {
         salePrice,
         purchaseCost,
         batchStatus,
-        item['is_deleted'] == true ? 1 : 0,
+        _snapshotBool(item, 'is_deleted') ? 1 : 0,
         serverCreatedAt == null
             ? null
             : _seconds(DateTime.parse(serverCreatedAt).toUtc()),
@@ -584,7 +593,7 @@ class MobileSyncRepository {
         _requiredSnapshotId(item, 'name'),
         item['phone']?.toString(),
         balance,
-        item['is_deleted'] == true ? 1 : 0,
+        _snapshotBool(item, 'is_deleted') ? 1 : 0,
         _serverSeconds(item),
       ],
     );
