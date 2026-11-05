@@ -187,6 +187,17 @@ void main() {
     expect(await repository.checkpoint('unexpected'), isNull);
   });
 
+  test('oversized continuation cursor cannot persist a checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(SyncPullPage(
+        stream: 'customers', nextCursor: 'x' * 1001, hasMore: false,
+        data: const <Map<String, dynamic>>[],
+      )),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('customers'), isNull);
+  });
+
   test('missing continuation cursor cannot persist a partial page', () async {
     await expectLater(
       repository.applyPullPage(
