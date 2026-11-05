@@ -127,7 +127,7 @@ class MobileSyncRepository {
       }
 
       await _database.customStatement(
-        'DELETE FROM sync_outbox_entries WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ?',
+        "DELETE FROM sync_outbox_entries WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ? AND status = 'sending'",
         <Object?>[event.idempotencyKey, event.aggregateId, event.eventType],
       );
       final QueryRow removed = await _database
