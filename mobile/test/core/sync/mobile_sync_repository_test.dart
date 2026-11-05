@@ -162,6 +162,28 @@ void main() {
     expect(await repository.checkpoint('suppliers'), isNull);
   });
 
+  test('missing purchase order status preserves checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'purchase_orders',
+          nextCursor: 'bad-status',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'order-1',
+              'supplier_id': 'supplier-1',
+              'number': 'PO-1',
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('purchase_orders'), isNull);
+  });
+
   test('blank supplier name rolls back synchronization', () async {
     await expectLater(
       repository.applyPullPage(
