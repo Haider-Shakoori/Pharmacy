@@ -36,9 +36,9 @@ class GoodsReceiptDraftLine {
     'received_quantity': receivedQuantity,
     'bonus_quantity': bonusQuantity,
     'unit_cost': unitCost,
-    'batch_number': batchNumber,
-    'expires_at': expiresAt,
-    'manufactured_at': manufacturedAt,
+    'batch_number': batchNumber?.trim(),
+    'expires_at': expiresAt?.trim(),
+    'manufactured_at': manufacturedAt?.trim(),
     'sale_price': salePrice,
   };
 }
