@@ -1204,4 +1204,31 @@ void main() {
     );
   });
 
+  test('customer snapshots without balance preserve local balance', () async {
+    Future<void> pull(Map<String, dynamic> item, String cursor) async {
+      await repository.applyPullPage(SyncPullPage(
+        stream: 'customers', nextCursor: cursor, hasMore: false,
+        data: <Map<String, dynamic>>[item],
+      ));
+    }
+    final customer = <String, dynamic>{
+      'id': 'customer-balance', 'name': 'Customer',
+      'server_updated_at': '2026-11-03T00:00:00Z',
+    };
+    await pull(<String, dynamic>{...customer, 'balance': '42.5000'}, 'first');
+    await pull(<String, dynamic>{...customer, 'name': 'Updated Customer'}, 'second');
+    final row = await database.customSelect(
+      'SELECT balance, name FROM local_customers WHERE id = ?',
+      variables: <Variable<Object>>[const Variable<String>('customer-balance')],
+    ).getSingle();
+    expect(row.read<String>('balance'), '42.5000');
+    expect(row.read<String>('name'), 'Updated Customer');
+    await pull(<String, dynamic>{...customer, 'balance': '12.0000'}, 'third');
+    final updated = await database.customSelect(
+      'SELECT balance FROM local_customers WHERE id = ?',
+      variables: <Variable<Object>>[const Variable<String>('customer-balance')],
+    ).getSingle();
+    expect(updated.read<String>('balance'), '12.0000');
+  });
+
 }
