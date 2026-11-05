@@ -61,16 +61,18 @@ class SyncPushResult {
     final key = json['idempotency_key'];
     final status = json['status'];
     final retryable = json['retryable'];
+    final serverId = json['server_id'];
     if (key is! String || key.trim().isEmpty ||
         status is! String ||
         (status != 'accepted' && status != 'rejected') ||
-        (retryable != null && retryable is! bool)) {
+        (retryable != null && retryable is! bool) ||
+        (serverId != null && (serverId is! String || serverId.trim().isEmpty))) {
       throw const FormatException('Invalid synchronization acknowledgement.');
     }
     return SyncPushResult(
       idempotencyKey: key,
       status: status,
-      serverId: json['server_id']?.toString(),
+      serverId: serverId as String?,
       code: json['code']?.toString(),
       message: json['message']?.toString(),
       retryable: retryable == true,
