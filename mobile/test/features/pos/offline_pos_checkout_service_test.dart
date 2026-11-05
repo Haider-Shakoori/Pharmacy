@@ -136,36 +136,40 @@ void main() {
     expect((line['batch_allocations'] as List<dynamic>).length, 1);
   });
 
-  test('checkout trims stock location and cashier identifiers consistently', () async {
-    await service.checkout(
-      const OfflinePosCheckoutRequest(
-        stockLocationId: ' main-location ',
-        cashierUserId: ' 7 ',
-        permissions: <String>{'pos.sell'},
-        lines: <OfflinePosLineInput>[
-          OfflinePosLineInput(
-            medicineId: 'medicine-1',
-            quantity: '1',
-            unitPrice: '12.5000',
-          ),
-        ],
-        payments: <OfflinePosPaymentInput>[
-          OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
-        ],
-      ),
-    );
-    final QueryRow sale = await database.customSelect(
-      'SELECT stock_location_id FROM local_sales',
-    ).getSingle();
-    expect(sale.read<String>('stock_location_id'), 'main-location');
-    final QueryRow event = await database.customSelect(
-      'SELECT payload_json FROM sync_outbox_entries',
-    ).getSingle();
-    final Map<String, dynamic> payload =
-        jsonDecode(event.read<String>('payload_json')) as Map<String, dynamic>;
-    expect(payload['stock_location_id'], 'main-location');
-    expect(payload['cashier_user_id'], '7');
-  });
+  test(
+    'checkout trims stock location and cashier identifiers consistently',
+    () async {
+      await service.checkout(
+        const OfflinePosCheckoutRequest(
+          stockLocationId: ' main-location ',
+          cashierUserId: ' 7 ',
+          permissions: <String>{'pos.sell'},
+          lines: <OfflinePosLineInput>[
+            OfflinePosLineInput(
+              medicineId: 'medicine-1',
+              quantity: '1',
+              unitPrice: '12.5000',
+            ),
+          ],
+          payments: <OfflinePosPaymentInput>[
+            OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
+          ],
+        ),
+      );
+      final QueryRow sale = await database
+          .customSelect('SELECT stock_location_id FROM local_sales')
+          .getSingle();
+      expect(sale.read<String>('stock_location_id'), 'main-location');
+      final QueryRow event = await database
+          .customSelect('SELECT payload_json FROM sync_outbox_entries')
+          .getSingle();
+      final Map<String, dynamic> payload = jsonDecode(
+        event.read<String>('payload_json'),
+      ) as Map<String, dynamic>;
+      expect(payload['stock_location_id'], 'main-location');
+      expect(payload['cashier_user_id'], '7');
+    },
+  );
 
   test('normalizes a supplied business date in sale and outbox', () async {
     await service.checkout(
@@ -186,15 +190,15 @@ void main() {
         ],
       ),
     );
-    final sale = await database.customSelect(
-      'SELECT business_date FROM local_sales',
-    ).getSingle();
+    final sale = await database
+        .customSelect('SELECT business_date FROM local_sales')
+        .getSingle();
     expect(sale.read<String>('business_date'), '2026-09-28');
-    final event = await database.customSelect(
-      'SELECT payload_json FROM sync_outbox_entries',
-    ).getSingle();
-    final payload = jsonDecode(event.read<String>('payload_json'))
-        as Map<String, dynamic>;
+    final event = await database
+        .customSelect('SELECT payload_json FROM sync_outbox_entries')
+        .getSingle();
+    final payload =
+        jsonDecode(event.read<String>('payload_json')) as Map<String, dynamic>;
     expect(payload['business_date'], '2026-09-28');
   });
 
@@ -217,19 +221,19 @@ void main() {
         ],
       ),
     );
-    final sale = await database.customSelect(
-      'SELECT customer_id FROM local_sales',
-    ).getSingle();
+    final sale = await database
+        .customSelect('SELECT customer_id FROM local_sales')
+        .getSingle();
     expect(sale.readNullable<String>('customer_id'), isNull);
-    final payment = await database.customSelect(
-      'SELECT method FROM local_sale_payments',
-    ).getSingle();
+    final payment = await database
+        .customSelect('SELECT method FROM local_sale_payments')
+        .getSingle();
     expect(payment.read<String>('method'), 'cash');
-    final event = await database.customSelect(
-      'SELECT payload_json FROM sync_outbox_entries',
-    ).getSingle();
-    final payload = jsonDecode(event.read<String>('payload_json'))
-        as Map<String, dynamic>;
+    final event = await database
+        .customSelect('SELECT payload_json FROM sync_outbox_entries')
+        .getSingle();
+    final payload =
+        jsonDecode(event.read<String>('payload_json')) as Map<String, dynamic>;
     expect(payload['customer_id'], isNull);
     final payments = payload['payments'] as List<dynamic>;
     expect((payments.single as Map<String, dynamic>)['method'], 'cash');
@@ -255,9 +259,9 @@ void main() {
       ),
     );
     expect(result.changeAmount.toString(), '2.5000');
-    final sale = await database.customSelect(
-      'SELECT change_amount FROM local_sales',
-    ).getSingle();
+    final sale = await database
+        .customSelect('SELECT change_amount FROM local_sales')
+        .getSingle();
     expect(sale.read<String>('change_amount'), '2.5000');
   });
 
@@ -283,15 +287,17 @@ void main() {
       ),
       throwsA(isA<OfflinePosException>()),
     );
-    final saleCount = await database.customSelect(
-      'SELECT COUNT(*) AS c FROM local_sales',
-    ).getSingle();
-    final outboxCount = await database.customSelect(
-      'SELECT COUNT(*) AS c FROM sync_outbox_entries',
-    ).getSingle();
-    final stock = await database.customSelect(
-      "SELECT available_quantity FROM local_inventory_batches WHERE id = 'batch-1'",
-    ).getSingle();
+    final saleCount = await database
+        .customSelect('SELECT COUNT(*) AS c FROM local_sales')
+        .getSingle();
+    final outboxCount = await database
+        .customSelect('SELECT COUNT(*) AS c FROM sync_outbox_entries')
+        .getSingle();
+    final stock = await database
+        .customSelect(
+          "SELECT available_quantity FROM local_inventory_batches WHERE id = 'batch-1'",
+        )
+        .getSingle();
     expect(saleCount.read<int>('c'), 0);
     expect(outboxCount.read<int>('c'), 0);
     expect(stock.read<String>('available_quantity'), '20.0000');
@@ -499,38 +505,52 @@ void main() {
       expect(outboxCount, 0);
     },
   );
-  test('invalid cashier and calendar date cannot create offline sales', () async {
-    for (final request in <OfflinePosCheckoutRequest>[
-      const OfflinePosCheckoutRequest(
-        stockLocationId: 'main-location',
-        cashierUserId: ' ',
-        permissions: <String>{'pos.sell'},
-        lines: <OfflinePosLineInput>[
-          OfflinePosLineInput(medicineId: 'medicine-1', quantity: '1', unitPrice: '12.5000'),
-        ],
-        payments: <OfflinePosPaymentInput>[
-          OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
-        ],
-      ),
-      const OfflinePosCheckoutRequest(
-        stockLocationId: 'main-location',
-        cashierUserId: '7',
-        businessDate: '2026-02-30',
-        permissions: <String>{'pos.sell'},
-        lines: <OfflinePosLineInput>[
-          OfflinePosLineInput(medicineId: 'medicine-1', quantity: '1', unitPrice: '12.5000'),
-        ],
-        payments: <OfflinePosPaymentInput>[
-          OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
-        ],
-      ),
-    ]) {
-      await expectLater(service.checkout(request), throwsA(isA<OfflinePosException>()));
-    }
-    final count = await database.customSelect(
-      'SELECT COUNT(*) AS c FROM sync_outbox_entries',
-    ).map((row) => row.read<int>('c')).getSingle();
-    expect(count, 0);
-  });
-
+  test(
+    'invalid cashier and calendar date cannot create offline sales',
+    () async {
+      for (final request in <OfflinePosCheckoutRequest>[
+        const OfflinePosCheckoutRequest(
+          stockLocationId: 'main-location',
+          cashierUserId: ' ',
+          permissions: <String>{'pos.sell'},
+          lines: <OfflinePosLineInput>[
+            OfflinePosLineInput(
+              medicineId: 'medicine-1',
+              quantity: '1',
+              unitPrice: '12.5000',
+            ),
+          ],
+          payments: <OfflinePosPaymentInput>[
+            OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
+          ],
+        ),
+        const OfflinePosCheckoutRequest(
+          stockLocationId: 'main-location',
+          cashierUserId: '7',
+          businessDate: '2026-02-30',
+          permissions: <String>{'pos.sell'},
+          lines: <OfflinePosLineInput>[
+            OfflinePosLineInput(
+              medicineId: 'medicine-1',
+              quantity: '1',
+              unitPrice: '12.5000',
+            ),
+          ],
+          payments: <OfflinePosPaymentInput>[
+            OfflinePosPaymentInput(method: 'cash', amount: '12.5000'),
+          ],
+        ),
+      ]) {
+        await expectLater(
+          service.checkout(request),
+          throwsA(isA<OfflinePosException>()),
+        );
+      }
+      final count = await database
+          .customSelect('SELECT COUNT(*) AS c FROM sync_outbox_entries')
+          .map((row) => row.read<int>('c'))
+          .getSingle();
+      expect(count, 0);
+    },
+  );
 }
