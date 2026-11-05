@@ -359,6 +359,35 @@ class MobileSyncApiTest extends TestCase
         $this->assertSame('10.0000', $order['lines'][0]['ordered_quantity']);
     }
 
+    public function test_cashier_cannot_capture_goods_receipt_through_mobile_sync(): void
+    {
+        $event = [
+            'idempotency_key' => 'grn:unauthorized-cashier-001',
+            'event_type' => 'goods_receipt.create',
+            'payload' => [
+                'local_id' => 'grn:unauthorized-cashier-001',
+                'idempotency_key' => 'grn:unauthorized-cashier-001',
+                'purchase_order_id' => '01J00000000000000000000000',
+                'received_at' => now()->toISOString(),
+                'lines' => [[
+                    'purchase_order_line_id' => '01J00000000000000000000001',
+                    'received_quantity' => '1',
+                    'bonus_quantity' => '0',
+                    'unit_cost' => '10',
+                ]],
+            ],
+        ];
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/sync/push', [
+                'events' => [$event],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.status', 'rejected')
+            ->assertJsonPath('data.results.0.code', 'permission_denied')
+            ->assertJsonPath('data.results.0.retryable', false);
+    }
+
     public function test_session_refresh_renews_access_without_plaintext_license_key(): void
     {
         $response = $this->withToken($this->accessToken)
