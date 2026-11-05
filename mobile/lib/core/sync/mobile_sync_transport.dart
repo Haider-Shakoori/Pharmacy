@@ -160,9 +160,12 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
       final Object? decoded = response.body.isEmpty
           ? <String, dynamic>{}
           : jsonDecode(response.body);
-      final Map<String, dynamic> payload = decoded is Map<String, dynamic>
-          ? decoded
-          : <String, dynamic>{};
+      if (decoded is! Map<String, dynamic>) {
+        throw const MobileSyncException(
+          'The pharmacy server returned an invalid response.',
+        );
+      }
+      final Map<String, dynamic> payload = decoded;
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final Object? data = payload['data'];
