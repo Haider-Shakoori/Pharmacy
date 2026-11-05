@@ -137,10 +137,7 @@ void main() {
     );
     final Map<String, Object?> snapshot = registration.toJson();
     snapshot['permissions'] = <Object>['pos.sell', 123];
-    expect(
-      () => MobileRegistration.fromJson(snapshot),
-      throwsFormatException,
-    );
+    expect(() => MobileRegistration.fromJson(snapshot), throwsFormatException);
   });
 
   test('refresh rejects malformed offline lease and user objects', () {
@@ -181,56 +178,68 @@ void main() {
     );
   });
 
-
   test('session refresh cannot switch user or activation', () {
     final registration = MobileRegistration(
-      tenantId: 'tenant-1', tenantName: 'Pharmacy',
-      activationId: 'activation-1', deviceId: 'device-1', accessToken: 'old',
-      accessExpiresAt: DateTime.utc(2026, 12), leaseToken: 'lease',
-      leaseExpiresAt: DateTime.utc(2026, 12), userId: '7',
-      userName: 'Cashier', userEmail: 'cashier@example.test',
+      tenantId: 'tenant-1',
+      tenantName: 'Pharmacy',
+      activationId: 'activation-1',
+      deviceId: 'device-1',
+      accessToken: 'old',
+      accessExpiresAt: DateTime.utc(2026, 12),
+      leaseToken: 'lease',
+      leaseExpiresAt: DateTime.utc(2026, 12),
+      userId: '7',
+      userName: 'Cashier',
+      userEmail: 'cashier@example.test',
       permissions: const <String>[],
     );
     final response = <String, dynamic>{
       'access_token': 'new',
       'access_expires_at': '2026-12-01T00:00:00Z',
       'offline_lease': <String, dynamic>{
-        'token': 'new-lease', 'expires_at': '2026-12-01T00:00:00Z',
+        'token': 'new-lease',
+        'expires_at': '2026-12-01T00:00:00Z',
       },
     };
     expect(
       () => registration.withRefreshedSession(<String, dynamic>{
         ...response,
         'user': <String, dynamic>{
-          'id': '8', 'name': 'Other', 'email': 'other@example.test',
+          'id': '8',
+          'name': 'Other',
+          'email': 'other@example.test',
         },
       }),
       throwsFormatException,
     );
     expect(
       () => registration.withRefreshedSession(<String, dynamic>{
-        ...response, 'activation_id': 'activation-2',
+        ...response,
+        'activation_id': 'activation-2',
       }),
       throwsFormatException,
     );
     expect(
       () => registration.withRefreshedSession(<String, dynamic>{
-        ...response, 'device_id': 'device-2',
+        ...response,
+        'device_id': 'device-2',
       }),
       throwsFormatException,
     );
     for (final tenantMismatch in <Map<String, dynamic>>[
       <String, dynamic>{'tenant_id': 'tenant-2'},
-      <String, dynamic>{'tenant': <String, dynamic>{'id': 'tenant-2'}},
+      <String, dynamic>{
+        'tenant': <String, dynamic>{'id': 'tenant-2'},
+      },
     ]) {
       expect(
-        () => registration.withRefreshedSession(
-          <String, dynamic>{...response, ...tenantMismatch},
-        ),
+        () => registration.withRefreshedSession(<String, dynamic>{
+          ...response,
+          ...tenantMismatch,
+        }),
         throwsFormatException,
       );
     }
     expect(registration.withRefreshedSession(response).userId, '7');
   });
-
 }
