@@ -471,12 +471,9 @@ class MobileSyncRepository {
     final String batchStatus = item['status'] == null
         ? 'active'
         : _requiredSnapshotId(item, 'status');
-    final String? expiresAt = item['expires_at']?.toString();
-    final String? serverCreatedAt = item['server_created_at']?.toString();
-    if ((expiresAt != null && expiresAt.trim().isEmpty) ||
-        (serverCreatedAt != null && serverCreatedAt.trim().isEmpty)) {
-      throw const FormatException('Inventory snapshot has a blank timestamp.');
-    }
+    final String? expiresAt = _optionalSnapshotTimestamp(item, 'expires_at');
+    final String? serverCreatedAt =
+        _optionalSnapshotTimestamp(item, 'server_created_at');
     final Object? rawAvailable = item['available_quantity'];
     if (rawAvailable == null || rawAvailable.toString().trim().isEmpty) {
       throw const FormatException('Inventory snapshot is missing available stock.');
@@ -591,6 +588,16 @@ class MobileSyncRepository {
         _serverSeconds(item),
       ],
     );
+  }
+
+  String? _optionalSnapshotTimestamp(Map<String, dynamic> item, String field) {
+    final Object? raw = item[field];
+    if (raw == null) return null;
+    if (raw is! String || raw.trim().isEmpty) {
+      throw FormatException('Inventory snapshot has an invalid $field.');
+    }
+    DateTime.parse(raw.trim());
+    return raw.trim();
   }
 
   int _serverSeconds(Map<String, dynamic> item) {
