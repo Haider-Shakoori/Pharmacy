@@ -184,6 +184,31 @@ void main() {
     expect(await repository.checkpoint('purchase_orders'), isNull);
   });
 
+  test('negative purchase order total rolls back checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'purchase_orders',
+          nextCursor: 'negative-total',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'po-negative',
+              'supplier_id': 'supplier-1',
+              'number': 'PO-NEG',
+              'status': 'approved',
+              'grand_total': '-1',
+              'lines': <Map<String, dynamic>>[],
+              'server_updated_at': '2026-11-03T00:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('purchase_orders'), isNull);
+  });
+
   test('malformed order lines do not advance checkpoint', () async {
     await expectLater(
       repository.applyPullPage(
