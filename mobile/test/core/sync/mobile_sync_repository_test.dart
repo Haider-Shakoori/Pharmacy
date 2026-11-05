@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/core/sync/mobile_sync_repository.dart';
 import 'package:businessos_pharmacy/core/sync/sync_models.dart';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
