@@ -109,7 +109,10 @@ class MobileRegistration {
   }
 
   MobileRegistration withRefreshedSession(Map<String, dynamic> data) {
-    final Map<String, dynamic> lease = _requiredMap(data['offline_lease'], 'offline_lease');
+    final Map<String, dynamic> lease = _requiredMap(
+      data['offline_lease'],
+      'offline_lease',
+    );
     final Map<String, dynamic>? user = data['user'] == null
         ? null
         : _requiredMap(data['user'], 'user');
@@ -122,23 +125,34 @@ class MobileRegistration {
         : _requiredMap(data['tenant'], 'tenant');
 
     // A refresh must never silently change the identity that owns local data.
-    if (tenant != null && _requiredString(tenant['id'], 'tenant.id') != tenantId) {
-      throw const FormatException('Session refresh returned a different tenant.');
+    if (tenant != null &&
+        _requiredString(tenant['id'], 'tenant.id') != tenantId) {
+      throw const FormatException(
+        'Session refresh returned a different tenant.',
+      );
     }
     if (data['tenant_id'] != null &&
         _requiredString(data['tenant_id'], 'tenant_id') != tenantId) {
-      throw const FormatException('Session refresh returned a different tenant.');
+      throw const FormatException(
+        'Session refresh returned a different tenant.',
+      );
     }
     if (user != null && _requiredString(user['id'], 'user.id') != userId) {
       throw const FormatException('Session refresh returned a different user.');
     }
     if (data['activation_id'] != null &&
-        _requiredString(data['activation_id'], 'activation_id') != activationId) {
-      throw const FormatException('Session refresh returned a different activation.');
+        _requiredString(data['activation_id'], 'activation_id') !=
+            activationId) {
+      throw const FormatException(
+        'Session refresh returned a different activation.',
+      );
     }
-    if (deviceId != null && data['device_id'] != null &&
+    if (deviceId != null &&
+        data['device_id'] != null &&
         _requiredString(data['device_id'], 'device_id') != deviceId) {
-      throw const FormatException('Session refresh returned a different device.');
+      throw const FormatException(
+        'Session refresh returned a different device.',
+      );
     }
 
     return MobileRegistration(
@@ -154,8 +168,12 @@ class MobileRegistration {
       leaseExpiresAt: DateTime.parse(lease['expires_at'].toString()),
       leasePublicKey: lease['public_key']?.toString() ?? leasePublicKey,
       userId: user == null ? userId : _requiredString(user['id'], 'user.id'),
-      userName: user == null ? userName : _requiredString(user['name'], 'user.name'),
-      userEmail: user == null ? userEmail : _requiredString(user['email'], 'user.email'),
+      userName: user == null
+          ? userName
+          : _requiredString(user['name'], 'user.name'),
+      userEmail: user == null
+          ? userEmail
+          : _requiredString(user['email'], 'user.email'),
       permissions: user == null
           ? permissions
           : _permissions(user['permissions']),
