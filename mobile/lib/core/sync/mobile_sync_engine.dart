@@ -52,6 +52,14 @@ class MobileSyncEngine {
 
     final List<SyncOutboxEvent> events = await repository.pendingOutbox();
     if (events.isNotEmpty) {
+      final Set<String> eventKeys = events
+          .map((event) => event.idempotencyKey)
+          .toSet();
+      if (eventKeys.length != events.length) {
+        throw const MobileSyncException(
+          'The local synchronization queue contains duplicate event keys.',
+        );
+      }
       await repository.markSending(events);
 
       try {
