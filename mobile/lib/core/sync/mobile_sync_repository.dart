@@ -255,8 +255,10 @@ class MobileSyncRepository {
     if (!supportedStreams.contains(page.stream)) {
       throw const FormatException('Unsupported local synchronization stream.');
     }
-    if (page.hasMore &&
-        (page.nextCursor == null || page.nextCursor!.trim().isEmpty)) {
+    if (page.nextCursor != null && page.nextCursor!.trim().isEmpty) {
+      throw const FormatException('Invalid synchronization cursor.');
+    }
+    if (page.hasMore && page.nextCursor == null) {
       throw const FormatException('Missing synchronization continuation cursor.');
     }
     await _database.transaction(() async {
