@@ -182,4 +182,38 @@ void main() {
   });
 
 
+  test('session refresh cannot switch user or activation', () {
+    final registration = MobileRegistration(
+      tenantId: 'tenant-1', tenantName: 'Pharmacy',
+      activationId: 'activation-1', accessToken: 'old',
+      accessExpiresAt: DateTime.utc(2026, 12), leaseToken: 'lease',
+      leaseExpiresAt: DateTime.utc(2026, 12), userId: '7',
+      userName: 'Cashier', userEmail: 'cashier@example.test',
+      permissions: const <String>[],
+    );
+    final response = <String, dynamic>{
+      'access_token': 'new',
+      'access_expires_at': '2026-12-01T00:00:00Z',
+      'offline_lease': <String, dynamic>{
+        'token': 'new-lease', 'expires_at': '2026-12-01T00:00:00Z',
+      },
+    };
+    expect(
+      () => registration.withRefreshedSession(<String, dynamic>{
+        ...response,
+        'user': <String, dynamic>{
+          'id': '8', 'name': 'Other', 'email': 'other@example.test',
+        },
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => registration.withRefreshedSession(<String, dynamic>{
+        ...response, 'activation_id': 'activation-2',
+      }),
+      throwsFormatException,
+    );
+    expect(registration.withRefreshedSession(response).userId, '7');
+  });
+
 }
