@@ -297,6 +297,18 @@ void main() {
     expect(outbox.readNullable<String>('last_error'), isNull);
   });
 
+  test('blank persisted event identity prevents outbox claim', () async {
+    await database.customStatement(
+      "UPDATE sync_outbox_entries SET aggregate_id = '   '",
+    );
+    await expectLater(repository.pendingOutbox(), throwsFormatException);
+    final QueryRow row = await database.customSelect(
+      'SELECT status, attempt_count FROM sync_outbox_entries',
+    ).getSingle();
+    expect(row.read<String>('status'), 'pending');
+    expect(row.read<int>('attempt_count'), 0);
+  });
+
   test('malformed queued payload rolls back expired lease recovery', () async {
     final int expired = DateTime.now().millisecondsSinceEpoch ~/ 1000 - 600;
     await database.customStatement(
