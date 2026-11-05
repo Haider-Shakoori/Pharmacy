@@ -333,6 +333,14 @@ class MobileSyncRepository {
     return 30 * (1 << exponent);
   }
 
+  String _requiredSnapshotId(Map<String, dynamic> item, String field) {
+    final Object? value = item[field];
+    if (value is! String || value.trim().isEmpty) {
+      throw FormatException('Synchronization snapshot has invalid $field.');
+    }
+    return value.trim();
+  }
+
   Future<void> _applySupplier(Map<String, dynamic> item) {
     return _database.customStatement(
       '''
@@ -347,7 +355,7 @@ class MobileSyncRepository {
       WHERE excluded.server_updated_at >= local_suppliers.server_updated_at
       ''',
       <Object?>[
-        item['id'].toString(),
+        _requiredSnapshotId(item, 'id'),
         item['code']?.toString(),
         item['name'].toString(),
         item['phone']?.toString(),
@@ -376,8 +384,8 @@ class MobileSyncRepository {
       WHERE excluded.server_updated_at >= local_purchase_orders.server_updated_at
       ''',
       <Object?>[
-        item['id'].toString(),
-        item['supplier_id'].toString(),
+        _requiredSnapshotId(item, 'id'),
+        _requiredSnapshotId(item, 'supplier_id'),
         item['number'].toString(),
         item['status'].toString(),
         item['order_date']?.toString(),
@@ -409,7 +417,7 @@ class MobileSyncRepository {
       WHERE excluded.server_updated_at >= local_medicines.server_updated_at
       ''',
       <Object?>[
-        item['id'].toString(),
+        _requiredSnapshotId(item, 'id'),
         item['medicine_code']?.toString(),
         item['brand_name'].toString(),
         item['generic_name']?.toString(),
@@ -537,7 +545,7 @@ class MobileSyncRepository {
       WHERE excluded.server_updated_at >= local_customers.server_updated_at
       ''',
       <Object?>[
-        item['id'].toString(),
+        _requiredSnapshotId(item, 'id'),
         item['name'].toString(),
         item['phone']?.toString(),
         item['balance']?.toString() ?? '0.0000',
