@@ -132,6 +132,36 @@ void main() {
     },
   );
 
+  test('empty unsupported pull page cannot create a checkpoint', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'unexpected',
+          nextCursor: 'unsafe',
+          hasMore: false,
+          data: <Map<String, dynamic>>[],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('unexpected'), isNull);
+  });
+
+  test('missing continuation cursor cannot persist a partial page', () async {
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'suppliers',
+          nextCursor: null,
+          hasMore: true,
+          data: <Map<String, dynamic>>[],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('suppliers'), isNull);
+  });
+
   test('invalid supplier identity rolls back entire pull page and checkpoint', () async {
     await expectLater(
       repository.applyPullPage(
