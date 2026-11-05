@@ -102,7 +102,7 @@ class SyncPullPage {
     // A malformed page must never advance the local checkpoint. Otherwise
     // stock or purchase-order rows could be silently skipped.
     if (stream is! String ||
-        stream.isEmpty ||
+        stream.trim().isEmpty ||
         raw is! List ||
         hasMore is! bool ||
         (nextCursor != null && nextCursor is! String) ||
