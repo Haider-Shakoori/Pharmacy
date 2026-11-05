@@ -167,6 +167,43 @@ void main() {
     expect(payload['cashier_user_id'], '7');
   });
 
+  test('normalizes POS medicine, customer and payment fields', () async {
+    await service.checkout(
+      const OfflinePosCheckoutRequest(
+        stockLocationId: 'main-location',
+        cashierUserId: '7',
+        customerId: '  ',
+        permissions: <String>{'pos.sell'},
+        lines: <OfflinePosLineInput>[
+          OfflinePosLineInput(
+            medicineId: ' medicine-1 ',
+            quantity: '1',
+            unitPrice: '12.5000',
+          ),
+        ],
+        payments: <OfflinePosPaymentInput>[
+          OfflinePosPaymentInput(method: ' cash ', amount: '12.5000'),
+        ],
+      ),
+    );
+    final sale = await database.customSelect(
+      'SELECT customer_id FROM local_sales',
+    ).getSingle();
+    expect(sale.readNullable<String>('customer_id'), isNull);
+    final payment = await database.customSelect(
+      'SELECT method FROM local_sale_payments',
+    ).getSingle();
+    expect(payment.read<String>('method'), 'cash');
+    final event = await database.customSelect(
+      'SELECT payload_json FROM sync_outbox_entries',
+    ).getSingle();
+    final payload = jsonDecode(event.read<String>('payload_json'))
+        as Map<String, dynamic>;
+    expect(payload['customer_id'], isNull);
+    final payments = payload['payments'] as List<dynamic>;
+    expect((payments.single as Map<String, dynamic>)['method'], 'cash');
+  });
+
   test('FEFO spans batches and local oversell is rejected atomically', () async {
     final int firstExpiry =
         DateTime(2026, 10, 1).millisecondsSinceEpoch ~/ 1000;
