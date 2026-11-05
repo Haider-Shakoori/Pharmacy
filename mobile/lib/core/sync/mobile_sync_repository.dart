@@ -259,7 +259,8 @@ class MobileSyncRepository {
     if (!supportedStreams.contains(page.stream)) {
       throw const FormatException('Unsupported local synchronization stream.');
     }
-    if (page.nextCursor != null && page.nextCursor!.trim().isEmpty) {
+    if (page.nextCursor != null &&
+        (page.nextCursor!.trim().isEmpty || page.nextCursor!.length > 1000)) {
       throw const FormatException('Invalid synchronization cursor.');
     }
     if (page.hasMore && page.nextCursor == null) {
