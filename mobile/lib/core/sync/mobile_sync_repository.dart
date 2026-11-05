@@ -17,7 +17,7 @@ class MobileSyncRepository {
     final int now = _seconds(DateTime.now());
     // A process may terminate after marking events as sending. Reclaim only
     // stale leases; idempotency keys remain unchanged across retries.
-    final List<QueryRow> rows = await _database.transaction(() async {
+    return _database.transaction(() async {
       await _database.customStatement(
         '''
         UPDATE sync_outbox_entries
@@ -26,7 +26,7 @@ class MobileSyncRepository {
         ''',
         <Object?>[now, now - 300],
       );
-      return _database.customSelect(
+      final List<QueryRow> rows = await _database.customSelect(
           '''
       SELECT idempotency_key, aggregate_id, event_type, payload_json
       FROM sync_outbox_entries
@@ -41,9 +41,7 @@ class MobileSyncRepository {
           ],
         )
         .get();
-    });
-
-    return rows
+      return rows
         .map(
           (QueryRow row) => SyncOutboxEvent.fromRow(
             idempotencyKey: row.read<String>('idempotency_key'),
@@ -53,6 +51,7 @@ class MobileSyncRepository {
           ),
         )
         .toList(growable: false);
+    });
   }
 
   Future<void> markSending(List<SyncOutboxEvent> events) async {
