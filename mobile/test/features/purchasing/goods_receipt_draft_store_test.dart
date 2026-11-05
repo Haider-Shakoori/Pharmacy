@@ -27,7 +27,10 @@ void main() {
   });
 
   test('blank worksheet IDs are rejected without persistence', () async {
-    await expectLater(store.save('  ', <String, Map<String, String>>{}), throwsFormatException);
+    await expectLater(
+      store.save('  ', <String, Map<String, String>>{}),
+      throwsFormatException,
+    );
     await expectLater(store.load('  '), throwsFormatException);
     await expectLater(store.delete('  '), throwsFormatException);
   });
