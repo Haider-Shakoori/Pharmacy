@@ -401,7 +401,7 @@ class MobileSyncRepository {
         _requiredSnapshotId(item, 'id'),
         _requiredSnapshotId(item, 'supplier_id'),
         _requiredSnapshotId(item, 'number'),
-        item['status'].toString(),
+        _requiredSnapshotId(item, 'status'),
         item['order_date']?.toString(),
         item['expected_date']?.toString(),
         item['currency']?.toString() ?? 'AFN',
