@@ -31,15 +31,20 @@ class GoodsReceiptDraftLine {
   final bool requiresBatch;
   final bool requiresExpiry;
 
+  static String? _optionalPayloadValue(String? value) {
+    final String? normalized = value?.trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
+  }
+
   Map<String, String?> toPayload() => <String, String?>{
     'purchase_order_line_id': purchaseOrderLineId.trim(),
     'received_quantity': receivedQuantity.trim(),
     'bonus_quantity': bonusQuantity.trim(),
     'unit_cost': unitCost.trim(),
-    'batch_number': batchNumber?.trim(),
-    'expires_at': expiresAt?.trim(),
-    'manufactured_at': manufacturedAt?.trim(),
-    'sale_price': salePrice?.trim(),
+    'batch_number': _optionalPayloadValue(batchNumber),
+    'expires_at': _optionalPayloadValue(expiresAt),
+    'manufactured_at': _optionalPayloadValue(manufacturedAt),
+    'sale_price': _optionalPayloadValue(salePrice),
   };
 }
 
