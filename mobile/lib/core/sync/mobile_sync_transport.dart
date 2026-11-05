@@ -59,6 +59,10 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
     if (events.isEmpty || events.length > 25) {
       throw const MobileSyncException('Invalid synchronization batch size.');
     }
+    if (events.map((event) => event.idempotencyKey).toSet().length !=
+        events.length) {
+      throw const MobileSyncException('Duplicate synchronization event keys.');
+    }
     final Map<String, dynamic> data = await _request(
       method: 'POST',
       uri: endpoint.uri.resolve('/api/v1/mobile/sync/push'),
