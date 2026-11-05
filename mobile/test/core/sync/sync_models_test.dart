@@ -16,7 +16,7 @@ void main() {
     });
 
     test('rejects malformed acknowledgement server identifiers', () {
-      for (final Object invalid in <Object>['', '  ', 123, true]) {
+      for (final Object invalid in <Object>['', '  ', 0, -1, true]) {
         expect(
           () => SyncPushResult.fromJson(<String, dynamic>{
             'idempotency_key': 'event-1',
@@ -33,6 +33,14 @@ void main() {
           'server_id': 'sale-1',
         }).serverId,
         'sale-1',
+      );
+      expect(
+        SyncPushResult.fromJson(<String, dynamic>{
+          'idempotency_key': 'event-1',
+          'status': 'accepted',
+          'server_id': 123,
+        }).serverId,
+        '123',
       );
     });
 
