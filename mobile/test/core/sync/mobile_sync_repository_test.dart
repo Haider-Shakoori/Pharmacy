@@ -664,6 +664,26 @@ void main() {
     expect(outbox.read<int>('attempt_count'), 0);
   });
 
+  test('transport recovery ignores mismatched outbox identity', () async {
+    final SyncOutboxEvent original = (await repository.pendingOutbox()).single;
+    await repository.markSending(<SyncOutboxEvent>[original]);
+    final SyncOutboxEvent mismatched = SyncOutboxEvent(
+      idempotencyKey: original.idempotencyKey,
+      aggregateId: 'another-sale',
+      eventType: original.eventType,
+      payload: original.payload,
+    );
+    await repository.retryTransportFailure(
+      <SyncOutboxEvent>[mismatched],
+      'Temporary transport failure',
+    );
+    final row = await database.customSelect(
+      'SELECT status, last_error FROM sync_outbox_entries',
+    ).getSingle();
+    expect(row.read<String>('status'), 'sending');
+    expect(row.readNullable<String>('last_error'), isNull);
+  });
+
   test('stale rejection cannot alter a pending sale', () async {
     final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
     await expectLater(
