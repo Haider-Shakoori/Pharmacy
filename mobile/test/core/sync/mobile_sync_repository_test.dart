@@ -297,6 +297,25 @@ void main() {
     expect(outbox.readNullable<String>('last_error'), isNull);
   });
 
+  test('outbox claim rejects mismatched aggregate without changing status', () async {
+    final SyncOutboxEvent original = (await repository.pendingOutbox()).single;
+    final SyncOutboxEvent mismatched = SyncOutboxEvent(
+      idempotencyKey: original.idempotencyKey,
+      aggregateId: 'another-sale',
+      eventType: original.eventType,
+      payload: original.payload,
+    );
+    await expectLater(
+      repository.markSending(<SyncOutboxEvent>[mismatched]),
+      throwsStateError,
+    );
+    final QueryRow outbox = await database.customSelect(
+      'SELECT status, attempt_count FROM sync_outbox_entries',
+    ).getSingle();
+    expect(outbox.read<String>('status'), 'pending');
+    expect(outbox.read<int>('attempt_count'), 0);
+  });
+
   test('stale rejection cannot alter a pending sale', () async {
     final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
     await expectLater(
