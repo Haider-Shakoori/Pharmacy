@@ -61,19 +61,16 @@ void main() {
   });
 
   test('rejects duplicate order line IDs with surrounding whitespace', () {
-    final errors = GoodsReceiptDraftValidator.validate(
-      <GoodsReceiptDraftLine>[
-        line(),
-        const GoodsReceiptDraftLine(
-          purchaseOrderLineId: ' po-line-1 ',
-          orderedQuantity: '10',
-          previouslyReceivedQuantity: '0',
-          receivedQuantity: '1',
-          unitCost: '10',
-        ),
-      ],
-      orderStatus: 'approved',
-    );
+    final errors = GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+      line(),
+      const GoodsReceiptDraftLine(
+        purchaseOrderLineId: ' po-line-1 ',
+        orderedQuantity: '10',
+        previouslyReceivedQuantity: '0',
+        receivedQuantity: '1',
+        unitCost: '10',
+      ),
+    ], orderStatus: 'approved');
     expect(errors.join(' '), contains('distinct'));
   });
 
@@ -99,10 +96,9 @@ void main() {
       expiresAt: '2027-12-01',
     );
     expect(
-      GoodsReceiptDraftValidator.validate(
-        <GoodsReceiptDraftLine>[item],
-        orderStatus: 'approved',
-      ).join(' '),
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        item,
+      ], orderStatus: 'approved').join(' '),
       contains('Manufacturing date cannot be after expiry'),
     );
   });
@@ -123,8 +119,12 @@ void main() {
     expect(item.toPayload()['expires_at'], '2027-12-01');
     expect(item.toPayload()['manufactured_at'], '2026-01-01');
     expect(item.toPayload()['sale_price'], '15');
-    expect(GoodsReceiptDraftValidator.validate(
-      <GoodsReceiptDraftLine>[item], orderStatus: 'approved'), isEmpty);
+    expect(
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        item,
+      ], orderStatus: 'approved'),
+      isEmpty,
+    );
   });
 
   test('normalizes receipt numeric fields and padded order status', () {
@@ -141,10 +141,9 @@ void main() {
     expect(payload['bonus_quantity'], '1');
     expect(payload['unit_cost'], '10.0000');
     expect(
-      GoodsReceiptDraftValidator.validate(
-        <GoodsReceiptDraftLine>[item],
-        orderStatus: ' approved ',
-      ),
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        item,
+      ], orderStatus: ' approved '),
       isEmpty,
     );
   });
@@ -163,7 +162,10 @@ void main() {
     );
     final payload = item.toPayload();
     for (final field in <String>[
-      'batch_number', 'expires_at', 'manufactured_at', 'sale_price',
+      'batch_number',
+      'expires_at',
+      'manufactured_at',
+      'sale_price',
     ]) {
       expect(payload[field], isNull);
     }
@@ -242,17 +244,15 @@ void main() {
   });
   test('enforces Laravel 120-character batch number limit', () {
     expect(
-      GoodsReceiptDraftValidator.validate(
-        <GoodsReceiptDraftLine>[line(batch: 'B' * 120)],
-        orderStatus: 'approved',
-      ),
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        line(batch: 'B' * 120),
+      ], orderStatus: 'approved'),
       isEmpty,
     );
     expect(
-      GoodsReceiptDraftValidator.validate(
-        <GoodsReceiptDraftLine>[line(batch: 'B' * 121)],
-        orderStatus: 'approved',
-      ).join(' '),
+      GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+        line(batch: 'B' * 121),
+      ], orderStatus: 'approved').join(' '),
       contains('120 characters'),
     );
   });
@@ -267,13 +267,11 @@ void main() {
       unitCost: '1000000000000',
       salePrice: '1000000000000',
     );
-    final errors = GoodsReceiptDraftValidator.validate(
-      <GoodsReceiptDraftLine>[item],
-      orderStatus: 'approved',
-    ).join(' ');
+    final errors = GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+      item,
+    ], orderStatus: 'approved').join(' ');
     expect(errors, contains('999999999'));
     expect(errors, contains('Unit cost'));
     expect(errors, contains('Sale price'));
   });
-
 }
