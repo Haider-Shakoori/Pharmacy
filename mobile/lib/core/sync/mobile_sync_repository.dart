@@ -586,7 +586,7 @@ class MobileSyncRepository {
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name,
         phone = excluded.phone,
-        balance = excluded.balance,
+        balance = CASE WHEN ? = 1 THEN excluded.balance ELSE local_customers.balance END,
         is_deleted = excluded.is_deleted,
         server_updated_at = excluded.server_updated_at
       WHERE excluded.server_updated_at >= local_customers.server_updated_at
@@ -598,6 +598,7 @@ class MobileSyncRepository {
         balance,
         _snapshotBool(item, 'is_deleted') ? 1 : 0,
         _serverSeconds(item),
+        item['balance'] == null ? 0 : 1,
       ],
     );
   }
