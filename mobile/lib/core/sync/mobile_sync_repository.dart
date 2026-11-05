@@ -122,7 +122,7 @@ class MobileSyncRepository {
             .customSelect('SELECT changes() AS affected')
             .getSingle();
         if (updated.read<int>('affected') != 1) {
-          throw const StateError(
+          throw StateError(
             'Sale acknowledgement could not update exactly one local sale.',
           );
         }
