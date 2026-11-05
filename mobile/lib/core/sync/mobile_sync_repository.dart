@@ -194,6 +194,14 @@ class MobileSyncRepository {
             event.aggregateId,
           ],
         );
+        final QueryRow saleChanged = await _database
+            .customSelect('SELECT changes() AS affected')
+            .getSingle();
+        if (saleChanged.read<int>('affected') != 1) {
+          throw StateError(
+            'Sale rejection could not update exactly one local sale.',
+          );
+        }
       }
     });
   }
