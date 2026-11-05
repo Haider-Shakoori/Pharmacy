@@ -61,8 +61,9 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
         line.expiry.text = values['expiry'] ?? '';
       }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() => errors = <String>['Unable to load saved draft: $error']);
+      }
     }
   }
 
@@ -90,8 +91,9 @@ class _GoodsReceiptWorksheetState extends State<GoodsReceiptWorksheet> {
         );
       }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() => errors = <String>['Unable to save draft: $error']);
+      }
     } finally {
       if (mounted) setState(() => saving = false);
     }
