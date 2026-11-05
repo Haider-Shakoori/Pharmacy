@@ -50,14 +50,12 @@ class OfflineGoodsReceiptQueue {
     // Do not allow two unresolved receipts for the same purchase order.
     // Their quantities would each be based on the same cached stock state.
     await database.transaction(() async {
-      final outstanding = await database.customSelect(
-        '''
+      final outstanding = await database.customSelect('''
         SELECT payload_json
         FROM sync_outbox_entries
         WHERE event_type = 'goods_receipt.create'
           AND status IN ('pending', 'retry', 'sending', 'rejected')
-        ''',
-      ).get();
+        ''').get();
       for (final row in outstanding) {
         final Object? existing;
         try {
