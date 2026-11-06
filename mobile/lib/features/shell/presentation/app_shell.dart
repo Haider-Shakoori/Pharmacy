@@ -794,73 +794,82 @@ class _HomePanel extends ConsumerWidget {
           style: text.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: entries.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.48,
-          ),
-          itemBuilder: (BuildContext context, int index) {
-            final entry = entries[index];
-            return Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: () => onNavigate(
-                  entry.tab,
-                  entry.tab == 4
-                      ? (entry.title == 'Purchases'
-                            ? 'Purchases'
-                            : entry.title == 'Alerts'
-                            ? 'Alerts'
-                            : entry.title == 'Sync'
-                            ? 'Sync'
-                            : entry.title == 'Settings'
-                            ? 'Settings'
-                            : 'Customers')
-                      : null,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Container(
-                        padding: const EdgeInsets.all(9),
-                        decoration: BoxDecoration(
-                          color: entry.color,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          entry.icon,
-                          color: const Color(0xFF1557C0),
-                          size: 23,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        entry.title,
-                        maxLines: 1,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        entry.detail,
-                        maxLines: 1,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.blueGrey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+        LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final columns = constraints.maxWidth >= 720
+                ? 4
+                : constraints.maxWidth >= 440
+                ? 3
+                : 2;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: entries.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.48,
               ),
+              itemBuilder: (BuildContext context, int index) {
+                final entry = entries[index];
+                return Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () => onNavigate(
+                      entry.tab,
+                      entry.tab == 4
+                          ? (entry.title == 'Purchases'
+                                ? 'Purchases'
+                                : entry.title == 'Alerts'
+                                ? 'Alerts'
+                                : entry.title == 'Sync'
+                                ? 'Sync'
+                                : entry.title == 'Settings'
+                                ? 'Settings'
+                                : 'Customers')
+                          : null,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(
+                              color: entry.color,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              entry.icon,
+                              color: const Color(0xFF1557C0),
+                              size: 23,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            entry.title,
+                            maxLines: 1,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            entry.detail,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.blueGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             );
           },
         ),
