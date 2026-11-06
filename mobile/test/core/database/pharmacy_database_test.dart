@@ -42,8 +42,8 @@ void main() {
     );
   });
 
-  test('Batch 22 schema upgrades local stock allocation storage', () async {
-    expect(database.schemaVersion, 2);
+  test('schema version 3 includes purchasing and receiving storage', () async {
+    expect(database.schemaVersion, 3);
   });
 
   test('financial and quantity values round-trip as exact text', () async {
