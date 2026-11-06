@@ -19,35 +19,30 @@ class MobileRegistration {
   });
 
   factory MobileRegistration.fromApi(Map<String, dynamic> data) {
-    final Map<String, dynamic> tenant = Map<String, dynamic>.from(
-      data['tenant'] as Map,
-    );
-    final Map<String, dynamic> user = Map<String, dynamic>.from(
-      data['user'] as Map,
-    );
-    final Map<String, dynamic> lease = Map<String, dynamic>.from(
-      data['offline_lease'] as Map,
+    final Map<String, dynamic> tenant = _requiredMap(data['tenant'], 'tenant');
+    final Map<String, dynamic> user = _requiredMap(data['user'], 'user');
+    final Map<String, dynamic> lease = _requiredMap(
+      data['offline_lease'],
+      'offline_lease',
     );
     final Map<String, dynamic> inventoryPolicy = data['inventory_policy'] is Map
         ? Map<String, dynamic>.from(data['inventory_policy'] as Map)
         : <String, dynamic>{};
 
     return MobileRegistration(
-      tenantId: tenant['id'].toString(),
-      tenantName: tenant['name'].toString(),
-      activationId: data['activation_id'].toString(),
+      tenantId: _requiredString(tenant['id'], 'tenant.id'),
+      tenantName: _requiredString(tenant['name'], 'tenant.name'),
+      activationId: _requiredString(data['activation_id'], 'activation_id'),
       deviceId: data['device_id']?.toString(),
-      accessToken: data['access_token'].toString(),
+      accessToken: _requiredString(data['access_token'], 'access_token'),
       accessExpiresAt: DateTime.parse(data['access_expires_at'].toString()),
-      leaseToken: lease['token'].toString(),
+      leaseToken: _requiredString(lease['token'], 'offline_lease.token'),
       leaseExpiresAt: DateTime.parse(lease['expires_at'].toString()),
       leasePublicKey: lease['public_key']?.toString(),
-      userId: user['id'].toString(),
-      userName: user['name'].toString(),
-      userEmail: user['email'].toString(),
-      permissions: (user['permissions'] as List<dynamic>? ?? <dynamic>[])
-          .map((dynamic value) => value.toString())
-          .toList(growable: false),
+      userId: _requiredString(user['id'], 'user.id'),
+      userName: _requiredString(user['name'], 'user.name'),
+      userEmail: _requiredString(user['email'], 'user.email'),
+      permissions: _permissions(user['permissions']),
       lowStockThreshold:
           int.tryParse(
             inventoryPolicy['low_stock_threshold']?.toString() ?? '',
@@ -62,21 +57,19 @@ class MobileRegistration {
 
   factory MobileRegistration.fromJson(Map<String, dynamic> json) {
     return MobileRegistration(
-      tenantId: json['tenant_id'].toString(),
-      tenantName: json['tenant_name'].toString(),
-      activationId: json['activation_id'].toString(),
+      tenantId: _requiredString(json['tenant_id'], 'tenant_id'),
+      tenantName: _requiredString(json['tenant_name'], 'tenant_name'),
+      activationId: _requiredString(json['activation_id'], 'activation_id'),
       deviceId: json['device_id']?.toString(),
-      accessToken: json['access_token'].toString(),
+      accessToken: _requiredString(json['access_token'], 'access_token'),
       accessExpiresAt: DateTime.parse(json['access_expires_at'].toString()),
-      leaseToken: json['lease_token'].toString(),
+      leaseToken: _requiredString(json['lease_token'], 'lease_token'),
       leaseExpiresAt: DateTime.parse(json['lease_expires_at'].toString()),
       leasePublicKey: json['lease_public_key']?.toString(),
-      userId: json['user_id'].toString(),
-      userName: json['user_name'].toString(),
-      userEmail: json['user_email'].toString(),
-      permissions: (json['permissions'] as List<dynamic>? ?? <dynamic>[])
-          .map((dynamic value) => value.toString())
-          .toList(growable: false),
+      userId: _requiredString(json['user_id'], 'user_id'),
+      userName: _requiredString(json['user_name'], 'user_name'),
+      userEmail: _requiredString(json['user_email'], 'user_email'),
+      permissions: _permissions(json['permissions']),
       lowStockThreshold:
           int.tryParse(json['low_stock_threshold']?.toString() ?? '') ?? 10,
       nearExpiryDays:
@@ -85,35 +78,105 @@ class MobileRegistration {
     );
   }
 
+  static Map<String, dynamic> _requiredMap(Object? value, String field) {
+    if (value is! Map) {
+      throw FormatException('Invalid mobile registration field: $field');
+    }
+    try {
+      return Map<String, dynamic>.from(value);
+    } on TypeError {
+      throw FormatException('Invalid mobile registration field: $field');
+    }
+  }
+
+  static List<String> _permissions(Object? value) {
+    if (value == null) return const <String>[];
+    if (value is! List || value.any((item) => item is! String)) {
+      throw const FormatException('Invalid mobile registration permissions.');
+    }
+    return List<String>.unmodifiable(value.cast<String>());
+  }
+
+  static String _requiredString(Object? value, String field) {
+    if (value is! String && value is! num) {
+      throw FormatException('Invalid mobile registration field: $field');
+    }
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null') {
+      throw FormatException('Missing mobile registration field: $field');
+    }
+    return text;
+  }
+
   MobileRegistration withRefreshedSession(Map<String, dynamic> data) {
-    final Map<String, dynamic> lease = Map<String, dynamic>.from(
-      data['offline_lease'] as Map,
+    final Map<String, dynamic> lease = _requiredMap(
+      data['offline_lease'],
+      'offline_lease',
     );
-    final Map<String, dynamic>? user = data['user'] is Map
-        ? Map<String, dynamic>.from(data['user'] as Map)
-        : null;
+    final Map<String, dynamic>? user = data['user'] == null
+        ? null
+        : _requiredMap(data['user'], 'user');
     final Map<String, dynamic> inventoryPolicy = data['inventory_policy'] is Map
         ? Map<String, dynamic>.from(data['inventory_policy'] as Map)
         : <String, dynamic>{};
+
+    final Map<String, dynamic>? tenant = data['tenant'] == null
+        ? null
+        : _requiredMap(data['tenant'], 'tenant');
+
+    // A refresh must never silently change the identity that owns local data.
+    if (tenant != null &&
+        _requiredString(tenant['id'], 'tenant.id') != tenantId) {
+      throw const FormatException(
+        'Session refresh returned a different tenant.',
+      );
+    }
+    if (data['tenant_id'] != null &&
+        _requiredString(data['tenant_id'], 'tenant_id') != tenantId) {
+      throw const FormatException(
+        'Session refresh returned a different tenant.',
+      );
+    }
+    if (user != null && _requiredString(user['id'], 'user.id') != userId) {
+      throw const FormatException('Session refresh returned a different user.');
+    }
+    if (data['activation_id'] != null &&
+        _requiredString(data['activation_id'], 'activation_id') !=
+            activationId) {
+      throw const FormatException(
+        'Session refresh returned a different activation.',
+      );
+    }
+    if (deviceId != null &&
+        data['device_id'] != null &&
+        _requiredString(data['device_id'], 'device_id') != deviceId) {
+      throw const FormatException(
+        'Session refresh returned a different device.',
+      );
+    }
 
     return MobileRegistration(
       tenantId: tenantId,
       tenantName: tenantName,
       activationId: activationId,
-      deviceId: data['device_id']?.toString() ?? deviceId,
-      accessToken: data['access_token'].toString(),
+      deviceId: data['device_id'] == null
+          ? deviceId
+          : _requiredString(data['device_id'], 'device_id'),
+      accessToken: _requiredString(data['access_token'], 'access_token'),
       accessExpiresAt: DateTime.parse(data['access_expires_at'].toString()),
-      leaseToken: lease['token'].toString(),
+      leaseToken: _requiredString(lease['token'], 'offline_lease.token'),
       leaseExpiresAt: DateTime.parse(lease['expires_at'].toString()),
       leasePublicKey: lease['public_key']?.toString() ?? leasePublicKey,
-      userId: user?['id']?.toString() ?? userId,
-      userName: user?['name']?.toString() ?? userName,
-      userEmail: user?['email']?.toString() ?? userEmail,
+      userId: user == null ? userId : _requiredString(user['id'], 'user.id'),
+      userName: user == null
+          ? userName
+          : _requiredString(user['name'], 'user.name'),
+      userEmail: user == null
+          ? userEmail
+          : _requiredString(user['email'], 'user.email'),
       permissions: user == null
           ? permissions
-          : (user['permissions'] as List<dynamic>? ?? <dynamic>[])
-                .map((dynamic value) => value.toString())
-                .toList(growable: false),
+          : _permissions(user['permissions']),
       lowStockThreshold:
           int.tryParse(
             inventoryPolicy['low_stock_threshold']?.toString() ?? '',
@@ -144,6 +207,8 @@ class MobileRegistration {
   final String? cloudBaseUrl;
 
   bool get accessExpired => !DateTime.now().isBefore(accessExpiresAt);
+
+  bool get leaseExpired => !DateTime.now().isBefore(leaseExpiresAt);
 
   Map<String, Object?> toJson() {
     return <String, Object?>{

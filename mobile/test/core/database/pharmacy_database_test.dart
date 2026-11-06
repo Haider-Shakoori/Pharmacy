@@ -42,7 +42,7 @@ void main() {
     );
   });
 
-  test('schema version 3 includes purchasing and receiving storage', () async {
+  test('Batch 3 schema includes supplier and purchase order storage', () async {
     expect(database.schemaVersion, 3);
   });
 

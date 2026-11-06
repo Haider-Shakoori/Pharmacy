@@ -38,6 +38,9 @@ class OfflinePosCheckoutService {
         'This pharmacy user does not have POS sale permission.',
       );
     }
+    if (request.cashierUserId.trim().isEmpty) {
+      throw const OfflinePosException('A cashier identity is required.');
+    }
     if (request.stockLocationId.trim().isEmpty) {
       throw const OfflinePosException('A stock location is required.');
     }
@@ -52,8 +55,19 @@ class OfflinePosCheckoutService {
       );
     }
 
+    final String stockLocationId = request.stockLocationId.trim();
+    final String cashierUserId = request.cashierUserId.trim();
+    final String? customerId = request.customerId?.trim().isEmpty == true
+        ? null
+        : request.customerId?.trim();
     final DateTime now = _clock();
-    final String businessDate = request.businessDate ?? _businessDate(now);
+    final String businessDate =
+        request.businessDate?.trim() ?? _businessDate(now);
+    if (!_validBusinessDate(businessDate)) {
+      throw const OfflinePosException(
+        'Business date must be a valid YYYY-MM-DD date.',
+      );
+    }
     final String saleId = _idGenerator();
     final String idempotencyKey = 'sale:$saleId:completed';
 
@@ -66,7 +80,7 @@ class OfflinePosCheckoutService {
         final medicine =
             await (_database.select(_database.localMedicines)..where(
                   (table) =>
-                      table.id.equals(input.medicineId) &
+                      table.id.equals(input.medicineId.trim()) &
                       table.isActive.equals(true) &
                       table.isDeleted.equals(false),
                 ))
@@ -95,7 +109,7 @@ class OfflinePosCheckoutService {
 
         final List<_OfflineBatchSnapshot> batches = await _eligibleBatches(
           medicine.id,
-          request.stockLocationId,
+          stockLocationId,
           now,
         );
         if (batches.isEmpty) {
@@ -175,12 +189,18 @@ class OfflinePosCheckoutService {
 
       final FixedDecimal total = subtotal - discountTotal;
       FixedDecimal tendered = FixedDecimal.zero;
-      bool hasCash = false;
+      FixedDecimal cashTendered = FixedDecimal.zero;
       final List<Map<String, Object?>> paymentPayload =
           <Map<String, Object?>>[];
 
       for (final OfflinePosPaymentInput input in request.payments) {
-        if (!_offlinePaymentMethods.contains(input.method)) {
+        if (input.reference != null && input.reference!.length > 160) {
+          throw const OfflinePosException(
+            'Payment references cannot exceed 160 characters.',
+          );
+        }
+        final String paymentMethod = input.method.trim();
+        if (!_offlinePaymentMethods.contains(paymentMethod)) {
           throw const OfflinePosException(
             'Offline POS currently supports cash, bank and mobile payments.',
           );
@@ -194,7 +214,7 @@ class OfflinePosCheckoutService {
         }
 
         tendered += amount;
-        hasCash = hasCash || input.method == 'cash';
+        if (paymentMethod == 'cash') cashTendered += amount;
         final String paymentId = _idGenerator();
 
         await _database.customStatement(
@@ -206,7 +226,7 @@ class OfflinePosCheckoutService {
           <Object?>[
             paymentId,
             saleId,
-            input.method,
+            paymentMethod,
             amount.toString(),
             input.reference,
           ],
@@ -214,7 +234,7 @@ class OfflinePosCheckoutService {
 
         paymentPayload.add(<String, Object?>{
           'local_id': paymentId,
-          'method': input.method,
+          'method': paymentMethod,
           'amount': amount.toString(),
           'reference': input.reference,
         });
@@ -227,7 +247,7 @@ class OfflinePosCheckoutService {
       }
 
       final FixedDecimal change = tendered - total;
-      if (change.isPositive && !hasCash) {
+      if (change.isPositive && cashTendered.compareTo(change) < 0) {
         throw const OfflinePosException(
           'Offline overpayment can only be returned as cash change.',
         );
@@ -245,8 +265,8 @@ class OfflinePosCheckoutService {
         ''',
         <Object?>[
           saleId,
-          request.customerId,
-          request.stockLocationId,
+          customerId,
+          stockLocationId,
           businessDate,
           subtotal.toString(),
           discountTotal.toString(),
@@ -263,9 +283,9 @@ class OfflinePosCheckoutService {
         'v': 1,
         'local_id': saleId,
         'idempotency_key': idempotencyKey,
-        'stock_location_id': request.stockLocationId,
-        'customer_id': request.customerId,
-        'cashier_user_id': request.cashierUserId,
+        'stock_location_id': stockLocationId,
+        'customer_id': customerId,
+        'cashier_user_id': cashierUserId,
         'business_date': businessDate,
         'currency': 'AFN',
         'subtotal': subtotal.toString(),
@@ -378,10 +398,22 @@ class OfflinePosCheckoutService {
         '''
         UPDATE local_inventory_batches
         SET available_quantity = ?
-        WHERE id = ?
+        WHERE id = ? AND available_quantity = ?
         ''',
-        <Object?>[availableAfter.toString(), batch.id],
+        <Object?>[
+          availableAfter.toString(),
+          batch.id,
+          batch.available.toString(),
+        ],
       );
+      final changed = await _database
+          .customSelect('SELECT changes() AS affected')
+          .getSingle();
+      if (changed.read<int>('affected') != 1) {
+        throw const OfflinePosException(
+          'Stock changed during checkout. Refresh the catalog and retry.',
+        );
+      }
 
       await _database.customStatement(
         '''
@@ -418,10 +450,22 @@ class OfflinePosCheckoutService {
     return allocations;
   }
 
+  bool _validBusinessDate(String value) {
+    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(value);
+    if (match == null) return false;
+    final year = int.parse(match.group(1)!);
+    final month = int.parse(match.group(2)!);
+    final day = int.parse(match.group(3)!);
+    if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) {
+      return false;
+    }
+    final parsed = DateTime.utc(year, month, day);
+    return parsed.year == year && parsed.month == month && parsed.day == day;
+  }
+
   String _businessDate(DateTime value) {
     final String month = value.month.toString().padLeft(2, '0');
     final String day = value.day.toString().padLeft(2, '0');
-
     return '${value.year}-$month-$day';
   }
 }
