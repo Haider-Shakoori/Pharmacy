@@ -39,6 +39,7 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   int _selectedIndex = 0;
+  String _moreSection = 'Customers';
   ReviewedMedicineScan? _reviewedScan;
   Future<List<String>>? _duplicateLookup;
   bool _registrationApproval = false;
@@ -66,7 +67,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     final List<_ShellDestination> destinations = <_ShellDestination>[
       const _ShellDestination(icon: Icons.dashboard_outlined, label: 'Home'),
       _ShellDestination(icon: Icons.point_of_sale_rounded, label: strings.pos),
-      _ShellDestination(icon: Icons.inventory_2_outlined, label: strings.stock),
+      const _ShellDestination(
+        icon: Icons.medication_outlined,
+        label: 'Medicines',
+      ),
       const _ShellDestination(icon: Icons.bar_chart_rounded, label: 'Reports'),
       const _ShellDestination(icon: Icons.menu_rounded, label: 'More'),
     ];
@@ -111,8 +115,10 @@ class _AppShellState extends ConsumerState<AppShell> {
             const SizedBox(height: 16),
             if (_selectedIndex == 0)
               _HomePanel(
-                onNavigate: (int index) =>
-                    setState(() => _selectedIndex = index),
+                onNavigate: (int index, String? section) => setState(() {
+                  _selectedIndex = index;
+                  if (section != null) _moreSection = section;
+                }),
               )
             else if (_selectedIndex == 1)
               const OfflinePosPanel()
@@ -461,20 +467,41 @@ class _AppShellState extends ConsumerState<AppShell> {
               const OperationalAlertsCard(),
             ],
             if (_selectedIndex == 4) ...<Widget>[
-              const OfflineCustomersPanel(),
-              const SizedBox(height: 16),
-              const OfflinePurchasingPanel(),
-              const SizedBox(height: 16),
-              const OperationalAlertsCard(),
-              const SizedBox(height: 16),
-              const SizedBox(height: 16),
-              const SyncStatusCard(),
-              const SizedBox(height: 16),
-              const MobileRegistrationCard(),
-              const SizedBox(height: 16),
-              ConnectionModeCard(
-                defaultCloudUri: AppEnvironment.current.apiBaseUri,
+              Text('More', style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children:
+                    <String>[
+                          'Customers',
+                          'Purchases',
+                          'Alerts',
+                          'Sync',
+                          'Settings',
+                        ]
+                        .map(
+                          (section) => ChoiceChip(
+                            label: Text(section),
+                            selected: _moreSection == section,
+                            onSelected: (_) =>
+                                setState(() => _moreSection = section),
+                          ),
+                        )
+                        .toList(),
               ),
+              const SizedBox(height: 16),
+              if (_moreSection == 'Customers') const OfflineCustomersPanel(),
+              if (_moreSection == 'Purchases') const OfflinePurchasingPanel(),
+              if (_moreSection == 'Alerts') const OperationalAlertsCard(),
+              if (_moreSection == 'Sync') const SyncStatusCard(),
+              if (_moreSection == 'Settings') ...<Widget>[
+                const MobileRegistrationCard(),
+                const SizedBox(height: 16),
+                ConnectionModeCard(
+                  defaultCloudUri: AppEnvironment.current.apiBaseUri,
+                ),
+              ],
             ],
           ],
         ),
@@ -508,7 +535,7 @@ class _ShellDestination {
 
 class _HomePanel extends ConsumerWidget {
   const _HomePanel({required this.onNavigate});
-  final ValueChanged<int> onNavigate;
+  final void Function(int, String?) onNavigate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -542,6 +569,13 @@ class _HomePanel extends ConsumerWidget {
             detail: 'Batches & expiry',
             tab: 2,
             color: const Color(0xFFE8E1FF),
+          ),
+          (
+            icon: Icons.shopping_bag_outlined,
+            title: 'Purchases',
+            detail: 'Orders & receiving',
+            tab: 4,
+            color: const Color(0xFFE9EDF4),
           ),
           (
             icon: Icons.people_alt_rounded,
@@ -718,7 +752,7 @@ class _HomePanel extends ConsumerWidget {
                                   ),
                                 ),
                                 TextButton(
-                                  onPressed: () => onNavigate(2),
+                                  onPressed: () => onNavigate(2, null),
                                   child: const Text('View stock'),
                                 ),
                               ],
@@ -777,7 +811,20 @@ class _HomePanel extends ConsumerWidget {
               borderRadius: BorderRadius.circular(18),
               child: InkWell(
                 borderRadius: BorderRadius.circular(18),
-                onTap: () => onNavigate(entry.tab),
+                onTap: () => onNavigate(
+                  entry.tab,
+                  entry.tab == 4
+                      ? (entry.title == 'Purchases'
+                            ? 'Purchases'
+                            : entry.title == 'Alerts'
+                            ? 'Alerts'
+                            : entry.title == 'Sync'
+                            ? 'Sync'
+                            : entry.title == 'Settings'
+                            ? 'Settings'
+                            : 'Customers')
+                      : null,
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(

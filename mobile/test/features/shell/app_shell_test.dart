@@ -45,7 +45,7 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.text('Stock').last);
+    await tester.tap(find.text('Medicines').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -61,6 +61,10 @@ void main() {
     await tester.tap(find.text('More').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Sync').last);
+    await tester.pump();
     expect(find.byType(SyncStatusCard), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 100));
   });
 }
