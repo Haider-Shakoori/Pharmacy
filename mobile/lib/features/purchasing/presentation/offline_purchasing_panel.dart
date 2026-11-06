@@ -5,12 +5,13 @@ import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/features/purchasing/data/purchase_receiving_summary.dart';
-import 'package:drift/drift.dart';
+import 'package:businessos_pharmacy/features/purchasing/presentation/goods_receipt_worksheet.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Offline purchasing is read-only until the server supports idempotent
-/// purchase-order and goods-receipt push events.
+/// Synced purchasing records are read-only; receiving can be queued offline.
+/// The server remains authoritative for posting stock.
 class OfflinePurchasingPanel extends ConsumerWidget {
   const OfflinePurchasingPanel({super.key});
 
@@ -35,7 +36,10 @@ class OfflinePurchasingPanel extends ConsumerWidget {
             .when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Text('Offline database error: $error'),
-              data: (PharmacyDatabase db) => _PurchasingBrowser(database: db),
+              data: (PharmacyDatabase db) => _PurchasingBrowser(
+                database: db,
+                canReceive: user.permissions.contains('purchases.manage'),
+              ),
             );
       },
     );
@@ -43,8 +47,9 @@ class OfflinePurchasingPanel extends ConsumerWidget {
 }
 
 class _PurchasingBrowser extends StatefulWidget {
-  const _PurchasingBrowser({required this.database});
+  const _PurchasingBrowser({required this.database, required this.canReceive});
   final PharmacyDatabase database;
+  final bool canReceive;
 
   @override
   State<_PurchasingBrowser> createState() => _PurchasingBrowserState();
@@ -56,6 +61,46 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
   int _page = 0;
   static const int _pageSize = 30;
   late Future<List<QueryRow>> _rows;
+  late Future<List<QueryRow>> _receipts;
+  bool _retryingReceipt = false;
+
+  Future<void> _retryReceipt(String key) async {
+    if (_retryingReceipt || !widget.canReceive) return;
+    setState(() => _retryingReceipt = true);
+    try {
+      await widget.database.customStatement(
+        '''
+        UPDATE sync_outbox_entries
+        SET status = 'retry', next_attempt_at = NULL,
+            updated_at = ?
+        WHERE idempotency_key = ?
+          AND event_type = 'goods_receipt.create'
+          AND status = 'retry'
+      ''',
+        <Object?>[DateTime.now().millisecondsSinceEpoch ~/ 1000, key],
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Receipt is ready for the next synchronization.'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to retry receipt: $error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _retryingReceipt = false;
+          _refresh();
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -65,6 +110,13 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
 
   void _refresh() {
     _rows = _load();
+    _receipts = widget.database.customSelect('''
+      SELECT idempotency_key, status, attempt_count, last_error, created_at
+      FROM sync_outbox_entries
+      WHERE event_type = 'goods_receipt.create'
+      ORDER BY created_at DESC, idempotency_key DESC
+      LIMIT 30
+    ''').get();
   }
 
   Future<List<QueryRow>> _load() {
@@ -175,6 +227,31 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
                   'Order lines',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
+                if (widget.canReceive &&
+                    lines.isNotEmpty &&
+                    (row.read<String>('subtitle') == 'approved' ||
+                        row.read<String>('subtitle') == 'partially_received'))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => GoodsReceiptWorksheet(
+                              database: widget.database,
+                              purchaseOrderId: row.read<String>('id'),
+                              orderNumber: row.read<String>('title'),
+                              orderStatus: row.read<String>('subtitle'),
+                              lines: lines,
+                            ),
+                          ),
+                        );
+                        if (mounted) setState(_refresh);
+                      },
+                      icon: const Icon(Icons.inventory_outlined),
+                      label: const Text('Open receiving worksheet'),
+                    ),
+                  ),
                 if (lines.isEmpty) const Text('No lines synced.'),
                 for (final raw in lines)
                   if (raw is Map)
@@ -204,7 +281,8 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
               ],
               const SizedBox(height: 12),
               const Text(
-                'Read-only offline copy. Changes and goods receiving require server synchronization.',
+                'Purchase orders and stock reflect the last completed server pull. '
+                'Queued receipts do not update stock until the server accepts them and inventory is synchronized.',
               ),
             ],
           ),
@@ -220,7 +298,75 @@ class _PurchasingBrowserState extends State<_PurchasingBrowser> {
       children: <Widget>[
         Text('Purchasing', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),
-        const Text('Synced records available offline • read-only'),
+        const Text(
+          'Synced orders and suppliers are read-only. Receipts can be queued offline; stock updates after server synchronization.',
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => setState(_refresh),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Refresh purchasing data'),
+          ),
+        ),
+        if (_orders)
+          FutureBuilder<List<QueryRow>>(
+            future: _receipts,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Text(
+                  'Unable to load queued receipts: ${snapshot.error}',
+                );
+              }
+              if (!snapshot.hasData) {
+                return const LinearProgressIndicator();
+              }
+              final receipts = snapshot.data!;
+              if (receipts.isEmpty) {
+                return const Text(
+                  'No goods receipts awaiting synchronization.',
+                );
+              }
+              return ExpansionTile(
+                title: Text('Offline goods receipts (${receipts.length})'),
+                subtitle: const Text(
+                  'Pending receipts do not change stock until server posting.',
+                ),
+                children: <Widget>[
+                  for (final receipt in receipts)
+                    ListTile(
+                      dense: true,
+                      title: Text(
+                        'Receipt ${receipt.read<String>('idempotency_key')}',
+                      ),
+                      trailing:
+                          widget.canReceive &&
+                              receipt.read<String>('status') == 'retry'
+                          ? IconButton(
+                              tooltip: 'Retry on next sync',
+                              icon: const Icon(Icons.refresh),
+                              onPressed: _retryingReceipt
+                                  ? null
+                                  : () => _retryReceipt(
+                                      receipt.read<String>('idempotency_key'),
+                                    ),
+                            )
+                          : null,
+                      subtitle: Text(
+                        'Status: ${receipt.read<String>('status')} • '
+                        'Attempts: ${receipt.read<int>('attempt_count')}'
+                        '${receipt.readNullable<String>('last_error') == null ? '' : ' • ${receipt.readNullable<String>('last_error')}'}',
+                      ),
+                    ),
+                  TextButton.icon(
+                    onPressed: () => setState(_refresh),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Refresh queue'),
+                  ),
+                ],
+              );
+            },
+          ),
         const SizedBox(height: 12),
         SegmentedButton<bool>(
           segments: const <ButtonSegment<bool>>[

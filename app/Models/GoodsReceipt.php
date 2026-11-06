@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'purchase_order_id', 'supplier_id', 'receipt_number', 'status', 'received_at',
+    'purchase_order_id', 'supplier_id', 'stock_location_id', 'receipt_number', 'status', 'received_at',
     'idempotency_key', 'inventory_posted_at', 'created_by', 'notes',
 ])]
 class GoodsReceipt extends Model

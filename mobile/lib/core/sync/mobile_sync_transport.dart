@@ -56,6 +56,13 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
     required MobileRegistration registration,
     required List<SyncOutboxEvent> events,
   }) async {
+    if (events.isEmpty || events.length > 25) {
+      throw const MobileSyncException('Invalid synchronization batch size.');
+    }
+    if (events.map((event) => event.idempotencyKey).toSet().length !=
+        events.length) {
+      throw const MobileSyncException('Duplicate synchronization event keys.');
+    }
     final Map<String, dynamic> data = await _request(
       method: 'POST',
       uri: endpoint.uri.resolve('/api/v1/mobile/sync/push'),
@@ -67,14 +74,18 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
       },
     );
 
-    final List<dynamic> raw = data['results'] as List<dynamic>? ?? <dynamic>[];
-
+    final Object? raw = data['results'];
+    if (raw is! List || raw.any((item) => item is! Map)) {
+      throw const MobileSyncException(
+        'The pharmacy server returned invalid synchronization acknowledgements.',
+      );
+    }
     return raw
-        .whereType<Map<dynamic, dynamic>>()
-        .map(
-          (Map<dynamic, dynamic> value) =>
-              SyncPushResult.fromJson(Map<String, dynamic>.from(value)),
-        )
+        .map((item) {
+          return SyncPushResult.fromJson(
+            Map<String, dynamic>.from(item as Map),
+          );
+        })
         .toList(growable: false);
   }
 
@@ -86,6 +97,22 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
     required String? cursor,
     int limit = 100,
   }) async {
+    const allowedStreams = <String>{
+      'medicines',
+      'inventory',
+      'customers',
+      'suppliers',
+      'purchase_orders',
+    };
+    if (!allowedStreams.contains(stream)) {
+      throw const MobileSyncException('Unsupported synchronization stream.');
+    }
+    if (limit < 1 || limit > 250) {
+      throw const MobileSyncException('Invalid synchronization page size.');
+    }
+    if (cursor != null && (cursor.trim().isEmpty || cursor.length > 1000)) {
+      throw const MobileSyncException('Invalid synchronization cursor.');
+    }
     final Uri uri = endpoint.uri
         .resolve('/api/v1/mobile/sync/pull/$stream')
         .replace(
@@ -135,9 +162,12 @@ class HttpMobileSyncTransport implements MobileSyncTransport {
       final Object? decoded = response.body.isEmpty
           ? <String, dynamic>{}
           : jsonDecode(response.body);
-      final Map<String, dynamic> payload = decoded is Map<String, dynamic>
-          ? decoded
-          : <String, dynamic>{};
+      if (decoded is! Map<String, dynamic>) {
+        throw const MobileSyncException(
+          'The pharmacy server returned an invalid response.',
+        );
+      }
+      final Map<String, dynamic> payload = decoded;
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final Object? data = payload['data'];

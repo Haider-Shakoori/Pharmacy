@@ -49,29 +49,3 @@ jobs:
 
       - name: Test
         run: flutter test
-
-      - name: Build Windows release
-        run: flutter build windows --release --dart-define=API_BASE_URL=https://pharmacy.businessos.af
-
-      - name: Create portable ZIP
-        shell: pwsh
-        run: Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath build\windows\BusinessOS-Pharmacy-Portable.zip -Force
-
-      - name: Install Inno Setup
-        shell: pwsh
-        run: choco install innosetup --yes --no-progress
-
-      - name: Build Windows installer EXE
-        shell: pwsh
-        run: |
-          $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([^\+]+)' | ForEach-Object { $_.Matches[0].Groups[1].Value })
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" windows_installer\BusinessOSPharmacy.iss
-
-      - name: Upload Windows installer
-        uses: actions/upload-artifact@v6
-        with:
-          name: businessos-pharmacy-windows
-          path: |
-            mobile/build/windows/installer/BusinessOS-Pharmacy-Setup.exe
-            mobile/build/windows/BusinessOS-Pharmacy-Portable.zip
-          retention-days: 30

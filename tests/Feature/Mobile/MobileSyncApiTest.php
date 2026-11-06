@@ -4,6 +4,7 @@ namespace Tests\Feature\Mobile;
 
 use App\Models\Branch;
 use App\Models\Customer;
+use App\Models\GoodsReceipt;
 use App\Models\Medicine;
 use App\Models\ProductBatch;
 use App\Models\PurchaseOrder;
@@ -13,8 +14,10 @@ use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Inventory\StockMovementService;
+use App\Services\Mobile\MobileGoodsReceiptService;
 use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class MobileSyncApiTest extends TestCase
@@ -357,6 +360,96 @@ class MobileSyncApiTest extends TestCase
         $this->assertSame('100.0000', $order['grand_total']);
         $this->assertCount(1, $order['lines']);
         $this->assertSame('10.0000', $order['lines'][0]['ordered_quantity']);
+    }
+
+    public function test_cashier_cannot_capture_goods_receipt_through_mobile_sync(): void
+    {
+        $event = [
+            'idempotency_key' => 'grn:unauthorized-cashier-001',
+            'event_type' => 'goods_receipt.create',
+            'payload' => [
+                'local_id' => 'grn:unauthorized-cashier-001',
+                'idempotency_key' => 'grn:unauthorized-cashier-001',
+                'purchase_order_id' => '01J00000000000000000000000',
+                'received_at' => now()->toISOString(),
+                'lines' => [[
+                    'purchase_order_line_id' => '01J00000000000000000000001',
+                    'received_quantity' => '1',
+                    'bonus_quantity' => '0',
+                    'unit_cost' => '10',
+                ]],
+            ],
+        ];
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/sync/push', [
+                'events' => [$event],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.status', 'rejected')
+            ->assertJsonPath('data.results.0.code', 'permission_denied')
+            ->assertJsonPath('data.results.0.retryable', false);
+    }
+
+    public function test_goods_receipt_capture_is_idempotent_and_does_not_post_inventory(): void
+    {
+        $this->tenant->run(function (): void {
+            $supplier = Supplier::query()->create([
+                'code' => 'GRN-SUP',
+                'name' => 'Receipt Supplier',
+                'is_active' => true,
+            ]);
+            $user = User::query()->where('email', 'mobile@sync.test')->firstOrFail();
+            $medicine = Medicine::query()->where('medicine_code', 'SYNC-001')->firstOrFail();
+            $order = PurchaseOrder::query()->create([
+                'supplier_id' => $supplier->id,
+                'number' => 'PO-GRN-001',
+                'created_by' => $user->id,
+                'status' => 'approved',
+                'order_date' => today(),
+                'currency' => 'AFN',
+                'subtotal' => '100.0000',
+                'discount_total' => '0.0000',
+                'landed_cost_total' => '0.0000',
+                'grand_total' => '100.0000',
+            ]);
+            $line = $order->lines()->create([
+                'medicine_id' => $medicine->id,
+                'description' => 'Sync Medicine',
+                'ordered_quantity' => '10.0000',
+                'received_quantity' => '0.0000',
+                'unit_cost' => '10.0000',
+                'discount_amount' => '0.0000',
+                'landed_cost_allocated' => '0.0000',
+                'line_total' => '100.0000',
+            ]);
+            $payload = [
+                'purchase_order_id' => $order->id,
+                'received_at' => now()->toISOString(),
+                'lines' => [[
+                    'purchase_order_line_id' => $line->id,
+                    'received_quantity' => '4',
+                    'bonus_quantity' => '0',
+                    'unit_cost' => '10',
+                    'batch_number' => 'GRN-LOT',
+                    'expires_at' => today()->addMonths(6)->toDateString(),
+                ]],
+            ];
+            $service = app(MobileGoodsReceiptService::class);
+            $before = ProductBatch::query()->where('medicine_id', $medicine->id)->sum('available_quantity');
+            $first = $service->capture($user, $payload, 'grn:integration-001');
+            $again = $service->capture($user, $payload, 'grn:integration-001');
+            $this->assertSame($first->id, $again->id);
+            $this->assertSame('pending_inventory', $first->status);
+            $this->assertNull($first->inventory_posted_at);
+            $this->assertSame(1, GoodsReceipt::query()->where('idempotency_key', 'grn:integration-001')->count());
+            $this->assertEquals($before, ProductBatch::query()->where('medicine_id', $medicine->id)->sum('available_quantity'));
+
+            $over = $payload;
+            $over['lines'][0]['received_quantity'] = '7';
+            $this->expectException(ValidationException::class);
+            $service->capture($user, $over, 'grn:integration-002');
+        });
     }
 
     public function test_session_refresh_renews_access_without_plaintext_license_key(): void

@@ -31,6 +31,7 @@ class _OperationalAlertsCardState extends ConsumerState<OperationalAlertsCard> {
   }
 
   Future<void> _load() async {
+    if (mounted) setState(() => _loading = true);
     try {
       final MobileRegistration? registration = await ref.read(
         mobileRegistrationProvider.future,
@@ -99,13 +100,12 @@ class _OperationalAlertsCardState extends ConsumerState<OperationalAlertsCard> {
       return;
     }
 
-    await repository.setNotificationsEnabled(true);
-    await notifications.notifyIfChanged(snapshot, repository);
-
-    if (mounted) {
-      setState(() {
-        _notificationsEnabled = true;
-      });
+    try {
+      await repository.setNotificationsEnabled(true);
+      await notifications.notifyIfChanged(snapshot, repository);
+      if (mounted) setState(() => _notificationsEnabled = true);
+    } on Object catch (error) {
+      if (mounted) setState(() => _error = error.toString());
     }
   }
 
@@ -124,7 +124,20 @@ class _OperationalAlertsCardState extends ConsumerState<OperationalAlertsCard> {
 
     if (_error != null) {
       return Card(
-        child: Padding(padding: const EdgeInsets.all(20), child: Text(_error!)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(_error!),
+              TextButton.icon(
+                onPressed: _load,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry alerts'),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

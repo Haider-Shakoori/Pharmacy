@@ -415,6 +415,13 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         _checkingOut = false;
         _error = strings.posInvalidValue;
       });
+    } on Object catch (error) {
+      // Checkout is atomic. Keep the cart if persistence fails.
+      if (!mounted) return;
+      setState(() {
+        _checkingOut = false;
+        _error = 'Unable to complete the offline sale: $error';
+      });
     }
   }
 
@@ -526,13 +533,28 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
             style: Theme.of(context).textTheme.titleMedium
                 ?.copyWith(fontWeight: FontWeight.w800),
           ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () async {
+                try {
+                  final recent = await _receipts.recentCompleted();
+                  if (mounted) setState(() => _recentReceipts = recent);
+                } on Object catch (error) {
+                  if (mounted) setState(() => _error = error.toString());
+                }
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh receipts'),
+            ),
+          ),
           ..._recentReceipts.map(
             (OfflineReceipt receipt) => Card(
               child: ListTile(
                 leading: const Icon(Icons.receipt_long_rounded),
                 title: Text(receipt.displayNumber),
                 subtitle: Text(
-                  '${receipt.total.compact} AFN • ${receipt.businessDate}',
+                  '${receipt.total.compact} AFN • ${receipt.businessDate} • ${receipt.syncState}',
                 ),
                 trailing: IconButton(
                   tooltip: strings.receiptPrint,

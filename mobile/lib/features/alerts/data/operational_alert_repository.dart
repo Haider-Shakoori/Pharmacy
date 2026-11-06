@@ -116,8 +116,16 @@ class OperationalAlertRepository {
       }
     }
 
+    // The alert list is capped for readability, but the badge must report
+    // every rejected transaction, including those outside the first page.
+    final QueryRow rejectedCountRow = await _database.customSelect('''
+      SELECT COUNT(*) AS total
+      FROM sync_outbox_entries
+      WHERE status = 'rejected'
+      ''').getSingle();
+
     final List<QueryRow> rejectedRows = await _database.customSelect('''
-      SELECT aggregate_id, last_error
+      SELECT aggregate_id, event_type, last_error
       FROM sync_outbox_entries
       WHERE status = 'rejected'
       ORDER BY updated_at DESC
@@ -129,10 +137,14 @@ class OperationalAlertRepository {
           (QueryRow row) => LocalOperationalAlert(
             kind: OperationalAlertKind.syncRejected,
             severity: OperationalAlertSeverity.critical,
-            title: 'Sale synchronization conflict',
+            title: row.read<String>('event_type') == 'goods_receipt.create'
+                ? 'Goods receipt synchronization conflict'
+                : row.read<String>('event_type') == 'sale.completed'
+                ? 'Sale synchronization conflict'
+                : 'Transaction synchronization conflict',
             detail:
                 row.readNullable<String>('last_error') ??
-                'A completed offline sale needs reconciliation.',
+                'An offline transaction needs reconciliation.',
           ),
         )
         .toList(growable: false);
@@ -147,7 +159,7 @@ class OperationalAlertRepository {
       lowStockCount: lowStock.length,
       nearExpiryCount: nearExpiry.length,
       expiredCount: expired.length,
-      syncRejectedCount: rejected.length,
+      syncRejectedCount: rejectedCountRow.read<int>('total'),
     );
   }
 

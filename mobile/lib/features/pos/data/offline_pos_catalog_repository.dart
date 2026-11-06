@@ -27,8 +27,20 @@ class OfflinePosCatalogRepository {
     String query = '',
     int limit = 30,
   }) async {
+    if (limit < 1 || limit > 500) {
+      throw RangeError.range(limit, 1, 500, 'limit');
+    }
+    if (stockLocationId.trim().isEmpty) {
+      throw const FormatException('Stock location is required.');
+    }
+    final String locationId = stockLocationId.trim();
     final String needle = query.trim();
-    final String pattern = '%$needle%';
+    // Escape LIKE metacharacters so a literal search cannot become a wildcard.
+    final String escapedNeedle = needle
+        .replaceAll(r'\', r'\\')
+        .replaceAll('%', r'\%')
+        .replaceAll('_', r'\_');
+    final String pattern = '%$escapedNeedle%';
 
     final medicineQuery = _database.select(_database.localMedicines)
       ..where(
@@ -37,14 +49,16 @@ class OfflinePosCatalogRepository {
             table.isDeleted.equals(false) &
             (needle.isEmpty
                 ? const Constant<bool>(true)
-                : table.brandName.like(pattern) |
-                      table.genericName.like(pattern) |
-                      table.medicineCode.like(pattern)),
+                : table.brandName.like(pattern, escapeChar: r'\') |
+                      table.genericName.like(pattern, escapeChar: r'\') |
+                      table.medicineCode.like(pattern, escapeChar: r'\')),
       )
-      ..limit(limit);
+      ..orderBy([(table) => OrderingTerm(expression: table.brandName)]);
 
     final medicines = await medicineQuery.get();
-    medicines.sort((a, b) => a.brandName.compareTo(b.brandName));
+    // Use one expiry boundary for the whole search, including large catalogs.
+    final DateTime now = DateTime.now();
+    final DateTime startOfToday = DateTime(now.year, now.month, now.day);
     final List<OfflinePosCatalogItem> results = <OfflinePosCatalogItem>[];
 
     for (final medicine in medicines) {
@@ -52,7 +66,7 @@ class OfflinePosCatalogRepository {
         ..where(
           (table) =>
               table.medicineId.equals(medicine.id) &
-              table.stockLocationId.equals(stockLocationId) &
+              table.stockLocationId.equals(locationId) &
               table.status.equals('active') &
               table.isDeleted.equals(false),
         );
@@ -72,18 +86,12 @@ class OfflinePosCatalogRepository {
           return -1;
         }
 
-        return left.compareTo(right);
+        final int byExpiry = left.compareTo(right);
+        return byExpiry != 0 ? byExpiry : a.id.compareTo(b.id);
       });
 
       FixedDecimal available = FixedDecimal.zero;
       FixedDecimal? salePrice;
-      final DateTime today = DateTime.now();
-      final DateTime startOfToday = DateTime(
-        today.year,
-        today.month,
-        today.day,
-      );
-
       for (final batch in batches) {
         final FixedDecimal quantity = FixedDecimal.parse(
           batch.availableQuantity,
@@ -111,11 +119,14 @@ class OfflinePosCatalogRepository {
           brandName: medicine.brandName,
           genericName: medicine.genericName,
           saleUnit: medicine.saleUnit,
-          stockLocationId: stockLocationId,
+          stockLocationId: locationId,
           salePrice: salePrice,
           availableQuantity: available,
         ),
       );
+      if (results.length >= limit) {
+        break;
+      }
     }
 
     return results;

@@ -21,6 +21,10 @@ class ServerEndpoint {
 
     if (uri == null ||
         uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty ||
+        uri.hasFragment ||
+        uri.hasQuery ||
+        (uri.path.isNotEmpty && uri.path != '/') ||
         !<String>{'http', 'https'}.contains(uri.scheme)) {
       throw const FormatException(
         'Enter a valid HTTP or HTTPS server address.',
@@ -60,6 +64,10 @@ class ServerEndpoint {
 
     final List<int?> octets = value.split('.').map(int.tryParse).toList();
     if (octets.length != 4 || octets.any((int? part) => part == null)) {
+      return false;
+    }
+
+    if (octets.any((int? part) => part! < 0 || part > 255)) {
       return false;
     }
 
