@@ -45,6 +45,19 @@ void main() {
     );
     await tester.pump();
 
+    await tester.enterText(
+      find.byKey(const ValueKey('dashboard-module-search')),
+      'Purchases',
+    );
+    await tester.pump();
+    expect(find.text('Purchases'), findsNWidgets(2));
+    expect(find.text('POS (Sales)'), findsNothing);
+    await tester.enterText(
+      find.byKey(const ValueKey('dashboard-module-search')),
+      '',
+    );
+    await tester.pump();
+
     await tester.tap(find.text('Medicines').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));

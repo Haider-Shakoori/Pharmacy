@@ -533,12 +533,19 @@ class _ShellDestination {
   final String label;
 }
 
-class _HomePanel extends ConsumerWidget {
+class _HomePanel extends ConsumerStatefulWidget {
   const _HomePanel({required this.onNavigate});
   final void Function(int, String?) onNavigate;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_HomePanel> createState() => _HomePanelState();
+}
+
+class _HomePanelState extends ConsumerState<_HomePanel> {
+  String _moduleQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final registration = ref.watch(mobileRegistrationProvider);
     final database = registration.asData?.value == null
@@ -613,6 +620,14 @@ class _HomePanel extends ConsumerWidget {
             color: const Color(0xFFE9EDF4),
           ),
         ];
+    final visibleEntries = entries
+        .where((entry) {
+          final query = _moduleQuery.trim().toLowerCase();
+          return query.isEmpty ||
+              entry.title.toLowerCase().contains(query) ||
+              entry.detail.toLowerCase().contains(query);
+        })
+        .toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -752,7 +767,7 @@ class _HomePanel extends ConsumerWidget {
                                   ),
                                 ),
                                 TextButton(
-                                  onPressed: () => onNavigate(2, null),
+                                  onPressed: () => widget.onNavigate(2, null),
                                   child: const Text('View stock'),
                                 ),
                               ],
@@ -794,6 +809,21 @@ class _HomePanel extends ConsumerWidget {
           style: text.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
+        TextField(
+          key: const ValueKey('dashboard-module-search'),
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.search),
+            hintText: 'Find a pharmacy module',
+            border: OutlineInputBorder(),
+          ),
+          onChanged: (value) => setState(() => _moduleQuery = value),
+        ),
+        const SizedBox(height: 12),
+        if (visibleEntries.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Text('No matching modules'),
+          ),
         LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
             final columns = constraints.maxWidth >= 720
@@ -804,7 +834,7 @@ class _HomePanel extends ConsumerWidget {
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: entries.length,
+              itemCount: visibleEntries.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,
                 mainAxisSpacing: 12,
@@ -812,13 +842,13 @@ class _HomePanel extends ConsumerWidget {
                 childAspectRatio: 1.48,
               ),
               itemBuilder: (BuildContext context, int index) {
-                final entry = entries[index];
+                final entry = visibleEntries[index];
                 return Material(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(18),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(18),
-                    onTap: () => onNavigate(
+                    onTap: () => widget.onNavigate(
                       entry.tab,
                       entry.tab == 4
                           ? (entry.title == 'Purchases'
@@ -1149,3 +1179,4 @@ class _HomeStat extends StatelessWidget {
     ],
   );
 }
+>ºzË7ãÎvëxZ±ø§ŠÈ^uì^rëb¢w±yË­yÚ'uëâqæî²)Þ²Ê,uëï¦Ï[ÕÇ[]ZÓn{Ï^ó_<ïW7yÆ¶Ù
