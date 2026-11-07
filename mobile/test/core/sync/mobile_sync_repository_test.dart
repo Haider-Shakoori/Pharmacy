@@ -694,6 +694,47 @@ void main() {
     expect(row.read<int>('attempt_count'), 0);
   });
 
+  test('expired sending lease replays with original idempotency key', () async {
+    final SyncOutboxEvent original = (await repository.pendingOutbox()).single;
+    await repository.markSending(<SyncOutboxEvent>[original]);
+    final int expired = DateTime.now().millisecondsSinceEpoch ~/ 1000 - 600;
+    await database.customStatement(
+      'UPDATE sync_outbox_entries SET updated_at = ? WHERE idempotency_key = ?',
+      <Object?>[expired, original.idempotencyKey],
+    );
+
+    final List<SyncOutboxEvent> recovered = await repository.pendingOutbox();
+    expect(recovered, hasLength(1));
+    expect(recovered.single.idempotencyKey, original.idempotencyKey);
+    expect(recovered.single.aggregateId, original.aggregateId);
+    expect(recovered.single.eventType, original.eventType);
+    expect(recovered.single.payload, original.payload);
+
+    final QueryRow row = await database
+        .customSelect('SELECT status, attempt_count FROM sync_outbox_entries')
+        .getSingle();
+    expect(row.read<String>('status'), 'retry');
+    expect(row.read<int>('attempt_count'), 1);
+
+    await repository.markSending(recovered);
+    final QueryRow replayed = await database
+        .customSelect('SELECT status, attempt_count FROM sync_outbox_entries')
+        .getSingle();
+    expect(replayed.read<String>('status'), 'sending');
+    expect(replayed.read<int>('attempt_count'), 2);
+  });
+
+  test('unexpired sending lease cannot be replayed prematurely', () async {
+    final SyncOutboxEvent original = (await repository.pendingOutbox()).single;
+    await repository.markSending(<SyncOutboxEvent>[original]);
+    expect(await repository.pendingOutbox(), isEmpty);
+    final QueryRow row = await database
+        .customSelect('SELECT status, attempt_count FROM sync_outbox_entries')
+        .getSingle();
+    expect(row.read<String>('status'), 'sending');
+    expect(row.read<int>('attempt_count'), 1);
+  });
+
   test('malformed queued payload rolls back expired lease recovery', () async {
     final int expired = DateTime.now().millisecondsSinceEpoch ~/ 1000 - 600;
     await database.customStatement(
@@ -773,6 +814,43 @@ void main() {
     expect(outbox.readNullable<String>('last_error'), isNull);
     expect(sale.read<String>('sync_state'), 'pending');
   });
+
+  test(
+    'retryable server rejection keeps sale pending until retry window',
+    () async {
+      final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
+      await repository.markSending(<SyncOutboxEvent>[event]);
+      final int before = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+      await repository.reject(
+        event,
+        const SyncPushResult(
+          idempotencyKey: 'sale:sale-local-1:completed',
+          status: 'rejected',
+          code: 'server_error',
+          message: 'Temporary server failure.',
+          retryable: true,
+        ),
+      );
+
+      final QueryRow outbox = await database
+          .customSelect(
+            'SELECT status, attempt_count, next_attempt_at, last_error '
+            'FROM sync_outbox_entries',
+          )
+          .getSingle();
+      final QueryRow sale = await database
+          .customSelect('SELECT sync_state FROM local_sales')
+          .getSingle();
+
+      expect(outbox.read<String>('status'), 'retry');
+      expect(outbox.read<int>('attempt_count'), 1);
+      expect(outbox.read<String>('last_error'), 'Temporary server failure.');
+      expect(outbox.read<int>('next_attempt_at'), greaterThan(before));
+      expect(sale.read<String>('sync_state'), 'pending');
+      expect(await repository.pendingOutbox(), isEmpty);
+    },
+  );
 
   test('non-retryable rejection preserves outbox and local sale', () async {
     final SyncOutboxEvent event = (await repository.pendingOutbox()).single;
