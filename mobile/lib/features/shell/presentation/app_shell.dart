@@ -555,6 +555,7 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final strings = AppStrings.of(context);
     final registration = ref.watch(mobileRegistrationProvider);
     final database = registration.asData?.value == null
         ? null
@@ -640,12 +641,12 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Dashboard',
+          strings.dashboardTitle,
           style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 5),
         Text(
-          'Your pharmacy at a glance',
+          strings.dashboardSubtitle,
           style: text.bodyMedium?.copyWith(color: Colors.blueGrey),
         ),
         const SizedBox(height: 16),
@@ -687,15 +688,15 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
         const SizedBox(height: 14),
         Row(
           children: <Widget>[
-            const Expanded(
+            Expanded(
               child: Text(
-                'Local overview',
+                strings.dashboardLocalOverview,
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
             ),
             IconButton(
               key: const ValueKey('dashboard-refresh'),
-              tooltip: 'Refresh local overview',
+              tooltip: strings.dashboardRefresh,
               onPressed: () => setState(() => _summaryRefreshVersion++),
               icon: const Icon(Icons.refresh_rounded),
             ),
@@ -831,7 +832,7 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
           ),
         const SizedBox(height: 20),
         Text(
-          'Quick access',
+          strings.dashboardQuickAccess,
           style: text.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
@@ -839,13 +840,13 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
           key: const ValueKey('dashboard-module-search'),
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search),
-            hintText: 'Find a pharmacy module',
+            hintText: strings.dashboardSearchHint,
             border: const OutlineInputBorder(),
             suffixIcon: _moduleQuery.isEmpty
                 ? null
                 : IconButton(
                     key: const ValueKey('dashboard-clear-search'),
-                    tooltip: 'Clear module search',
+                    tooltip: strings.dashboardClearSearch,
                     onPressed: () {
                       FocusScope.of(context).unfocus();
                       _moduleSearchController.clear();
@@ -861,18 +862,19 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
         Semantics(
           liveRegion: true,
           child: Text(
-            _moduleQuery.trim().isEmpty
-                ? '${visibleEntries.length} pharmacy modules available'
-                : '${visibleEntries.length} matching modules',
+            strings.dashboardResultCount(
+              visibleEntries.length,
+              filtered: _moduleQuery.trim().isNotEmpty,
+            ),
             key: const ValueKey('dashboard-search-result-count'),
             style: text.bodySmall?.copyWith(color: Colors.blueGrey),
           ),
         ),
         const SizedBox(height: 8),
         if (visibleEntries.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Text('No matching modules'),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Text(strings.dashboardNoMatches),
           ),
         LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {

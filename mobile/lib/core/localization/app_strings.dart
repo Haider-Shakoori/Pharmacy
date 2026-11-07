@@ -19,6 +19,17 @@ class AppStrings {
   String get appName => _value('appName');
   String get foundation => _value('foundation');
   String get foundationBody => _value('foundationBody');
+  String get dashboardTitle => _value('dashboardTitle');
+  String get dashboardSubtitle => _value('dashboardSubtitle');
+  String get dashboardQuickAccess => _value('dashboardQuickAccess');
+  String get dashboardSearchHint => _value('dashboardSearchHint');
+  String get dashboardNoMatches => _value('dashboardNoMatches');
+  String get dashboardLocalOverview => _value('dashboardLocalOverview');
+  String get dashboardRefresh => _value('dashboardRefresh');
+  String get dashboardClearSearch => _value('dashboardClearSearch');
+  String dashboardResultCount(int count, {required bool filtered}) =>
+      _value(filtered ? 'dashboardMatchingCount' : 'dashboardAvailableCount')
+          .replaceFirst('{count}', count.toString());
   String get home => _value('home');
   String get medicines => _value('medicines');
   String get reports => _value('reports');
@@ -176,6 +187,16 @@ class AppStrings {
   static const Map<AppLocale, Map<String, String>>
   _translations = <AppLocale, Map<String, String>>{
     AppLocale.english: <String, String>{
+      'dashboardTitle': 'Dashboard',
+      'dashboardSubtitle': 'Your pharmacy at a glance',
+      'dashboardQuickAccess': 'Quick access',
+      'dashboardSearchHint': 'Find a pharmacy module',
+      'dashboardNoMatches': 'No matching modules',
+      'dashboardLocalOverview': 'Local overview',
+      'dashboardRefresh': 'Refresh local overview',
+      'dashboardClearSearch': 'Clear module search',
+      'dashboardMatchingCount': '{count} matching modules',
+      'dashboardAvailableCount': '{count} pharmacy modules available',
       'home': 'Home',
       'medicines': 'Medicines',
       'reports': 'Reports',
@@ -318,6 +339,16 @@ class AppStrings {
       'syncPulled': 'records pulled',
     },
     AppLocale.dari: <String, String>{
+      'dashboardTitle': 'داشبورد',
+      'dashboardSubtitle': 'نمای کلی دواخانه شما',
+      'dashboardQuickAccess': 'دسترسی سریع',
+      'dashboardSearchHint': 'جستجوی بخش دواخانه',
+      'dashboardNoMatches': 'هیچ بخشی یافت نشد',
+      'dashboardLocalOverview': 'نمای کلی محلی',
+      'dashboardRefresh': 'تازه‌سازی نمای کلی',
+      'dashboardClearSearch': 'پاک کردن جستجو',
+      'dashboardMatchingCount': '{count} بخش مطابق',
+      'dashboardAvailableCount': '{count} بخش دواخانه موجود',
       'home': 'خانه',
       'medicines': 'دواها',
       'reports': 'گزارش‌ها',
@@ -461,6 +492,16 @@ class AppStrings {
       'syncPulled': 'رکورد دریافت شد',
     },
     AppLocale.pashto: <String, String>{
+      'dashboardTitle': 'ډشبورډ',
+      'dashboardSubtitle': 'ستاسو د درملتون لنډه کتنه',
+      'dashboardQuickAccess': 'چټک لاسرسی',
+      'dashboardSearchHint': 'د درملتون برخه ولټوئ',
+      'dashboardNoMatches': 'هیڅ برخه ونه موندل شوه',
+      'dashboardLocalOverview': 'ځايي لنډیز',
+      'dashboardRefresh': 'ځايي لنډیز تازه کړئ',
+      'dashboardClearSearch': 'لټون پاک کړئ',
+      'dashboardMatchingCount': '{count} برابرې برخې',
+      'dashboardAvailableCount': '{count} د درملتون برخې شته',
       'home': 'کور',
       'medicines': 'درمل',
       'reports': 'راپورونه',
