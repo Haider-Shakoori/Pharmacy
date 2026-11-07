@@ -36,7 +36,9 @@ class MedicineScanCoordinator {
     final uri = Uri.tryParse(imagePath.trim());
     if (uri == null ||
         (uri.hasScheme && uri.scheme != 'file') ||
-        (uri.scheme == 'file' && uri.host.isNotEmpty)) {
+        (uri.scheme == 'file' && uri.host.isNotEmpty) ||
+        (uri.scheme.isEmpty && !imagePath.trim().startsWith('/')) ||
+        (uri.scheme == 'file' && !uri.path.startsWith('/'))) {
       throw ArgumentError.value(
         imagePath,
         'imagePath',

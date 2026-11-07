@@ -34,7 +34,9 @@ class MedicineImageAcquisition {
     final uri = Uri.tryParse(cleaned);
     if (uri == null ||
         (uri.hasScheme && uri.scheme != 'file') ||
-        (uri.scheme == 'file' && uri.host.isNotEmpty)) {
+        (uri.scheme == 'file' && uri.host.isNotEmpty) ||
+        (uri.scheme.isEmpty && !cleaned.startsWith('/')) ||
+        (uri.scheme == 'file' && !uri.path.startsWith('/'))) {
       throw StateError('Only local image paths are permitted');
     }
     return MedicineImageSelection(localPath: cleaned, origin: origin);

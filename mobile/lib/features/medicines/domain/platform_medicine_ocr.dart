@@ -29,8 +29,21 @@ class PlatformMedicineOcr implements NativeMedicineOcr {
 
   @override
   Future<List<String>> recognizeLocalImage(String imagePath) async {
-    if (imagePath.trim().isEmpty) {
+    final cleaned = imagePath.trim();
+    if (cleaned.isEmpty) {
       throw ArgumentError.value(imagePath, 'imagePath', 'Image path required');
+    }
+    final uri = Uri.tryParse(cleaned);
+    if (uri == null ||
+        (uri.hasScheme && uri.scheme != 'file') ||
+        (uri.scheme == 'file' && uri.host.isNotEmpty) ||
+        (uri.scheme.isEmpty && !cleaned.startsWith('/')) ||
+        (uri.scheme == 'file' && !uri.path.startsWith('/'))) {
+      throw ArgumentError.value(
+        imagePath,
+        'imagePath',
+        'Only local absolute image paths are allowed',
+      );
     }
     try {
       final lines = await _channel.invokeListMethod<String>(

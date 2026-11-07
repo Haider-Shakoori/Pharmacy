@@ -51,6 +51,16 @@ void main() {
     );
   });
 
+  test('remote and relative paths rejected before platform call', () async {
+    for (final path in [
+      'https://example.com/image.jpg',
+      'relative.jpg',
+      'content://external/image',
+    ]) {
+      await expectLater(ocr.recognizeLocalImage(path), throwsArgumentError);
+    }
+  });
+
   test('empty path rejected before platform call', () async {
     await expectLater(ocr.recognizeLocalImage(' '), throwsArgumentError);
   });

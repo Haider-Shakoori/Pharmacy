@@ -59,6 +59,15 @@ void main() {
     expect(ocr.calls, 0);
   });
 
+  test('rejects relative paths without invoking OCR', () async {
+    final ocr = FakeNativeOcr();
+    await expectLater(
+      MedicineScanCoordinator(ocr: ocr).scanLocalImage('image.jpg'),
+      throwsArgumentError,
+    );
+    expect(ocr.calls, 0);
+  });
+
   test('rejects empty image path without invoking OCR', () async {
     final ocr = FakeNativeOcr();
     await expectLater(
