@@ -10,6 +10,7 @@ import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_catalog_repository.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_checkout_service.dart';
 import 'package:businessos_pharmacy/features/pos/domain/offline_pos_models.dart';
+import 'package:businessos_pharmacy/features/pos/domain/pos_search_gate.dart';
 import 'package:businessos_pharmacy/features/receipt/data/offline_receipt_repository.dart';
 import 'package:businessos_pharmacy/features/receipt/domain/offline_receipt.dart';
 import 'package:businessos_pharmacy/features/receipt/presentation/receipt_print_sheet.dart';
@@ -89,6 +90,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   late final OfflinePosCheckoutService _checkout;
   late final OfflineReceiptRepository _receipts;
   final TextEditingController _searchController = TextEditingController();
+  final PosSearchGate _searchGate = PosSearchGate();
 
   List<String> _locations = <String>[];
   List<OfflinePosCatalogItem> _results = <OfflinePosCatalogItem>[];
@@ -170,8 +172,10 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   }
 
   Future<void> _search() async {
+    final int generation = _searchGate.begin();
     final String? locationId = _locationId;
     if (locationId == null) {
+      if (mounted) setState(() => _results = <OfflinePosCatalogItem>[]);
       return;
     }
 
@@ -181,7 +185,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         query: _searchController.text,
       );
 
-      if (!mounted) {
+      if (!mounted || !_searchGate.isCurrent(generation)) {
         return;
       }
       setState(() {
@@ -189,7 +193,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         _error = null;
       });
     } on Object catch (error) {
-      if (!mounted) {
+      if (!mounted || !_searchGate.isCurrent(generation)) {
         return;
       }
       setState(() {
@@ -340,7 +344,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   Future<void> _complete() async {
     final AppStrings strings = AppStrings.of(context);
     final String? locationId = _locationId;
-    if (locationId == null || _cart.isEmpty) {
+    if (_checkingOut || locationId == null || _cart.isEmpty) {
       return;
     }
 
@@ -473,12 +477,21 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                         ),
                       )
                       .toList(growable: false),
-                  onChanged: (String? value) {
-                    setState(() {
-                      _locationId = value;
-                    });
-                    _search();
-                  },
+                  onChanged: _checkingOut
+                      ? null
+                      : (String? value) {
+                          if (value == _locationId) return;
+                          _searchGate.invalidate();
+                          setState(() {
+                            _locationId = value;
+                            // Cart lines must never be checked out against another
+                            // location's batch inventory.
+                            _cart.clear();
+                            _results = <OfflinePosCatalogItem>[];
+                            _error = null;
+                          });
+                          _search();
+                        },
                 ),
                 const SizedBox(height: 12),
                 TextField(
