@@ -15,6 +15,39 @@ void main() {
       }
     });
 
+    test('rejects unknown acknowledgement statuses', () {
+      for (final Object? status in <Object?>[
+        null,
+        '',
+        'pending',
+        'ACCEPTED',
+        1,
+      ]) {
+        expect(
+          () => SyncPushResult.fromJson(<String, dynamic>{
+            'idempotency_key': 'event-1',
+            'status': status,
+          }),
+          throwsFormatException,
+        );
+      }
+    });
+
+    test('preserves retryable rejection details for replay', () {
+      final SyncPushResult result = SyncPushResult.fromJson(<String, dynamic>{
+        'idempotency_key': 'event-1',
+        'status': 'rejected',
+        'retryable': true,
+        'code': 'temporary_unavailable',
+        'message': 'Try again',
+      });
+      expect(result.accepted, isFalse);
+      expect(result.retryable, isTrue);
+      expect(result.idempotencyKey, 'event-1');
+      expect(result.code, 'temporary_unavailable');
+      expect(result.message, 'Try again');
+    });
+
     test('rejects malformed acknowledgement server identifiers', () {
       for (final Object invalid in <Object>['', '  ', 0, -1, true]) {
         expect(
@@ -117,6 +150,47 @@ void main() {
       );
     });
 
+    test('rejects malformed pull payload rows and continuation flags', () {
+      for (final Object invalidData in <Object>[
+        'not-a-list',
+        <Object?>[null],
+        <Object>['not-a-map'],
+      ]) {
+        expect(
+          () => SyncPullPage.fromJson(<String, dynamic>{
+            'stream': 'inventory',
+            'data': invalidData,
+            'has_more': false,
+            'next_cursor': null,
+          }),
+          throwsFormatException,
+        );
+      }
+      for (final Object invalidFlag in <Object>['false', 0, 1]) {
+        expect(
+          () => SyncPullPage.fromJson(<String, dynamic>{
+            'stream': 'inventory',
+            'data': <Object>[],
+            'has_more': invalidFlag,
+            'next_cursor': null,
+          }),
+          throwsFormatException,
+        );
+      }
+    });
+
+    test('rejects oversized cursor on final pages as well', () {
+      expect(
+        () => SyncPullPage.fromJson(<String, dynamic>{
+          'stream': 'inventory',
+          'data': <Object>[],
+          'has_more': false,
+          'next_cursor': 'x' * 1001,
+        }),
+        throwsFormatException,
+      );
+    });
+
     test('accepts a valid final page with no continuation cursor', () {
       final SyncPullPage page = SyncPullPage.fromJson(<String, dynamic>{
         'stream': 'inventory',
@@ -126,6 +200,43 @@ void main() {
       });
       expect(page.hasMore, isFalse);
       expect(page.nextCursor, isNull);
+    });
+
+    test('rejects invalid persisted outbox JSON shapes', () {
+      for (final String payload in <String>['[]', 'null', '42', 'not-json']) {
+        expect(
+          () => SyncOutboxEvent.fromRow(
+            idempotencyKey: 'event-1',
+            aggregateId: 'sale-1',
+            eventType: 'sale.completed',
+            payloadJson: payload,
+          ),
+          throwsFormatException,
+        );
+      }
+    });
+
+    test('rejects missing event keys and event types before replay', () {
+      for (final String key in <String>['', '  ']) {
+        expect(
+          () => SyncOutboxEvent.fromRow(
+            idempotencyKey: key,
+            aggregateId: 'sale-1',
+            eventType: 'sale.completed',
+            payloadJson: '{}',
+          ),
+          throwsFormatException,
+        );
+      }
+      expect(
+        () => SyncOutboxEvent.fromRow(
+          idempotencyKey: 'event-1',
+          aggregateId: 'sale-1',
+          eventType: '  ',
+          payloadJson: '{}',
+        ),
+        throwsFormatException,
+      );
     });
 
     test('rejects invalid persisted outbox identities', () {
