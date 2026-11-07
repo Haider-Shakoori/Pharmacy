@@ -81,7 +81,14 @@ class _AppShellState extends ConsumerState<AppShell> {
           children: <Widget>[
             Icon(Icons.medication_rounded, color: Color(0xFF1557C0)),
             SizedBox(width: 9),
-            Text('Darmaltoon', style: TextStyle(fontWeight: FontWeight.w800)),
+            Flexible(
+              child: Text(
+                'Darmaltoon',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
           ],
         ),
         actions: <Widget>[
@@ -905,65 +912,75 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
                 crossAxisCount: columns,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 1.48,
+                mainAxisExtent:
+                    166 + (MediaQuery.textScalerOf(context).scale(1) - 1) * 120,
               ),
               itemBuilder: (BuildContext context, int index) {
                 final entry = visibleEntries[index];
                 return Material(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(18),
-                  child: InkWell(
-                    key: ValueKey(
-                      'dashboard-shortcut-${entry.tab}-${entry.title}',
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    onTap: () => widget.onNavigate(
-                      entry.tab,
-                      entry.tab == 4
-                          ? (entry.title == 'Purchases'
-                                ? 'Purchases'
-                                : entry.title == 'Alerts'
-                                ? 'Alerts'
-                                : entry.title == 'Sync'
-                                ? 'Sync'
-                                : entry.title == 'Settings'
-                                ? 'Settings'
-                                : 'Customers')
-                          : null,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Container(
-                            padding: const EdgeInsets.all(9),
-                            decoration: BoxDecoration(
-                              color: entry.color,
-                              borderRadius: BorderRadius.circular(12),
+                  child: Semantics(
+                    button: true,
+                    label:
+                        '${strings.dashboardModuleTitle(entry.title)} — ${strings.dashboardModuleDetail(entry.detail)}',
+                    child: InkWell(
+                      key: ValueKey(
+                        'dashboard-shortcut-${entry.tab}-${entry.title}',
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () => widget.onNavigate(
+                        entry.tab,
+                        entry.tab == 4
+                            ? (entry.title == 'Purchases'
+                                  ? 'Purchases'
+                                  : entry.title == 'Alerts'
+                                  ? 'Alerts'
+                                  : entry.title == 'Sync'
+                                  ? 'Sync'
+                                  : entry.title == 'Settings'
+                                  ? 'Settings'
+                                  : 'Customers')
+                            : null,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Container(
+                              padding: const EdgeInsets.all(9),
+                              decoration: BoxDecoration(
+                                color: entry.color,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                entry.icon,
+                                color: const Color(0xFF1557C0),
+                                size: 23,
+                              ),
                             ),
-                            child: Icon(
-                              entry.icon,
-                              color: const Color(0xFF1557C0),
-                              size: 23,
+                            const SizedBox(height: 8),
+                            Text(
+                              strings.dashboardModuleTitle(entry.title),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            strings.dashboardModuleTitle(entry.title),
-                            maxLines: 1,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            strings.dashboardModuleDetail(entry.detail),
-                            maxLines: 1,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.blueGrey,
+                            Text(
+                              strings.dashboardModuleDetail(entry.detail),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.blueGrey,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
