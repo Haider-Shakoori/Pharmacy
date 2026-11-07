@@ -666,25 +666,29 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
             ),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Row(
+          child: Row(
             children: <Widget>[
-              Icon(Icons.storefront_rounded, size: 36, color: Colors.white),
-              SizedBox(width: 14),
+              const Icon(
+                Icons.storefront_rounded,
+                size: 36,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      'Pharmacy workspace',
+                      strings.dashboardWorkspace,
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     Text(
-                      'Offline sales and inventory workspace',
+                      strings.dashboardWorkspaceSubtitle,
                       style: TextStyle(color: Colors.white70),
                     ),
                   ],
@@ -732,8 +736,8 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        const Text(
-                          'Today on this device',
+                        Text(
+                          strings.dashboardToday,
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
@@ -742,15 +746,15 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
                           runSpacing: 12,
                           children: <Widget>[
                             _HomeStat(
-                              label: 'Sales',
+                              label: strings.dashboardSales,
                               value: '${summary.salesCount}',
                             ),
                             _HomeStat(
-                              label: 'Revenue',
+                              label: strings.dashboardRevenue,
                               value: '${summary.total.compact} AFN',
                             ),
                             _HomeStat(
-                              label: 'Pending sync',
+                              label: strings.dashboardPendingSync,
                               value: '${summary.pendingSync}',
                             ),
                           ],
@@ -793,9 +797,9 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
                           children: <Widget>[
                             Row(
                               children: <Widget>[
-                                const Expanded(
+                                Expanded(
                                   child: Text(
-                                    'Inventory alerts — local catalog',
+                                    strings.dashboardInventoryAlerts,
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -803,7 +807,7 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
                                 ),
                                 TextButton(
                                   onPressed: () => widget.onNavigate(2, null),
-                                  child: const Text('View stock'),
+                                  child: Text(strings.dashboardViewStock),
                                 ),
                               ],
                             ),
@@ -813,22 +817,24 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
                               runSpacing: 12,
                               children: <Widget>[
                                 _HomeStat(
-                                  label: 'Out of stock',
+                                  label: strings.dashboardOutOfStock,
                                   value: '${overview.outOfStock}',
                                 ),
                                 _HomeStat(
-                                  label: 'Expired batches',
+                                  label: strings.dashboardExpiredBatches,
                                   value: '${overview.expiredBatches}',
                                 ),
                                 _HomeStat(
-                                  label: 'Expiring in 30 days',
+                                  label: strings.dashboardExpiringSoon,
                                   value: '${overview.expiringBatches}',
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Based on ${overview.medicines} locally synced active medicines.',
+                              strings.dashboardMedicineCount(
+                                overview.medicines,
+                              ),
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],

@@ -75,6 +75,20 @@ class AppStrings {
     return details[englishDetail] ?? englishDetail;
   }
 
+  String get dashboardWorkspace => _value('dashboardWorkspace');
+  String get dashboardWorkspaceSubtitle => _value('dashboardWorkspaceSubtitle');
+  String get dashboardToday => _value('dashboardToday');
+  String get dashboardSales => _value('dashboardSales');
+  String get dashboardRevenue => _value('dashboardRevenue');
+  String get dashboardPendingSync => _value('dashboardPendingSync');
+  String get dashboardInventoryAlerts => _value('dashboardInventoryAlerts');
+  String get dashboardViewStock => _value('dashboardViewStock');
+  String get dashboardOutOfStock => _value('dashboardOutOfStock');
+  String get dashboardExpiredBatches => _value('dashboardExpiredBatches');
+  String get dashboardExpiringSoon => _value('dashboardExpiringSoon');
+  String dashboardMedicineCount(int count) =>
+      _value('dashboardMedicineCount')
+          .replaceFirst('{count}', count.toString());
   String get dashboardTitle => _value('dashboardTitle');
   String get dashboardSubtitle => _value('dashboardSubtitle');
   String get dashboardQuickAccess => _value('dashboardQuickAccess');
@@ -243,6 +257,19 @@ class AppStrings {
   static const Map<AppLocale, Map<String, String>>
   _translations = <AppLocale, Map<String, String>>{
     AppLocale.english: <String, String>{
+      'dashboardWorkspace': 'Pharmacy workspace',
+      'dashboardWorkspaceSubtitle': 'Offline sales and inventory workspace',
+      'dashboardToday': 'Today on this device',
+      'dashboardSales': 'Sales',
+      'dashboardRevenue': 'Revenue',
+      'dashboardPendingSync': 'Pending sync',
+      'dashboardInventoryAlerts': 'Inventory alerts — local catalog',
+      'dashboardViewStock': 'View stock',
+      'dashboardOutOfStock': 'Out of stock',
+      'dashboardExpiredBatches': 'Expired batches',
+      'dashboardExpiringSoon': 'Expiring in 30 days',
+      'dashboardMedicineCount':
+          'Based on {count} locally synced active medicines.',
       'dashboardTitle': 'Dashboard',
       'dashboardSubtitle': 'Your pharmacy at a glance',
       'dashboardQuickAccess': 'Quick access',
@@ -395,6 +422,18 @@ class AppStrings {
       'syncPulled': 'records pulled',
     },
     AppLocale.dari: <String, String>{
+      'dashboardWorkspace': 'محیط کاری دواخانه',
+      'dashboardWorkspaceSubtitle': 'فروش و موجودی آفلاین',
+      'dashboardToday': 'امروز در این دستگاه',
+      'dashboardSales': 'فروش',
+      'dashboardRevenue': 'عواید',
+      'dashboardPendingSync': 'در انتظار همگام‌سازی',
+      'dashboardInventoryAlerts': 'هشدارهای موجودی محلی',
+      'dashboardViewStock': 'مشاهده موجودی',
+      'dashboardOutOfStock': 'ناموجود',
+      'dashboardExpiredBatches': 'بچ‌های منقضی',
+      'dashboardExpiringSoon': 'انقضا در ۳۰ روز',
+      'dashboardMedicineCount': 'بر اساس {count} دوای فعال همگام‌شده.',
       'dashboardTitle': 'داشبورد',
       'dashboardSubtitle': 'نمای کلی دواخانه شما',
       'dashboardQuickAccess': 'دسترسی سریع',
@@ -548,6 +587,18 @@ class AppStrings {
       'syncPulled': 'رکورد دریافت شد',
     },
     AppLocale.pashto: <String, String>{
+      'dashboardWorkspace': 'د درملتون کاري چاپېریال',
+      'dashboardWorkspaceSubtitle': 'افلاین پلور او زېرمه',
+      'dashboardToday': 'نن په دې وسیله',
+      'dashboardSales': 'پلور',
+      'dashboardRevenue': 'عاید',
+      'dashboardPendingSync': 'د همغږۍ په تمه',
+      'dashboardInventoryAlerts': 'د ځايي زېرمې خبرتیاوې',
+      'dashboardViewStock': 'زېرمه وګورئ',
+      'dashboardOutOfStock': 'زېرمه نشته',
+      'dashboardExpiredBatches': 'تېرې شوې بستې',
+      'dashboardExpiringSoon': 'په ۳۰ ورځو کې ختمېږي',
+      'dashboardMedicineCount': 'د {count} همغږو فعالو درملو پر بنسټ.',
       'dashboardTitle': 'ډشبورډ',
       'dashboardSubtitle': 'ستاسو د درملتون لنډه کتنه',
       'dashboardQuickAccess': 'چټک لاسرسی',
