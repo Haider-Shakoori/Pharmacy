@@ -55,6 +55,9 @@ void main() {
     await tester.pump();
     expect(find.text('Purchases'), findsNWidgets(2));
     expect(find.text('POS (Sales)'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('dashboard-clear-search')));
+    await tester.pump();
+    expect(find.text('POS (Sales)'), findsOneWidget);
     await tester.enterText(
       find.byKey(const ValueKey('dashboard-module-search')),
       '',

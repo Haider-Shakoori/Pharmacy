@@ -543,7 +543,14 @@ class _HomePanel extends ConsumerStatefulWidget {
 
 class _HomePanelState extends ConsumerState<_HomePanel> {
   String _moduleQuery = '';
+  final TextEditingController _moduleSearchController = TextEditingController();
   int _summaryRefreshVersion = 0;
+
+  @override
+  void dispose() {
+    _moduleSearchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -830,11 +837,24 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
         const SizedBox(height: 12),
         TextField(
           key: const ValueKey('dashboard-module-search'),
-          decoration: const InputDecoration(
-            prefixIcon: Icon(Icons.search),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search),
             hintText: 'Find a pharmacy module',
-            border: OutlineInputBorder(),
+            border: const OutlineInputBorder(),
+            suffixIcon: _moduleQuery.isEmpty
+                ? null
+                : IconButton(
+                    key: const ValueKey('dashboard-clear-search'),
+                    tooltip: 'Clear module search',
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      _moduleSearchController.clear();
+                      setState(() => _moduleQuery = '');
+                    },
+                    icon: const Icon(Icons.close_rounded),
+                  ),
           ),
+          controller: _moduleSearchController,
           onChanged: (value) => setState(() => _moduleQuery = value),
         ),
         const SizedBox(height: 12),
