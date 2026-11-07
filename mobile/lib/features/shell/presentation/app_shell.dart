@@ -858,6 +858,17 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
           onChanged: (value) => setState(() => _moduleQuery = value),
         ),
         const SizedBox(height: 12),
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            _moduleQuery.trim().isEmpty
+                ? '${visibleEntries.length} pharmacy modules available'
+                : '${visibleEntries.length} matching modules',
+            key: const ValueKey('dashboard-search-result-count'),
+            style: text.bodySmall?.copyWith(color: Colors.blueGrey),
+          ),
+        ),
+        const SizedBox(height: 8),
         if (visibleEntries.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 20),
