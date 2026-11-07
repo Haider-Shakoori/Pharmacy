@@ -17,7 +17,7 @@ class MobileSyncPushController extends Controller
     ): JsonResponse {
         $validated = $request->validate([
             'events' => ['required', 'array', 'min:1', 'max:25'],
-            'events.*.idempotency_key' => ['required', 'string', 'max:191'],
+            'events.*.idempotency_key' => ['required', 'string', 'max:191', 'distinct:strict'],
             'events.*.event_type' => ['required', 'string', 'max:100'],
             'events.*.payload' => ['required', 'array'],
         ]);
