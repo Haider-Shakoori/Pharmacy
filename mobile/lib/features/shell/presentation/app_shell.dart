@@ -634,7 +634,15 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
           final query = _moduleQuery.trim().toLowerCase();
           return query.isEmpty ||
               entry.title.toLowerCase().contains(query) ||
-              entry.detail.toLowerCase().contains(query);
+              entry.detail.toLowerCase().contains(query) ||
+              strings
+                  .dashboardModuleTitle(entry.title)
+                  .toLowerCase()
+                  .contains(query) ||
+              strings
+                  .dashboardModuleDetail(entry.detail)
+                  .toLowerCase()
+                  .contains(query);
         })
         .toList(growable: false);
     return Column(
@@ -934,12 +942,12 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            entry.title,
+                            strings.dashboardModuleTitle(entry.title),
                             maxLines: 1,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            entry.detail,
+                            strings.dashboardModuleDetail(entry.detail),
                             maxLines: 1,
                             style: const TextStyle(
                               fontSize: 11,

@@ -19,6 +19,62 @@ class AppStrings {
   String get appName => _value('appName');
   String get foundation => _value('foundation');
   String get foundationBody => _value('foundationBody');
+  String dashboardModuleTitle(String englishTitle) {
+    if (locale == AppLocale.english) return englishTitle;
+    final titles = locale == AppLocale.dari
+        ? <String, String>{
+            'POS (Sales)': 'فروش',
+            'Medicines': 'دواها',
+            'Inventory': 'موجودی',
+            'Purchases': 'خریدها',
+            'Customers': 'مشتریان',
+            'Reports': 'گزارش‌ها',
+            'Alerts': 'هشدارها',
+            'Sync': 'همگام‌سازی',
+            'Settings': 'تنظیمات',
+          }
+        : <String, String>{
+            'POS (Sales)': 'پلور',
+            'Medicines': 'درمل',
+            'Inventory': 'زېرمه',
+            'Purchases': 'پېرودنې',
+            'Customers': 'پېرودونکي',
+            'Reports': 'راپورونه',
+            'Alerts': 'خبرتیاوې',
+            'Sync': 'همغږي',
+            'Settings': 'تنظیمات',
+          };
+    return titles[englishTitle] ?? englishTitle;
+  }
+
+  String dashboardModuleDetail(String englishDetail) {
+    if (locale == AppLocale.english) return englishDetail;
+    final details = locale == AppLocale.dari
+        ? <String, String>{
+            'Offline checkout': 'فروش آفلاین',
+            'Catalog & stock': 'فهرست و موجودی',
+            'Batches & expiry': 'بچ‌ها و انقضا',
+            'Orders & receiving': 'سفارش و دریافت',
+            'Accounts': 'حساب‌ها',
+            'Business insights': 'گزارش‌های تجاری',
+            'Stock & expiry': 'موجودی و انقضا',
+            'Offline-first': 'اولویت با آفلاین',
+            'Device & access': 'دستگاه و دسترسی',
+          }
+        : <String, String>{
+            'Offline checkout': 'افلاین پلور',
+            'Catalog & stock': 'لړلیک او زېرمه',
+            'Batches & expiry': 'بستې او نېټې',
+            'Orders & receiving': 'فرمایشونه او ترلاسه کول',
+            'Accounts': 'حسابونه',
+            'Business insights': 'سوداګریز راپورونه',
+            'Stock & expiry': 'زېرمه او نېټې',
+            'Offline-first': 'لومړی افلاین',
+            'Device & access': 'وسیله او لاسرسی',
+          };
+    return details[englishDetail] ?? englishDetail;
+  }
+
   String get dashboardTitle => _value('dashboardTitle');
   String get dashboardSubtitle => _value('dashboardSubtitle');
   String get dashboardQuickAccess => _value('dashboardQuickAccess');
