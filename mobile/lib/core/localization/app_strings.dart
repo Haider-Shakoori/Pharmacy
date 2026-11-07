@@ -19,6 +19,13 @@ class AppStrings {
   String get appName => _value('appName');
   String get foundation => _value('foundation');
   String get foundationBody => _value('foundationBody');
+  String get home => _value('home');
+  String get medicines => _value('medicines');
+  String get reports => _value('reports');
+  String get more => _value('more');
+  String get purchases => _value('purchases');
+  String get alerts => _value('alerts');
+  String get settings => _value('settings');
   String get pos => _value('pos');
   String get stock => _value('stock');
   String get customers => _value('customers');
@@ -169,6 +176,13 @@ class AppStrings {
   static const Map<AppLocale, Map<String, String>>
   _translations = <AppLocale, Map<String, String>>{
     AppLocale.english: <String, String>{
+      'home': 'Home',
+      'medicines': 'Medicines',
+      'reports': 'Reports',
+      'more': 'More',
+      'purchases': 'Purchases',
+      'alerts': 'Alerts',
+      'settings': 'Settings',
       'appName': 'BusinessOS Pharmacy',
       'foundation': 'Offline-ready mobile foundation',
       'foundationBody': 'The local database, offline POS and synchronization engine are enabled in the next mobile batches.',
@@ -304,6 +318,13 @@ class AppStrings {
       'syncPulled': 'records pulled',
     },
     AppLocale.dari: <String, String>{
+      'home': 'خانه',
+      'medicines': 'دواها',
+      'reports': 'گزارش‌ها',
+      'more': 'بیشتر',
+      'purchases': 'خریدها',
+      'alerts': 'هشدارها',
+      'settings': 'تنظیمات',
       'appName': 'فارمسی BusinessOS',
       'foundation': 'بنیاد موبایل آماده برای کار آفلاین',
       'foundationBody': 'دیتابیس محلی، فروش آفلاین و سیستم همگام‌سازی در مراحل بعدی موبایل فعال می‌شوند.',
@@ -440,6 +461,13 @@ class AppStrings {
       'syncPulled': 'رکورد دریافت شد',
     },
     AppLocale.pashto: <String, String>{
+      'home': 'کور',
+      'medicines': 'درمل',
+      'reports': 'راپورونه',
+      'more': 'نور',
+      'purchases': 'پېرودنې',
+      'alerts': 'خبرتیاوې',
+      'settings': 'تنظیمات',
       'appName': 'BusinessOS فارمسي',
       'foundation': 'د آفلاین کار لپاره چمتو موبایل بنسټ',
       'foundationBody': 'ځايي ډیټابیس، آفلاین پلور او همغږي په راتلونکو موبایل پړاوونو کې فعالېږي.',

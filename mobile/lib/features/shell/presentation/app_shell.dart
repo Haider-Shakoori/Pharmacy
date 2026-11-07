@@ -65,14 +65,14 @@ class _AppShellState extends ConsumerState<AppShell> {
             .contains('medicines.manage') ==
         true;
     final List<_ShellDestination> destinations = <_ShellDestination>[
-      const _ShellDestination(icon: Icons.dashboard_outlined, label: 'Home'),
+      _ShellDestination(icon: Icons.dashboard_outlined, label: strings.home),
       _ShellDestination(icon: Icons.point_of_sale_rounded, label: strings.pos),
-      const _ShellDestination(
+      _ShellDestination(
         icon: Icons.medication_outlined,
-        label: 'Medicines',
+        label: strings.medicines,
       ),
-      const _ShellDestination(icon: Icons.bar_chart_rounded, label: 'Reports'),
-      const _ShellDestination(icon: Icons.menu_rounded, label: 'More'),
+      _ShellDestination(icon: Icons.bar_chart_rounded, label: strings.reports),
+      _ShellDestination(icon: Icons.menu_rounded, label: strings.more),
     ];
 
     return Scaffold(
