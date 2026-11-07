@@ -57,8 +57,9 @@ class _MedicineRegistrationDialogState
             final number = double.tryParse(value.trim());
             if (number == null ||
                 !number.isFinite ||
-                (controller == _units && number <= 0) ||
-                number < 0) {
+                (controller == _units && (number <= 0 || number > 99999999)) ||
+                (controller == _reorder &&
+                    (number < 0 || number > 999999999))) {
               return 'Enter a valid number';
             }
           }
