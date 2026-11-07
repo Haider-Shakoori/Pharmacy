@@ -5,6 +5,7 @@ namespace Tests\Feature\Mobile;
 use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\GoodsReceipt;
+use App\Models\LicenseActivation;
 use App\Models\Medicine;
 use App\Models\ProductBatch;
 use App\Models\PurchaseOrder;
@@ -130,6 +131,187 @@ class MobileSyncApiTest extends TestCase
         $this->accessToken = $registration->json('data.access_token');
     }
 
+    public function test_revoked_device_cannot_pull_or_refresh_with_existing_token(): void
+    {
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/sync/pull/medicines?limit=1')
+            ->assertOk();
+
+        LicenseActivation::query()
+            ->where('device_id', $this->deviceId)
+            ->update(['revoked_at' => now()]);
+
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/sync/pull/medicines?limit=1')
+            ->assertUnauthorized();
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/session/refresh')
+            ->assertUnauthorized();
+    }
+
+    public function test_deactivated_pharmacy_user_cannot_sync_or_refresh_existing_session(): void
+    {
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/sync/pull/medicines?limit=1')
+            ->assertOk();
+
+        $this->tenant->run(function (): void {
+            User::query()->where('email', 'mobile@sync.test')->update(['is_active' => false]);
+        });
+
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/sync/pull/medicines?limit=1')
+            ->assertUnauthorized();
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/session/refresh')
+            ->assertUnauthorized();
+    }
+
+    public function test_mobile_catalog_pull_does_not_leak_another_tenants_medicines(): void
+    {
+        $otherTenant = $this->createTenant([
+            'name' => 'Separate Pharmacy',
+            'slug' => 'separate-mobile-pharmacy',
+        ]);
+        $otherTenant->run(function (): void {
+            Medicine::query()->create([
+                'medicine_code' => 'OTHER-TENANT-ONLY',
+                'brand_name' => 'Other Tenant Secret Medicine',
+                'sale_unit' => 'tablet',
+            ]);
+        });
+
+        $response = $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/sync/pull/medicines?limit=250')
+            ->assertOk();
+
+        $codes = collect($response->json('data.data'))->pluck('medicine_code')->all();
+        $this->assertContains('SYNC-001', $codes);
+        $this->assertNotContains('OTHER-TENANT-ONLY', $codes);
+    }
+
+    public function test_mobile_sync_rejects_duplicate_event_keys_in_one_batch(): void
+    {
+        $event = [
+            'idempotency_key' => 'duplicate:mobile-event-001',
+            'event_type' => 'sale.completed',
+            'payload' => ['local_id' => 'mobile-event-001'],
+        ];
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/sync/push', [
+                'events' => [$event, $event],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'events.0.idempotency_key',
+                'events.1.idempotency_key',
+            ]);
+    }
+
+    public function test_duplicate_batch_keys_do_not_partially_create_sales(): void
+    {
+        $references = $this->tenant->run(function (): array {
+            return [
+                'medicine_id' => Medicine::query()
+                    ->where('medicine_code', 'SYNC-001')->value('id'),
+                'location_id' => StockLocation::query()
+                    ->where('code', 'MAIN')->value('id'),
+            ];
+        });
+
+        $key = 'sale:duplicate-batch-001:completed';
+        $event = [
+            'idempotency_key' => $key,
+            'event_type' => 'sale.completed',
+            'payload' => [
+                'v' => 1,
+                'local_id' => 'duplicate-batch-001',
+                'idempotency_key' => $key,
+                'stock_location_id' => $references['location_id'],
+                'customer_id' => null,
+                'cashier_user_id' => '1',
+                'business_date' => today()->toDateString(),
+                'currency' => 'AFN',
+                'lines' => [[
+                    'medicine_id' => $references['medicine_id'],
+                    'quantity' => '1.0000',
+                    'unit_price' => '10.0000',
+                    'discount_amount' => '0.0000',
+                ]],
+                'payments' => [[
+                    'method' => 'cash',
+                    'amount' => '10.0000',
+                ]],
+            ],
+        ];
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/sync/push', ['events' => [$event, $event]])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'events.0.idempotency_key',
+                'events.1.idempotency_key',
+            ]);
+
+        $this->tenant->run(function () use ($key): void {
+            $this->assertSame(0, Sale::query()->where('idempotency_key', $key)->count());
+        });
+    }
+
+    public function test_mobile_sync_rejects_sale_payload_key_mismatch_without_creating_sale(): void
+    {
+        $key = 'sale:mismatched-mobile-key:completed';
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/sync/push', [
+                'events' => [[
+                    'idempotency_key' => $key,
+                    'event_type' => 'sale.completed',
+                    'payload' => [
+                        'local_id' => 'mismatched-mobile-key',
+                        'idempotency_key' => 'sale:another-key:completed',
+                    ],
+                ]],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.idempotency_key', $key)
+            ->assertJsonPath('data.results.0.status', 'rejected')
+            ->assertJsonPath('data.results.0.code', 'idempotency_mismatch')
+            ->assertJsonPath('data.results.0.retryable', false);
+
+        $this->tenant->run(function () use ($key): void {
+            $this->assertSame(0, Sale::query()->where('idempotency_key', $key)->count());
+        });
+    }
+
+    public function test_mobile_sync_rejects_sale_claimed_by_another_cashier_without_side_effects(): void
+    {
+        $key = 'sale:foreign-cashier-001:completed';
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/sync/push', [
+                'events' => [[
+                    'idempotency_key' => $key,
+                    'event_type' => 'sale.completed',
+                    'payload' => [
+                        'local_id' => 'foreign-cashier-001',
+                        'idempotency_key' => $key,
+                        'cashier_user_id' => 'different-user',
+                    ],
+                ]],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.status', 'rejected')
+            ->assertJsonPath('data.results.0.code', 'cashier_mismatch')
+            ->assertJsonPath('data.results.0.retryable', false);
+
+        $this->tenant->run(function () use ($key): void {
+            $this->assertSame(0, Sale::query()->where('idempotency_key', $key)->count());
+        });
+    }
+
     public function test_mobile_sale_push_is_idempotent_and_returns_acknowledgement(): void
     {
         $references = $this->tenant->run(function (): array {
@@ -193,6 +375,54 @@ class MobileSyncApiTest extends TestCase
                     ->count(),
             );
             $this->assertNotNull(Sale::query()->find($serverId));
+        });
+    }
+
+    public function test_unbalanced_offline_sale_is_rejected_without_creating_sale(): void
+    {
+        $references = $this->tenant->run(function (): array {
+            return [
+                'medicine_id' => Medicine::query()->where('medicine_code', 'SYNC-001')->value('id'),
+                'location_id' => StockLocation::query()->where('code', 'MAIN')->value('id'),
+                'cashier_id' => User::query()->where('email', 'mobile@sync.test')->value('id'),
+            ];
+        });
+
+        $key = 'sale:unbalanced-mobile-001:completed';
+        $response = $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/sync/push', [
+                'events' => [[
+                    'idempotency_key' => $key,
+                    'event_type' => 'sale.completed',
+                    'payload' => [
+                        'v' => 1,
+                        'local_id' => 'unbalanced-mobile-001',
+                        'idempotency_key' => $key,
+                        'stock_location_id' => $references['location_id'],
+                        'customer_id' => null,
+                        'cashier_user_id' => (string) $references['cashier_id'],
+                        'business_date' => today()->toDateString(),
+                        'currency' => 'AFN',
+                        'lines' => [[
+                            'medicine_id' => $references['medicine_id'],
+                            'quantity' => '2.0000',
+                            'unit_price' => '10.0000',
+                            'discount_amount' => '0.0000',
+                        ]],
+                        'payments' => [[
+                            'method' => 'cash',
+                            'amount' => '5.0000',
+                        ]],
+                    ],
+                ]],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.results.0.status', 'rejected')
+            ->assertJsonPath('data.results.0.retryable', false);
+
+        $this->assertNotEmpty($response->json('data.results.0.code'));
+        $this->tenant->run(function () use ($key): void {
+            $this->assertSame(0, Sale::query()->where('idempotency_key', $key)->count());
         });
     }
 
