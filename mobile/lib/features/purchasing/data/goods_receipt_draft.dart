@@ -101,6 +101,11 @@ class GoodsReceiptDraftValidator {
         if (cost.compareTo(FixedDecimal.parse('999999999999')) > 0) {
           errors.add('Unit cost cannot exceed 999999999999.');
         }
+        if (previous.compareTo(ordered) > 0) {
+          errors.add(
+            'Previously received quantity exceeds the ordered quantity.',
+          );
+        }
         if ((previous + received).compareTo(ordered) > 0) {
           errors.add('Received quantity exceeds the remaining order quantity.');
         }

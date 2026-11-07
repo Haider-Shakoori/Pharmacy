@@ -42,6 +42,13 @@ void main() {
     );
   });
 
+  test('rejects inconsistent previously received quantities', () {
+    final errors = GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
+      line(ordered: '10', previous: '11', received: '1'),
+    ], orderStatus: 'approved');
+    expect(errors.join(' '), contains('Previously received quantity exceeds'));
+  });
+
   test('requires batch and expiry for tracked medicines', () {
     final errors = GoodsReceiptDraftValidator.validate(<GoodsReceiptDraftLine>[
       line(batch: '', expiry: ''),
