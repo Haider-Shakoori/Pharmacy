@@ -44,6 +44,9 @@ void main() {
       ),
     );
     await tester.pump();
+    expect(find.byKey(const ValueKey('dashboard-refresh')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('dashboard-refresh')));
+    await tester.pump();
 
     await tester.enterText(
       find.byKey(const ValueKey('dashboard-module-search')),

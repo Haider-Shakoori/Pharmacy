@@ -543,6 +543,7 @@ class _HomePanel extends ConsumerStatefulWidget {
 
 class _HomePanelState extends ConsumerState<_HomePanel> {
   String _moduleQuery = '';
+  int _summaryRefreshVersion = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -677,13 +678,29 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
           ),
         ),
         const SizedBox(height: 14),
+        Row(
+          children: <Widget>[
+            const Expanded(
+              child: Text(
+                'Local overview',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              ),
+            ),
+            IconButton(
+              key: const ValueKey('dashboard-refresh'),
+              tooltip: 'Refresh local overview',
+              onPressed: () => setState(() => _summaryRefreshVersion++),
+              icon: const Icon(Icons.refresh_rounded),
+            ),
+          ],
+        ),
         if (database != null)
           database.when(
             loading: () => const LinearProgressIndicator(),
             error: (Object error, StackTrace trace) =>
                 const Text('Local sales summary unavailable'),
             data: (db) => FutureBuilder<OfflineSalesSummary>(
-              key: ValueKey('${db.hashCode}-$date'),
+              key: ValueKey('${db.hashCode}-$date-$_summaryRefreshVersion'),
               future: OfflineSalesSummaryRepository(db).forBusinessDate(date),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -736,7 +753,9 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
             error: (Object error, StackTrace trace) =>
                 const Text('Inventory alerts unavailable'),
             data: (db) => FutureBuilder<InventoryOverview>(
-              key: ValueKey('inventory-alerts-${db.hashCode}-$date'),
+              key: ValueKey(
+                'inventory-alerts-${db.hashCode}-$date-$_summaryRefreshVersion',
+              ),
               future: OfflineCatalogBrowser(db).inventoryOverview(now: now),
               builder:
                   (
