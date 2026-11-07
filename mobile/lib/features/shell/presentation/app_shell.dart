@@ -910,9 +910,12 @@ class _HomePanelState extends ConsumerState<_HomePanel> {
               itemBuilder: (BuildContext context, int index) {
                 final entry = visibleEntries[index];
                 return Material(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(18),
                   child: InkWell(
+                    key: ValueKey(
+                      'dashboard-shortcut-${entry.tab}-${entry.title}',
+                    ),
                     borderRadius: BorderRadius.circular(18),
                     onTap: () => widget.onNavigate(
                       entry.tab,
