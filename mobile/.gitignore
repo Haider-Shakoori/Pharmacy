@@ -6,7 +6,6 @@
 .pub/
 build/
 coverage/
-android/
 .metadata
 *.iml
 .idea/

@@ -10,6 +10,7 @@ import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_catalog_repository.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_checkout_service.dart';
 import 'package:businessos_pharmacy/features/pos/domain/offline_pos_models.dart';
+import 'package:businessos_pharmacy/features/pos/domain/pos_search_gate.dart';
 import 'package:businessos_pharmacy/features/receipt/data/offline_receipt_repository.dart';
 import 'package:businessos_pharmacy/features/receipt/domain/offline_receipt.dart';
 import 'package:businessos_pharmacy/features/receipt/presentation/receipt_print_sheet.dart';
@@ -89,6 +90,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   late final OfflinePosCheckoutService _checkout;
   late final OfflineReceiptRepository _receipts;
   final TextEditingController _searchController = TextEditingController();
+  final PosSearchGate _searchGate = PosSearchGate();
 
   List<String> _locations = <String>[];
   List<OfflinePosCatalogItem> _results = <OfflinePosCatalogItem>[];
@@ -170,8 +172,10 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   }
 
   Future<void> _search() async {
+    final int generation = _searchGate.begin();
     final String? locationId = _locationId;
     if (locationId == null) {
+      if (mounted) setState(() => _results = <OfflinePosCatalogItem>[]);
       return;
     }
 
@@ -181,7 +185,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         query: _searchController.text,
       );
 
-      if (!mounted) {
+      if (!mounted || !_searchGate.isCurrent(generation)) {
         return;
       }
       setState(() {
@@ -189,7 +193,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         _error = null;
       });
     } on Object catch (error) {
-      if (!mounted) {
+      if (!mounted || !_searchGate.isCurrent(generation)) {
         return;
       }
       setState(() {
@@ -340,7 +344,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   Future<void> _complete() async {
     final AppStrings strings = AppStrings.of(context);
     final String? locationId = _locationId;
-    if (locationId == null || _cart.isEmpty) {
+    if (_checkingOut || locationId == null || _cart.isEmpty) {
       return;
     }
 
@@ -415,6 +419,13 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         _checkingOut = false;
         _error = strings.posInvalidValue;
       });
+    } on Object catch (error) {
+      // Checkout is atomic. Keep the cart if persistence fails.
+      if (!mounted) return;
+      setState(() {
+        _checkingOut = false;
+        _error = 'Unable to complete the offline sale: $error';
+      });
     }
   }
 
@@ -466,12 +477,21 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                         ),
                       )
                       .toList(growable: false),
-                  onChanged: (String? value) {
-                    setState(() {
-                      _locationId = value;
-                    });
-                    _search();
-                  },
+                  onChanged: _checkingOut
+                      ? null
+                      : (String? value) {
+                          if (value == _locationId) return;
+                          _searchGate.invalidate();
+                          setState(() {
+                            _locationId = value;
+                            // Cart lines must never be checked out against another
+                            // location's batch inventory.
+                            _cart.clear();
+                            _results = <OfflinePosCatalogItem>[];
+                            _error = null;
+                          });
+                          _search();
+                        },
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -526,13 +546,28 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
             style: Theme.of(context).textTheme.titleMedium
                 ?.copyWith(fontWeight: FontWeight.w800),
           ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () async {
+                try {
+                  final recent = await _receipts.recentCompleted();
+                  if (mounted) setState(() => _recentReceipts = recent);
+                } on Object catch (error) {
+                  if (mounted) setState(() => _error = error.toString());
+                }
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh receipts'),
+            ),
+          ),
           ..._recentReceipts.map(
             (OfflineReceipt receipt) => Card(
               child: ListTile(
                 leading: const Icon(Icons.receipt_long_rounded),
                 title: Text(receipt.displayNumber),
                 subtitle: Text(
-                  '${receipt.total.compact} AFN • ${receipt.businessDate}',
+                  '${receipt.total.compact} AFN • ${receipt.businessDate} • ${receipt.syncState}',
                 ),
                 trailing: IconButton(
                   tooltip: strings.receiptPrint,

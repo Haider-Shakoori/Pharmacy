@@ -16,6 +16,11 @@ class OperationalNotificationService {
 
     const InitializationSettings settings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      ),
     );
     await _plugin.initialize(settings: settings);
     _initialized = true;
@@ -29,7 +34,13 @@ class OperationalNotificationService {
         >()
         ?.requestNotificationsPermission();
 
-    return granted ?? true;
+    final bool? iosGranted = await _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >()
+        ?.requestPermissions(alert: true, badge: true, sound: true);
+
+    return granted ?? iosGranted ?? false;
   }
 
   Future<void> notifyIfChanged(
@@ -66,7 +77,10 @@ class OperationalNotificationService {
           '${snapshot.nearExpiryCount} near expiry · '
           '${snapshot.expiredCount} expired · '
           '${snapshot.syncRejectedCount} sync conflicts',
-      notificationDetails: const NotificationDetails(android: android),
+      notificationDetails: const NotificationDetails(
+        android: android,
+        iOS: DarwinNotificationDetails(),
+      ),
       payload: 'operational-alerts',
     );
 

@@ -105,7 +105,7 @@ class MobileSyncPullService
                     'updated_at',
                 ]),
                 'purchase_orders' => PurchaseOrder::query()
-                    ->with('lines:id,purchase_order_id,medicine_id,description,ordered_quantity,received_quantity,unit_cost,discount_amount,landed_cost_allocated,line_total')
+                    ->with(['lines' => fn ($query) => $query->with('medicine:id,batch_tracking_required,expiry_tracking_required')])
                     ->select([
                         'id', 'supplier_id', 'number', 'status', 'order_date',
                         'expected_date', 'currency', 'subtotal', 'discount_total',
@@ -318,6 +318,8 @@ class MobileSyncPullService
                     'lines' => $row->lines->map(fn ($line): array => [
                         'id' => $line->id,
                         'medicine_id' => $line->medicine_id,
+                        'batch_tracking_required' => (bool) $line->medicine?->batch_tracking_required,
+                        'expiry_tracking_required' => (bool) $line->medicine?->expiry_tracking_required,
                         'description' => $line->description,
                         'ordered_quantity' => (string) $line->ordered_quantity,
                         'received_quantity' => (string) $line->received_quantity,

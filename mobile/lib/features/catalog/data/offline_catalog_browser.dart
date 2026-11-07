@@ -23,6 +23,33 @@ class OfflineCatalogBrowser {
 
   final PharmacyDatabase _database;
 
+  /// Finds exact brand-name matches in the locally synced catalog.
+  /// The local schema has no barcode column: medicine_code is an internal
+  /// identifier and must never be mistaken for a scanned product barcode.
+  /// Generic names alone are not duplicates (many brands share an ingredient).
+  /// This advisory lookup does not replace server-side duplicate validation.
+  Future<List<String>> possibleDuplicateMedicineNames({
+    required String brandName,
+    String? genericName,
+    String? barcode,
+  }) async {
+    final brand = brandName.trim();
+    if (brand.isEmpty) {
+      throw ArgumentError.value(brandName, 'brandName', 'Required');
+    }
+    final rows = await _database
+        .customSelect(
+          'SELECT DISTINCT brand_name FROM local_medicines '
+          'WHERE is_deleted = 0 AND LOWER(TRIM(brand_name)) = LOWER(?) '
+          'ORDER BY brand_name COLLATE NOCASE LIMIT 20',
+          variables: <Variable<Object>>[Variable<String>(brand)],
+        )
+        .get();
+    return rows
+        .map((QueryRow row) => row.read<String>('brand_name'))
+        .toList(growable: false);
+  }
+
   /// Counts the entire locally synced catalog, not the 100-row browser page.
   Future<InventoryOverview> inventoryOverview({
     String? locationId,

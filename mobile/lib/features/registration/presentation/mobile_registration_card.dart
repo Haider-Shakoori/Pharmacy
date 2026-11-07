@@ -71,22 +71,26 @@ class _MobileRegistrationCardState
       MobileRegistration? registration;
       MobileRegistrationException? lastError;
 
-      for (final ServerEndpoint endpoint in candidates) {
-        try {
-          registration = await client.register(
-            endpoint: endpoint,
-            device: device,
-            licenseKey: _licenseController.text,
-            email: _emailController.text,
-            password: _passwordController.text,
-          );
-          break;
-        } on MobileRegistrationException catch (error) {
-          lastError = error;
-          if (!error.retryable || profile.mode != DeploymentMode.automatic) {
-            rethrow;
+      try {
+        for (final ServerEndpoint endpoint in candidates) {
+          try {
+            registration = await client.register(
+              endpoint: endpoint,
+              device: device,
+              licenseKey: _licenseController.text,
+              email: _emailController.text,
+              password: _passwordController.text,
+            );
+            break;
+          } on MobileRegistrationException catch (error) {
+            lastError = error;
+            if (!error.retryable || profile.mode != DeploymentMode.automatic) {
+              rethrow;
+            }
           }
         }
+      } finally {
+        client.close();
       }
 
       if (registration == null) {
@@ -126,6 +130,14 @@ class _MobileRegistrationCardState
         _registering = false;
         _error = error.message.toString();
       });
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _registering = false;
+        _error = 'Unable to save registration. Please try again.';
+      });
     }
   }
 
@@ -157,14 +169,19 @@ class _MobileRegistrationCardState
           .read(deviceIdentityServiceProvider)
           .load();
 
-      final MobileRegistration registration = await MobileRegistrationClient()
-          .startTrial(
-            endpoint: licensingEndpoint,
-            device: device,
-            pharmacyCode: _pharmacyCodeController.text,
-            email: _emailController.text,
-            password: _passwordController.text,
-          );
+      final MobileRegistrationClient client = MobileRegistrationClient();
+      late final MobileRegistration registration;
+      try {
+        registration = await client.startTrial(
+          endpoint: licensingEndpoint,
+          device: device,
+          pharmacyCode: _pharmacyCodeController.text,
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+      } finally {
+        client.close();
+      }
 
       await _persistRegistration(
         registration,
@@ -199,6 +216,14 @@ class _MobileRegistrationCardState
         _registering = false;
         _error = error.message.toString();
       });
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _registering = false;
+        _error = 'Unable to save registration. Please try again.';
+      });
     }
   }
 
@@ -207,8 +232,8 @@ class _MobileRegistrationCardState
     required ConnectionProfileRepository profileRepository,
     required ConnectionProfile profile,
   }) async {
-    await ref.read(mobileRegistrationRepositoryProvider).save(registration);
-
+    // Validate the supplied endpoint before persisting credentials, so a
+    // malformed server response cannot leave a partially activated device.
     final String? cloudBaseUrl = registration.cloudBaseUrl;
     if (cloudBaseUrl != null && cloudBaseUrl.isNotEmpty) {
       final ServerEndpoint cloud = ServerEndpoint.fromInput(
@@ -223,6 +248,8 @@ class _MobileRegistrationCardState
         ),
       );
     }
+
+    await ref.read(mobileRegistrationRepositoryProvider).save(registration);
 
     ref.invalidate(mobileRegistrationProvider);
     ref.invalidate(localDatabaseScopeProvider);
@@ -291,6 +318,22 @@ class _MobileRegistrationCardState
                     'Access expires: ${current.accessExpiresAt.toLocal()}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  Text(
+                    'Offline lease expires: ${current.leaseExpiresAt.toLocal()}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (current.accessExpired ||
+                      current.leaseExpired) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      current.leaseExpired
+                          ? 'Offline transactions are unavailable until the lease is renewed. Connect to the pharmacy server and synchronize.'
+                          : 'The online session has expired. Connect to the pharmacy server and synchronize to renew it.',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: _unregister,

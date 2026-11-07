@@ -19,6 +19,12 @@ class SyncOutboxEvent {
       throw const FormatException('Invalid synchronization outbox payload.');
     }
 
+    if (idempotencyKey.trim().isEmpty ||
+        aggregateId.trim().isEmpty ||
+        eventType.trim().isEmpty) {
+      throw const FormatException('Invalid synchronization outbox identity.');
+    }
+
     return SyncOutboxEvent(
       idempotencyKey: idempotencyKey,
       aggregateId: aggregateId,
@@ -52,13 +58,27 @@ class SyncPushResult {
   });
 
   factory SyncPushResult.fromJson(Map<String, dynamic> json) {
+    final key = json['idempotency_key'];
+    final status = json['status'];
+    final retryable = json['retryable'];
+    final serverId = json['server_id'];
+    if (key is! String ||
+        key.trim().isEmpty ||
+        status is! String ||
+        (status != 'accepted' && status != 'rejected') ||
+        (retryable != null && retryable is! bool) ||
+        (serverId != null &&
+            !((serverId is String && serverId.trim().isNotEmpty) ||
+                (serverId is int && serverId > 0)))) {
+      throw const FormatException('Invalid synchronization acknowledgement.');
+    }
     return SyncPushResult(
-      idempotencyKey: json['idempotency_key'].toString(),
-      status: json['status'].toString(),
-      serverId: json['server_id']?.toString(),
+      idempotencyKey: key,
+      status: status,
+      serverId: serverId?.toString(),
       code: json['code']?.toString(),
       message: json['message']?.toString(),
-      retryable: json['retryable'] == true,
+      retryable: retryable == true,
     );
   }
 
@@ -81,18 +101,32 @@ class SyncPullPage {
   });
 
   factory SyncPullPage.fromJson(Map<String, dynamic> json) {
-    final List<dynamic> raw = json['data'] as List<dynamic>? ?? <dynamic>[];
+    final stream = json['stream'];
+    final raw = json['data'];
+    final hasMore = json['has_more'];
+    final nextCursor = json['next_cursor'];
+
+    // A malformed page must never advance the local checkpoint. Otherwise
+    // stock or purchase-order rows could be silently skipped.
+    if (stream is! String ||
+        stream.trim().isEmpty ||
+        raw is! List ||
+        hasMore is! bool ||
+        (nextCursor != null &&
+            (nextCursor is! String ||
+                nextCursor.trim().isEmpty ||
+                nextCursor.length > 1000)) ||
+        (hasMore == true &&
+            (nextCursor is! String || nextCursor.trim().isEmpty)) ||
+        raw.any((item) => item is! Map<String, dynamic>)) {
+      throw const FormatException('Invalid synchronization pull page.');
+    }
 
     return SyncPullPage(
-      stream: json['stream'].toString(),
-      data: raw
-          .whereType<Map<dynamic, dynamic>>()
-          .map(
-            (Map<dynamic, dynamic> value) => Map<String, dynamic>.from(value),
-          )
-          .toList(growable: false),
-      nextCursor: json['next_cursor']?.toString(),
-      hasMore: json['has_more'] == true,
+      stream: stream,
+      data: raw.cast<Map<String, dynamic>>(),
+      nextCursor: nextCursor as String?,
+      hasMore: hasMore,
     );
   }
 

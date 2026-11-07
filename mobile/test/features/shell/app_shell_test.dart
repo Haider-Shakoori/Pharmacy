@@ -44,8 +44,29 @@ void main() {
       ),
     );
     await tester.pump();
+    expect(find.byKey(const ValueKey('dashboard-refresh')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('dashboard-refresh')));
+    await tester.pump();
 
-    await tester.tap(find.text('Stock').last);
+    await tester.enterText(
+      find.byKey(const ValueKey('dashboard-module-search')),
+      'Purchases',
+    );
+    await tester.pump();
+    expect(find.text('Purchases'), findsNWidgets(2));
+    expect(find.text('POS (Sales)'), findsNothing);
+    expect(find.text('1 matching modules'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('dashboard-clear-search')));
+    await tester.pump();
+    expect(find.text('POS (Sales)'), findsOneWidget);
+    expect(find.text('9 pharmacy modules available'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('dashboard-module-search')),
+      '',
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Medicines').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -61,6 +82,10 @@ void main() {
     await tester.tap(find.text('More').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Sync').last);
+    await tester.pump();
     expect(find.byType(SyncStatusCard), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 100));
   });
 }

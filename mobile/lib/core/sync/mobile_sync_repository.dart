@@ -11,10 +11,25 @@ class MobileSyncRepository {
   final PharmacyDatabase _database;
 
   Future<List<SyncOutboxEvent>> pendingOutbox({int limit = 25}) async {
+    if (limit < 1 || limit > 25) {
+      // Laravel's mobile sync push endpoint accepts at most 25 events.
+      throw RangeError.range(limit, 1, 25, 'limit');
+    }
     final int now = _seconds(DateTime.now());
-    final List<QueryRow> rows = await _database
-        .customSelect(
-          '''
+    // A process may terminate after marking events as sending. Reclaim only
+    // stale leases; idempotency keys remain unchanged across retries.
+    return _database.transaction(() async {
+      await _database.customStatement(
+        '''
+        UPDATE sync_outbox_entries
+        SET status = 'retry', next_attempt_at = NULL, updated_at = ?
+        WHERE status = 'sending' AND updated_at <= ?
+        ''',
+        <Object?>[now, now - 300],
+      );
+      final List<QueryRow> rows = await _database
+          .customSelect(
+            '''
       SELECT idempotency_key, aggregate_id, event_type, payload_json
       FROM sync_outbox_entries
       WHERE status IN ('pending', 'retry')
@@ -22,23 +37,23 @@ class MobileSyncRepository {
       ORDER BY created_at, idempotency_key
       LIMIT ?
       ''',
-          variables: <Variable<Object>>[
-            Variable<int>(now),
-            Variable<int>(limit),
-          ],
-        )
-        .get();
-
-    return rows
-        .map(
-          (QueryRow row) => SyncOutboxEvent.fromRow(
-            idempotencyKey: row.read<String>('idempotency_key'),
-            aggregateId: row.read<String>('aggregate_id'),
-            eventType: row.read<String>('event_type'),
-            payloadJson: row.read<String>('payload_json'),
-          ),
-        )
-        .toList(growable: false);
+            variables: <Variable<Object>>[
+              Variable<int>(now),
+              Variable<int>(limit),
+            ],
+          )
+          .get();
+      return rows
+          .map(
+            (QueryRow row) => SyncOutboxEvent.fromRow(
+              idempotencyKey: row.read<String>('idempotency_key'),
+              aggregateId: row.read<String>('aggregate_id'),
+              eventType: row.read<String>('event_type'),
+              payloadJson: row.read<String>('payload_json'),
+            ),
+          )
+          .toList(growable: false);
+    });
   }
 
   Future<void> markSending(List<SyncOutboxEvent> events) async {
@@ -57,17 +72,42 @@ class MobileSyncRepository {
               attempt_count = attempt_count + 1,
               last_error = NULL,
               updated_at = ?
-          WHERE idempotency_key = ?
+          WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ? AND status IN ('pending', 'retry')
           ''',
-          <Object?>[now, event.idempotencyKey],
+          <Object?>[
+            now,
+            event.idempotencyKey,
+            event.aggregateId,
+            event.eventType,
+          ],
         );
+        final QueryRow changed = await _database
+            .customSelect('SELECT changes() AS affected')
+            .getSingle();
+        if (changed.read<int>('affected') != 1) {
+          throw StateError(
+            'Outbox event changed before it could be marked sending.',
+          );
+        }
       }
     });
   }
 
   Future<void> acknowledge(SyncOutboxEvent event, SyncPushResult result) async {
+    if (!result.accepted || result.idempotencyKey != event.idempotencyKey) {
+      throw const FormatException('Invalid acknowledgement for outbox event.');
+    }
+    // A sale cannot be considered synchronized without a durable server
+    // reference. Keep its outbox event so the original idempotency key retries.
+    if ((event.eventType == 'sale.completed' ||
+            event.eventType == 'goods_receipt.create') &&
+        (result.serverId == null || result.serverId!.trim().isEmpty)) {
+      throw const FormatException(
+        'Accepted transaction acknowledgement is missing its server ID.',
+      );
+    }
     await _database.transaction(() async {
-      if (event.eventType == 'sale.completed' && result.serverId != null) {
+      if (event.eventType == 'sale.completed') {
         await _database.customStatement(
           '''
           UPDATE local_sales
@@ -82,22 +122,43 @@ class MobileSyncRepository {
             event.aggregateId,
           ],
         );
+        // Do not discard the outbox entry if its local sale was missing.
+        // Otherwise a successful remote write could become invisible locally.
+        final QueryRow updated = await _database
+            .customSelect('SELECT changes() AS affected')
+            .getSingle();
+        if (updated.read<int>('affected') != 1) {
+          throw StateError(
+            'Sale acknowledgement could not update exactly one local sale.',
+          );
+        }
       }
 
       await _database.customStatement(
-        'DELETE FROM sync_outbox_entries WHERE idempotency_key = ?',
-        <Object?>[event.idempotencyKey],
+        "DELETE FROM sync_outbox_entries WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ? AND status = 'sending'",
+        <Object?>[event.idempotencyKey, event.aggregateId, event.eventType],
       );
+      final QueryRow removed = await _database
+          .customSelect('SELECT changes() AS affected')
+          .getSingle();
+      if (removed.read<int>('affected') != 1) {
+        throw StateError(
+          'Sale acknowledgement could not remove exactly one matching outbox event.',
+        );
+      }
     });
   }
 
   Future<void> reject(SyncOutboxEvent event, SyncPushResult result) async {
+    if (result.accepted || result.idempotencyKey != event.idempotencyKey) {
+      throw const FormatException('Invalid rejection for outbox event.');
+    }
     final DateTime now = DateTime.now();
-    final int attempt = await _attemptCount(event.idempotencyKey);
-    final int delaySeconds = _retryDelaySeconds(attempt);
     final String nextStatus = result.retryable ? 'retry' : 'rejected';
 
     await _database.transaction(() async {
+      final int attempt = await _attemptCount(event.idempotencyKey);
+      final int delaySeconds = _retryDelaySeconds(attempt);
       await _database.customStatement(
         '''
         UPDATE sync_outbox_entries
@@ -105,7 +166,7 @@ class MobileSyncRepository {
             last_error = ?,
             next_attempt_at = ?,
             updated_at = ?
-        WHERE idempotency_key = ?
+        WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ? AND status = 'sending'
         ''',
         <Object?>[
           nextStatus,
@@ -115,8 +176,19 @@ class MobileSyncRepository {
               : null,
           _seconds(now),
           event.idempotencyKey,
+          event.aggregateId,
+          event.eventType,
         ],
       );
+
+      final QueryRow changed = await _database
+          .customSelect('SELECT changes() AS affected')
+          .getSingle();
+      if (changed.read<int>('affected') != 1) {
+        throw StateError(
+          'Outbox rejection requires one matching sending event.',
+        );
+      }
 
       if (event.eventType == 'sale.completed') {
         await _database.customStatement(
@@ -132,6 +204,14 @@ class MobileSyncRepository {
             event.aggregateId,
           ],
         );
+        final QueryRow saleChanged = await _database
+            .customSelect('SELECT changes() AS affected')
+            .getSingle();
+        if (saleChanged.read<int>('affected') != 1) {
+          throw StateError(
+            'Sale rejection could not update exactly one local sale.',
+          );
+        }
       }
     });
   }
@@ -141,6 +221,19 @@ class MobileSyncRepository {
     String message,
   ) async {
     for (final SyncOutboxEvent event in events) {
+      // Acknowledged events may already have been removed before a later
+      // database or transport operation failed. Never recreate them.
+      final row = await _database
+          .customSelect(
+            'SELECT status FROM sync_outbox_entries WHERE idempotency_key = ? AND aggregate_id = ? AND event_type = ?',
+            variables: <Variable<Object>>[
+              Variable<String>(event.idempotencyKey),
+              Variable<String>(event.aggregateId),
+              Variable<String>(event.eventType),
+            ],
+          )
+          .getSingleOrNull();
+      if (row?.read<String>('status') != 'sending') continue;
       await reject(
         event,
         SyncPushResult(
@@ -166,6 +259,25 @@ class MobileSyncRepository {
   }
 
   Future<void> applyPullPage(SyncPullPage page) async {
+    const supportedStreams = <String>{
+      'medicines',
+      'inventory',
+      'customers',
+      'suppliers',
+      'purchase_orders',
+    };
+    if (!supportedStreams.contains(page.stream)) {
+      throw const FormatException('Unsupported local synchronization stream.');
+    }
+    if (page.nextCursor != null &&
+        (page.nextCursor!.trim().isEmpty || page.nextCursor!.length > 1000)) {
+      throw const FormatException('Invalid synchronization cursor.');
+    }
+    if (page.hasMore && page.nextCursor == null) {
+      throw const FormatException(
+        'Missing synchronization continuation cursor.',
+      );
+    }
     await _database.transaction(() async {
       for (final Map<String, dynamic> item in page.data) {
         switch (page.stream) {
@@ -254,6 +366,23 @@ class MobileSyncRepository {
     return 30 * (1 << exponent);
   }
 
+  bool _snapshotBool(Map<String, dynamic> item, String field) {
+    final Object? value = item[field];
+    if (value == null) return false;
+    if (value is! bool) {
+      throw FormatException('Synchronization snapshot has invalid $field.');
+    }
+    return value;
+  }
+
+  String _requiredSnapshotId(Map<String, dynamic> item, String field) {
+    final Object? value = item[field];
+    if (value is! String || value.trim().isEmpty) {
+      throw FormatException('Synchronization snapshot has invalid $field.');
+    }
+    return value.trim();
+  }
+
   Future<void> _applySupplier(Map<String, dynamic> item) {
     return _database.customStatement(
       '''
@@ -265,21 +394,33 @@ class MobileSyncRepository {
         phone = excluded.phone, contact_person = excluded.contact_person,
         is_active = excluded.is_active, is_deleted = excluded.is_deleted,
         server_updated_at = excluded.server_updated_at
+      WHERE excluded.server_updated_at >= local_suppliers.server_updated_at
       ''',
       <Object?>[
-        item['id'].toString(),
+        _requiredSnapshotId(item, 'id'),
         item['code']?.toString(),
-        item['name'].toString(),
+        _requiredSnapshotId(item, 'name'),
         item['phone']?.toString(),
         item['contact_person']?.toString(),
-        item['is_active'] == true ? 1 : 0,
-        item['is_deleted'] == true ? 1 : 0,
+        _snapshotBool(item, 'is_active') ? 1 : 0,
+        _snapshotBool(item, 'is_deleted') ? 1 : 0,
         _serverSeconds(item),
       ],
     );
   }
 
   Future<void> _applyPurchaseOrder(Map<String, dynamic> item) {
+    final Object? rawLines = item['lines'];
+    if (rawLines != null &&
+        (rawLines is! List || rawLines.any((line) => line is! Map))) {
+      throw const FormatException(
+        'Purchase order lines must be a list of records.',
+      );
+    }
+    final String grandTotal = item['grand_total']?.toString() ?? '0';
+    if (FixedDecimal.parse(grandTotal).isNegative) {
+      throw const FormatException('Purchase order total cannot be negative.');
+    }
     return _database.customStatement(
       '''
       INSERT INTO local_purchase_orders
@@ -293,18 +434,21 @@ class MobileSyncRepository {
         grand_total = excluded.grand_total, lines_json = excluded.lines_json,
         is_deleted = excluded.is_deleted,
         server_updated_at = excluded.server_updated_at
+      WHERE excluded.server_updated_at >= local_purchase_orders.server_updated_at
       ''',
       <Object?>[
-        item['id'].toString(),
-        item['supplier_id'].toString(),
-        item['number'].toString(),
-        item['status'].toString(),
+        _requiredSnapshotId(item, 'id'),
+        _requiredSnapshotId(item, 'supplier_id'),
+        _requiredSnapshotId(item, 'number'),
+        _requiredSnapshotId(item, 'status'),
         item['order_date']?.toString(),
         item['expected_date']?.toString(),
-        item['currency']?.toString() ?? 'AFN',
-        item['grand_total']?.toString() ?? '0',
+        item['currency'] == null
+            ? 'AFN'
+            : _requiredSnapshotId(item, 'currency'),
+        grandTotal,
         jsonEncode(item['lines'] ?? <Object>[]),
-        item['is_deleted'] == true ? 1 : 0,
+        _snapshotBool(item, 'is_deleted') ? 1 : 0,
         _serverSeconds(item),
       ],
     );
@@ -325,27 +469,66 @@ class MobileSyncRepository {
         is_active = excluded.is_active,
         is_deleted = excluded.is_deleted,
         server_updated_at = excluded.server_updated_at
+      WHERE excluded.server_updated_at >= local_medicines.server_updated_at
       ''',
       <Object?>[
-        item['id'].toString(),
+        _requiredSnapshotId(item, 'id'),
         item['medicine_code']?.toString(),
-        item['brand_name'].toString(),
+        _requiredSnapshotId(item, 'brand_name'),
         item['generic_name']?.toString(),
-        item['sale_unit']?.toString() ?? 'unit',
-        item['is_active'] == true ? 1 : 0,
-        item['is_deleted'] == true ? 1 : 0,
+        item['sale_unit'] == null
+            ? 'unit'
+            : _requiredSnapshotId(item, 'sale_unit'),
+        _snapshotBool(item, 'is_active') ? 1 : 0,
+        _snapshotBool(item, 'is_deleted') ? 1 : 0,
         _serverSeconds(item),
       ],
     );
   }
 
   Future<void> _applyInventory(Map<String, dynamic> item) async {
-    final String batchId = item['id'].toString();
-    final String? expiresAt = item['expires_at']?.toString();
-    final String? serverCreatedAt = item['server_created_at']?.toString();
-    final FixedDecimal serverAvailable = FixedDecimal.parse(
-      item['available_quantity']?.toString() ?? '0',
+    final Object? rawId = item['id'];
+    final Object? rawMedicineId = item['medicine_id'];
+    final Object? rawLocationId = item['stock_location_id'];
+    if (rawId is! String ||
+        rawId.trim().isEmpty ||
+        rawMedicineId is! String ||
+        rawMedicineId.trim().isEmpty ||
+        rawLocationId is! String ||
+        rawLocationId.trim().isEmpty) {
+      throw const FormatException(
+        'Inventory snapshot is missing required identifiers.',
+      );
+    }
+    final String batchId = rawId.trim();
+    final String batchStatus = item['status'] == null
+        ? 'active'
+        : _requiredSnapshotId(item, 'status');
+    final String? expiresAt = _optionalSnapshotTimestamp(item, 'expires_at');
+    final String? serverCreatedAt = _optionalSnapshotTimestamp(
+      item,
+      'server_created_at',
     );
+    final Object? rawAvailable = item['available_quantity'];
+    if (rawAvailable == null || rawAvailable.toString().trim().isEmpty) {
+      throw const FormatException(
+        'Inventory snapshot is missing available stock.',
+      );
+    }
+    final FixedDecimal serverAvailable = FixedDecimal.parse(
+      rawAvailable.toString(),
+    );
+    if (serverAvailable.isNegative) {
+      throw const FormatException(
+        'Inventory snapshot cannot contain negative available stock.',
+      );
+    }
+    final String salePrice = item['sale_price']?.toString() ?? '0';
+    final String purchaseCost = item['purchase_cost']?.toString() ?? '0';
+    if (FixedDecimal.parse(salePrice).isNegative ||
+        FixedDecimal.parse(purchaseCost).isNegative) {
+      throw const FormatException('Inventory prices cannot be negative.');
+    }
     final FixedDecimal outstanding = await _outstandingAllocationQuantity(
       batchId,
     );
@@ -373,18 +556,19 @@ class MobileSyncRepository {
         is_deleted = excluded.is_deleted,
         server_created_at = excluded.server_created_at,
         server_updated_at = excluded.server_updated_at
+      WHERE excluded.server_updated_at >= local_inventory_batches.server_updated_at
       ''',
       <Object?>[
         batchId,
-        item['medicine_id'].toString(),
-        item['stock_location_id'].toString(),
+        rawMedicineId.trim(),
+        rawLocationId.trim(),
         item['batch_number']?.toString() ?? '',
         expiresAt == null ? null : _seconds(DateTime.parse(expiresAt).toUtc()),
         available.toString(),
-        item['sale_price']?.toString() ?? '0',
-        item['purchase_cost']?.toString() ?? '0',
-        item['status']?.toString() ?? 'active',
-        item['is_deleted'] == true ? 1 : 0,
+        salePrice,
+        purchaseCost,
+        batchStatus,
+        _snapshotBool(item, 'is_deleted') ? 1 : 0,
         serverCreatedAt == null
             ? null
             : _seconds(DateTime.parse(serverCreatedAt).toUtc()),
@@ -419,6 +603,8 @@ class MobileSyncRepository {
   }
 
   Future<void> _applyCustomer(Map<String, dynamic> item) {
+    final String balance = item['balance']?.toString() ?? '0.0000';
+    FixedDecimal.parse(balance);
     return _database.customStatement(
       '''
       INSERT INTO local_customers (
@@ -427,24 +613,41 @@ class MobileSyncRepository {
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name,
         phone = excluded.phone,
-        balance = excluded.balance,
+        balance = CASE WHEN ? = 1 THEN excluded.balance ELSE local_customers.balance END,
         is_deleted = excluded.is_deleted,
         server_updated_at = excluded.server_updated_at
+      WHERE excluded.server_updated_at >= local_customers.server_updated_at
       ''',
       <Object?>[
-        item['id'].toString(),
-        item['name'].toString(),
+        _requiredSnapshotId(item, 'id'),
+        _requiredSnapshotId(item, 'name'),
         item['phone']?.toString(),
-        item['balance']?.toString() ?? '0.0000',
-        item['is_deleted'] == true ? 1 : 0,
+        balance,
+        _snapshotBool(item, 'is_deleted') ? 1 : 0,
         _serverSeconds(item),
+        item['balance'] == null ? 0 : 1,
       ],
     );
   }
 
+  String? _optionalSnapshotTimestamp(Map<String, dynamic> item, String field) {
+    final Object? raw = item[field];
+    if (raw == null) return null;
+    if (raw is! String || raw.trim().isEmpty) {
+      throw FormatException('Inventory snapshot has an invalid $field.');
+    }
+    DateTime.parse(raw.trim());
+    return raw.trim();
+  }
+
   int _serverSeconds(Map<String, dynamic> item) {
-    final String value = item['server_updated_at'].toString();
-    return _seconds(DateTime.parse(value).toUtc());
+    final Object? raw = item['server_updated_at'];
+    if (raw is! String || raw.trim().isEmpty) {
+      throw const FormatException(
+        'Synchronization snapshot has no server update timestamp.',
+      );
+    }
+    return _seconds(DateTime.parse(raw.trim()).toUtc());
   }
 
   int _seconds(DateTime value) => value.millisecondsSinceEpoch ~/ 1000;

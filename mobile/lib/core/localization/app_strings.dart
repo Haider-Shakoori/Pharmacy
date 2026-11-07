@@ -19,6 +19,94 @@ class AppStrings {
   String get appName => _value('appName');
   String get foundation => _value('foundation');
   String get foundationBody => _value('foundationBody');
+  String dashboardModuleTitle(String englishTitle) {
+    if (locale == AppLocale.english) return englishTitle;
+    final titles = locale == AppLocale.dari
+        ? <String, String>{
+            'POS (Sales)': 'فروش',
+            'Medicines': 'دواها',
+            'Inventory': 'موجودی',
+            'Purchases': 'خریدها',
+            'Customers': 'مشتریان',
+            'Reports': 'گزارش‌ها',
+            'Alerts': 'هشدارها',
+            'Sync': 'همگام‌سازی',
+            'Settings': 'تنظیمات',
+          }
+        : <String, String>{
+            'POS (Sales)': 'پلور',
+            'Medicines': 'درمل',
+            'Inventory': 'زېرمه',
+            'Purchases': 'پېرودنې',
+            'Customers': 'پېرودونکي',
+            'Reports': 'راپورونه',
+            'Alerts': 'خبرتیاوې',
+            'Sync': 'همغږي',
+            'Settings': 'تنظیمات',
+          };
+    return titles[englishTitle] ?? englishTitle;
+  }
+
+  String dashboardModuleDetail(String englishDetail) {
+    if (locale == AppLocale.english) return englishDetail;
+    final details = locale == AppLocale.dari
+        ? <String, String>{
+            'Offline checkout': 'فروش آفلاین',
+            'Catalog & stock': 'فهرست و موجودی',
+            'Batches & expiry': 'بچ‌ها و انقضا',
+            'Orders & receiving': 'سفارش و دریافت',
+            'Accounts': 'حساب‌ها',
+            'Business insights': 'گزارش‌های تجاری',
+            'Stock & expiry': 'موجودی و انقضا',
+            'Offline-first': 'اولویت با آفلاین',
+            'Device & access': 'دستگاه و دسترسی',
+          }
+        : <String, String>{
+            'Offline checkout': 'افلاین پلور',
+            'Catalog & stock': 'لړلیک او زېرمه',
+            'Batches & expiry': 'بستې او نېټې',
+            'Orders & receiving': 'فرمایشونه او ترلاسه کول',
+            'Accounts': 'حسابونه',
+            'Business insights': 'سوداګریز راپورونه',
+            'Stock & expiry': 'زېرمه او نېټې',
+            'Offline-first': 'لومړی افلاین',
+            'Device & access': 'وسیله او لاسرسی',
+          };
+    return details[englishDetail] ?? englishDetail;
+  }
+
+  String get dashboardWorkspace => _value('dashboardWorkspace');
+  String get dashboardWorkspaceSubtitle => _value('dashboardWorkspaceSubtitle');
+  String get dashboardToday => _value('dashboardToday');
+  String get dashboardSales => _value('dashboardSales');
+  String get dashboardRevenue => _value('dashboardRevenue');
+  String get dashboardPendingSync => _value('dashboardPendingSync');
+  String get dashboardInventoryAlerts => _value('dashboardInventoryAlerts');
+  String get dashboardViewStock => _value('dashboardViewStock');
+  String get dashboardOutOfStock => _value('dashboardOutOfStock');
+  String get dashboardExpiredBatches => _value('dashboardExpiredBatches');
+  String get dashboardExpiringSoon => _value('dashboardExpiringSoon');
+  String dashboardMedicineCount(int count) =>
+      _value('dashboardMedicineCount')
+          .replaceFirst('{count}', count.toString());
+  String get dashboardTitle => _value('dashboardTitle');
+  String get dashboardSubtitle => _value('dashboardSubtitle');
+  String get dashboardQuickAccess => _value('dashboardQuickAccess');
+  String get dashboardSearchHint => _value('dashboardSearchHint');
+  String get dashboardNoMatches => _value('dashboardNoMatches');
+  String get dashboardLocalOverview => _value('dashboardLocalOverview');
+  String get dashboardRefresh => _value('dashboardRefresh');
+  String get dashboardClearSearch => _value('dashboardClearSearch');
+  String dashboardResultCount(int count, {required bool filtered}) =>
+      _value(filtered ? 'dashboardMatchingCount' : 'dashboardAvailableCount')
+          .replaceFirst('{count}', count.toString());
+  String get home => _value('home');
+  String get medicines => _value('medicines');
+  String get reports => _value('reports');
+  String get more => _value('more');
+  String get purchases => _value('purchases');
+  String get alerts => _value('alerts');
+  String get settings => _value('settings');
   String get pos => _value('pos');
   String get stock => _value('stock');
   String get customers => _value('customers');
@@ -169,6 +257,36 @@ class AppStrings {
   static const Map<AppLocale, Map<String, String>>
   _translations = <AppLocale, Map<String, String>>{
     AppLocale.english: <String, String>{
+      'dashboardWorkspace': 'Pharmacy workspace',
+      'dashboardWorkspaceSubtitle': 'Offline sales and inventory workspace',
+      'dashboardToday': 'Today on this device',
+      'dashboardSales': 'Sales',
+      'dashboardRevenue': 'Revenue',
+      'dashboardPendingSync': 'Pending sync',
+      'dashboardInventoryAlerts': 'Inventory alerts — local catalog',
+      'dashboardViewStock': 'View stock',
+      'dashboardOutOfStock': 'Out of stock',
+      'dashboardExpiredBatches': 'Expired batches',
+      'dashboardExpiringSoon': 'Expiring in 30 days',
+      'dashboardMedicineCount':
+          'Based on {count} locally synced active medicines.',
+      'dashboardTitle': 'Dashboard',
+      'dashboardSubtitle': 'Your pharmacy at a glance',
+      'dashboardQuickAccess': 'Quick access',
+      'dashboardSearchHint': 'Find a pharmacy module',
+      'dashboardNoMatches': 'No matching modules',
+      'dashboardLocalOverview': 'Local overview',
+      'dashboardRefresh': 'Refresh local overview',
+      'dashboardClearSearch': 'Clear module search',
+      'dashboardMatchingCount': '{count} matching modules',
+      'dashboardAvailableCount': '{count} pharmacy modules available',
+      'home': 'Home',
+      'medicines': 'Medicines',
+      'reports': 'Reports',
+      'more': 'More',
+      'purchases': 'Purchases',
+      'alerts': 'Alerts',
+      'settings': 'Settings',
       'appName': 'BusinessOS Pharmacy',
       'foundation': 'Offline-ready mobile foundation',
       'foundationBody': 'The local database, offline POS and synchronization engine are enabled in the next mobile batches.',
@@ -304,6 +422,35 @@ class AppStrings {
       'syncPulled': 'records pulled',
     },
     AppLocale.dari: <String, String>{
+      'dashboardWorkspace': 'محیط کاری دواخانه',
+      'dashboardWorkspaceSubtitle': 'فروش و موجودی آفلاین',
+      'dashboardToday': 'امروز در این دستگاه',
+      'dashboardSales': 'فروش',
+      'dashboardRevenue': 'عواید',
+      'dashboardPendingSync': 'در انتظار همگام‌سازی',
+      'dashboardInventoryAlerts': 'هشدارهای موجودی محلی',
+      'dashboardViewStock': 'مشاهده موجودی',
+      'dashboardOutOfStock': 'ناموجود',
+      'dashboardExpiredBatches': 'بچ‌های منقضی',
+      'dashboardExpiringSoon': 'انقضا در ۳۰ روز',
+      'dashboardMedicineCount': 'بر اساس {count} دوای فعال همگام‌شده.',
+      'dashboardTitle': 'داشبورد',
+      'dashboardSubtitle': 'نمای کلی دواخانه شما',
+      'dashboardQuickAccess': 'دسترسی سریع',
+      'dashboardSearchHint': 'جستجوی بخش دواخانه',
+      'dashboardNoMatches': 'هیچ بخشی یافت نشد',
+      'dashboardLocalOverview': 'نمای کلی محلی',
+      'dashboardRefresh': 'تازه‌سازی نمای کلی',
+      'dashboardClearSearch': 'پاک کردن جستجو',
+      'dashboardMatchingCount': '{count} بخش مطابق',
+      'dashboardAvailableCount': '{count} بخش دواخانه موجود',
+      'home': 'خانه',
+      'medicines': 'دواها',
+      'reports': 'گزارش‌ها',
+      'more': 'بیشتر',
+      'purchases': 'خریدها',
+      'alerts': 'هشدارها',
+      'settings': 'تنظیمات',
       'appName': 'فارمسی BusinessOS',
       'foundation': 'بنیاد موبایل آماده برای کار آفلاین',
       'foundationBody': 'دیتابیس محلی، فروش آفلاین و سیستم همگام‌سازی در مراحل بعدی موبایل فعال می‌شوند.',
@@ -440,6 +587,35 @@ class AppStrings {
       'syncPulled': 'رکورد دریافت شد',
     },
     AppLocale.pashto: <String, String>{
+      'dashboardWorkspace': 'د درملتون کاري چاپېریال',
+      'dashboardWorkspaceSubtitle': 'افلاین پلور او زېرمه',
+      'dashboardToday': 'نن په دې وسیله',
+      'dashboardSales': 'پلور',
+      'dashboardRevenue': 'عاید',
+      'dashboardPendingSync': 'د همغږۍ په تمه',
+      'dashboardInventoryAlerts': 'د ځايي زېرمې خبرتیاوې',
+      'dashboardViewStock': 'زېرمه وګورئ',
+      'dashboardOutOfStock': 'زېرمه نشته',
+      'dashboardExpiredBatches': 'تېرې شوې بستې',
+      'dashboardExpiringSoon': 'په ۳۰ ورځو کې ختمېږي',
+      'dashboardMedicineCount': 'د {count} همغږو فعالو درملو پر بنسټ.',
+      'dashboardTitle': 'ډشبورډ',
+      'dashboardSubtitle': 'ستاسو د درملتون لنډه کتنه',
+      'dashboardQuickAccess': 'چټک لاسرسی',
+      'dashboardSearchHint': 'د درملتون برخه ولټوئ',
+      'dashboardNoMatches': 'هیڅ برخه ونه موندل شوه',
+      'dashboardLocalOverview': 'ځايي لنډیز',
+      'dashboardRefresh': 'ځايي لنډیز تازه کړئ',
+      'dashboardClearSearch': 'لټون پاک کړئ',
+      'dashboardMatchingCount': '{count} برابرې برخې',
+      'dashboardAvailableCount': '{count} د درملتون برخې شته',
+      'home': 'کور',
+      'medicines': 'درمل',
+      'reports': 'راپورونه',
+      'more': 'نور',
+      'purchases': 'پېرودنې',
+      'alerts': 'خبرتیاوې',
+      'settings': 'تنظیمات',
       'appName': 'BusinessOS فارمسي',
       'foundation': 'د آفلاین کار لپاره چمتو موبایل بنسټ',
       'foundationBody': 'ځايي ډیټابیس، آفلاین پلور او همغږي په راتلونکو موبایل پړاوونو کې فعالېږي.',
