@@ -56,6 +56,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
+  void _openAlerts() {
+    setState(() {
+      _selectedIndex = 4;
+      _moreSection = 'Alerts';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
@@ -96,6 +103,11 @@ class _AppShellState extends ConsumerState<AppShell> {
           ],
         ),
         actions: <Widget>[
+          IconButton(
+            tooltip: s.moduleAlerts,
+            onPressed: _openAlerts,
+            icon: const Icon(Icons.notifications_none_rounded),
+          ),
           PopupMenuButton<AppLocale>(
             tooltip: strings.language,
             initialValue: AppLocale.fromCode(
