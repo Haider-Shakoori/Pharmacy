@@ -6,6 +6,7 @@ import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
+import 'package:businessos_pharmacy/features/catalog/presentation/stock_workspace.dart';
 import 'package:businessos_pharmacy/features/medicines/data/medicine_duplicate_preflight.dart';
 import 'package:businessos_pharmacy/features/medicines/data/medicine_registration_catalog_refresh.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
@@ -21,6 +22,7 @@ import 'package:businessos_pharmacy/features/purchasing/presentation/offline_pur
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.dart';
 import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
+import 'package:businessos_pharmacy/features/shell/presentation/home_dashboard.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
 import 'package:flutter/material.dart';
@@ -121,7 +123,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             const ConnectivityBanner(),
             const SizedBox(height: 16),
             if (_selectedIndex == 0)
-              _HomePanel(
+              HomeDashboard(
                 onNavigate: (int index, String? section) => setState(() {
                   _selectedIndex = index;
                   if (section != null) _moreSection = section;
@@ -130,7 +132,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             else if (_selectedIndex == 1)
               const OfflinePosPanel()
             else if (_selectedIndex == 2)
-              const OfflineStockPanel()
+              const StockWorkspace()
             else if (_selectedIndex == 3)
               const _ReportsPanel(),
             if (_selectedIndex == 2) ...<Widget>[
