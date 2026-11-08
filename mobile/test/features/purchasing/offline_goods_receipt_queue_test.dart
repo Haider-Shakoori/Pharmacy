@@ -79,6 +79,38 @@ void main() {
     },
   );
 
+  test('invalid second receipt preserves existing queued receipt', () async {
+    final queue = OfflineGoodsReceiptQueue(database);
+    const validLines = <GoodsReceiptDraftLine>[
+      GoodsReceiptDraftLine(
+        purchaseOrderLineId: 'line-1',
+        orderedQuantity: '10',
+        previouslyReceivedQuantity: '0',
+        receivedQuantity: '2',
+        unitCost: '12.5',
+      ),
+    ];
+    final firstKey = await queue.enqueue(
+      purchaseOrderId: 'order-1',
+      orderStatus: 'approved',
+      receivedAt: DateTime.utc(2026, 11, 3),
+      lines: validLines,
+    );
+    await expectLater(
+      queue.enqueue(
+        purchaseOrderId: 'order-2',
+        orderStatus: 'draft',
+        receivedAt: DateTime.utc(2026, 11, 3),
+        lines: validLines,
+      ),
+      throwsFormatException,
+    );
+    final events = await MobileSyncRepository(database).pendingOutbox();
+    expect(events, hasLength(1));
+    expect(events.single.idempotencyKey, firstKey);
+    expect(events.single.payload['purchase_order_id'], 'order-1');
+  });
+
   test('invalid receipt never creates an outbox event', () async {
     await expectLater(
       OfflineGoodsReceiptQueue(database).enqueue(
