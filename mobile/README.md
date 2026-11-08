@@ -1,75 +1,23 @@
-# BusinessOS Pharmacy — Android foundation
+# Darmaltoon Pharmacy — Flutter mobile client
 
-This directory is the Flutter Android client for BusinessOS Pharmacy.
+This directory contains the offline-first Flutter client for Darmaltoon Pharmacy (Android and iOS). Earlier batch notes below are historical implementation notes, not the current feature inventory.
 
-## Batch 16 scope
+## Current implementation and verification
 
-Batch 16 establishes the mobile application boundary:
+- Material 3 application with English, Dari and Pashto localization and RTL support.
+- Encrypted device configuration and Local / Cloud / Automatic endpoint selection.
+- Drift/SQLite offline storage, device registration, offline POS and sync components.
+- Purchasing screens include a local receiving worksheet, persisted drafts and an offline goods-receipt outbox.
+- Goods receipts are **not inventory postings**: stock must remain unchanged until an authenticated, idempotent server operation validates and posts the receipt.
+- The goods-receipt validator requires at least one **positive received quantity**; a bonus-only receipt is currently rejected. Do not treat bonus-only receipt support as implemented.
+- The branch includes a `goods_receipt.create` sync-push handler and `MobileGoodsReceiptService`: authorized, idempotent receipts are captured server-side with `pending_inventory` status and an accepted acknowledgment. Inventory posting is a separate authenticated workflow. End-to-end receipt capture, acknowledgment, and subsequent posting still require integration testing.
+- GitHub Actions passed Flutter Mobile CI, Flutter Mobile Validation, Windows workflow, application CI and Release Candidate UAT at commit `5c397840`. Passing CI is not proof of physical-device or production readiness.
 
-- Flutter 3.47.5 / Dart 3.13.4 toolchain.
-- Android-first Material 3 shell.
-- English, Dari and Pashto localization with RTL.
-- Riverpod and GoRouter application boundaries.
-- Encrypted secure storage and stable installation identity.
-- Network-link monitoring separated from server reachability.
-- **Local / Cloud / Automatic** server connection policy.
-- Secure persistence of the selected connection profile.
-- Private-LAN validation for local HTTP and HTTPS-only cloud endpoints.
-- POS/Stock/Customers/Sync placeholders for later mobile batches.
-- Independent Flutter CI for format, analysis, tests and APK compilation.
+## Development and release policy
 
-Batch 16 intentionally does not implement Drift/SQLite, authentication, device
-registration, offline sales, synchronization, signed license leases, offline
-stock allocation or receipt printing. Those remain Batches 17–23.
+Keep development on the feature branch. Do not merge, deploy, produce release APK/IPA artifacts or distribute builds without explicit approval. Physical-device scanner/OCR, printer and permissions checks, end-to-end tenant/LAN/auth/sync tests, and signing verification are deferred to the final release gate. See `RELEASE_READINESS.md`.
 
-## Connection scenarios
-
-**Local** connects to a Laravel/Apache server on the pharmacy's own LAN/Wi-Fi.
-The user can enter a private IP such as `192.168.1.20` or a local hostname.
-
-**Cloud** connects to the tenant's dedicated BusinessOS Pharmacy HTTPS endpoint.
-
-**Automatic** prefers Local, falls back to Cloud, and becomes offline when
-neither endpoint is reachable. Offline is a runtime state, not a fourth mode.
-
-The Local and Cloud servers must expose the same versioned Pharmacy API. Future
-QR pairing or mDNS discovery will only populate the Local endpoint; they do not
-change the data model or sync protocol. The selected connection profile is
-persisted in encrypted device storage.
-
-## Android host bootstrap
-
-With Flutter 3.47.5 installed:
-
-```bash
-cd mobile
-bash tool/bootstrap_android.sh
-flutter pub get
-flutter run
-```
-
-The script creates the Android host with application ID
-`af.businessos.pharmacy`. CI performs the same bootstrap from a clean runner.
-
-## Optional cloud seed
-
-A build can seed the Cloud endpoint:
-
-```bash
-flutter run --dart-define=API_BASE_URL=https://darmaltoon.com
-```
-
-The connection screen can then persist the authorized Local/Cloud profile in
-encrypted storage. Batch 18 will bind that profile to the registered tenant and
-device identity.
-
-## Offline-first rule
-
-When transaction work begins in Batch 19, sales are committed to the local
-database first. Network availability must never be a prerequisite for an
-otherwise licensed offline sale. Batch 20 synchronization uses UUIDs, an
-outbox, idempotency keys, acknowledgements and checkpoints.
-
+## Historical implementation notes
 
 ## Batch 17 local database
 

@@ -62,7 +62,7 @@ jobs:
         run: npm run build
 
   android-uat:
-    if: github.event_name == 'workflow_dispatch' && inputs.run_android == true
+    if: ${{ false }} # Android UAT builds disabled until explicit final-release authorization.
     runs-on: ubuntu-latest
     defaults:
       run:

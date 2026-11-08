@@ -185,6 +185,11 @@ class _SyncStatusCardState extends ConsumerState<SyncStatusCard> {
                       : '${strings.syncLast}: ${status.lastSyncedAt}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  strings.serverNotVerified,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 if (_message != null) ...<Widget>[
                   const SizedBox(height: 12),
                   Text(_message!),

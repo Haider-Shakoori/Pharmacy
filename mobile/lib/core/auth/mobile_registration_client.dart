@@ -25,6 +25,9 @@ class MobileRegistrationClient {
   final http.Client _client;
   final Duration timeout;
 
+  /// Release the underlying HTTP connection pool after registration.
+  void close() => _client.close();
+
   Future<MobileRegistration> register({
     required ServerEndpoint endpoint,
     required DeviceIdentity device,

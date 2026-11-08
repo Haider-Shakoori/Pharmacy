@@ -52,18 +52,52 @@ class MobileSyncEngine {
 
     final List<SyncOutboxEvent> events = await repository.pendingOutbox();
     if (events.isNotEmpty) {
-      await repository.markSending(events);
-
+      final Set<String> eventKeys = events
+          .map((event) => event.idempotencyKey)
+          .toSet();
+      if (eventKeys.length != events.length) {
+        throw const MobileSyncException(
+          'The local synchronization queue contains duplicate event keys.',
+        );
+      }
       try {
+        await repository.markSending(events);
         final List<SyncPushResult> results = await transport.push(
           endpoint: endpoint,
           registration: registration,
           events: events,
         );
-        final Map<String, SyncPushResult> byKey = <String, SyncPushResult>{
-          for (final SyncPushResult result in results)
-            result.idempotencyKey: result,
-        };
+        final Map<String, SyncPushResult> byKey = <String, SyncPushResult>{};
+        final Set<String> requestedKeys = events
+            .map((event) => event.idempotencyKey)
+            .toSet();
+        for (final SyncPushResult result in results) {
+          if (!requestedKeys.contains(result.idempotencyKey) ||
+              byKey.containsKey(result.idempotencyKey)) {
+            throw const MobileSyncException(
+              'The server returned duplicate or unexpected acknowledgements. '
+              'The pending transactions will be retried safely.',
+            );
+          }
+          byKey[result.idempotencyKey] = result;
+        }
+
+        // Validate every acknowledgement before applying any local outcome.
+        // An incomplete response can be retried, but a malformed response
+        // must not partially acknowledge sales before failing validation.
+        for (final SyncOutboxEvent event in events) {
+          final SyncPushResult? result = byKey[event.idempotencyKey];
+          if (result != null &&
+              result.accepted &&
+              (event.eventType == 'sale.completed' ||
+                  event.eventType == 'goods_receipt.create') &&
+              (result.serverId == null || result.serverId!.trim().isEmpty)) {
+            throw const MobileSyncException(
+              'An accepted transaction acknowledgement is missing its server ID. '
+              'Pending transactions will be retried safely.',
+            );
+          }
+        }
 
         for (final SyncOutboxEvent event in events) {
           final SyncPushResult? result = byKey[event.idempotencyKey];
@@ -91,8 +125,11 @@ class MobileSyncEngine {
             }
           }
         }
-      } on MobileSyncException catch (error) {
-        await repository.retryTransportFailure(events, error.message);
+      } catch (error) {
+        // Do not leave outbox events in the sending state if the transport
+        // throws an unexpected exception. Preserve their idempotency keys
+        // and schedule a retry without posting inventory locally.
+        await repository.retryTransportFailure(events, error.toString());
         rethrow;
       }
     }
@@ -106,8 +143,10 @@ class MobileSyncEngine {
     ]) {
       String? cursor = await repository.checkpoint(stream);
       int pageCount = 0;
+      final Set<String> seenCursors = <String>{?cursor};
+      const int maxPagesPerStream = 50;
 
-      while (pageCount < 50) {
+      while (pageCount < maxPagesPerStream) {
         final SyncPullPage page = await transport.pull(
           endpoint: endpoint,
           registration: registration,
@@ -115,13 +154,36 @@ class MobileSyncEngine {
           cursor: cursor,
         );
 
+        if (page.stream != stream) {
+          throw MobileSyncException(
+            'Synchronization returned the wrong stream for $stream.',
+          );
+        }
+        if (page.hasMore &&
+            (page.nextCursor == null ||
+                page.nextCursor!.trim().isEmpty ||
+                page.nextCursor == cursor ||
+                seenCursors.contains(page.nextCursor))) {
+          throw MobileSyncException(
+            'Synchronization returned an invalid continuation cursor for '
+            '$stream. Local data was not changed for this page.',
+          );
+        }
+
         await repository.applyPullPage(page);
         pulled += page.data.length;
         cursor = page.nextCursor;
+        if (cursor != null) seenCursors.add(cursor);
         pageCount += 1;
 
         if (!page.hasMore) {
           break;
+        }
+        if (pageCount == maxPagesPerStream) {
+          throw MobileSyncException(
+            'Synchronization is incomplete for $stream after '
+            '$maxPagesPerStream pages. Run Sync Now again to continue.',
+          );
         }
       }
     }

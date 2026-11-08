@@ -3,6 +3,8 @@ import 'package:businessos_pharmacy/core/network/connectivity_monitor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// One-line network status. Server reachability is shown on the Sync screen,
+/// because a working Wi-Fi link does not prove the pharmacy server is reachable.
 class ConnectivityBanner extends ConsumerWidget {
   const ConnectivityBanner({super.key});
 
@@ -35,15 +37,17 @@ class ConnectivityBanner extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 10,
+                  vertical: 8,
                 ),
                 child: Row(
                   children: <Widget>[
-                    Icon(icon, size: 18),
+                    Icon(icon, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '$label · ${strings.serverNotVerified}',
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),

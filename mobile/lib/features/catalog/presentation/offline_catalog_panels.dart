@@ -128,7 +128,7 @@ class _StockBrowserState extends State<_StockBrowser> {
       );
       final List<String> locations = await browser.stockLocations();
       final InventoryOverview overview = await browser.inventoryOverview(
-        locationId: _location,
+        locationId: location,
       );
       final List<StockMedicineSnapshot> medicines = await browser.medicines(
         search: search,
@@ -284,6 +284,7 @@ class _StockBrowserState extends State<_StockBrowser> {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
+          key: ValueKey('stock-location-${_location ?? 'all'}'),
           initialValue: _location ?? '',
           decoration: InputDecoration(labelText: strings.posLocation),
           items: <DropdownMenuItem<String>>[
@@ -297,7 +298,11 @@ class _StockBrowserState extends State<_StockBrowser> {
             ),
           ],
           onChanged: (String? value) {
-            _location = value == null || value.isEmpty ? null : value;
+            final String? selected = value == null || value.isEmpty
+                ? null
+                : value;
+            if (selected == _location) return;
+            _location = selected;
             _page = 0;
             _load();
           },

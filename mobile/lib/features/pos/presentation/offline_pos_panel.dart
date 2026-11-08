@@ -7,9 +7,12 @@ import 'package:businessos_pharmacy/core/decimal/fixed_decimal.dart';
 import 'package:businessos_pharmacy/core/licensing/offline_lease_authorizer.dart';
 import 'package:businessos_pharmacy/core/licensing/offline_lease_verifier.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
+import 'package:businessos_pharmacy/core/localization/module_strings.dart';
+import 'package:businessos_pharmacy/core/localization/scanner_strings.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_catalog_repository.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_checkout_service.dart';
 import 'package:businessos_pharmacy/features/pos/domain/offline_pos_models.dart';
+import 'package:businessos_pharmacy/features/pos/domain/pos_search_gate.dart';
 import 'package:businessos_pharmacy/features/receipt/data/offline_receipt_repository.dart';
 import 'package:businessos_pharmacy/features/receipt/domain/offline_receipt.dart';
 import 'package:businessos_pharmacy/features/receipt/presentation/receipt_print_sheet.dart';
@@ -89,6 +92,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   late final OfflinePosCheckoutService _checkout;
   late final OfflineReceiptRepository _receipts;
   final TextEditingController _searchController = TextEditingController();
+  final PosSearchGate _searchGate = PosSearchGate();
 
   List<String> _locations = <String>[];
   List<OfflinePosCatalogItem> _results = <OfflinePosCatalogItem>[];
@@ -170,8 +174,10 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   }
 
   Future<void> _search() async {
+    final int generation = _searchGate.begin();
     final String? locationId = _locationId;
     if (locationId == null) {
+      if (mounted) setState(() => _results = <OfflinePosCatalogItem>[]);
       return;
     }
 
@@ -181,7 +187,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         query: _searchController.text,
       );
 
-      if (!mounted) {
+      if (!mounted || !_searchGate.isCurrent(generation)) {
         return;
       }
       setState(() {
@@ -189,7 +195,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         _error = null;
       });
     } on Object catch (error) {
-      if (!mounted) {
+      if (!mounted || !_searchGate.isCurrent(generation)) {
         return;
       }
       setState(() {
@@ -229,6 +235,19 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
             discount: '0.0000',
           ),
         );
+      }
+    });
+  }
+
+  void _changeQuantity(_CartEntry entry, bool increase) {
+    final FixedDecimal one = FixedDecimal.parse('1');
+    final FixedDecimal current = FixedDecimal.parse(entry.quantity);
+    final FixedDecimal next = increase ? current + one : current - one;
+    setState(() {
+      if (!next.isPositive) {
+        _cart.remove(entry);
+      } else {
+        entry.quantity = next.toString();
       }
     });
   }
@@ -320,6 +339,35 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
     discount.dispose();
   }
 
+  FixedDecimal get _subtotal {
+    FixedDecimal value = FixedDecimal.zero;
+
+    for (final _CartEntry entry in _cart) {
+      try {
+        value += FixedDecimal.parse(entry.quantity)
+            .multiply(FixedDecimal.parse(entry.unitPrice));
+      } on FormatException {
+        return FixedDecimal.zero;
+      }
+    }
+
+    return value;
+  }
+
+  FixedDecimal get _discountTotal {
+    FixedDecimal value = FixedDecimal.zero;
+
+    for (final _CartEntry entry in _cart) {
+      try {
+        value += FixedDecimal.parse(entry.discount);
+      } on FormatException {
+        return FixedDecimal.zero;
+      }
+    }
+
+    return value;
+  }
+
   FixedDecimal get _total {
     FixedDecimal value = FixedDecimal.zero;
 
@@ -340,7 +388,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   Future<void> _complete() async {
     final AppStrings strings = AppStrings.of(context);
     final String? locationId = _locationId;
-    if (locationId == null || _cart.isEmpty) {
+    if (_checkingOut || locationId == null || _cart.isEmpty) {
       return;
     }
 
@@ -415,6 +463,13 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         _checkingOut = false;
         _error = strings.posInvalidValue;
       });
+    } on Object catch (error) {
+      // Checkout is atomic. Keep the cart if persistence fails.
+      if (!mounted) return;
+      setState(() {
+        _checkingOut = false;
+        _error = 'Unable to complete the offline sale: $error';
+      });
     }
   }
 
@@ -433,6 +488,8 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   @override
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
+    final ModuleStrings s = ModuleStrings.of(context);
+    final ScannerStrings sc = ScannerStrings.of(context);
 
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -455,6 +512,22 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: <Widget>[
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: strings.posSearch,
+                    hintText: strings.posSearchHint,
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: IconButton(
+                      tooltip: sc.scanBarcodeTooltip,
+                      onPressed: _scanBarcode,
+                      icon: const Icon(Icons.qr_code_scanner_rounded),
+                    ),
+                  ),
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => _search(),
+                ),
+                const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _locationId,
                   decoration: InputDecoration(labelText: strings.posLocation),
@@ -466,35 +539,21 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                         ),
                       )
                       .toList(growable: false),
-                  onChanged: (String? value) {
-                    setState(() {
-                      _locationId = value;
-                    });
-                    _search();
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: strings.posSearch,
-                    hintText: strings.posSearchHint,
-                    suffixIcon: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        IconButton(
-                          tooltip: 'Scan barcode or QR code',
-                          onPressed: _scanBarcode,
-                          icon: const Icon(Icons.qr_code_scanner_rounded),
-                        ),
-                        IconButton(
-                          onPressed: _search,
-                          icon: const Icon(Icons.search_rounded),
-                        ),
-                      ],
-                    ),
-                  ),
-                  onSubmitted: (_) => _search(),
+                  onChanged: _checkingOut
+                      ? null
+                      : (String? value) {
+                          if (value == _locationId) return;
+                          _searchGate.invalidate();
+                          setState(() {
+                            _locationId = value;
+                            // Cart lines must never be checked out against another
+                            // location's batch inventory.
+                            _cart.clear();
+                            _results = <OfflinePosCatalogItem>[];
+                            _error = null;
+                          });
+                          _search();
+                        },
                 ),
               ],
             ),
@@ -503,8 +562,12 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         const SizedBox(height: 12),
         ..._results.map(
           (OfflinePosCatalogItem item) => Card(
+            margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
-              title: Text(item.brandName),
+              title: Text(
+                item.brandName,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               subtitle: Text(
                 '${item.genericName ?? ''} • '
                 '${strings.posAvailable}: ${item.availableQuantity.compact} '
@@ -526,13 +589,28 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
             style: Theme.of(context).textTheme.titleMedium
                 ?.copyWith(fontWeight: FontWeight.w800),
           ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () async {
+                try {
+                  final recent = await _receipts.recentCompleted();
+                  if (mounted) setState(() => _recentReceipts = recent);
+                } on Object catch (error) {
+                  if (mounted) setState(() => _error = error.toString());
+                }
+              },
+              icon: const Icon(Icons.refresh),
+              label: Text(sc.refreshReceipts),
+            ),
+          ),
           ..._recentReceipts.map(
             (OfflineReceipt receipt) => Card(
               child: ListTile(
                 leading: const Icon(Icons.receipt_long_rounded),
                 title: Text(receipt.displayNumber),
                 subtitle: Text(
-                  '${receipt.total.compact} AFN • ${receipt.businessDate}',
+                  '${receipt.total.compact} AFN • ${receipt.businessDate} • ${receipt.syncState}',
                 ),
                 trailing: IconButton(
                   tooltip: strings.receiptPrint,
@@ -556,23 +634,65 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           ),
         ..._cart.map(
           (_CartEntry entry) => Card(
-            child: ListTile(
-              title: Text(entry.item.brandName),
-              subtitle: Text(
-                '${strings.posQuantity}: '
-                '${FixedDecimal.parse(entry.quantity).compact} • '
-                '${strings.posUnitPrice}: '
-                '${FixedDecimal.parse(entry.unitPrice).compact} AFN',
-              ),
-              onTap: () => _edit(entry),
-              trailing: IconButton(
-                tooltip: strings.posRemove,
-                onPressed: () {
-                  setState(() {
-                    _cart.remove(entry);
-                  });
-                },
-                icon: const Icon(Icons.delete_outline_rounded),
+            margin: const EdgeInsets.only(bottom: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _edit(entry),
+                          child: Text(
+                            entry.item.brandName,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: strings.posRemove,
+                        onPressed: () {
+                          setState(() {
+                            _cart.remove(entry);
+                          });
+                        },
+                        icon: const Icon(Icons.delete_outline_rounded),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: <Widget>[
+                      IconButton.outlined(
+                        tooltip: s.decreaseQuantity,
+                        onPressed: _checkingOut
+                            ? null
+                            : () => _changeQuantity(entry, false),
+                        icon: const Icon(Icons.remove),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          FixedDecimal.parse(entry.quantity).compact,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      IconButton.outlined(
+                        tooltip: s.increaseQuantity,
+                        onPressed: _checkingOut
+                            ? null
+                            : () => _changeQuantity(entry, true),
+                        icon: const Icon(Icons.add),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${FixedDecimal.parse(entry.unitPrice).compact} AFN ${s.eachSuffix}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
@@ -585,6 +705,31 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           ),
         ],
         if (_cart.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: <Widget>[
+                  _TotalRow(
+                    label: s.subtotal,
+                    value: '${_subtotal.compact} AFN',
+                  ),
+                  _TotalRow(
+                    label: s.discount,
+                    value: '− ${_discountTotal.compact} AFN',
+                    valueColor: const Color(0xFFD93A3A),
+                  ),
+                  const Divider(),
+                  _TotalRow(
+                    label: strings.posTotal,
+                    value: '${_total.compact} AFN',
+                    bold: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _paymentMethod,
@@ -612,22 +757,65 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
             },
           ),
           const SizedBox(height: 12),
-          Text(
-            '${strings.posTotal}: ${_total.compact} AFN',
-            textAlign: TextAlign.end,
-            style: Theme.of(context).textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: _checkingOut ? null : _complete,
-            icon: const Icon(Icons.check_circle_outline_rounded),
-            label: Text(
-              _checkingOut ? strings.saving : strings.posCompleteSale,
-            ),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Tooltip(
+                  message: s.holdNotAvailable,
+                  child: OutlinedButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.pause_circle_outline_rounded),
+                    label: Text(s.hold),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: FilledButton.icon(
+                  onPressed: _checkingOut ? null : _complete,
+                  icon: const Icon(Icons.payments_outlined),
+                  label: Text(
+                    _checkingOut ? strings.saving : strings.posCompleteSale,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ],
+    );
+  }
+}
+
+class _TotalRow extends StatelessWidget {
+  const _TotalRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.bold = false,
+  });
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final bool bold;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle style = TextStyle(
+      fontWeight: bold ? FontWeight.w900 : FontWeight.w500,
+      fontSize: bold ? 18 : 14,
+      color: valueColor,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: <Widget>[
+          Expanded(child: Text(label, style: style)),
+          Text(value, style: style),
+        ],
+      ),
     );
   }
 }
@@ -660,27 +848,28 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
   bool _handled = false;
 
   Future<void> _enterCodeManually() async {
+    final ScannerStrings sc = ScannerStrings.of(context);
     final TextEditingController input = TextEditingController();
     final String? code = await showDialog<String>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Enter medicine code'),
+        title: Text(sc.enterCodeTitle),
         content: TextField(
           controller: input,
           autofocus: true,
           textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(labelText: 'Barcode or QR value'),
+          decoration: InputDecoration(labelText: sc.barcodeOrQrValue),
           onSubmitted: (String value) =>
               Navigator.of(dialogContext).pop(value.trim()),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(sc.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(input.text.trim()),
-            child: const Text('Search'),
+            child: Text(sc.search),
           ),
         ],
       ),
@@ -713,54 +902,53 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Scan medicine code'),
-      actions: <Widget>[
-        IconButton(
-          tooltip: 'Toggle flashlight',
-          onPressed: () => _controller.toggleTorch(),
-          icon: const Icon(Icons.flashlight_on_outlined),
-        ),
-        IconButton(
-          tooltip: 'Enter code manually',
-          onPressed: _enterCodeManually,
-          icon: const Icon(Icons.keyboard_outlined),
-        ),
-      ],
-    ),
-    body: Stack(
-      children: <Widget>[
-        MobileScanner(
-          controller: _controller,
-          onDetect: _onDetect,
-          errorBuilder: (BuildContext context, MobileScannerException error) =>
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    'Camera unavailable: ${error.errorCode.name}. Check camera permissions in iOS Settings.',
+  Widget build(BuildContext context) {
+    final ScannerStrings sc = ScannerStrings.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(sc.scanTitle),
+        actions: <Widget>[
+          IconButton(
+            tooltip: sc.toggleFlash,
+            onPressed: () => _controller.toggleTorch(),
+            icon: const Icon(Icons.flashlight_on_outlined),
+          ),
+          IconButton(
+            tooltip: sc.enterCodeManually,
+            onPressed: _enterCodeManually,
+            icon: const Icon(Icons.keyboard_outlined),
+          ),
+        ],
+      ),
+      body: Stack(
+        children: <Widget>[
+          MobileScanner(
+            controller: _controller,
+            onDetect: _onDetect,
+            errorBuilder:
+                (BuildContext context, MobileScannerException error) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(sc.cameraUnavailable(error.errorCode.name)),
                   ),
                 ),
-              ),
-        ),
-        const Align(
-          alignment: Alignment.bottomCenter,
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Card(
-                child: Padding(
-                  padding: EdgeInsets.all(14),
-                  child: Text(
-                    'Align the medicine barcode or QR code within the camera view.',
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Text(sc.alignBarcode),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

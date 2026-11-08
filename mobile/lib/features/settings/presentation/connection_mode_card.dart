@@ -49,17 +49,22 @@ class _ConnectionModeCardState extends State<ConnectionModeCard> {
   }
 
   Future<void> _load() async {
-    final ConnectionProfile profile = await _repository.load();
-    if (!mounted) {
-      return;
+    try {
+      final ConnectionProfile profile = await _repository.load();
+      if (!mounted) return;
+      _localController.text = profile.localEndpoint?.uri.toString() ?? '';
+      _cloudController.text = profile.cloudEndpoint?.uri.toString() ?? '';
+      setState(() {
+        _mode = profile.mode;
+        _loading = false;
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Unable to load connection settings: $error';
+      });
     }
-
-    _localController.text = profile.localEndpoint?.uri.toString() ?? '';
-    _cloudController.text = profile.cloudEndpoint?.uri.toString() ?? '';
-    setState(() {
-      _mode = profile.mode;
-      _loading = false;
-    });
   }
 
   Future<void> _save() async {
@@ -117,12 +122,16 @@ class _ConnectionModeCardState extends State<ConnectionModeCard> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(strings.connectionSaved)));
     } on FormatException catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         _saving = false;
         _error = error.message.toString();
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _error = 'Unable to save connection settings: $error';
       });
     }
   }
