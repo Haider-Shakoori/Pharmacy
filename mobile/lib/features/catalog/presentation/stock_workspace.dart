@@ -365,7 +365,10 @@ class _StockBodyState extends State<_StockBody> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: Colors.blueGrey),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.blueGrey,
+                  ),
                 ],
               ),
             ),
@@ -516,10 +519,7 @@ class _Notice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text(message),
-      ),
+      child: Padding(padding: const EdgeInsets.all(20), child: Text(message)),
     );
   }
 }
