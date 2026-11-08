@@ -304,7 +304,7 @@ class _SalesReportState extends State<_SalesReport> {
                     _Metric(
                       icon: Icons.payments_outlined,
                       label: s.revenueAfn,
-                      value: '${data.summary.total.compact}',
+                      value: data.summary.total.compact,
                       color: const Color(0xFFDAF5E6),
                     ),
                     _Metric(
