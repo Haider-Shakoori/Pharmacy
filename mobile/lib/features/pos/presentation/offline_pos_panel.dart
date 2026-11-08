@@ -7,6 +7,7 @@ import 'package:businessos_pharmacy/core/decimal/fixed_decimal.dart';
 import 'package:businessos_pharmacy/core/licensing/offline_lease_authorizer.dart';
 import 'package:businessos_pharmacy/core/licensing/offline_lease_verifier.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
+import 'package:businessos_pharmacy/core/localization/module_strings.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_catalog_repository.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_checkout_service.dart';
 import 'package:businessos_pharmacy/features/pos/domain/offline_pos_models.dart';
@@ -487,6 +488,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   @override
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
+    final ModuleStrings s = ModuleStrings.of(context);
 
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -662,7 +664,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                   Row(
                     children: <Widget>[
                       IconButton.outlined(
-                        tooltip: 'Decrease quantity',
+                        tooltip: s.decreaseQuantity,
                         onPressed: _checkingOut
                             ? null
                             : () => _changeQuantity(entry, false),
@@ -676,7 +678,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                         ),
                       ),
                       IconButton.outlined(
-                        tooltip: 'Increase quantity',
+                        tooltip: s.increaseQuantity,
                         onPressed: _checkingOut
                             ? null
                             : () => _changeQuantity(entry, true),
@@ -684,7 +686,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                       ),
                       const Spacer(),
                       Text(
-                        '${FixedDecimal.parse(entry.unitPrice).compact} AFN each',
+                        '${FixedDecimal.parse(entry.unitPrice).compact} AFN ${s.eachSuffix}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -709,11 +711,11 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
               child: Column(
                 children: <Widget>[
                   _TotalRow(
-                    label: 'Subtotal',
+                    label: s.subtotal,
                     value: '${_subtotal.compact} AFN',
                   ),
                   _TotalRow(
-                    label: 'Discount',
+                    label: s.discount,
                     value: '− ${_discountTotal.compact} AFN',
                     valueColor: const Color(0xFFD93A3A),
                   ),
@@ -758,11 +760,11 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
             children: <Widget>[
               Expanded(
                 child: Tooltip(
-                  message: 'Hold is not available yet',
+                  message: s.holdNotAvailable,
                   child: OutlinedButton.icon(
                     onPressed: null,
                     icon: const Icon(Icons.pause_circle_outline_rounded),
-                    label: const Text('Hold'),
+                    label: Text(s.hold),
                   ),
                 ),
               ),
