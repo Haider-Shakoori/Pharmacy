@@ -153,10 +153,8 @@ class _AppShellState extends ConsumerState<AppShell> {
               const SizedBox(height: 16),
               if (canScanMedicines)
                 ExpansionTile(
-                  title: const Text('Scan medicine label'),
-                  subtitle: const Text(
-                    'Offline draft — pharmacist review required',
-                  ),
+                  title: Text(s.scanLabel),
+                  subtitle: Text(s.scanDraftNote),
                   children: [
                     MedicineScanFlow(
                       images: MedicineImageAcquisition(
@@ -186,10 +184,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                               _registrationApproval &&
                               canScanMedicines;
                           return ListTile(
-                            title: const Text('Register reviewed medicine'),
-                            subtitle: const Text(
-                              'Online registration requires pharmacist approval.',
-                            ),
+                            title: Text(s.registerReviewed),
+                            subtitle: Text(s.registerNeedsApproval),
                             trailing: const Icon(Icons.add_circle_outline),
                             enabled: ready,
                             onTap: !ready
@@ -232,10 +228,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                                       if (!context.mounted) return;
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Medicine registered and catalog synchronized.',
-                                              ),
+                                            SnackBar(
+                                              content: Text(s.registeredSynced),
                                             ),
                                           );
                                     } catch (error) {
@@ -245,7 +239,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                       ).showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            'Medicine saved online, but catalog sync failed: $error. Use Sync Now to retry.',
+                                            s.catalogSyncFailed('$error'),
                                           ),
                                         ),
                                       );
@@ -260,30 +254,26 @@ class _AppShellState extends ConsumerState<AppShell> {
                         builder: (context, snapshot) {
                           if (snapshot.connectionState !=
                               ConnectionState.done) {
-                            return const ListTile(
-                              title: Text(
-                                'Checking local catalog for duplicates...',
-                              ),
+                            return ListTile(
+                              title: Text(s.checkingDuplicates),
                             );
                           }
                           if (snapshot.hasError) {
-                            return const ListTile(
-                              title: Text('Duplicate check unavailable'),
-                              subtitle: Text(
-                                'Do not register until catalog duplicates are checked.',
-                              ),
+                            return ListTile(
+                              title: Text(s.duplicateUnavailable),
+                              subtitle: Text(s.doNotRegister),
                             );
                           }
                           final matches = snapshot.data ?? <String>[];
                           return ListTile(
                             title: Text(
                               matches.isEmpty
-                                  ? 'No matches in locally synced catalog'
-                                  : 'Possible duplicates: ${matches.length}',
+                                  ? s.noLocalMatches
+                                  : s.possibleDuplicatesCount(matches.length),
                             ),
                             subtitle: Text(
                               matches.isEmpty
-                                  ? 'Server-side verification is still required.'
+                                  ? s.serverVerifyNeeded
                                   : matches.join(', '),
                             ),
                           );
@@ -291,10 +281,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                       ),
                     if (_reviewedScan != null)
                       CheckboxListTile(
-                        title: const Text('Approve registration handoff'),
-                        subtitle: const Text(
-                          'I have checked the reviewed details. This does not authorize saving to the server.',
-                        ),
+                        title: Text(s.approveHandoff),
+                        subtitle: Text(s.approveHandoffBody),
                         value: _registrationApproval,
                         onChanged: (value) {
                           setState(() {
@@ -314,12 +302,10 @@ class _AppShellState extends ConsumerState<AppShell> {
                               snapshot.data!.isEmpty &&
                               _registrationApproval;
                           return ListTile(
-                            title: const Text('Prepare registration handoff'),
-                            subtitle: const Text(
-                              'Copies verified draft fields only. No server submission.',
-                            ),
+                            title: Text(s.prepareHandoff),
+                            subtitle: Text(s.prepareHandoffBody),
                             trailing: IconButton(
-                              tooltip: 'Copy registration handoff',
+                              tooltip: s.copyHandoffTooltip,
                               icon: const Icon(Icons.assignment_outlined),
                               onPressed: !ready || !canScanMedicines
                                   ? null
@@ -350,7 +336,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                                             );
                                         if (matches.isNotEmpty) {
                                           throw StateError(
-                                            'Possible server duplicates: ${matches.join(', ')}',
+                                            s.serverDuplicates(
+                                              matches.join(', '),
+                                            ),
                                           );
                                         }
                                       } catch (error) {
@@ -359,7 +347,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                                             .showSnackBar(
                                               SnackBar(
                                                 content: Text(
-                                                  'Handoff blocked: $error',
+                                                  s.handoffBlocked('$error'),
                                                 ),
                                               ),
                                             );
@@ -389,10 +377,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                                       if (!context.mounted) return;
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Handoff copied. Server validation and pharmacist registration are still required.',
-                                              ),
+                                            SnackBar(
+                                              content: Text(s.handoffCopied),
                                             ),
                                           );
                                     },
@@ -402,16 +388,10 @@ class _AppShellState extends ConsumerState<AppShell> {
                       ),
                     if (_reviewedScan != null)
                       ListTile(
-                        title: const Text(
-                          'Medicine registration is not enabled',
-                        ),
-                        subtitle: const Text(
-                          'A pharmacist must verify the current server catalog '
-                          'and resolve possible duplicates before saving. '
-                          'This scan remains a draft and does not change stock.',
-                        ),
+                        title: Text(s.registrationDisabled),
+                        subtitle: Text(s.registrationDisabledBody),
                         trailing: IconButton(
-                          tooltip: 'Recheck local catalog',
+                          tooltip: s.recheckTooltip,
                           icon: const Icon(Icons.refresh),
                           onPressed: () {
                             final draft = _reviewedScan;
@@ -436,14 +416,14 @@ class _AppShellState extends ConsumerState<AppShell> {
                               'Form: ${_reviewedScan!.dosageForm}',
                             if (_reviewedScan!.barcode != null)
                               'Barcode: ${_reviewedScan!.barcode}',
-                            'Reviewed draft only. No medicine or stock saved.',
+                            s.reviewedDraftOnly,
                           ].join('\n'),
                         ),
                         trailing: Wrap(
                           spacing: 0,
                           children: [
                             IconButton(
-                              tooltip: 'Copy reviewed medicine details',
+                              tooltip: s.copyReviewedTooltip,
                               icon: const Icon(Icons.copy_outlined),
                               onPressed: () async {
                                 final draft = _reviewedScan;
@@ -464,16 +444,12 @@ class _AppShellState extends ConsumerState<AppShell> {
                                 );
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Reviewed details copied. Register medicine manually; nothing was saved.',
-                                    ),
-                                  ),
+                                  SnackBar(content: Text(s.reviewedCopied)),
                                 );
                               },
                             ),
                             IconButton(
-                              tooltip: 'Clear reviewed draft',
+                              tooltip: s.clearDraftTooltip,
                               icon: const Icon(Icons.delete_outline),
                               onPressed: () => setState(() {
                                 _reviewedScan = null;
