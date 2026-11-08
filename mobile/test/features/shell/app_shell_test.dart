@@ -69,6 +69,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Soon'), findsWidgets);
 
+    await tester.ensureVisible(find.text('Sync'));
+    await tester.pump();
     await tester.tap(find.text('Sync'));
     await tester.pump();
     expect(find.byType(SyncStatusCard), findsOneWidget);
