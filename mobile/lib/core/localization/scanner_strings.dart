@@ -30,10 +30,8 @@ class ScannerStrings {
   String get alignBarcode => _t('alignBarcode');
   String get refreshReceipts => _t('refreshReceipts');
 
-  String cameraUnavailable(String code) => _t('cameraUnavailable').replaceAll(
-    '{code}',
-    code,
-  );
+  String cameraUnavailable(String code) =>
+      _t('cameraUnavailable').replaceAll('{code}', code);
 
   static const Map<AppLocale, Map<String, String>> _table =
       <AppLocale, Map<String, String>>{
@@ -49,8 +47,7 @@ class ScannerStrings {
           'alignBarcode':
               'Align the medicine barcode or QR code within the camera view.',
           'refreshReceipts': 'Refresh receipts',
-          'cameraUnavailable':
-              'Camera unavailable: {code}. Check camera permissions in iOS Settings.',
+          'cameraUnavailable': 'Camera unavailable: {code}. Check camera permissions in iOS Settings.',
         },
         AppLocale.dari: <String, String>{
           'scanBarcodeTooltip': 'اسکن بارکد یا QR',
@@ -61,11 +58,9 @@ class ScannerStrings {
           'barcodeOrQrValue': 'مقدار بارکد یا QR',
           'cancel': 'لغو',
           'search': 'جستجو',
-          'alignBarcode':
-              'بارکد یا QR دوا را داخل نمای دوربین قرار دهید.',
+          'alignBarcode': 'بارکد یا QR دوا را داخل نمای دوربین قرار دهید.',
           'refreshReceipts': 'تازه‌سازی رسیدها',
-          'cameraUnavailable':
-              'دوربین در دسترس نیست: {code}. مجوز دوربین را در تنظیمات iOS بررسی کنید.',
+          'cameraUnavailable': 'دوربین در دسترس نیست: {code}. مجوز دوربین را در تنظیمات iOS بررسی کنید.',
         },
         AppLocale.pashto: <String, String>{
           'scanBarcodeTooltip': 'بارکوډ یا QR سکن کړئ',
