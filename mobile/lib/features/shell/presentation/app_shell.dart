@@ -3,6 +3,7 @@ import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
+import 'package:businessos_pharmacy/core/localization/module_strings.dart';
 import 'package:businessos_pharmacy/features/alerts/presentation/operational_alerts_card.dart';
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
@@ -58,6 +59,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
+    final ModuleStrings s = ModuleStrings.of(context);
     final bool canScanMedicines =
         ref
             .watch(mobileRegistrationProvider)
@@ -476,7 +478,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               const OperationalAlertsCard(),
             ],
             if (_selectedIndex == 4) ...<Widget>[
-              Text('More', style: Theme.of(context).textTheme.headlineMedium),
+              Text(strings.more, style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 12),
               GridView.count(
                 shrinkWrap: true,
@@ -485,7 +487,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
                 childAspectRatio: 1.05,
-                children: _moreModules
+                children: _moreModules(s)
                     .map(
                       (_MoreModule module) => _ModuleTile(
                         module: module,
@@ -553,32 +555,40 @@ class _ShellDestination {
 
 /// The 12 modules from the approved design. Modules without a screen yet are
 /// shown as "Soon" and cannot be tapped.
-const List<_MoreModule> _moreModules = <_MoreModule>[
-  _MoreModule(label: 'POS', icon: Icons.point_of_sale_rounded, tab: 1),
-  _MoreModule(label: 'Medicines', icon: Icons.medication_rounded, tab: 2),
-  _MoreModule(label: 'Inventory', icon: Icons.inventory_2_rounded, tab: 2),
+List<_MoreModule> _moreModules(ModuleStrings s) => <_MoreModule>[
+  _MoreModule(label: s.moduleSales, icon: Icons.point_of_sale_rounded, tab: 1),
   _MoreModule(
-    label: 'Purchases',
+    label: s.moduleMedicines,
+    icon: Icons.medication_rounded,
+    tab: 2,
+  ),
+  _MoreModule(
+    label: s.moduleInventory,
+    icon: Icons.inventory_2_rounded,
+    tab: 2,
+  ),
+  _MoreModule(
+    label: s.modulePurchases,
     icon: Icons.shopping_bag_outlined,
     section: 'Purchases',
   ),
   _MoreModule(
-    label: 'Customers',
+    label: s.moduleCustomers,
     icon: Icons.people_alt_rounded,
     section: 'Customers',
   ),
-  _MoreModule(label: 'Suppliers', icon: Icons.storefront_outlined),
-  _MoreModule(label: 'Reports', icon: Icons.bar_chart_rounded, tab: 3),
-  _MoreModule(label: 'Finance', icon: Icons.account_balance_outlined),
-  _MoreModule(label: 'Transfers', icon: Icons.swap_horiz_rounded),
+  _MoreModule(label: s.moduleSuppliers, icon: Icons.storefront_outlined),
+  _MoreModule(label: s.moduleReports, icon: Icons.bar_chart_rounded, tab: 3),
+  _MoreModule(label: s.moduleFinance, icon: Icons.account_balance_outlined),
+  _MoreModule(label: s.moduleTransfers, icon: Icons.swap_horiz_rounded),
   _MoreModule(
-    label: 'Alerts',
+    label: s.moduleAlerts,
     icon: Icons.notifications_active_outlined,
     section: 'Alerts',
   ),
-  _MoreModule(label: 'Sync', icon: Icons.sync_rounded, section: 'Sync'),
+  _MoreModule(label: s.moduleSync, icon: Icons.sync_rounded, section: 'Sync'),
   _MoreModule(
-    label: 'Settings',
+    label: s.moduleSettings,
     icon: Icons.settings_outlined,
     section: 'Settings',
   ),
@@ -613,6 +623,7 @@ class _ModuleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final ColorScheme colors = Theme.of(context).colorScheme;
     final Color foreground = module.available
         ? const Color(0xFF1557C0)
@@ -641,9 +652,9 @@ class _ModuleTile extends StatelessWidget {
                 ),
               ),
               if (!module.available)
-                const Text(
-                  'Soon',
-                  style: TextStyle(fontSize: 10, color: Colors.blueGrey),
+                Text(
+                  s.soon,
+                  style: const TextStyle(fontSize: 10, color: Colors.blueGrey),
                 ),
             ],
           ),
