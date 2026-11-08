@@ -1,5 +1,6 @@
 import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
+import 'package:businessos_pharmacy/core/localization/module_strings.dart';
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final registration = ref.watch(mobileRegistrationProvider);
     final database = registration.asData?.value == null
         ? null
@@ -44,7 +46,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
           children: <Widget>[
             Expanded(
               child: Text(
-                'Dashboard',
+                s.dashboard,
                 style: text.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
@@ -53,7 +55,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
             Text(today, style: text.bodySmall),
             IconButton(
               key: const ValueKey('dashboard-refresh'),
-              tooltip: 'Refresh',
+              tooltip: s.refreshLocalOverview,
               onPressed: () => setState(() => _refreshVersion++),
               icon: const Icon(Icons.refresh_rounded),
             ),
@@ -66,7 +68,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
           database.when(
             loading: () => const LinearProgressIndicator(),
             error: (Object error, StackTrace trace) =>
-                const Text('Local dashboard unavailable'),
+                Text(s.dashboardUnavailable),
             data: (db) => FutureBuilder<_DashboardData>(
               key: ValueKey('dashboard-$_refreshVersion-$today'),
               future: () async {
@@ -83,7 +85,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                     AsyncSnapshot<_DashboardData> snapshot,
                   ) {
                     if (snapshot.hasError) {
-                      return const Text('Unable to load dashboard');
+                      return Text(s.dashboardLoadError);
                     }
                     if (!snapshot.hasData) {
                       return const LinearProgressIndicator();
@@ -94,7 +96,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
           ),
         const SizedBox(height: 16),
         Text(
-          'Quick access',
+          s.quickAccess,
           style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 10),
@@ -104,6 +106,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
   }
 
   Widget _buildKpis(BuildContext context, _DashboardData data) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final summary = data.summary;
     final overview = data.overview;
     return GridView.count(
@@ -115,42 +118,42 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
       childAspectRatio: 1.7,
       children: <Widget>[
         _KpiTile(
-          label: 'Sales today',
+          label: s.salesToday,
           value: '${summary.total.compact} AFN',
           icon: Icons.payments_outlined,
           color: const Color(0xFF1E9E5A),
           background: const Color(0xFFDAF5E6),
         ),
         _KpiTile(
-          label: 'Invoices',
+          label: s.invoices,
           value: '${summary.salesCount}',
           icon: Icons.receipt_long_outlined,
           color: const Color(0xFF1557C0),
           background: const Color(0xFFDDEAFF),
         ),
         _KpiTile(
-          label: 'Low stock',
+          label: s.lowStock,
           value: '${overview.outOfStock}',
           icon: Icons.inventory_2_outlined,
           color: const Color(0xFFE38A1B),
           background: const Color(0xFFFFE9D6),
         ),
         _KpiTile(
-          label: 'Expiring soon',
+          label: s.expiringSoon,
           value: '${overview.expiringBatches}',
           icon: Icons.event_busy_outlined,
           color: const Color(0xFFD93A3A),
           background: const Color(0xFFFDE4E4),
         ),
         _KpiTile(
-          label: 'Expired batches',
+          label: s.expiredBatches,
           value: '${overview.expiredBatches}',
           icon: Icons.warning_amber_rounded,
           color: const Color(0xFFD93A3A),
           background: const Color(0xFFFDE4E4),
         ),
         _KpiTile(
-          label: 'Pending sync',
+          label: s.pendingSync,
           value: '${summary.pendingSync}',
           icon: Icons.sync_rounded,
           color: const Color(0xFF7A4FD6),
@@ -161,31 +164,52 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
   }
 
   Widget _buildQuickAccess(BuildContext context) {
-    const List<({IconData icon, String label, int tab, String? section})>
+    final ModuleStrings s = ModuleStrings.of(context);
+    final List<({IconData icon, String label, int tab, String? section})>
     links = <({IconData icon, String label, int tab, String? section})>[
-      (icon: Icons.point_of_sale_rounded, label: 'POS', tab: 1, section: null),
-      (icon: Icons.medication_rounded, label: 'Medicines', tab: 2, section: null),
-      (icon: Icons.inventory_2_rounded, label: 'Inventory', tab: 2, section: null),
-      (icon: Icons.bar_chart_rounded, label: 'Reports', tab: 3, section: null),
+      (
+        icon: Icons.point_of_sale_rounded,
+        label: s.moduleSales,
+        tab: 1,
+        section: null,
+      ),
+      (
+        icon: Icons.medication_rounded,
+        label: s.moduleMedicines,
+        tab: 2,
+        section: null,
+      ),
+      (
+        icon: Icons.inventory_2_rounded,
+        label: s.moduleInventory,
+        tab: 2,
+        section: null,
+      ),
+      (
+        icon: Icons.bar_chart_rounded,
+        label: s.moduleReports,
+        tab: 3,
+        section: null,
+      ),
       (
         icon: Icons.shopping_bag_outlined,
-        label: 'Purchases',
+        label: s.modulePurchases,
         tab: 4,
         section: 'Purchases',
       ),
       (
         icon: Icons.people_alt_rounded,
-        label: 'Customers',
+        label: s.moduleCustomers,
         tab: 4,
         section: 'Customers',
       ),
       (
         icon: Icons.notifications_active_outlined,
-        label: 'Alerts',
+        label: s.moduleAlerts,
         tab: 4,
         section: 'Alerts',
       ),
-      (icon: Icons.sync_rounded, label: 'Sync', tab: 4, section: 'Sync'),
+      (icon: Icons.sync_rounded, label: s.moduleSync, tab: 4, section: 'Sync'),
     ];
 
     return GridView.count(
