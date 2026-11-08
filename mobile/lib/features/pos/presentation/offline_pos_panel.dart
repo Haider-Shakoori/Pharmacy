@@ -8,6 +8,7 @@ import 'package:businessos_pharmacy/core/licensing/offline_lease_authorizer.dart
 import 'package:businessos_pharmacy/core/licensing/offline_lease_verifier.dart';
 import 'package:businessos_pharmacy/core/localization/app_strings.dart';
 import 'package:businessos_pharmacy/core/localization/module_strings.dart';
+import 'package:businessos_pharmacy/core/localization/scanner_strings.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_catalog_repository.dart';
 import 'package:businessos_pharmacy/features/pos/data/offline_pos_checkout_service.dart';
 import 'package:businessos_pharmacy/features/pos/domain/offline_pos_models.dart';
@@ -489,6 +490,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
     final ModuleStrings s = ModuleStrings.of(context);
+    final ScannerStrings sc = ScannerStrings.of(context);
 
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -518,7 +520,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                     hintText: strings.posSearchHint,
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: IconButton(
-                      tooltip: 'Scan barcode or QR code',
+                      tooltip: sc.scanBarcodeTooltip,
                       onPressed: _scanBarcode,
                       icon: const Icon(Icons.qr_code_scanner_rounded),
                     ),
@@ -600,7 +602,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                 }
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Refresh receipts'),
+              label: Text(sc.refreshReceipts),
             ),
           ),
           ..._recentReceipts.map(
@@ -847,27 +849,28 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
   bool _handled = false;
 
   Future<void> _enterCodeManually() async {
+    final ScannerStrings sc = ScannerStrings.of(context);
     final TextEditingController input = TextEditingController();
     final String? code = await showDialog<String>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('Enter medicine code'),
+        title: Text(sc.enterCodeTitle),
         content: TextField(
           controller: input,
           autofocus: true,
           textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(labelText: 'Barcode or QR value'),
+          decoration: InputDecoration(labelText: sc.barcodeOrQrValue),
           onSubmitted: (String value) =>
               Navigator.of(dialogContext).pop(value.trim()),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(sc.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(input.text.trim()),
-            child: const Text('Search'),
+            child: Text(sc.search),
           ),
         ],
       ),
@@ -900,54 +903,53 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Scan medicine code'),
-      actions: <Widget>[
-        IconButton(
-          tooltip: 'Toggle flashlight',
-          onPressed: () => _controller.toggleTorch(),
-          icon: const Icon(Icons.flashlight_on_outlined),
-        ),
-        IconButton(
-          tooltip: 'Enter code manually',
-          onPressed: _enterCodeManually,
-          icon: const Icon(Icons.keyboard_outlined),
-        ),
-      ],
-    ),
-    body: Stack(
-      children: <Widget>[
-        MobileScanner(
-          controller: _controller,
-          onDetect: _onDetect,
-          errorBuilder: (BuildContext context, MobileScannerException error) =>
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    'Camera unavailable: ${error.errorCode.name}. Check camera permissions in iOS Settings.',
+  Widget build(BuildContext context) {
+    final ScannerStrings sc = ScannerStrings.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(sc.scanTitle),
+        actions: <Widget>[
+          IconButton(
+            tooltip: sc.toggleFlash,
+            onPressed: () => _controller.toggleTorch(),
+            icon: const Icon(Icons.flashlight_on_outlined),
+          ),
+          IconButton(
+            tooltip: sc.enterCodeManually,
+            onPressed: _enterCodeManually,
+            icon: const Icon(Icons.keyboard_outlined),
+          ),
+        ],
+      ),
+      body: Stack(
+        children: <Widget>[
+          MobileScanner(
+            controller: _controller,
+            onDetect: _onDetect,
+            errorBuilder:
+                (BuildContext context, MobileScannerException error) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(sc.cameraUnavailable(error.errorCode.name)),
                   ),
                 ),
-              ),
-        ),
-        const Align(
-          alignment: Alignment.bottomCenter,
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Card(
-                child: Padding(
-                  padding: EdgeInsets.all(14),
-                  child: Text(
-                    'Align the medicine barcode or QR code within the camera view.',
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Text(sc.alignBarcode),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
