@@ -2,7 +2,8 @@ import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:flutter/widgets.dart';
 
 /// Translations for the screens added in the mobile redesign (dashboard,
-/// stock workspace, reports, POS layout and the 12-module launcher).
+/// stock workspace, reports, POS layout, the 12-module launcher and the
+/// medicine scan review section).
 ///
 /// English is the fallback for any missing key. Dari and Pashto are drafts
 /// and should be reviewed by a native speaker before release.
@@ -135,6 +136,39 @@ class ModuleStrings {
   String get increaseQuantity => _t('increaseQuantity');
   String get eachSuffix => _t('eachSuffix');
 
+  // Medicine scan review
+  String get scanLabel => _t('scanLabel');
+  String get scanDraftNote => _t('scanDraftNote');
+  String get registerReviewed => _t('registerReviewed');
+  String get registerNeedsApproval => _t('registerNeedsApproval');
+  String get checkingDuplicates => _t('checkingDuplicates');
+  String get duplicateUnavailable => _t('duplicateUnavailable');
+  String get doNotRegister => _t('doNotRegister');
+  String get noLocalMatches => _t('noLocalMatches');
+  String get serverVerifyNeeded => _t('serverVerifyNeeded');
+  String get approveHandoff => _t('approveHandoff');
+  String get approveHandoffBody => _t('approveHandoffBody');
+  String get prepareHandoff => _t('prepareHandoff');
+  String get prepareHandoffBody => _t('prepareHandoffBody');
+  String get copyHandoffTooltip => _t('copyHandoffTooltip');
+  String get registrationDisabled => _t('registrationDisabled');
+  String get registrationDisabledBody => _t('registrationDisabledBody');
+  String get recheckTooltip => _t('recheckTooltip');
+  String get reviewedDraftOnly => _t('reviewedDraftOnly');
+  String get copyReviewedTooltip => _t('copyReviewedTooltip');
+  String get clearDraftTooltip => _t('clearDraftTooltip');
+  String get registeredSynced => _t('registeredSynced');
+  String get handoffCopied => _t('handoffCopied');
+  String get reviewedCopied => _t('reviewedCopied');
+  String possibleDuplicatesCount(int count) =>
+      _fill('possibleDuplicatesCount', <String, String>{'count': '$count'});
+  String catalogSyncFailed(String error) =>
+      _fill('catalogSyncFailed', <String, String>{'error': error});
+  String handoffBlocked(String error) =>
+      _fill('handoffBlocked', <String, String>{'error': error});
+  String serverDuplicates(String list) =>
+      _fill('serverDuplicates', <String, String>{'list': list});
+
   static const Map<AppLocale, Map<String, String>> _table =
       <AppLocale, Map<String, String>>{
         AppLocale.english: <String, String>{
@@ -237,6 +271,39 @@ class ModuleStrings {
           'decreaseQuantity': 'Decrease quantity',
           'increaseQuantity': 'Increase quantity',
           'eachSuffix': 'each',
+          'scanLabel': 'Scan medicine label',
+          'scanDraftNote': 'Offline draft — pharmacist review required',
+          'registerReviewed': 'Register reviewed medicine',
+          'registerNeedsApproval': 'Online registration requires pharmacist approval.',
+          'checkingDuplicates': 'Checking local catalog for duplicates...',
+          'duplicateUnavailable': 'Duplicate check unavailable',
+          'doNotRegister': 'Do not register until catalog duplicates are checked.',
+          'noLocalMatches': 'No matches in locally synced catalog',
+          'serverVerifyNeeded': 'Server-side verification is still required.',
+          'approveHandoff': 'Approve registration handoff',
+          'approveHandoffBody':
+              'I have checked the reviewed details. This does not authorize saving to the server.',
+          'prepareHandoff': 'Prepare registration handoff',
+          'prepareHandoffBody':
+              'Copies verified draft fields only. No server submission.',
+          'copyHandoffTooltip': 'Copy registration handoff',
+          'registrationDisabled': 'Medicine registration is not enabled',
+          'registrationDisabledBody':
+              'A pharmacist must verify the current server catalog and resolve possible duplicates before saving. This scan remains a draft and does not change stock.',
+          'recheckTooltip': 'Recheck local catalog',
+          'reviewedDraftOnly': 'Reviewed draft only. No medicine or stock saved.',
+          'copyReviewedTooltip': 'Copy reviewed medicine details',
+          'clearDraftTooltip': 'Clear reviewed draft',
+          'registeredSynced': 'Medicine registered and catalog synchronized.',
+          'handoffCopied':
+              'Handoff copied. Server validation and pharmacist registration are still required.',
+          'reviewedCopied':
+              'Reviewed details copied. Register medicine manually; nothing was saved.',
+          'possibleDuplicatesCount': 'Possible duplicates: {count}',
+          'catalogSyncFailed':
+              'Medicine saved online, but catalog sync failed: {error}. Use Sync Now to retry.',
+          'handoffBlocked': 'Handoff blocked: {error}',
+          'serverDuplicates': 'Possible server duplicates: {list}',
         },
         AppLocale.dari: <String, String>{
           'dashboard': 'داشبورد',
@@ -338,6 +405,39 @@ class ModuleStrings {
           'decreaseQuantity': 'کاهش تعداد',
           'increaseQuantity': 'افزایش تعداد',
           'eachSuffix': 'هر کدام',
+          'scanLabel': 'اسکن برچسب دوا',
+          'scanDraftNote': 'پیش‌نویس آفلاین — بررسی توسط داروساز لازم است',
+          'registerReviewed': 'ثبت دوای بررسی‌شده',
+          'registerNeedsApproval': 'ثبت آنلاین به تأیید داروساز نیاز دارد.',
+          'checkingDuplicates': 'در حال بررسی فهرست محلی برای موارد تکراری...',
+          'duplicateUnavailable': 'بررسی موارد تکراری در دسترس نیست',
+          'doNotRegister': 'تا بررسی موارد تکراری فهرست، ثبت نکنید.',
+          'noLocalMatches': 'هیچ موردی در فهرست همگام‌شدهٔ محلی یافت نشد',
+          'serverVerifyNeeded': 'تأیید از سمت سرور هنوز لازم است.',
+          'approveHandoff': 'تأیید انتقال ثبت',
+          'approveHandoffBody':
+              'جزئیات بررسی‌شده را کنترل کرده‌ام. این تأیید ذخیره در سرور را مجاز نمی‌کند.',
+          'prepareHandoff': 'آماده‌سازی انتقال ثبت',
+          'prepareHandoffBody':
+              'فقط فیلدهای تأییدشدهٔ پیش‌نویس کپی می‌شود. ارسال به سرور انجام نمی‌شود.',
+          'copyHandoffTooltip': 'کپی انتقال ثبت',
+          'registrationDisabled': 'ثبت دوا فعال نیست',
+          'registrationDisabledBody':
+              'داروساز باید فهرست فعلی سرور را تأیید کند و موارد تکراری را پیش از ذخیره برطرف کند. این اسکن پیش‌نویس می‌ماند و موجودی را تغییر نمی‌دهد.',
+          'recheckTooltip': 'بررسی مجدد فهرست محلی',
+          'reviewedDraftOnly': 'فقط پیش‌نویس بررسی‌شده. هیچ دوا یا موجودی ذخیره نشد.',
+          'copyReviewedTooltip': 'کپی جزئیات دوای بررسی‌شده',
+          'clearDraftTooltip': 'پاک کردن پیش‌نویس بررسی‌شده',
+          'registeredSynced': 'دوا ثبت شد و فهرست همگام‌سازی شد.',
+          'handoffCopied':
+              'انتقال کپی شد. اعتبارسنجی سرور و ثبت توسط داروساز هنوز لازم است.',
+          'reviewedCopied':
+              'جزئیات بررسی‌شده کپی شد. دوا را به‌صورت دستی ثبت کنید؛ چیزی ذخیره نشد.',
+          'possibleDuplicatesCount': 'موارد احتمالی تکراری: {count}',
+          'catalogSyncFailed':
+              'دوا به‌صورت آنلاین ذخیره شد، اما همگام‌سازی فهرست ناموفق بود: {error}. برای تلاش دوباره همگام‌سازی اکنون را بزنید.',
+          'handoffBlocked': 'انتقال مسدود شد: {error}',
+          'serverDuplicates': 'موارد احتمالی تکراری در سرور: {list}',
         },
         AppLocale.pashto: <String, String>{
           'dashboard': 'ډشبورډ',
@@ -439,6 +539,39 @@ class ModuleStrings {
           'decreaseQuantity': 'مقدار کم کړئ',
           'increaseQuantity': 'مقدار زیات کړئ',
           'eachSuffix': 'هر یو',
+          'scanLabel': 'د درملو لیبل سکن کړئ',
+          'scanDraftNote': 'آفلاین مسوده — د درماسټ بیاکتنه اړینه ده',
+          'registerReviewed': 'بیاکتل شوې درمل ثبت کړئ',
+          'registerNeedsApproval': 'آنلاین ثبت د درماسټ تایید ته اړتیا لري.',
+          'checkingDuplicates': 'د ځايي لیست کې د تکراري توکو کتنه کېږي...',
+          'duplicateUnavailable': 'د تکراري توکو کتنه شتون نه لري',
+          'doNotRegister': 'تر هغې چې د لیست تکراري توکي وکتل شي، ثبت مه کوئ.',
+          'noLocalMatches': 'په همغږي شوي ځايي لیست کې هیڅ سمون نه دی موندل شوی',
+          'serverVerifyNeeded': 'د سرور اړخ تایید لا اړین دی.',
+          'approveHandoff': 'د ثبت لیږد تایید کړئ',
+          'approveHandoffBody':
+              'ما بیاکتل شوي توضیحات وکتل. دا تایید د سرور ساتنې اجازه نه ورکوي.',
+          'prepareHandoff': 'د ثبت لیږد چمتو کړئ',
+          'prepareHandoffBody':
+              'یوازې تایید شوي مسوده ساحې کاپي کېږي. سرور ته نه لېږل کېږي.',
+          'copyHandoffTooltip': 'د ثبت لیږد کاپي کړئ',
+          'registrationDisabled': 'د درملو ثبت فعال نه دی',
+          'registrationDisabledBody':
+              'درماسټ باید اوسنی د سرور لیست تایید کړي او ساتلو دمخه تکراري توکي حل کړي. دا سکن مسوده پاتې کېږي او زېرمه نه بدلوي.',
+          'recheckTooltip': 'ځايي لیست بیا وکتل شي',
+          'reviewedDraftOnly': 'یوازې بیاکتل شوې مسوده. هیڅ درمل یا زېرمه نه ده ساتل شوې.',
+          'copyReviewedTooltip': 'بیاکتل شوي درمل توضیحات کاپي کړئ',
+          'clearDraftTooltip': 'بیاکتل شوې مسوده پاکه کړئ',
+          'registeredSynced': 'درمل ثبت شو او لیست همغږي شو.',
+          'handoffCopied':
+              'لیږد کاپي شو. د سرور تایید او د درماسټ ثبت لا اړین دي.',
+          'reviewedCopied':
+              'بیاکتل شوي توضیحات کاپي شول. درمل په لاس ثبت کړئ؛ هیڅ شی ونه ساتل شو.',
+          'possibleDuplicatesCount': 'احتمالي تکراري توکي: {count}',
+          'catalogSyncFailed':
+              'درمل آنلاین خوندي شو، خو د لیست همغږي ناکامه شوه: {error}. بیا هڅې لپاره اوس همغږي کړئ وکاروئ.',
+          'handoffBlocked': 'لیږد بند شو: {error}',
+          'serverDuplicates': 'د سرور احتمالي تکراري توکي: {list}',
         },
       };
 }
