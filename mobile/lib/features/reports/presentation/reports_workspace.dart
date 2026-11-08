@@ -8,7 +8,15 @@ import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum _ReportKind { sales, profitLoss, inventory, expiry, purchase, customers, financial }
+enum _ReportKind {
+  sales,
+  profitLoss,
+  inventory,
+  expiry,
+  purchase,
+  customers,
+  financial,
+}
 
 class _ReportInfo {
   const _ReportInfo({
@@ -176,9 +184,8 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
     PharmacyDatabase db,
     _ReportKind kind,
   ) {
-    final _ReportInfo info = _reportList(s).firstWhere(
-      (_ReportInfo report) => report.kind == kind,
-    );
+    final _ReportInfo info = _reportList(s)
+        .firstWhere((_ReportInfo report) => report.kind == kind);
     final Widget body = switch (kind) {
       _ReportKind.sales => _SalesReport(database: db),
       _ReportKind.inventory => _InventoryReport(database: db),
@@ -199,9 +206,8 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
             Expanded(
               child: Text(
                 info.title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(context).textTheme.headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
           ],
@@ -337,9 +343,9 @@ class _SalesReportState extends State<_SalesReport> {
                                     width: 48,
                                     child: Text(
                                       day.businessDate.substring(5),
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall,
                                     ),
                                   ),
                                   Expanded(
@@ -551,7 +557,10 @@ class _CustomerReport extends StatelessWidget {
     return FutureBuilder<List<CustomerSnapshot>>(
       future: browser.customers(search: '', page: 0),
       builder:
-          (BuildContext context, AsyncSnapshot<List<CustomerSnapshot>> snapshot) {
+          (
+            BuildContext context,
+            AsyncSnapshot<List<CustomerSnapshot>> snapshot,
+          ) {
             if (snapshot.hasError) {
               return _Notice(message: s.unableToReadCustomers);
             }
@@ -660,10 +669,7 @@ class _Notice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text(message),
-      ),
+      child: Padding(padding: const EdgeInsets.all(20), child: Text(message)),
     );
   }
 }
