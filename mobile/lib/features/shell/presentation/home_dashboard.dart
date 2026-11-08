@@ -75,9 +75,8 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                 final OfflineSalesSummaryRepository repository =
                     OfflineSalesSummaryRepository(db);
                 final summary = await repository.forBusinessDate(today);
-                final overview = await OfflineCatalogBrowser(
-                  db,
-                ).inventoryOverview(now: now);
+                final overview = await OfflineCatalogBrowser(db)
+                    .inventoryOverview(now: now);
                 final trend = await repository.dailyTrend(
                   _formatDate(DateTime(now.year, now.month, now.day - 6)),
                   today,
@@ -327,10 +326,7 @@ class _SalesBars extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
-                    Text(
-                      '${day.count}',
-                      style: const TextStyle(fontSize: 11),
-                    ),
+                    Text('${day.count}', style: const TextStyle(fontSize: 11)),
                     const SizedBox(height: 4),
                     Container(
                       height: peak == 0 ? 4 : 4 + 80 * day.count / peak,
