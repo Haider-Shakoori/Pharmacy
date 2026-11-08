@@ -2,6 +2,7 @@ import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
 import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
+import 'package:businessos_pharmacy/core/localization/module_strings.dart';
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/reports/data/offline_sales_summary.dart';
 import 'package:flutter/material.dart';
@@ -25,54 +26,54 @@ class _ReportInfo {
   final bool available;
 }
 
-const List<_ReportInfo> _reports = <_ReportInfo>[
+List<_ReportInfo> _reportList(ModuleStrings s) => <_ReportInfo>[
   _ReportInfo(
     kind: _ReportKind.sales,
     icon: Icons.show_chart_rounded,
-    title: 'Sales Report',
-    detail: 'Invoices, revenue and daily trend on this device',
+    title: s.salesReport,
+    detail: s.salesReportDetail,
     available: true,
   ),
   _ReportInfo(
     kind: _ReportKind.inventory,
     icon: Icons.inventory_2_outlined,
-    title: 'Inventory Report',
-    detail: 'Stock levels and acquisition value',
+    title: s.inventoryReport,
+    detail: s.inventoryReportDetail,
     available: true,
   ),
   _ReportInfo(
     kind: _ReportKind.expiry,
     icon: Icons.alarm_rounded,
-    title: 'Expiry Report',
-    detail: 'Batches expired or expiring within 30 days',
+    title: s.expiryReport,
+    detail: s.expiryReportDetail,
     available: true,
   ),
   _ReportInfo(
     kind: _ReportKind.customers,
     icon: Icons.people_outline_rounded,
-    title: 'Customer Report',
-    detail: 'Customer contacts and balances',
+    title: s.customerReport,
+    detail: s.customerReportDetail,
     available: true,
   ),
   _ReportInfo(
     kind: _ReportKind.profitLoss,
     icon: Icons.trending_up_rounded,
-    title: 'Profit & Loss',
-    detail: 'Needs cost and expense data from the server',
+    title: s.profitLoss,
+    detail: s.profitLossDetail,
     available: false,
   ),
   _ReportInfo(
     kind: _ReportKind.purchase,
     icon: Icons.local_shipping_outlined,
-    title: 'Purchase Report',
-    detail: 'Needs supplier purchase history from the server',
+    title: s.purchaseReport,
+    detail: s.purchaseReportDetail,
     available: false,
   ),
   _ReportInfo(
     kind: _ReportKind.financial,
     icon: Icons.account_balance_wallet_outlined,
-    title: 'Financial Report',
-    detail: 'Needs receivables and payables from the server',
+    title: s.financialReport,
+    detail: s.financialReportDetail,
     available: false,
   ),
 ];
@@ -93,6 +94,7 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
 
   @override
   Widget build(BuildContext context) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final AsyncValue<MobileRegistration?> registration = ref.watch(
       mobileRegistrationProvider,
     );
@@ -101,7 +103,7 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
       error: (Object error, StackTrace trace) => Text(error.toString()),
       data: (MobileRegistration? user) {
         if (user == null) {
-          return const _Notice(message: 'Register this device to view reports.');
+          return _Notice(message: s.registerToViewReports);
         }
         return ref
             .watch(pharmacyDatabaseProvider)
@@ -111,31 +113,28 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
               data: (PharmacyDatabase db) {
                 final _ReportKind? selected = _selected;
                 if (selected == null) {
-                  return _buildDirectory(context);
+                  return _buildDirectory(context, s);
                 }
-                return _buildDetail(context, db, selected);
+                return _buildDetail(context, s, db, selected);
               },
             );
       },
     );
   }
 
-  Widget _buildDirectory(BuildContext context) {
+  Widget _buildDirectory(BuildContext context, ModuleStrings s) {
     final TextTheme text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Text(
-          'Reports',
+          s.reports,
           style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
-        Text(
-          'Totals on this device. Company-wide reports need server data.',
-          style: text.bodySmall,
-        ),
+        Text(s.reportsSubtitle, style: text.bodySmall),
         const SizedBox(height: 12),
-        ..._reports.map(
+        ..._reportList(s).map(
           (_ReportInfo info) => Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
@@ -157,8 +156,8 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
               subtitle: Text(info.detail),
               trailing: info.available
                   ? const Icon(Icons.chevron_right_rounded)
-                  : const Chip(
-                      label: Text('Soon'),
+                  : Chip(
+                      label: Text(s.soon),
                       visualDensity: VisualDensity.compact,
                     ),
               onTap: info.available
@@ -173,10 +172,11 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
 
   Widget _buildDetail(
     BuildContext context,
+    ModuleStrings s,
     PharmacyDatabase db,
     _ReportKind kind,
   ) {
-    final _ReportInfo info = _reports.firstWhere(
+    final _ReportInfo info = _reportList(s).firstWhere(
       (_ReportInfo report) => report.kind == kind,
     );
     final Widget body = switch (kind) {
@@ -184,7 +184,7 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
       _ReportKind.inventory => _InventoryReport(database: db),
       _ReportKind.expiry => _ExpiryReport(database: db),
       _ReportKind.customers => _CustomerReport(database: db),
-      _ => const _Notice(message: 'This report is not available yet.'),
+      _ => _Notice(message: s.reportNotAvailable),
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -192,7 +192,7 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
         Row(
           children: <Widget>[
             IconButton(
-              tooltip: 'Back to reports',
+              tooltip: s.back,
               onPressed: () => setState(() => _selected = null),
               icon: const Icon(Icons.arrow_back_rounded),
             ),
@@ -239,6 +239,7 @@ class _SalesReportState extends State<_SalesReport> {
 
   @override
   Widget build(BuildContext context) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final DateTime now = DateTime.now();
     final String end = _formatDate(now);
     final String start = _formatDate(
@@ -251,10 +252,10 @@ class _SalesReportState extends State<_SalesReport> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         SegmentedButton<int>(
-          segments: const <ButtonSegment<int>>[
-            ButtonSegment<int>(value: 1, label: Text('Today')),
-            ButtonSegment<int>(value: 7, label: Text('7 days')),
-            ButtonSegment<int>(value: 30, label: Text('30 days')),
+          segments: <ButtonSegment<int>>[
+            ButtonSegment<int>(value: 1, label: Text(s.today)),
+            ButtonSegment<int>(value: 7, label: Text(s.days7)),
+            ButtonSegment<int>(value: 30, label: Text(s.days30)),
           ],
           selected: <int>{_days},
           onSelectionChanged: (Set<int> selection) =>
@@ -273,7 +274,7 @@ class _SalesReportState extends State<_SalesReport> {
           }(),
           builder: (BuildContext context, AsyncSnapshot<_SalesData> snapshot) {
             if (snapshot.hasError) {
-              return const _Notice(message: 'Unable to read local sales.');
+              return _Notice(message: s.unableToReadSales);
             }
             if (!snapshot.hasData) {
               return const Padding(
@@ -296,19 +297,19 @@ class _SalesReportState extends State<_SalesReport> {
                   children: <Widget>[
                     _Metric(
                       icon: Icons.receipt_long_outlined,
-                      label: 'Invoices',
+                      label: s.invoicesCount,
                       value: '${data.summary.salesCount}',
                       color: const Color(0xFFDDEAFF),
                     ),
                     _Metric(
                       icon: Icons.payments_outlined,
-                      label: 'Revenue (AFN)',
+                      label: s.revenueAfn,
                       value: '${data.summary.total.compact}',
                       color: const Color(0xFFDAF5E6),
                     ),
                     _Metric(
                       icon: Icons.sync_rounded,
-                      label: 'Pending sync',
+                      label: s.pendingSyncShort,
                       value: '${data.summary.pendingSync}',
                       color: const Color(0xFFE8E1FF),
                     ),
@@ -322,9 +323,9 @@ class _SalesReportState extends State<_SalesReport> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          const Text(
-                            'Daily invoices',
-                            style: TextStyle(fontWeight: FontWeight.w700),
+                          Text(
+                            s.dailyInvoices,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 8),
                           ...data.trend.map(
@@ -388,6 +389,7 @@ class _InventoryReport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final OfflineCatalogBrowser browser = OfflineCatalogBrowser(database);
     return FutureBuilder<_InventoryData>(
       future: () async {
@@ -401,7 +403,7 @@ class _InventoryReport extends StatelessWidget {
       }(),
       builder: (BuildContext context, AsyncSnapshot<_InventoryData> snapshot) {
         if (snapshot.hasError) {
-          return const _Notice(message: 'Unable to read local inventory.');
+          return _Notice(message: s.unableToReadInventory);
         }
         if (!snapshot.hasData) {
           return const Padding(
@@ -419,25 +421,25 @@ class _InventoryReport extends StatelessWidget {
               children: <Widget>[
                 _Metric(
                   icon: Icons.medication_outlined,
-                  label: 'Medicines',
+                  label: s.metricMedicines,
                   value: '${data.overview.medicines}',
                   color: const Color(0xFFDDEAFF),
                 ),
                 _Metric(
                   icon: Icons.inventory_2_outlined,
-                  label: 'Out of stock',
+                  label: s.metricOutOfStock,
                   value: '${data.overview.outOfStock}',
                   color: const Color(0xFFFFEED4),
                 ),
                 _Metric(
                   icon: Icons.schedule_outlined,
-                  label: 'Expiring 30 days',
+                  label: s.metricExpiring30,
                   value: '${data.overview.expiringBatches}',
                   color: const Color(0xFFFFF3D9),
                 ),
                 _Metric(
                   icon: Icons.event_busy_outlined,
-                  label: 'Expired batches',
+                  label: s.expiredBatches,
                   value: '${data.overview.expiredBatches}',
                   color: const Color(0xFFFFE6DF),
                 ),
@@ -447,10 +449,9 @@ class _InventoryReport extends StatelessWidget {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.payments_outlined),
-                title: const Text('Remaining stock acquisition value'),
+                title: Text(s.acquisitionValue),
                 subtitle: Text(
-                  '${data.cost.batchCount} active, non-expired batches · '
-                  'based on recorded unit costs',
+                  '${data.cost.batchCount} ${s.acquisitionSubtitle}',
                 ),
                 trailing: Text(
                   'AFN ${data.cost.acquisitionValue.compact}',
@@ -472,6 +473,7 @@ class _ExpiryReport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final OfflineCatalogBrowser browser = OfflineCatalogBrowser(database);
     return FutureBuilder<List<StockMedicineSnapshot>>(
       future: browser.medicines(
@@ -486,7 +488,7 @@ class _ExpiryReport extends StatelessWidget {
             AsyncSnapshot<List<StockMedicineSnapshot>> snapshot,
           ) {
             if (snapshot.hasError) {
-              return const _Notice(message: 'Unable to read local expiry data.');
+              return _Notice(message: s.unableToReadExpiry);
             }
             if (!snapshot.hasData) {
               return const Padding(
@@ -500,9 +502,7 @@ class _ExpiryReport extends StatelessWidget {
                   _BatchRow(medicine: item, batch: batch),
             ];
             if (rows.isEmpty) {
-              return const _Notice(
-                message: 'No expired or expiring batches on this device.',
-              );
+              return _Notice(message: s.noExpiryOnDevice);
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -516,9 +516,9 @@ class _ExpiryReport extends StatelessWidget {
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         subtitle: Text(
-                          'Batch ${row.batch.batchNumber.isEmpty ? '—' : row.batch.batchNumber}'
-                          ' · Expires ${_formatDateOrDash(row.batch.expiresAt)}'
-                          '${row.batch.expired ? ' · Expired' : ''}',
+                          '${s.batch} ${row.batch.batchNumber.isEmpty ? '—' : row.batch.batchNumber}'
+                          ' · ${s.expires} ${_formatDateOrDash(row.batch.expiresAt)}'
+                          '${row.batch.expired ? ' · ${s.expired}' : ''}',
                         ),
                         trailing: Text(
                           row.batch.quantity.compact,
@@ -546,13 +546,14 @@ class _CustomerReport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final OfflineCatalogBrowser browser = OfflineCatalogBrowser(database);
     return FutureBuilder<List<CustomerSnapshot>>(
       future: browser.customers(search: '', page: 0),
       builder:
           (BuildContext context, AsyncSnapshot<List<CustomerSnapshot>> snapshot) {
             if (snapshot.hasError) {
-              return const _Notice(message: 'Unable to read local customers.');
+              return _Notice(message: s.unableToReadCustomers);
             }
             if (!snapshot.hasData) {
               return const Padding(
@@ -562,7 +563,7 @@ class _CustomerReport extends StatelessWidget {
             }
             final List<CustomerSnapshot> customers = snapshot.data!;
             if (customers.isEmpty) {
-              return const _Notice(message: 'No customers synced to this device.');
+              return _Notice(message: s.noCustomersOnDevice);
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
