@@ -148,3 +148,11 @@ Build a professional, offline-first, multilingual pharmacy management app for in
 - iOS build run: https://github.com/Haider-Shakoori/Pharmacy/actions/runs/42406697654
 - Existing project notes: `mobile/README.md` and `mobile/RELEASE_READINESS.md`.
 - Visual target: user-provided “Darmaltoon Mobile — Complete Pharmacy Management in Your Pocket” reference image, 2026-11-08.
+
+## 10. Progress log and update discipline
+- **2026-11-06–08:** Extended mobile sync/API regression coverage (duplicate keys, malformed ACK/cursors, outbox retry, tenant isolation, cashier and device authorization); the changes were reconciled into GitHub feature-branch source.
+- **2026-11-08:** Built and uploaded an unsigned iOS IPA using GitHub Actions macOS; the workflow completed successfully, but release and hardware integration acceptance remain separate.
+- **2026-11-08:** Reviewed real iPhone dashboard/inventory screenshots. Identified information-density, navigation and missing dedicated medicine-storage problems. Approved the five-phone Darmaltoon product concept as the UI design reference.
+- **Next update:** For each implemented batch, record commit SHA, files/screens changed, tests run, device observations, remaining limitations and the next priority. Mark checklist items complete only after verification.
+
+**Important:** The approved visual reference is supplied in the project conversation; its original image file is not asserted to be committed to this repository. Keep this Markdown specification usable without requiring that image asset.
