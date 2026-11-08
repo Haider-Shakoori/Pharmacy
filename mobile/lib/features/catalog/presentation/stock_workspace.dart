@@ -6,7 +6,7 @@ import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browse
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Compact, read-only stock workspace: Stock, Batches and Expiry views.
+/// Compact, read-only stock workspace: Stock, Batches, Expiry and Storage.
 ///
 /// Uses the same tenant-scoped database and permission rules as the previous
 /// stock panel. Nothing here writes stock.
@@ -64,7 +64,7 @@ class _StockBodyState extends State<_StockBody> {
   String? _error;
   bool _loading = true;
   int _page = 0;
-  int _tab = 0; // 0 = Stock, 1 = Batches, 2 = Expiry
+  int _tab = 0; // 0 = Stock, 1 = Batches, 2 = Expiry, 3 = Storage
   int _generation = 0;
 
   @override
@@ -173,69 +173,74 @@ class _StockBodyState extends State<_StockBody> {
             ],
           ),
         const SizedBox(height: 12),
-        TextField(
-          decoration: InputDecoration(
-            labelText: 'Search medicine or code',
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: IconButton(
-              tooltip: 'Refresh',
-              icon: const Icon(Icons.refresh),
-              onPressed: _load,
-            ),
-          ),
-          controller: _search,
-          textInputAction: TextInputAction.search,
-          onSubmitted: (String value) {
-            _page = 0;
-            _load();
-          },
-        ),
-        const SizedBox(height: 10),
-        DropdownButtonFormField<String>(
-          key: ValueKey('stock-location-${_location ?? 'all'}'),
-          initialValue: _location ?? '',
-          decoration: const InputDecoration(labelText: 'Location'),
-          items: <DropdownMenuItem<String>>[
-            const DropdownMenuItem<String>(
-              value: '',
-              child: Text('All locations'),
-            ),
-            ..._locations.map(
-              (String id) =>
-                  DropdownMenuItem<String>(value: id, child: Text(id)),
-            ),
-          ],
-          onChanged: (String? value) {
-            final String? selected = value == null || value.isEmpty
-                ? null
-                : value;
-            if (selected == _location) return;
-            _location = selected;
-            _page = 0;
-            _load();
-          },
-        ),
-        const SizedBox(height: 12),
         SegmentedButton<int>(
           segments: const <ButtonSegment<int>>[
             ButtonSegment<int>(value: 0, label: Text('Stock')),
             ButtonSegment<int>(value: 1, label: Text('Batches')),
             ButtonSegment<int>(value: 2, label: Text('Expiry')),
+            ButtonSegment<int>(value: 3, label: Text('Storage')),
           ],
           selected: <int>{_tab},
           onSelectionChanged: (Set<int> selection) =>
               setState(() => _tab = selection.first),
         ),
         const SizedBox(height: 12),
-        if (_loading)
-          const Padding(
-            padding: EdgeInsets.all(28),
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (_error != null)
-          _Notice(message: _error!)
-        else
-          _buildTab(context),
+        if (_tab == 3)
+          _buildStorage(context)
+        else ...<Widget>[
+          TextField(
+            decoration: InputDecoration(
+              labelText: 'Search medicine or code',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: IconButton(
+                tooltip: 'Refresh',
+                icon: const Icon(Icons.refresh),
+                onPressed: _load,
+              ),
+            ),
+            controller: _search,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (String value) {
+              _page = 0;
+              _load();
+            },
+          ),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            key: ValueKey('stock-location-${_location ?? 'all'}'),
+            initialValue: _location ?? '',
+            decoration: const InputDecoration(labelText: 'Location'),
+            items: <DropdownMenuItem<String>>[
+              const DropdownMenuItem<String>(
+                value: '',
+                child: Text('All locations'),
+              ),
+              ..._locations.map(
+                (String id) =>
+                    DropdownMenuItem<String>(value: id, child: Text(id)),
+              ),
+            ],
+            onChanged: (String? value) {
+              final String? selected = value == null || value.isEmpty
+                  ? null
+                  : value;
+              if (selected == _location) return;
+              _location = selected;
+              _page = 0;
+              _load();
+            },
+          ),
+          const SizedBox(height: 12),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(28),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_error != null)
+            _Notice(message: _error!)
+          else
+            _buildTab(context),
+        ],
       ],
     );
   }
@@ -246,6 +251,51 @@ class _StockBodyState extends State<_StockBody> {
     }
     final List<StockMedicineSnapshot> source = _tab == 1 ? _medicines : _expiring;
     return _buildBatchList(context, source, expiringView: _tab == 2);
+  }
+
+  Widget _buildStorage(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const Card(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Icon(Icons.warehouse_outlined, color: Color(0xFF1557C0)),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Medicine storage',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Storage locations (branch, room, rack, shelf and bin) are not available on this device yet. '
+                  'Batches stay in their recorded location until this feature is enabled.',
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const FilledButton.icon(
+          onPressed: null,
+          icon: Icon(Icons.add_location_alt_outlined),
+          label: Text('Add storage location'),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Coming soon: create locations, assign batches, stock counts and transfers.',
+        ),
+      ],
+    );
   }
 
   Widget _buildStockList(BuildContext context) {
