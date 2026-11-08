@@ -2,6 +2,7 @@ import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
 import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
+import 'package:businessos_pharmacy/core/localization/module_strings.dart';
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,7 @@ class StockWorkspace extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final AsyncValue<MobileRegistration?> registration = ref.watch(
       mobileRegistrationProvider,
     );
@@ -23,15 +25,13 @@ class StockWorkspace extends ConsumerWidget {
       error: (Object error, StackTrace trace) => Text(error.toString()),
       data: (MobileRegistration? user) {
         if (user == null) {
-          return const _Notice(message: 'Register this device to view stock.');
+          return _Notice(message: s.registerToViewStock);
         }
         final bool permitted =
             user.permissions.contains('pos.sell') ||
             user.permissions.contains('inventory.manage');
         if (!permitted) {
-          return const _Notice(
-            message: 'Stock access is not permitted for this user.',
-          );
+          return _Notice(message: s.stockNotPermitted);
         }
         return ref
             .watch(pharmacyDatabaseProvider)
@@ -127,19 +127,17 @@ class _StockBodyState extends State<_StockBody> {
 
   @override
   Widget build(BuildContext context) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final TextTheme text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Text(
-          'Stock',
+          s.stock,
           style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
-        Text(
-          'Read-only. Based on locally synced data.',
-          style: text.bodySmall,
-        ),
+        Text(s.stockReadOnly, style: text.bodySmall),
         const SizedBox(height: 12),
         if (!_loading && _error == null && _overview != null)
           Wrap(
@@ -148,25 +146,25 @@ class _StockBodyState extends State<_StockBody> {
             children: <Widget>[
               _Metric(
                 icon: Icons.medication_outlined,
-                label: 'Medicines',
+                label: s.metricMedicines,
                 value: '${_overview!.medicines}',
                 color: const Color(0xFFDDEAFF),
               ),
               _Metric(
                 icon: Icons.inventory_2_outlined,
-                label: 'Out of stock',
+                label: s.metricOutOfStock,
                 value: '${_overview!.outOfStock}',
                 color: const Color(0xFFFFEED4),
               ),
               _Metric(
                 icon: Icons.schedule_outlined,
-                label: 'Expiring 30 days',
+                label: s.metricExpiring30,
                 value: '${_overview!.expiringBatches}',
                 color: const Color(0xFFFFF3D9),
               ),
               _Metric(
                 icon: Icons.event_busy_outlined,
-                label: 'Expired batches',
+                label: s.expiredBatches,
                 value: '${_overview!.expiredBatches}',
                 color: const Color(0xFFFFE6DF),
               ),
@@ -174,11 +172,11 @@ class _StockBodyState extends State<_StockBody> {
           ),
         const SizedBox(height: 12),
         SegmentedButton<int>(
-          segments: const <ButtonSegment<int>>[
-            ButtonSegment<int>(value: 0, label: Text('Stock')),
-            ButtonSegment<int>(value: 1, label: Text('Batches')),
-            ButtonSegment<int>(value: 2, label: Text('Expiry')),
-            ButtonSegment<int>(value: 3, label: Text('Storage')),
+          segments: <ButtonSegment<int>>[
+            ButtonSegment<int>(value: 0, label: Text(s.tabStock)),
+            ButtonSegment<int>(value: 1, label: Text(s.tabBatches)),
+            ButtonSegment<int>(value: 2, label: Text(s.tabExpiry)),
+            ButtonSegment<int>(value: 3, label: Text(s.tabStorage)),
           ],
           selected: <int>{_tab},
           onSelectionChanged: (Set<int> selection) =>
@@ -190,10 +188,10 @@ class _StockBodyState extends State<_StockBody> {
         else ...<Widget>[
           TextField(
             decoration: InputDecoration(
-              labelText: 'Search medicine or code',
+              labelText: s.searchMedicine,
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
-                tooltip: 'Refresh',
+                tooltip: s.refresh,
                 icon: const Icon(Icons.refresh),
                 onPressed: _load,
               ),
@@ -209,12 +207,9 @@ class _StockBodyState extends State<_StockBody> {
           DropdownButtonFormField<String>(
             key: ValueKey('stock-location-${_location ?? 'all'}'),
             initialValue: _location ?? '',
-            decoration: const InputDecoration(labelText: 'Location'),
+            decoration: InputDecoration(labelText: s.location),
             items: <DropdownMenuItem<String>>[
-              const DropdownMenuItem<String>(
-                value: '',
-                child: Text('All locations'),
-              ),
+              DropdownMenuItem<String>(value: '', child: Text(s.allLocations)),
               ..._locations.map(
                 (String id) =>
                     DropdownMenuItem<String>(value: id, child: Text(id)),
@@ -249,58 +244,60 @@ class _StockBodyState extends State<_StockBody> {
     if (_tab == 0) {
       return _buildStockList(context);
     }
-    final List<StockMedicineSnapshot> source = _tab == 1 ? _medicines : _expiring;
+    final List<StockMedicineSnapshot> source = _tab == 1
+        ? _medicines
+        : _expiring;
     return _buildBatchList(context, source, expiringView: _tab == 2);
   }
 
   Widget _buildStorage(BuildContext context) {
+    final ModuleStrings s = ModuleStrings.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        const Card(
+        Card(
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    Icon(Icons.warehouse_outlined, color: Color(0xFF1557C0)),
-                    SizedBox(width: 8),
+                    const Icon(
+                      Icons.warehouse_outlined,
+                      color: Color(0xFF1557C0),
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Medicine storage',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                        s.storageTitle,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 10),
-                Text(
-                  'Storage locations (branch, room, rack, shelf and bin) are not available on this device yet. '
-                  'Batches stay in their recorded location until this feature is enabled.',
-                ),
+                const SizedBox(height: 10),
+                Text(s.storageBody),
               ],
             ),
           ),
         ),
         const SizedBox(height: 12),
-        const FilledButton.icon(
+        FilledButton.icon(
           onPressed: null,
-          icon: Icon(Icons.add_location_alt_outlined),
-          label: Text('Add storage location'),
+          icon: const Icon(Icons.add_location_alt_outlined),
+          label: Text(s.addStorageLocation),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Coming soon: create locations, assign batches, stock counts and transfers.',
-        ),
+        Text(s.storageComingSoon),
       ],
     );
   }
 
   Widget _buildStockList(BuildContext context) {
+    final ModuleStrings s = ModuleStrings.of(context);
     if (_medicines.isEmpty) {
-      return const _Notice(message: 'No medicines match this search.');
+      return _Notice(message: s.noMedicinesMatch);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -328,7 +325,7 @@ class _StockBodyState extends State<_StockBody> {
         Row(
           children: <Widget>[
             IconButton(
-              tooltip: 'Previous page',
+              tooltip: s.previousPage,
               onPressed: _page == 0
                   ? null
                   : () {
@@ -337,9 +334,9 @@ class _StockBodyState extends State<_StockBody> {
                     },
               icon: const Icon(Icons.chevron_left),
             ),
-            Text('Page ${_page + 1}'),
+            Text(s.pageNumber(_page + 1)),
             IconButton(
-              tooltip: 'Next page',
+              tooltip: s.nextPage,
               onPressed: _medicines.length < 100
                   ? null
                   : () {
@@ -359,6 +356,7 @@ class _StockBodyState extends State<_StockBody> {
     List<StockMedicineSnapshot> medicines, {
     required bool expiringView,
   }) {
+    final ModuleStrings s = ModuleStrings.of(context);
     final List<_BatchRow> rows = <_BatchRow>[
       for (final StockMedicineSnapshot item in medicines)
         for (final StockBatchSnapshot batch in item.batches)
@@ -366,9 +364,7 @@ class _StockBodyState extends State<_StockBody> {
     ];
     if (rows.isEmpty) {
       return _Notice(
-        message: expiringView
-            ? 'No expired or expiring batches.'
-            : 'No batches match this search.',
+        message: expiringView ? s.noExpiryMatches : s.noBatchMatches,
       );
     }
     return Column(
@@ -383,10 +379,10 @@ class _StockBodyState extends State<_StockBody> {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 subtitle: Text(
-                  'Batch ${row.batch.batchNumber.isEmpty ? '—' : row.batch.batchNumber}'
+                  '${s.batch} ${row.batch.batchNumber.isEmpty ? '—' : row.batch.batchNumber}'
                   ' · ${row.batch.locationId}'
-                  ' · Expires ${_formatDate(row.batch.expiresAt)}'
-                  '${row.batch.expired ? ' · Expired' : ''}',
+                  ' · ${s.expires} ${_formatDate(row.batch.expiresAt)}'
+                  '${row.batch.expired ? ' · ${s.expired}' : ''}',
                 ),
                 trailing: Text(
                   row.batch.quantity.compact,
