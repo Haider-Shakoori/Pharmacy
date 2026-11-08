@@ -234,15 +234,14 @@ class _AppShellState extends ConsumerState<AppShell> {
                                           );
                                     } catch (error) {
                                       if (!context.mounted) return;
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            s.catalogSyncFailed('$error'),
-                                          ),
-                                        ),
-                                      );
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                s.catalogSyncFailed('$error'),
+                                              ),
+                                            ),
+                                          );
                                     }
                                   },
                           );
@@ -254,9 +253,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                         builder: (context, snapshot) {
                           if (snapshot.connectionState !=
                               ConnectionState.done) {
-                            return ListTile(
-                              title: Text(s.checkingDuplicates),
-                            );
+                            return ListTile(title: Text(s.checkingDuplicates));
                           }
                           if (snapshot.hasError) {
                             return ListTile(
@@ -466,7 +463,10 @@ class _AppShellState extends ConsumerState<AppShell> {
               const OperationalAlertsCard(),
             ],
             if (_selectedIndex == 4) ...<Widget>[
-              Text(strings.more, style: Theme.of(context).textTheme.headlineMedium),
+              Text(
+                strings.more,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
               const SizedBox(height: 12),
               GridView.count(
                 shrinkWrap: true,
@@ -545,11 +545,7 @@ class _ShellDestination {
 /// shown as "Soon" and cannot be tapped.
 List<_MoreModule> _moreModules(ModuleStrings s) => <_MoreModule>[
   _MoreModule(label: s.moduleSales, icon: Icons.point_of_sale_rounded, tab: 1),
-  _MoreModule(
-    label: s.moduleMedicines,
-    icon: Icons.medication_rounded,
-    tab: 2,
-  ),
+  _MoreModule(label: s.moduleMedicines, icon: Icons.medication_rounded, tab: 2),
   _MoreModule(
     label: s.moduleInventory,
     icon: Icons.inventory_2_rounded,
