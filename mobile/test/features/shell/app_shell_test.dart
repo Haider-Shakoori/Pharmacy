@@ -2,6 +2,7 @@ import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/network/connectivity_monitor.dart';
 import 'package:businessos_pharmacy/features/shell/presentation/app_shell.dart';
+import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -44,47 +45,34 @@ void main() {
       ),
     );
     await tester.pump();
+
+    expect(find.byType(ConnectivityBanner), findsOneWidget);
     expect(find.byKey(const ValueKey('dashboard-refresh')), findsOneWidget);
+    expect(find.text('Quick access'), findsOneWidget);
+
     await tester.tap(find.byKey(const ValueKey('dashboard-refresh')));
     await tester.pump();
 
-    await tester.enterText(
-      find.byKey(const ValueKey('dashboard-module-search')),
-      'Purchases',
-    );
-    await tester.pump();
-    expect(find.text('Purchases'), findsNWidgets(2));
-    expect(find.text('POS (Sales)'), findsNothing);
-    expect(find.text('1 matching modules'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('dashboard-clear-search')));
-    await tester.pump();
-    expect(find.text('POS (Sales)'), findsOneWidget);
-    expect(find.text('9 pharmacy modules available'), findsOneWidget);
-    await tester.enterText(
-      find.byKey(const ValueKey('dashboard-module-search')),
-      '',
-    );
-    await tester.pump();
+    final Finder navigation = find.byType(NavigationBar);
 
-    await tester.tap(find.text('Medicines').last);
+    await tester.tap(
+      find.descendant(of: navigation, matching: find.text('Medicines')),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Register this device to view stock.'), findsOneWidget);
 
-    expect(
-      find.text(
-        'Device registration is required before transactional POS is enabled.',
-      ),
-      findsOneWidget,
+    await tester.tap(
+      find.descendant(of: navigation, matching: find.text('More')),
     );
-    expect(find.textContaining('No network link'), findsOneWidget);
-    expect(find.text('POS'), findsWidgets);
-    // Sync moved into the More tab in the five-destination shell.
-    await tester.tap(find.text('More').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('Sync').last);
+    expect(find.text('Soon'), findsWidgets);
+
+    await tester.tap(find.text('Sync'));
     await tester.pump();
     expect(find.byType(SyncStatusCard), findsOneWidget);
+
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 100));
   });
