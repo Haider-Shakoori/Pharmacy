@@ -72,12 +72,17 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
             data: (db) => FutureBuilder<_DashboardData>(
               key: ValueKey('dashboard-$_refreshVersion-$today'),
               future: () async {
-                final OfflineSalesSummary summary =
-                    await OfflineSalesSummaryRepository(db)
-                        .forBusinessDate(today);
-                final InventoryOverview overview =
-                    await OfflineCatalogBrowser(db).inventoryOverview(now: now);
-                return _DashboardData(summary, overview);
+                final OfflineSalesSummaryRepository repository =
+                    OfflineSalesSummaryRepository(db);
+                final summary = await repository.forBusinessDate(today);
+                final overview = await OfflineCatalogBrowser(
+                  db,
+                ).inventoryOverview(now: now);
+                final trend = await repository.dailyTrend(
+                  _formatDate(DateTime(now.year, now.month, now.day - 6)),
+                  today,
+                );
+                return _DashboardData(summary, overview, trend);
               }(),
               builder:
                   (
@@ -90,7 +95,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                     if (!snapshot.hasData) {
                       return const LinearProgressIndicator();
                     }
-                    return _buildKpis(context, snapshot.data!);
+                    return _buildKpis(context, snapshot.data!, now);
                   },
             ),
           ),
@@ -105,62 +110,104 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
     );
   }
 
-  Widget _buildKpis(BuildContext context, _DashboardData data) {
+  Widget _buildKpis(BuildContext context, _DashboardData data, DateTime now) {
     final ModuleStrings s = ModuleStrings.of(context);
     final summary = data.summary;
     final overview = data.overview;
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 1.7,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _KpiTile(
-          label: s.salesToday,
-          value: '${summary.total.compact} AFN',
-          icon: Icons.payments_outlined,
-          color: const Color(0xFF1E9E5A),
-          background: const Color(0xFFDAF5E6),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.7,
+          children: <Widget>[
+            _KpiTile(
+              label: s.salesToday,
+              value: '${summary.total.compact} AFN',
+              icon: Icons.payments_outlined,
+              color: const Color(0xFF1E9E5A),
+              background: const Color(0xFFDAF5E6),
+            ),
+            _KpiTile(
+              label: s.invoices,
+              value: '${summary.salesCount}',
+              icon: Icons.receipt_long_outlined,
+              color: const Color(0xFF1557C0),
+              background: const Color(0xFFDDEAFF),
+            ),
+            _KpiTile(
+              label: s.lowStock,
+              value: '${overview.outOfStock}',
+              icon: Icons.inventory_2_outlined,
+              color: const Color(0xFFE38A1B),
+              background: const Color(0xFFFFE9D6),
+            ),
+            _KpiTile(
+              label: s.expiringSoon,
+              value: '${overview.expiringBatches}',
+              icon: Icons.event_busy_outlined,
+              color: const Color(0xFFD93A3A),
+              background: const Color(0xFFFDE4E4),
+            ),
+            _KpiTile(
+              label: s.expiredBatches,
+              value: '${overview.expiredBatches}',
+              icon: Icons.warning_amber_rounded,
+              color: const Color(0xFFD93A3A),
+              background: const Color(0xFFFDE4E4),
+            ),
+            _KpiTile(
+              label: s.pendingSync,
+              value: '${summary.pendingSync}',
+              icon: Icons.sync_rounded,
+              color: const Color(0xFF7A4FD6),
+              background: const Color(0xFFE8E1FF),
+            ),
+          ],
         ),
-        _KpiTile(
-          label: s.invoices,
-          value: '${summary.salesCount}',
-          icon: Icons.receipt_long_outlined,
-          color: const Color(0xFF1557C0),
-          background: const Color(0xFFDDEAFF),
-        ),
-        _KpiTile(
-          label: s.lowStock,
-          value: '${overview.outOfStock}',
-          icon: Icons.inventory_2_outlined,
-          color: const Color(0xFFE38A1B),
-          background: const Color(0xFFFFE9D6),
-        ),
-        _KpiTile(
-          label: s.expiringSoon,
-          value: '${overview.expiringBatches}',
-          icon: Icons.event_busy_outlined,
-          color: const Color(0xFFD93A3A),
-          background: const Color(0xFFFDE4E4),
-        ),
-        _KpiTile(
-          label: s.expiredBatches,
-          value: '${overview.expiredBatches}',
-          icon: Icons.warning_amber_rounded,
-          color: const Color(0xFFD93A3A),
-          background: const Color(0xFFFDE4E4),
-        ),
-        _KpiTile(
-          label: s.pendingSync,
-          value: '${summary.pendingSync}',
-          icon: Icons.sync_rounded,
-          color: const Color(0xFF7A4FD6),
-          background: const Color(0xFFE8E1FF),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  s.dailyInvoices,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 12),
+                _SalesBars(days: _lastSevenDays(data.trend, now)),
+              ],
+            ),
+          ),
         ),
       ],
     );
+  }
+
+  /// Oldest to newest, with zero for days that had no invoices.
+  List<({String label, int count})> _lastSevenDays(
+    List<OfflineDailySales> trend,
+    DateTime now,
+  ) {
+    final Map<String, int> counts = <String, int>{
+      for (final OfflineDailySales day in trend)
+        day.businessDate: day.salesCount,
+    };
+    return <({String label, int count})>[
+      for (int offset = 6; offset >= 0; offset--)
+        () {
+          final String key = _formatDate(
+            DateTime(now.year, now.month, now.day - offset),
+          );
+          return (label: key.substring(8), count: counts[key] ?? 0);
+        }(),
+    ];
   }
 
   Widget _buildQuickAccess(BuildContext context) {
@@ -252,9 +299,65 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
 }
 
 class _DashboardData {
-  const _DashboardData(this.summary, this.overview);
+  const _DashboardData(this.summary, this.overview, this.trend);
   final OfflineSalesSummary summary;
   final InventoryOverview overview;
+  final List<OfflineDailySales> trend;
+}
+
+class _SalesBars extends StatelessWidget {
+  const _SalesBars({required this.days});
+
+  final List<({String label, int count})> days;
+
+  @override
+  Widget build(BuildContext context) {
+    final int peak = days.fold<int>(
+      0,
+      (int max, ({String label, int count}) day) =>
+          day.count > max ? day.count : max,
+    );
+    return SizedBox(
+      height: 130,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: days
+            .map(
+              (({String label, int count}) day) => Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    Text(
+                      '${day.count}',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      height: peak == 0 ? 4 : 4 + 80 * day.count / peak,
+                      margin: const EdgeInsets.symmetric(horizontal: 6),
+                      decoration: BoxDecoration(
+                        color: day.count == 0
+                            ? const Color(0xFFD5DCE8)
+                            : const Color(0xFF1557C0),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      day.label,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.blueGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(growable: false),
+      ),
+    );
+  }
 }
 
 class _KpiTile extends StatelessWidget {
