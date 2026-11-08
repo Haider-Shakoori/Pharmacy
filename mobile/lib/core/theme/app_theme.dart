@@ -18,10 +18,7 @@ abstract final class AppTheme {
     final ColorScheme colors = ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       brightness: Brightness.light,
-    ).copyWith(
-      primary: AppColors.primary,
-      surface: AppColors.surface,
-    );
+    ).copyWith(primary: AppColors.primary, surface: AppColors.surface);
 
     return ThemeData(
       colorScheme: colors,
