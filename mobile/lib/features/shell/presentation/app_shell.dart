@@ -41,7 +41,7 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   int _selectedIndex = 0;
-  String _moreSection = 'Customers';
+  String? _moreSection;
   ReviewedMedicineScan? _reviewedScan;
   Future<List<String>>? _duplicateLookup;
   bool _registrationApproval = false;
@@ -478,26 +478,35 @@ class _AppShellState extends ConsumerState<AppShell> {
             if (_selectedIndex == 4) ...<Widget>[
               Text('More', style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children:
-                    <String>[
-                          'Customers',
-                          'Purchases',
-                          'Alerts',
-                          'Sync',
-                          'Settings',
-                        ]
-                        .map(
-                          (section) => ChoiceChip(
-                            label: Text(section),
-                            selected: _moreSection == section,
-                            onSelected: (_) =>
-                                setState(() => _moreSection = section),
-                          ),
-                        )
-                        .toList(),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.05,
+                children: _moreModules
+                    .map(
+                      (_MoreModule module) => _ModuleTile(
+                        module: module,
+                        selected:
+                            module.section != null &&
+                            _moreSection == module.section,
+                        onTap: !module.available
+                            ? null
+                            : () {
+                                final int? tab = module.tab;
+                                setState(() {
+                                  if (tab != null) {
+                                    _selectedIndex = tab;
+                                  } else {
+                                    _moreSection = module.section;
+                                  }
+                                });
+                              },
+                      ),
+                    )
+                    .toList(growable: false),
               ),
               const SizedBox(height: 16),
               if (_moreSection == 'Customers') const OfflineCustomersPanel(),
@@ -540,4 +549,106 @@ class _ShellDestination {
 
   final IconData icon;
   final String label;
+}
+
+/// The 12 modules from the approved design. Modules without a screen yet are
+/// shown as "Soon" and cannot be tapped.
+const List<_MoreModule> _moreModules = <_MoreModule>[
+  _MoreModule(label: 'POS', icon: Icons.point_of_sale_rounded, tab: 1),
+  _MoreModule(label: 'Medicines', icon: Icons.medication_rounded, tab: 2),
+  _MoreModule(label: 'Inventory', icon: Icons.inventory_2_rounded, tab: 2),
+  _MoreModule(
+    label: 'Purchases',
+    icon: Icons.shopping_bag_outlined,
+    section: 'Purchases',
+  ),
+  _MoreModule(
+    label: 'Customers',
+    icon: Icons.people_alt_rounded,
+    section: 'Customers',
+  ),
+  _MoreModule(label: 'Suppliers', icon: Icons.storefront_outlined),
+  _MoreModule(label: 'Reports', icon: Icons.bar_chart_rounded, tab: 3),
+  _MoreModule(label: 'Finance', icon: Icons.account_balance_outlined),
+  _MoreModule(label: 'Transfers', icon: Icons.swap_horiz_rounded),
+  _MoreModule(
+    label: 'Alerts',
+    icon: Icons.notifications_active_outlined,
+    section: 'Alerts',
+  ),
+  _MoreModule(label: 'Sync', icon: Icons.sync_rounded, section: 'Sync'),
+  _MoreModule(
+    label: 'Settings',
+    icon: Icons.settings_outlined,
+    section: 'Settings',
+  ),
+];
+
+class _MoreModule {
+  const _MoreModule({
+    required this.label,
+    required this.icon,
+    this.tab,
+    this.section,
+  });
+
+  final String label;
+  final IconData icon;
+  final int? tab;
+  final String? section;
+
+  bool get available => tab != null || section != null;
+}
+
+class _ModuleTile extends StatelessWidget {
+  const _ModuleTile({
+    required this.module,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _MoreModule module;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final Color foreground = module.available
+        ? const Color(0xFF1557C0)
+        : Colors.blueGrey;
+    return Material(
+      color: selected ? const Color(0xFFDDEAFF) : Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(module.icon, color: foreground, size: 26),
+              const SizedBox(height: 6),
+              Text(
+                module.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: module.available ? colors.onSurface : Colors.blueGrey,
+                ),
+              ),
+              if (!module.available)
+                const Text(
+                  'Soon',
+                  style: TextStyle(fontSize: 10, color: Colors.blueGrey),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
