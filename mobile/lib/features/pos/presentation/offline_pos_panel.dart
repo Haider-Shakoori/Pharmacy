@@ -344,9 +344,8 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
 
     for (final _CartEntry entry in _cart) {
       try {
-        value += FixedDecimal.parse(entry.quantity).multiply(
-          FixedDecimal.parse(entry.unitPrice),
-        );
+        value += FixedDecimal.parse(entry.quantity)
+            .multiply(FixedDecimal.parse(entry.unitPrice));
       } on FormatException {
         return FixedDecimal.zero;
       }
