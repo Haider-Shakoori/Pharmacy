@@ -41,9 +41,8 @@ Future<void> _pumpDashboard(
             .toList(growable: false),
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         builder: (BuildContext context, Widget? child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
         home: AppShell(localeNotifier: notifier),
@@ -61,20 +60,17 @@ void main() {
         (size: const Size(900, 1100), locale: AppLocale.english, scale: 1),
         (size: const Size(320, 720), locale: AppLocale.dari, scale: 1.7),
       ]) {
-    testWidgets(
-      'dashboard fits ${config.size.width}px ${config.locale.code} '
-      'scale ${config.scale}',
-      (WidgetTester tester) async {
-        await _pumpDashboard(
-          tester,
-          locale: config.locale,
-          size: config.size,
-          textScale: config.scale,
-        );
-        expect(find.byType(GridView), findsWidgets);
-        expect(tester.takeException(), isNull);
-        await tester.pumpWidget(const SizedBox.shrink());
-      },
-    );
+    testWidgets('dashboard fits ${config.size.width}px ${config.locale.code} '
+        'scale ${config.scale}', (WidgetTester tester) async {
+      await _pumpDashboard(
+        tester,
+        locale: config.locale,
+        size: config.size,
+        textScale: config.scale,
+      );
+      expect(find.byType(GridView), findsWidgets);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
   }
 }
