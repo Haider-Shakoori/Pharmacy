@@ -186,22 +186,37 @@ class _StockBodyState extends State<_StockBody> {
         if (_tab == 3)
           _buildStorage(context)
         else ...<Widget>[
-          TextField(
-            decoration: InputDecoration(
-              labelText: s.searchMedicine,
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: IconButton(
-                tooltip: s.refresh,
-                icon: const Icon(Icons.refresh),
-                onPressed: _load,
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    labelText: s.searchMedicine,
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      tooltip: s.refresh,
+                      icon: const Icon(Icons.refresh),
+                      onPressed: _load,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  controller: _search,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (String value) {
+                    _page = 0;
+                    _load();
+                  },
+                ),
               ),
-            ),
-            controller: _search,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (String value) {
-              _page = 0;
-              _load();
-            },
+              const SizedBox(width: 8),
+              // Filters are not built yet; shown disabled to match the design.
+              const IconButton.outlined(
+                onPressed: null,
+                icon: Icon(Icons.tune_rounded),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
@@ -304,20 +319,54 @@ class _StockBodyState extends State<_StockBody> {
       children: <Widget>[
         ..._medicines.map(
           (StockMedicineSnapshot item) => Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              title: Text(
-                item.name,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              subtitle: Text(
-                <String>[item.medicineCode, item.genericName]
-                    .where((String value) => value.isNotEmpty)
-                    .join(' · '),
-              ),
-              trailing: Text(
-                '${item.available.compact} ${item.saleUnit}',
-                style: const TextStyle(fontWeight: FontWeight.w800),
+            margin: const EdgeInsets.only(bottom: 10),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: <Widget>[
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF2FF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.medication_rounded,
+                      color: Color(0xFF1557C0),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          item.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        if (item.genericName.isNotEmpty)
+                          Text(
+                            item.genericName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${s.stock}: ${item.available.compact} ${item.saleUnit}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1E9E5A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: Colors.blueGrey),
+                ],
               ),
             ),
           ),
