@@ -53,6 +53,35 @@ void main() {
     expect(find.text('Review scanned medicine details'), findsNothing);
     expect(confirmed, isEmpty);
   });
+  testWidgets('camera capture produces review without auto-registering', (
+    WidgetTester tester,
+  ) async {
+    final confirmed = <ReviewedMedicineScan>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: MedicineScanFlow(
+              images: MedicineImageAcquisition(_LocalImages()),
+              scanner: MedicineScanCoordinator(ocr: _OfflineOcr()),
+              onConfirmed: confirmed.add,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Camera'));
+    await tester.pumpAndSettle();
+    expect(find.text('Review scanned medicine details'), findsOneWidget);
+    expect(confirmed, isEmpty);
+    await tester.ensureVisible(find.text('Discard scan'));
+    await tester.tap(find.text('Discard scan'));
+    await tester.pumpAndSettle();
+    expect(confirmed, isEmpty);
+    expect(find.text('Review scanned medicine details'), findsNothing);
+  });
+
   testWidgets('confirmed scan is emitted once and draft is cleared', (
     WidgetTester tester,
   ) async {
