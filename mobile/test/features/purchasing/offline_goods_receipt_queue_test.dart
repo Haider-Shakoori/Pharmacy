@@ -40,38 +40,44 @@ void main() {
     expect((events.single.payload['lines'] as List<dynamic>), hasLength(1));
   });
 
-  test('separate purchase orders retain distinct durable receipt keys', () async {
-    final queue = OfflineGoodsReceiptQueue(database);
-    const lines = <GoodsReceiptDraftLine>[
-      GoodsReceiptDraftLine(
-        purchaseOrderLineId: 'line-1',
-        orderedQuantity: '10',
-        previouslyReceivedQuantity: '0',
-        receivedQuantity: '2',
-        unitCost: '12.5',
-      ),
-    ];
-    final first = await queue.enqueue(
-      purchaseOrderId: 'order-1',
-      orderStatus: 'approved',
-      receivedAt: DateTime.utc(2026, 11, 3),
-      lines: lines,
-    );
-    final second = await queue.enqueue(
-      purchaseOrderId: 'order-2',
-      orderStatus: 'approved',
-      receivedAt: DateTime.utc(2026, 11, 3),
-      lines: lines,
-    );
-    expect(second, isNot(first));
-    final events = await MobileSyncRepository(database).pendingOutbox();
-    expect(events, hasLength(2));
-    expect(events.map((event) => event.idempotencyKey).toSet(), {first, second});
-    expect(
-      events.map((event) => event.payload['purchase_order_id']).toSet(),
-      {'order-1', 'order-2'},
-    );
-  });
+  test(
+    'separate purchase orders retain distinct durable receipt keys',
+    () async {
+      final queue = OfflineGoodsReceiptQueue(database);
+      const lines = <GoodsReceiptDraftLine>[
+        GoodsReceiptDraftLine(
+          purchaseOrderLineId: 'line-1',
+          orderedQuantity: '10',
+          previouslyReceivedQuantity: '0',
+          receivedQuantity: '2',
+          unitCost: '12.5',
+        ),
+      ];
+      final first = await queue.enqueue(
+        purchaseOrderId: 'order-1',
+        orderStatus: 'approved',
+        receivedAt: DateTime.utc(2026, 11, 3),
+        lines: lines,
+      );
+      final second = await queue.enqueue(
+        purchaseOrderId: 'order-2',
+        orderStatus: 'approved',
+        receivedAt: DateTime.utc(2026, 11, 3),
+        lines: lines,
+      );
+      expect(second, isNot(first));
+      final events = await MobileSyncRepository(database).pendingOutbox();
+      expect(events, hasLength(2));
+      expect(events.map((event) => event.idempotencyKey).toSet(), {
+        first,
+        second,
+      });
+      expect(
+        events.map((event) => event.payload['purchase_order_id']).toSet(),
+        {'order-1', 'order-2'},
+      );
+    },
+  );
 
   test('invalid receipt never creates an outbox event', () async {
     await expectLater(
