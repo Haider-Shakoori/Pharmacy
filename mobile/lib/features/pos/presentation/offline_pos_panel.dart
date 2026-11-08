@@ -237,6 +237,19 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
     });
   }
 
+  void _changeQuantity(_CartEntry entry, bool increase) {
+    final FixedDecimal one = FixedDecimal.parse('1');
+    final FixedDecimal current = FixedDecimal.parse(entry.quantity);
+    final FixedDecimal next = increase ? current + one : current - one;
+    setState(() {
+      if (!next.isPositive) {
+        _cart.remove(entry);
+      } else {
+        entry.quantity = next.toString();
+      }
+    });
+  }
+
   Future<void> _edit(_CartEntry entry) async {
     final AppStrings strings = AppStrings.of(context);
     final TextEditingController quantity = TextEditingController(
@@ -322,6 +335,36 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
     quantity.dispose();
     price.dispose();
     discount.dispose();
+  }
+
+  FixedDecimal get _subtotal {
+    FixedDecimal value = FixedDecimal.zero;
+
+    for (final _CartEntry entry in _cart) {
+      try {
+        value += FixedDecimal.parse(entry.quantity).multiply(
+          FixedDecimal.parse(entry.unitPrice),
+        );
+      } on FormatException {
+        return FixedDecimal.zero;
+      }
+    }
+
+    return value;
+  }
+
+  FixedDecimal get _discountTotal {
+    FixedDecimal value = FixedDecimal.zero;
+
+    for (final _CartEntry entry in _cart) {
+      try {
+        value += FixedDecimal.parse(entry.discount);
+      } on FormatException {
+        return FixedDecimal.zero;
+      }
+    }
+
+    return value;
   }
 
   FixedDecimal get _total {
@@ -466,6 +509,22 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: <Widget>[
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: strings.posSearch,
+                    hintText: strings.posSearchHint,
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: IconButton(
+                      tooltip: 'Scan barcode or QR code',
+                      onPressed: _scanBarcode,
+                      icon: const Icon(Icons.qr_code_scanner_rounded),
+                    ),
+                  ),
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => _search(),
+                ),
+                const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _locationId,
                   decoration: InputDecoration(labelText: strings.posLocation),
@@ -493,29 +552,6 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                           _search();
                         },
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: strings.posSearch,
-                    hintText: strings.posSearchHint,
-                    suffixIcon: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        IconButton(
-                          tooltip: 'Scan barcode or QR code',
-                          onPressed: _scanBarcode,
-                          icon: const Icon(Icons.qr_code_scanner_rounded),
-                        ),
-                        IconButton(
-                          onPressed: _search,
-                          icon: const Icon(Icons.search_rounded),
-                        ),
-                      ],
-                    ),
-                  ),
-                  onSubmitted: (_) => _search(),
-                ),
               ],
             ),
           ),
@@ -523,8 +559,12 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         const SizedBox(height: 12),
         ..._results.map(
           (OfflinePosCatalogItem item) => Card(
+            margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
-              title: Text(item.brandName),
+              title: Text(
+                item.brandName,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               subtitle: Text(
                 '${item.genericName ?? ''} • '
                 '${strings.posAvailable}: ${item.availableQuantity.compact} '
@@ -591,23 +631,65 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           ),
         ..._cart.map(
           (_CartEntry entry) => Card(
-            child: ListTile(
-              title: Text(entry.item.brandName),
-              subtitle: Text(
-                '${strings.posQuantity}: '
-                '${FixedDecimal.parse(entry.quantity).compact} • '
-                '${strings.posUnitPrice}: '
-                '${FixedDecimal.parse(entry.unitPrice).compact} AFN',
-              ),
-              onTap: () => _edit(entry),
-              trailing: IconButton(
-                tooltip: strings.posRemove,
-                onPressed: () {
-                  setState(() {
-                    _cart.remove(entry);
-                  });
-                },
-                icon: const Icon(Icons.delete_outline_rounded),
+            margin: const EdgeInsets.only(bottom: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _edit(entry),
+                          child: Text(
+                            entry.item.brandName,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: strings.posRemove,
+                        onPressed: () {
+                          setState(() {
+                            _cart.remove(entry);
+                          });
+                        },
+                        icon: const Icon(Icons.delete_outline_rounded),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: <Widget>[
+                      IconButton.outlined(
+                        tooltip: 'Decrease quantity',
+                        onPressed: _checkingOut
+                            ? null
+                            : () => _changeQuantity(entry, false),
+                        icon: const Icon(Icons.remove),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          FixedDecimal.parse(entry.quantity).compact,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      IconButton.outlined(
+                        tooltip: 'Increase quantity',
+                        onPressed: _checkingOut
+                            ? null
+                            : () => _changeQuantity(entry, true),
+                        icon: const Icon(Icons.add),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${FixedDecimal.parse(entry.unitPrice).compact} AFN each',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
@@ -620,6 +702,31 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           ),
         ],
         if (_cart.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: <Widget>[
+                  _TotalRow(
+                    label: 'Subtotal',
+                    value: '${_subtotal.compact} AFN',
+                  ),
+                  _TotalRow(
+                    label: 'Discount',
+                    value: '− ${_discountTotal.compact} AFN',
+                    valueColor: const Color(0xFFD93A3A),
+                  ),
+                  const Divider(),
+                  _TotalRow(
+                    label: strings.posTotal,
+                    value: '${_total.compact} AFN',
+                    bold: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _paymentMethod,
@@ -647,22 +754,65 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
             },
           ),
           const SizedBox(height: 12),
-          Text(
-            '${strings.posTotal}: ${_total.compact} AFN',
-            textAlign: TextAlign.end,
-            style: Theme.of(context).textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: _checkingOut ? null : _complete,
-            icon: const Icon(Icons.check_circle_outline_rounded),
-            label: Text(
-              _checkingOut ? strings.saving : strings.posCompleteSale,
-            ),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Tooltip(
+                  message: 'Hold is not available yet',
+                  child: OutlinedButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.pause_circle_outline_rounded),
+                    label: const Text('Hold'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: FilledButton.icon(
+                  onPressed: _checkingOut ? null : _complete,
+                  icon: const Icon(Icons.payments_outlined),
+                  label: Text(
+                    _checkingOut ? strings.saving : strings.posCompleteSale,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ],
+    );
+  }
+}
+
+class _TotalRow extends StatelessWidget {
+  const _TotalRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.bold = false,
+  });
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final bool bold;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle style = TextStyle(
+      fontWeight: bold ? FontWeight.w900 : FontWeight.w500,
+      fontSize: bold ? 18 : 14,
+      color: valueColor,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: <Widget>[
+          Expanded(child: Text(label, style: style)),
+          Text(value, style: style),
+        ],
+      ),
     );
   }
 }
