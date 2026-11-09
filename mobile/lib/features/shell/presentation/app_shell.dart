@@ -152,315 +152,304 @@ class _AppShellState extends ConsumerState<AppShell> {
             if (_selectedIndex == 2) ...<Widget>[
               const SizedBox(height: 16),
               ExpansionTile(
-                  key: const ValueKey<String>('medicine-ocr-entry'),
-                  initiallyExpanded: true,
-                  leading: const Icon(Icons.document_scanner_outlined),
-                  title: Text(s.scanLabel),
-                  subtitle: Text(s.scanDraftNote),
-                  children: [
-                    MedicineScanFlow(
-                      images: MedicineImageAcquisition(
-                        PickerMedicineImageSource(),
-                      ),
-                      scanner: const MedicineScanCoordinator(
-                        ocr: PlatformMedicineOcr(),
-                      ),
-                      onConfirmed: (ReviewedMedicineScan reviewed) {
+                key: const ValueKey<String>('medicine-ocr-entry'),
+                initiallyExpanded: true,
+                leading: const Icon(Icons.document_scanner_outlined),
+                title: Text(s.scanLabel),
+                subtitle: Text(s.scanDraftNote),
+                children: [
+                  MedicineScanFlow(
+                    images: MedicineImageAcquisition(
+                      PickerMedicineImageSource(),
+                    ),
+                    scanner: const MedicineScanCoordinator(
+                      ocr: PlatformMedicineOcr(),
+                    ),
+                    onConfirmed: (ReviewedMedicineScan reviewed) {
+                      setState(() {
+                        _reviewedScan = reviewed;
+                        _registrationApproval = false;
+                        _duplicateLookup = _checkDuplicates(reviewed);
+                      });
+                    },
+                  ),
+                  if (_reviewedScan != null && _duplicateLookup != null)
+                    FutureBuilder<List<String>>(
+                      future: _duplicateLookup,
+                      builder: (context, snapshot) {
+                        final ready =
+                            snapshot.connectionState == ConnectionState.done &&
+                            !snapshot.hasError &&
+                            snapshot.hasData &&
+                            snapshot.data!.isEmpty &&
+                            _registrationApproval &&
+                            canScanMedicines;
+                        return ListTile(
+                          title: Text(s.registerReviewed),
+                          subtitle: Text(s.registerNeedsApproval),
+                          trailing: const Icon(Icons.add_circle_outline),
+                          enabled: ready,
+                          onTap: !ready
+                              ? null
+                              : () async {
+                                  final draft = _reviewedScan;
+                                  final registration = ref
+                                      .read(mobileRegistrationProvider)
+                                      .asData
+                                      ?.value;
+                                  if (draft == null || registration == null) {
+                                    return;
+                                  }
+                                  final handoff =
+                                      MedicineRegistrationHandoff.prepare(
+                                        reviewed: draft,
+                                        duplicateCheckCompleted: true,
+                                        possibleDuplicates: snapshot.data!,
+                                      );
+                                  final createdId = await showDialog<String>(
+                                    context: context,
+                                    builder: (context) =>
+                                        MedicineRegistrationDialog(
+                                          handoff: handoff,
+                                          registration: registration,
+                                        ),
+                                  );
+                                  if (!context.mounted || createdId == null) {
+                                    return;
+                                  }
+                                  setState(() {
+                                    _reviewedScan = null;
+                                    _duplicateLookup = null;
+                                    _registrationApproval = false;
+                                  });
+                                  try {
+                                    await refreshRegisteredMedicineCatalog(ref);
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(s.registeredSynced),
+                                      ),
+                                    );
+                                  } catch (error) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          s.catalogSyncFailed('$error'),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                        );
+                      },
+                    ),
+                  if (_reviewedScan != null && _duplicateLookup != null)
+                    FutureBuilder<List<String>>(
+                      future: _duplicateLookup,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return ListTile(title: Text(s.checkingDuplicates));
+                        }
+                        if (snapshot.hasError) {
+                          return ListTile(
+                            title: Text(s.duplicateUnavailable),
+                            subtitle: Text(s.doNotRegister),
+                          );
+                        }
+                        final matches = snapshot.data ?? <String>[];
+                        return ListTile(
+                          title: Text(
+                            matches.isEmpty
+                                ? s.noLocalMatches
+                                : s.possibleDuplicatesCount(matches.length),
+                          ),
+                          subtitle: Text(
+                            matches.isEmpty
+                                ? s.serverVerifyNeeded
+                                : matches.join(', '),
+                          ),
+                        );
+                      },
+                    ),
+                  if (_reviewedScan != null)
+                    CheckboxListTile(
+                      title: Text(s.approveHandoff),
+                      subtitle: Text(s.approveHandoffBody),
+                      value: _registrationApproval,
+                      onChanged: (value) {
                         setState(() {
-                          _reviewedScan = reviewed;
-                          _registrationApproval = false;
-                          _duplicateLookup = _checkDuplicates(reviewed);
+                          _registrationApproval = value ?? false;
                         });
                       },
                     ),
-                    if (_reviewedScan != null && _duplicateLookup != null)
-                      FutureBuilder<List<String>>(
-                        future: _duplicateLookup,
-                        builder: (context, snapshot) {
-                          final ready =
-                              snapshot.connectionState ==
-                                  ConnectionState.done &&
-                              !snapshot.hasError &&
-                              snapshot.hasData &&
-                              snapshot.data!.isEmpty &&
-                              _registrationApproval &&
-                              canScanMedicines;
-                          return ListTile(
-                            title: Text(s.registerReviewed),
-                            subtitle: Text(s.registerNeedsApproval),
-                            trailing: const Icon(Icons.add_circle_outline),
-                            enabled: ready,
-                            onTap: !ready
+                  if (_reviewedScan != null && _duplicateLookup != null)
+                    FutureBuilder<List<String>>(
+                      future: _duplicateLookup,
+                      builder: (context, snapshot) {
+                        final ready =
+                            snapshot.connectionState == ConnectionState.done &&
+                            !snapshot.hasError &&
+                            snapshot.hasData &&
+                            snapshot.data!.isEmpty &&
+                            _registrationApproval;
+                        return ListTile(
+                          title: Text(s.prepareHandoff),
+                          subtitle: Text(s.prepareHandoffBody),
+                          trailing: IconButton(
+                            tooltip: s.copyHandoffTooltip,
+                            icon: const Icon(Icons.assignment_outlined),
+                            onPressed: !ready || !canScanMedicines
                                 ? null
                                 : () async {
                                     final draft = _reviewedScan;
-                                    final registration = ref
-                                        .read(mobileRegistrationProvider)
-                                        .asData
-                                        ?.value;
-                                    if (draft == null || registration == null) {
-                                      return;
-                                    }
+                                    if (draft == null) return;
                                     final handoff =
                                         MedicineRegistrationHandoff.prepare(
                                           reviewed: draft,
                                           duplicateCheckCompleted: true,
                                           possibleDuplicates: snapshot.data!,
                                         );
-                                    final createdId = await showDialog<String>(
-                                      context: context,
-                                      builder: (context) =>
-                                          MedicineRegistrationDialog(
-                                            handoff: handoff,
-                                            registration: registration,
-                                          ),
-                                    );
-                                    if (!context.mounted || createdId == null) {
-                                      return;
-                                    }
-                                    setState(() {
-                                      _reviewedScan = null;
-                                      _duplicateLookup = null;
-                                      _registrationApproval = false;
-                                    });
+                                    final registration = ref
+                                        .read(mobileRegistrationProvider)
+                                        .asData
+                                        ?.value;
+                                    if (registration == null) return;
+                                    final client = http.Client();
                                     try {
-                                      await refreshRegisteredMedicineCatalog(
-                                        ref,
-                                      );
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                            SnackBar(
-                                              content: Text(s.registeredSynced),
-                                            ),
+                                      final matches =
+                                          await MedicineDuplicatePreflight(
+                                            environment: AppEnvironment.current,
+                                            client: client,
+                                          ).check(
+                                            registration: registration,
+                                            handoff: handoff,
                                           );
+                                      if (matches.isNotEmpty) {
+                                        throw StateError(
+                                          s.serverDuplicates(
+                                            matches.join(', '),
+                                          ),
+                                        );
+                                      }
                                     } catch (error) {
                                       if (!context.mounted) return;
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
                                             SnackBar(
                                               content: Text(
-                                                s.catalogSyncFailed('$error'),
+                                                s.handoffBlocked('$error'),
                                               ),
                                             ),
                                           );
+                                      return;
+                                    } finally {
+                                      client.close();
                                     }
+                                    if (!context.mounted ||
+                                        !_registrationApproval) {
+                                      return;
+                                    }
+                                    await Clipboard.setData(
+                                      ClipboardData(
+                                        text: [
+                                          'Brand: ${handoff.brandName}',
+                                          if (handoff.genericName != null)
+                                            'Generic: ${handoff.genericName}',
+                                          if (handoff.strength != null)
+                                            'Strength: ${handoff.strength}',
+                                          if (handoff.dosageForm != null)
+                                            'Form: ${handoff.dosageForm}',
+                                          if (handoff.barcode != null)
+                                            'Barcode: ${handoff.barcode}',
+                                        ].join('\\n'),
+                                      ),
+                                    );
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(s.handoffCopied)),
+                                    );
                                   },
-                          );
-                        },
-                      ),
-                    if (_reviewedScan != null && _duplicateLookup != null)
-                      FutureBuilder<List<String>>(
-                        future: _duplicateLookup,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState !=
-                              ConnectionState.done) {
-                            return ListTile(title: Text(s.checkingDuplicates));
-                          }
-                          if (snapshot.hasError) {
-                            return ListTile(
-                              title: Text(s.duplicateUnavailable),
-                              subtitle: Text(s.doNotRegister),
-                            );
-                          }
-                          final matches = snapshot.data ?? <String>[];
-                          return ListTile(
-                            title: Text(
-                              matches.isEmpty
-                                  ? s.noLocalMatches
-                                  : s.possibleDuplicatesCount(matches.length),
-                            ),
-                            subtitle: Text(
-                              matches.isEmpty
-                                  ? s.serverVerifyNeeded
-                                  : matches.join(', '),
-                            ),
-                          );
-                        },
-                      ),
-                    if (_reviewedScan != null)
-                      CheckboxListTile(
-                        title: Text(s.approveHandoff),
-                        subtitle: Text(s.approveHandoffBody),
-                        value: _registrationApproval,
-                        onChanged: (value) {
+                          ),
+                        );
+                      },
+                    ),
+                  if (_reviewedScan != null)
+                    ListTile(
+                      title: Text(s.registrationDisabled),
+                      subtitle: Text(s.registrationDisabledBody),
+                      trailing: IconButton(
+                        tooltip: s.recheckTooltip,
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () {
+                          final draft = _reviewedScan;
+                          if (draft == null) return;
                           setState(() {
-                            _registrationApproval = value ?? false;
+                            _registrationApproval = false;
+                            _duplicateLookup = _checkDuplicates(draft);
                           });
                         },
                       ),
-                    if (_reviewedScan != null && _duplicateLookup != null)
-                      FutureBuilder<List<String>>(
-                        future: _duplicateLookup,
-                        builder: (context, snapshot) {
-                          final ready =
-                              snapshot.connectionState ==
-                                  ConnectionState.done &&
-                              !snapshot.hasError &&
-                              snapshot.hasData &&
-                              snapshot.data!.isEmpty &&
-                              _registrationApproval;
-                          return ListTile(
-                            title: Text(s.prepareHandoff),
-                            subtitle: Text(s.prepareHandoffBody),
-                            trailing: IconButton(
-                              tooltip: s.copyHandoffTooltip,
-                              icon: const Icon(Icons.assignment_outlined),
-                              onPressed: !ready || !canScanMedicines
-                                  ? null
-                                  : () async {
-                                      final draft = _reviewedScan;
-                                      if (draft == null) return;
-                                      final handoff =
-                                          MedicineRegistrationHandoff.prepare(
-                                            reviewed: draft,
-                                            duplicateCheckCompleted: true,
-                                            possibleDuplicates: snapshot.data!,
-                                          );
-                                      final registration = ref
-                                          .read(mobileRegistrationProvider)
-                                          .asData
-                                          ?.value;
-                                      if (registration == null) return;
-                                      final client = http.Client();
-                                      try {
-                                        final matches =
-                                            await MedicineDuplicatePreflight(
-                                              environment:
-                                                  AppEnvironment.current,
-                                              client: client,
-                                            ).check(
-                                              registration: registration,
-                                              handoff: handoff,
-                                            );
-                                        if (matches.isNotEmpty) {
-                                          throw StateError(
-                                            s.serverDuplicates(
-                                              matches.join(', '),
-                                            ),
-                                          );
-                                        }
-                                      } catch (error) {
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  s.handoffBlocked('$error'),
-                                                ),
-                                              ),
-                                            );
-                                        return;
-                                      } finally {
-                                        client.close();
-                                      }
-                                      if (!context.mounted ||
-                                          !_registrationApproval) {
-                                        return;
-                                      }
-                                      await Clipboard.setData(
-                                        ClipboardData(
-                                          text: [
-                                            'Brand: ${handoff.brandName}',
-                                            if (handoff.genericName != null)
-                                              'Generic: ${handoff.genericName}',
-                                            if (handoff.strength != null)
-                                              'Strength: ${handoff.strength}',
-                                            if (handoff.dosageForm != null)
-                                              'Form: ${handoff.dosageForm}',
-                                            if (handoff.barcode != null)
-                                              'Barcode: ${handoff.barcode}',
-                                          ].join('\\n'),
-                                        ),
-                                      );
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                            SnackBar(
-                                              content: Text(s.handoffCopied),
-                                            ),
-                                          );
-                                    },
-                            ),
-                          );
-                        },
+                    ),
+                  if (_reviewedScan != null)
+                    ListTile(
+                      title: Text(_reviewedScan!.brandName),
+                      subtitle: Text(
+                        [
+                          if (_reviewedScan!.genericName != null)
+                            'Generic: ${_reviewedScan!.genericName}',
+                          if (_reviewedScan!.strength != null)
+                            'Strength: ${_reviewedScan!.strength}',
+                          if (_reviewedScan!.dosageForm != null)
+                            'Form: ${_reviewedScan!.dosageForm}',
+                          if (_reviewedScan!.barcode != null)
+                            'Barcode: ${_reviewedScan!.barcode}',
+                          s.reviewedDraftOnly,
+                        ].join('\n'),
                       ),
-                    if (_reviewedScan != null)
-                      ListTile(
-                        title: Text(s.registrationDisabled),
-                        subtitle: Text(s.registrationDisabledBody),
-                        trailing: IconButton(
-                          tooltip: s.recheckTooltip,
-                          icon: const Icon(Icons.refresh),
-                          onPressed: () {
-                            final draft = _reviewedScan;
-                            if (draft == null) return;
-                            setState(() {
+                      trailing: Wrap(
+                        spacing: 0,
+                        children: [
+                          IconButton(
+                            tooltip: s.copyReviewedTooltip,
+                            icon: const Icon(Icons.copy_outlined),
+                            onPressed: () async {
+                              final draft = _reviewedScan;
+                              if (draft == null) return;
+                              final fields = [
+                                'Brand: ${draft.brandName}',
+                                if (draft.genericName != null)
+                                  'Generic: ${draft.genericName}',
+                                if (draft.strength != null)
+                                  'Strength: ${draft.strength}',
+                                if (draft.dosageForm != null)
+                                  'Form: ${draft.dosageForm}',
+                                if (draft.barcode != null)
+                                  'Barcode: ${draft.barcode}',
+                              ];
+                              await Clipboard.setData(
+                                ClipboardData(text: fields.join('\n')),
+                              );
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(s.reviewedCopied)),
+                              );
+                            },
+                          ),
+                          IconButton(
+                            tooltip: s.clearDraftTooltip,
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: () => setState(() {
+                              _reviewedScan = null;
                               _registrationApproval = false;
-                              _duplicateLookup = _checkDuplicates(draft);
-                            });
-                          },
-                        ),
+                              _duplicateLookup = null;
+                            }),
+                          ),
+                        ],
                       ),
-                    if (_reviewedScan != null)
-                      ListTile(
-                        title: Text(_reviewedScan!.brandName),
-                        subtitle: Text(
-                          [
-                            if (_reviewedScan!.genericName != null)
-                              'Generic: ${_reviewedScan!.genericName}',
-                            if (_reviewedScan!.strength != null)
-                              'Strength: ${_reviewedScan!.strength}',
-                            if (_reviewedScan!.dosageForm != null)
-                              'Form: ${_reviewedScan!.dosageForm}',
-                            if (_reviewedScan!.barcode != null)
-                              'Barcode: ${_reviewedScan!.barcode}',
-                            s.reviewedDraftOnly,
-                          ].join('\n'),
-                        ),
-                        trailing: Wrap(
-                          spacing: 0,
-                          children: [
-                            IconButton(
-                              tooltip: s.copyReviewedTooltip,
-                              icon: const Icon(Icons.copy_outlined),
-                              onPressed: () async {
-                                final draft = _reviewedScan;
-                                if (draft == null) return;
-                                final fields = [
-                                  'Brand: ${draft.brandName}',
-                                  if (draft.genericName != null)
-                                    'Generic: ${draft.genericName}',
-                                  if (draft.strength != null)
-                                    'Strength: ${draft.strength}',
-                                  if (draft.dosageForm != null)
-                                    'Form: ${draft.dosageForm}',
-                                  if (draft.barcode != null)
-                                    'Barcode: ${draft.barcode}',
-                                ];
-                                await Clipboard.setData(
-                                  ClipboardData(text: fields.join('\n')),
-                                );
-                                if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(s.reviewedCopied)),
-                                );
-                              },
-                            ),
-                            IconButton(
-                              tooltip: s.clearDraftTooltip,
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () => setState(() {
-                                _reviewedScan = null;
-                                _registrationApproval = false;
-                                _duplicateLookup = null;
-                              }),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 16),
               const OperationalAlertsCard(),
             ],
@@ -649,3 +638,4 @@ class _ModuleTile extends StatelessWidget {
     );
   }
 }
+
