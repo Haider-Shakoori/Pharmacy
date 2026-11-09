@@ -238,7 +238,8 @@ class ModuleStrings {
       'storageType': 'Type',
       'storageCancel': 'Cancel',
       'storageCreate': 'Create',
-      'storageComingSoon': 'Coming soon: batch assignments, stock counts and transfers.',
+      'storageComingSoon':
+          'Coming soon: batch assignments, stock counts and transfers.',
       'reports': 'Reports',
       'reportsSubtitle':
           'Totals on this device. Company-wide reports need server data.',
@@ -374,8 +375,7 @@ class ModuleStrings {
       'storageType': 'نوع',
       'storageCancel': 'لغو',
       'storageCreate': 'ایجاد',
-      'storageComingSoon':
-          'به‌زودی: تخصیص بچ‌ها، شمارش موجودی و انتقال.',
+      'storageComingSoon': 'به‌زودی: تخصیص بچ‌ها، شمارش موجودی و انتقال.',
       'reports': 'گزارش‌ها',
       'reportsSubtitle': 'مجموع‌ها روی این دستگاه. گزارش‌های سراسری به داده‌های سرور نیاز دارند.',
       'registerToViewReports': 'برای مشاهدهٔ گزارش‌ها، این دستگاه را ثبت کنید.',
@@ -510,8 +510,7 @@ class ModuleStrings {
       'storageType': 'ډول',
       'storageCancel': 'لغوه کول',
       'storageCreate': 'جوړول',
-      'storageComingSoon':
-          'ژر راځي: د بستو ټاکنه، د ذخیرې شمېرل او لېږدول.',
+      'storageComingSoon': 'ژر راځي: د بستو ټاکنه، د ذخیرې شمېرل او لېږدول.',
       'reports': 'راپورونه',
       'reportsSubtitle':
           'پدې وسیله کې ټولې. د ټولې شرکت راپورونه د سرور معلومات غواړي.',
