@@ -255,9 +255,13 @@ class _StockBodyState extends State<_StockBody> {
   void didUpdateWidget(covariant _StockBody oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.database, widget.database) ||
-        oldWidget.registration.tenantId != widget.registration.tenantId) {
+        oldWidget.registration.tenantId != widget.registration.tenantId ||
+        oldWidget.registration.userId != widget.registration.userId ||
+        oldWidget.registration.accessToken != widget.registration.accessToken) {
       // A tenant/database switch must not display cached stock from the
       // previous database while the replacement tenant loads.
+      ++_serverGeneration;
+      _serverLocationsLoading = false;
       _serverLocations = null;
       _serverLocationsError = null;
       _locations = <String>[];
@@ -543,11 +547,13 @@ class _StockBodyState extends State<_StockBody> {
             ),
           ),
         ],
-        if (!_loading && _error == null && _locations.isEmpty) ...<Widget>[
+        if (!_serverLocationsLoading && _serverLocations == null &&
+            !_loading && _error == null && _locations.isEmpty) ...<Widget>[
           const SizedBox(height: 12),
           Text(s.noStorageLocations),
         ],
-        if (!_loading && _error == null && _locations.isNotEmpty) ...<Widget>[
+        if (_serverLocations == null && !_loading && _error == null &&
+            _locations.isNotEmpty) ...<Widget>[
           const SizedBox(height: 12),
           Text(s.location, style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
