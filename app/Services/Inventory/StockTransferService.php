@@ -46,7 +46,7 @@ class StockTransferService
             }
             $amount = BigDecimal::of($quantity);
             if ($amount->isLessThanOrEqualTo(BigDecimal::zero()) ||
-                ! $amount->isEqualTo($amount->toScale(4, RoundingMode::Unnecessary)) ||
+                $amount->getScale() > 4 ||
                 $amount->isGreaterThan(BigDecimal::of($source->available_quantity))) {
                 throw ValidationException::withMessages(['quantity' => 'Quantity must be positive, have at most four decimals, and not exceed available stock.']);
             }
@@ -74,8 +74,14 @@ class StockTransferService
                     'sale_price' => $source->sale_price,
                 ]);
             }
+            $previousQuantity = BigDecimal::of($target->available_quantity);
+            $combinedQuantity = $previousQuantity->plus($amount);
+            $weightedCost = $previousQuantity->multipliedBy(BigDecimal::of($target->purchase_cost))
+                ->plus($amount->multipliedBy(BigDecimal::of($source->purchase_cost)))
+                ->dividedBy($combinedQuantity, 4, RoundingMode::HalfUp);
             $target->update([
                 'received_quantity' => (string) BigDecimal::of($target->received_quantity)->plus($amount)->toScale(4, RoundingMode::HalfUp),
+                'purchase_cost' => (string) $weightedCost,
             ]);
             $out = $this->movements->record(
                 $source, '-'.$amount, 'transfer_out', self::class, $requestId,
