@@ -11,6 +11,7 @@ use App\Models\ProductBatch;
 use App\Models\PurchaseOrder;
 use App\Models\Sale;
 use App\Models\StockLocation;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
@@ -186,7 +187,7 @@ class MobileSyncApiTest extends TestCase
             $this->assertEquals('5.0000', ProductBatch::query()
                 ->where('stock_location_id', $destination->id)->firstOrFail()->available_quantity);
             $this->assertEquals($before, ProductBatch::query()->sum('available_quantity'));
-            $this->assertSame(2, \App\Models\StockMovement::query()
+            $this->assertSame(2, StockMovement::query()
                 ->where('source_id', 'transfer-test-1')->count());
 
             try {
@@ -210,7 +211,7 @@ class MobileSyncApiTest extends TestCase
                 'kind' => 'store',
                 'is_active' => true,
             ]);
-            $before = \App\Models\StockMovement::query()->count();
+            $before = StockMovement::query()->count();
             try {
                 app(StockTransferService::class)->transfer(
                     $source->id, $destination->id, '999.0000', 'transfer-too-large', null
@@ -219,7 +220,7 @@ class MobileSyncApiTest extends TestCase
             } catch (ValidationException $exception) {
                 $this->assertArrayHasKey('quantity', $exception->errors());
             }
-            $this->assertSame($before, \App\Models\StockMovement::query()->count());
+            $this->assertSame($before, StockMovement::query()->count());
         });
     }
 
