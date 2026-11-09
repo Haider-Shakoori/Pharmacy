@@ -65,6 +65,7 @@ class _StockBodyState extends State<_StockBody> {
   List<MobileStockLocation>? _serverLocations;
   String? _serverLocationsError;
   bool _serverLocationsLoading = false;
+  bool _creatingLocation = false;
   List<StockMedicineSnapshot> _medicines = <StockMedicineSnapshot>[];
   List<StockMedicineSnapshot> _expiring = <StockMedicineSnapshot>[];
   InventoryOverview? _overview;
@@ -106,6 +107,128 @@ class _StockBodyState extends State<_StockBody> {
       if (mounted && generation == _serverGeneration) {
         setState(() => _serverLocationsLoading = false);
       }
+    }
+  }
+
+  Future<void> _createLocation() async {
+    if (_creatingLocation ||
+        !widget.registration.permissions.contains('inventory.manage') ||
+        _serverLocations == null ||
+        _serverLocations!.isEmpty) {
+      return;
+    }
+    final MobileRegistration registration = widget.registration;
+    final int generation = _serverGeneration;
+    final TextEditingController code = TextEditingController();
+    final TextEditingController name = TextEditingController();
+    String branchId = _serverLocations!.first.branchId;
+    String kind = 'store';
+    try {
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) => StatefulBuilder(
+          builder: (BuildContext context, StateSetter updateDialog) =>
+              AlertDialog(
+                title: const Text('Add storage location'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      DropdownButtonFormField<String>(
+                        initialValue: branchId,
+                        decoration: const InputDecoration(labelText: 'Branch'),
+                        items: _serverLocations!
+                            .map((MobileStockLocation item) => item.branchId)
+                            .toSet()
+                            .map((String id) => DropdownMenuItem<String>(
+                                  value: id,
+                                  child: Text(id),
+                                ))
+                            .toList(),
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            updateDialog(() => branchId = value);
+                          }
+                        },
+                      ),
+                      TextField(
+                        controller: code,
+                        maxLength: 60,
+                        decoration: const InputDecoration(labelText: 'Code'),
+                      ),
+                      TextField(
+                        controller: name,
+                        maxLength: 160,
+                        decoration: const InputDecoration(labelText: 'Name'),
+                      ),
+                      DropdownButtonFormField<String>(
+                        initialValue: kind,
+                        decoration: const InputDecoration(labelText: 'Type'),
+                        items: const <String>[
+                          'store', 'warehouse', 'shelf', 'quarantine', 'other',
+                        ].map((String value) => DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        )).toList(),
+                        onChanged: (String? value) {
+                          if (value != null) updateDialog(() => kind = value);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext, false),
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      if (code.text.trim().isNotEmpty &&
+                          name.text.trim().isNotEmpty) {
+                        Navigator.pop(dialogContext, true);
+                      }
+                    },
+                    child: const Text('Create'),
+                  ),
+                ],
+              ),
+        ),
+      );
+      if (confirmed != true || !mounted || generation != _serverGeneration) {
+        return;
+      }
+      setState(() => _creatingLocation = true);
+      final http.Client client = http.Client();
+      try {
+        await MobileStockLocationApi(
+          environment: AppEnvironment.current,
+          client: client,
+        ).create(
+          registration: registration,
+          branchId: branchId,
+          code: code.text,
+          name: name.text,
+          kind: kind,
+        );
+        if (mounted && generation == _serverGeneration) {
+          await _loadServerLocations();
+        }
+      } on Object catch (error) {
+        if (mounted && generation == _serverGeneration) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error.toString())),
+          );
+        }
+      } finally {
+        client.close();
+        if (mounted && generation == _serverGeneration) {
+          setState(() => _creatingLocation = false);
+        }
+      }
+    } finally {
+      code.dispose();
+      name.dispose();
     }
   }
 
@@ -420,7 +543,10 @@ class _StockBodyState extends State<_StockBody> {
         ],
         const SizedBox(height: 12),
         FilledButton.icon(
-          onPressed: null,
+          onPressed: _creatingLocation || _serverLocationsLoading ||
+                  _serverLocations == null || _serverLocations!.isEmpty ||
+                  !widget.registration.permissions.contains('inventory.manage')
+              ? null : _createLocation,
           icon: const Icon(Icons.add_location_alt_outlined),
           label: Text(s.addStorageLocation),
         ),
