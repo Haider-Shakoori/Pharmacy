@@ -220,6 +220,11 @@ class MobileStockLocationApi {
         'Transfer connection failed. Retry with the same request ID.',
       );
     }
+    if (response.statusCode >= 500 || response.statusCode == 408) {
+      throw StockTransferUncertainException(
+        'Transfer status is uncertain (${response.statusCode}). Retry with the same request ID.',
+      );
+    }
     if (response.statusCode != 200) {
       throw StateError('Transfer rejected (${response.statusCode})');
     }
