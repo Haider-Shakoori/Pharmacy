@@ -140,10 +140,12 @@ class _StockBodyState extends State<_StockBody> {
                         items: _serverLocations!
                             .map((MobileStockLocation item) => item.branchId)
                             .toSet()
-                            .map((String id) => DropdownMenuItem<String>(
-                                  value: id,
-                                  child: Text(id),
-                                ))
+                            .map(
+                              (String id) => DropdownMenuItem<String>(
+                                value: id,
+                                child: Text(id),
+                              ),
+                            )
                             .toList(),
                         onChanged: (String? value) {
                           if (value != null) {
@@ -164,12 +166,21 @@ class _StockBodyState extends State<_StockBody> {
                       DropdownButtonFormField<String>(
                         initialValue: kind,
                         decoration: const InputDecoration(labelText: 'Type'),
-                        items: const <String>[
-                          'store', 'warehouse', 'shelf', 'quarantine', 'other',
-                        ].map((String value) => DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        )).toList(),
+                        items:
+                            const <String>[
+                                  'store',
+                                  'warehouse',
+                                  'shelf',
+                                  'quarantine',
+                                  'other',
+                                ]
+                                .map(
+                                  (String value) => DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (String? value) {
                           if (value != null) updateDialog(() => kind = value);
                         },
@@ -216,9 +227,8 @@ class _StockBodyState extends State<_StockBody> {
         }
       } on Object catch (error) {
         if (mounted && generation == _serverGeneration) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error.toString())),
-          );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(error.toString())));
         }
       } finally {
         client.close();
@@ -543,10 +553,14 @@ class _StockBodyState extends State<_StockBody> {
         ],
         const SizedBox(height: 12),
         FilledButton.icon(
-          onPressed: _creatingLocation || _serverLocationsLoading ||
-                  _serverLocations == null || _serverLocations!.isEmpty ||
+          onPressed:
+              _creatingLocation ||
+                  _serverLocationsLoading ||
+                  _serverLocations == null ||
+                  _serverLocations!.isEmpty ||
                   !widget.registration.permissions.contains('inventory.manage')
-              ? null : _createLocation,
+              ? null
+              : _createLocation,
           icon: const Icon(Icons.add_location_alt_outlined),
           label: Text(s.addStorageLocation),
         ),
