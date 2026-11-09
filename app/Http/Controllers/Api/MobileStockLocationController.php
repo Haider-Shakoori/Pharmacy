@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\ProductBatch;
 use App\Models\StockLocation;
 use App\Services\Mobile\MobileAccessService;
+use App\Services\Inventory\StockTransferService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -80,6 +81,34 @@ class MobileStockLocationController extends Controller
             return response()->json([
                 'data' => $page,
                 'next_after_id' => $hasMore ? $page->last()->id : null,
+            ]);
+        });
+    }
+
+    public function transfer(
+        Request $request,
+        MobileAccessService $access,
+        StockTransferService $transfers,
+    ): JsonResponse {
+        $context = $access->authenticate($request);
+        abort_unless(in_array('inventory.manage', $context->permissions, true), 403);
+
+        return $context->tenant->run(function () use ($request, $context, $transfers): JsonResponse {
+            $data = Validator::make($request->all(), [
+                'batch_id' => ['required', 'ulid'],
+                'destination_id' => ['required', 'ulid'],
+                'quantity' => ['required', 'regex:/^\\d{1,12}(?:\\.\\d{1,4})?$/'],
+                'request_id' => ['required', 'uuid'],
+            ])->validate();
+
+            return response()->json([
+                'data' => $transfers->transfer(
+                    $data['batch_id'],
+                    $data['destination_id'],
+                    (string) $data['quantity'],
+                    $data['request_id'],
+                    $context->userId,
+                ),
             ]);
         });
     }
