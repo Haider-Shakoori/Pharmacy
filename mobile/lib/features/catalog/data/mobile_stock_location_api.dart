@@ -95,6 +95,53 @@ class MobileStockLocationApi {
         .toList(growable: false);
   }
 
+  Future<MobileStockBatchPage> batches({
+    required MobileRegistration registration,
+    required String stockLocationId,
+    int limit = 100,
+    String? afterId,
+  }) async {
+    if (!registration.permissions.contains('inventory.manage')) {
+      throw StateError('Inventory management permission is required');
+    }
+    if (stockLocationId.trim().isEmpty || limit < 1 || limit > 100) {
+      throw ArgumentError('A location and page size of 1 to 100 are required');
+    }
+    _endpoint(registration);
+    final Uri endpoint = environment.apiBaseUri!
+        .resolve('api/v1/mobile/stock-location-batches')
+        .replace(queryParameters: <String, String>{
+          'stock_location_id': stockLocationId.trim(),
+          'limit': '$limit',
+          if (afterId != null) 'after_id': afterId,
+        });
+    final http.Response response;
+    try {
+      response = await client
+          .get(endpoint, headers: _headers(registration))
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      throw StateError('Loading inventory batches timed out');
+    } on http.ClientException {
+      throw StateError('Unable to connect to inventory server');
+    }
+    if (response.statusCode != 200) {
+      throw StateError('Inventory batch request failed (${response.statusCode})');
+    }
+    final dynamic payload = jsonDecode(response.body);
+    if (payload is! Map || payload['data'] is! List ||
+        (payload['next_after_id'] != null &&
+            payload['next_after_id'] is! String)) {
+      throw const FormatException('Invalid inventory batch response');
+    }
+    return MobileStockBatchPage(
+      batches: (payload['data'] as List<dynamic>)
+          .map((dynamic item) => MobileStockBatch.fromJson(item))
+          .toList(growable: false),
+      nextAfterId: payload['next_after_id'] as String?,
+    );
+  }
+
   Future<MobileStockLocation> create({
     required MobileRegistration registration,
     required String branchId,
@@ -237,4 +284,46 @@ class MobileStockBranch {
   final String id;
   final String code;
   final String name;
+}
+
+class MobileStockBatchPage {
+  const MobileStockBatchPage({required this.batches, required this.nextAfterId});
+  final List<MobileStockBatch> batches;
+  final String? nextAfterId;
+}
+
+class MobileStockBatch {
+  const MobileStockBatch({
+    required this.id,
+    required this.medicineId,
+    required this.locationId,
+    required this.availableQuantity,
+    required this.status,
+  });
+
+  factory MobileStockBatch.fromJson(dynamic value) {
+    if (value is! Map) {
+      throw const FormatException('Invalid inventory batch entry');
+    }
+    String field(String name) {
+      final dynamic v = value[name];
+      if (v is! String || v.trim().isEmpty) {
+        throw FormatException('Missing inventory batch field: $name');
+      }
+      return v;
+    }
+    return MobileStockBatch(
+      id: field('id'),
+      medicineId: field('medicine_id'),
+      locationId: field('stock_location_id'),
+      availableQuantity: field('available_quantity'),
+      status: field('status'),
+    );
+  }
+
+  final String id;
+  final String medicineId;
+  final String locationId;
+  final String availableQuantity;
+  final String status;
 }
