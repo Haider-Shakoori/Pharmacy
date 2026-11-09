@@ -33,10 +33,12 @@ class _CancelledImages implements LocalMedicineImageSource {
 
 class _FailingImages implements LocalMedicineImageSource {
   @override
-  Future<String?> captureImage() async => throw StateError('camera unavailable');
+  Future<String?> captureImage() async =>
+      throw StateError('camera unavailable');
 
   @override
-  Future<String?> chooseLocalImage() async => throw StateError('gallery unavailable');
+  Future<String?> chooseLocalImage() async =>
+      throw StateError('gallery unavailable');
 }
 
 void main() {
