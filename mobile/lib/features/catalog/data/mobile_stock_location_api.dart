@@ -126,12 +126,6 @@ class MobileStockLocation {
     required this.kind,
   });
 
-  final String id;
-  final String branchId;
-  final String code;
-  final String name;
-  final String kind;
-
   factory MobileStockLocation.fromJson(dynamic value) {
     if (value is! Map) {
       throw const FormatException('Invalid stock location entry');
@@ -152,4 +146,11 @@ class MobileStockLocation {
       kind: requiredField('kind'),
     );
   }
+
+  final String id;
+  final String branchId;
+  final String code;
+  final String name;
+  final String kind;
+
 }
