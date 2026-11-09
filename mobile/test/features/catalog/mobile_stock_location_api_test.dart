@@ -37,7 +37,10 @@ void main() {
 
   test('manager can fetch branches before any location exists', () async {
     final http.Client client = MockClient((http.Request request) async {
-      expect(request.url.path, endsWith('/api/v1/mobile/stock-location-branches'));
+      expect(
+        request.url.path,
+        endsWith('/api/v1/mobile/stock-location-branches'),
+      );
       return http.Response(
         jsonEncode(<String, Object>{
           'data': <Object>[
@@ -65,8 +68,10 @@ void main() {
     );
     addTearDown(client.close);
     await expectLater(
-      MobileStockLocationApi(environment: environment, client: client)
-          .branches(registration(<String>['pos.sell'])),
+      MobileStockLocationApi(
+        environment: environment,
+        client: client,
+      ).branches(registration(<String>['pos.sell'])),
       throwsA(isA<StateError>()),
     );
   });
