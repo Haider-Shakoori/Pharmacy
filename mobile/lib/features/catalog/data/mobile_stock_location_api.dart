@@ -106,6 +106,26 @@ class MobileStockLocationApi {
     } on http.ClientException {
       throw StateError('Connection failed; refresh before retrying creation');
     }
+    if (response.statusCode == 422) {
+      // Laravel validation errors are untrusted server text: show the
+      // field-specific message without treating a rejected write as success.
+      try {
+        final dynamic body = jsonDecode(response.body);
+        if (body is Map && body['errors'] is Map) {
+          final Map<dynamic, dynamic> errors = body['errors'] as Map;
+          for (final String field in <String>['code', 'name', 'branch_id', 'kind']) {
+            final dynamic messages = errors[field];
+            if (messages is List && messages.isNotEmpty &&
+                messages.first is String) {
+              throw StateError(messages.first as String);
+            }
+          }
+        }
+      } on FormatException {
+        // Keep the generic validation error for malformed responses.
+      }
+      throw StateError('Invalid location details (422)');
+    }
     if (response.statusCode != 201) {
       throw StateError('Location creation failed (${response.statusCode})');
     }
