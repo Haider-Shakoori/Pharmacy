@@ -40,9 +40,12 @@ void main() {
       expect(request.method, 'GET');
       expect(request.url.path, '/api/v1/mobile/stock-locations');
       expect(request.headers['Authorization'], 'Bearer token');
-      return http.Response(jsonEncode(<String, Object>{
-        'data': <Object>[location],
-      }), 200);
+      return http.Response(
+        jsonEncode(<String, Object>{
+          'data': <Object>[location],
+        }),
+        200,
+      );
     });
     addTearDown(client.close);
     final List<MobileStockLocation> locations = await MobileStockLocationApi(
@@ -64,21 +67,20 @@ void main() {
         'name': 'Main Store',
         'kind': 'store',
       });
-      return http.Response(jsonEncode(<String, Object>{
-        'data': location,
-      }), 201);
+      return http.Response(jsonEncode(<String, Object>{'data': location}), 201);
     });
     addTearDown(client.close);
-    final MobileStockLocation created = await MobileStockLocationApi(
-      environment: environment,
-      client: client,
-    ).create(
-      registration: registration(<String>['inventory.manage']),
-      branchId: ' branch-id ',
-      code: ' MAIN ',
-      name: ' Main Store ',
-      kind: 'store',
-    );
+    final MobileStockLocation created =
+        await MobileStockLocationApi(
+          environment: environment,
+          client: client,
+        ).create(
+          registration: registration(<String>['inventory.manage']),
+          branchId: ' branch-id ',
+          code: ' MAIN ',
+          name: ' Main Store ',
+          kind: 'store',
+        );
     expect(created.id, 'location-id');
   });
 
@@ -108,8 +110,10 @@ void main() {
     );
     addTearDown(client.close);
     await expectLater(
-      MobileStockLocationApi(environment: environment, client: client)
-          .list(registration(<String>['inventory.manage'])),
+      MobileStockLocationApi(
+        environment: environment,
+        client: client,
+      ).list(registration(<String>['inventory.manage'])),
       throwsFormatException,
     );
   });
