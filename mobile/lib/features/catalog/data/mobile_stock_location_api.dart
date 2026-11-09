@@ -113,7 +113,7 @@ class MobileStockLocationApi {
         .replace(queryParameters: <String, String>{
           'stock_location_id': stockLocationId.trim(),
           'limit': '$limit',
-          if (afterId != null) 'after_id': afterId,
+          'after_id': ?afterId,
         });
     final http.Response response;
     try {
