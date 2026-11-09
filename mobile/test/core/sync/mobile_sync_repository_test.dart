@@ -979,6 +979,69 @@ void main() {
     expect(medicine.read<String>('brand_name'), 'Synced Medicine');
     expect(await repository.checkpoint('medicines'), 'cursor-1');
   });
+  test('failed second pull page preserves first page and cursor', () async {
+    await repository.applyPullPage(
+      const SyncPullPage(
+        stream: 'medicines',
+        nextCursor: 'page-one',
+        hasMore: true,
+        data: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'page-one-medicine',
+            'medicine_code': 'PAGE-ONE',
+            'brand_name': 'Original medicine',
+            'generic_name': 'Generic',
+            'sale_unit': 'tablet',
+            'is_active': true,
+            'is_deleted': false,
+            'server_updated_at': '2026-09-28T10:00:00Z',
+          },
+        ],
+      ),
+    );
+    await expectLater(
+      repository.applyPullPage(
+        const SyncPullPage(
+          stream: 'medicines',
+          nextCursor: 'page-two',
+          hasMore: false,
+          data: <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'page-two-medicine',
+              'medicine_code': 'PAGE-TWO',
+              'brand_name': 'Uncommitted medicine',
+              'generic_name': 'Generic',
+              'sale_unit': 'tablet',
+              'is_active': true,
+              'is_deleted': false,
+              'server_updated_at': '2026-09-28T10:00:00Z',
+            },
+            <String, dynamic>{
+              'id': 'invalid-page-two-medicine',
+              'medicine_code': 'INVALID',
+              'brand_name': 'Invalid medicine',
+              'generic_name': 'Generic',
+              'sale_unit': '',
+              'is_active': true,
+              'is_deleted': false,
+              'server_updated_at': '2026-09-28T10:00:00Z',
+            },
+          ],
+        ),
+      ),
+      throwsFormatException,
+    );
+    expect(await repository.checkpoint('medicines'), 'page-one');
+    final rows = await database
+        .customSelect(
+          "SELECT id FROM local_medicines WHERE id LIKE 'page-%' ORDER BY id",
+        )
+        .get();
+    expect(rows.map((row) => row.read<String>('id')).toList(), <String>[
+      'page-one-medicine',
+    ]);
+  });
+
   test('negative inventory snapshots do not advance the checkpoint', () async {
     await expectLater(
       repository.applyPullPage(
