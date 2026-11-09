@@ -110,11 +110,13 @@ class MobileStockLocationApi {
     _endpoint(registration);
     final Uri endpoint = environment.apiBaseUri!
         .resolve('api/v1/mobile/stock-location-batches')
-        .replace(queryParameters: <String, String>{
-          'stock_location_id': stockLocationId.trim(),
-          'limit': '$limit',
-          'after_id': ?afterId,
-        });
+        .replace(
+          queryParameters: <String, String>{
+            'stock_location_id': stockLocationId.trim(),
+            'limit': '$limit',
+            'after_id': ?afterId,
+          },
+        );
     final http.Response response;
     try {
       response = await client
@@ -126,10 +128,13 @@ class MobileStockLocationApi {
       throw StateError('Unable to connect to inventory server');
     }
     if (response.statusCode != 200) {
-      throw StateError('Inventory batch request failed (${response.statusCode})');
+      throw StateError(
+        'Inventory batch request failed (${response.statusCode})',
+      );
     }
     final dynamic payload = jsonDecode(response.body);
-    if (payload is! Map || payload['data'] is! List ||
+    if (payload is! Map ||
+        payload['data'] is! List ||
         (payload['next_after_id'] != null &&
             payload['next_after_id'] is! String)) {
       throw const FormatException('Invalid inventory batch response');
@@ -287,7 +292,10 @@ class MobileStockBranch {
 }
 
 class MobileStockBatchPage {
-  const MobileStockBatchPage({required this.batches, required this.nextAfterId});
+  const MobileStockBatchPage({
+    required this.batches,
+    required this.nextAfterId,
+  });
   final List<MobileStockBatch> batches;
   final String? nextAfterId;
 }
@@ -312,6 +320,7 @@ class MobileStockBatch {
       }
       return v;
     }
+
     return MobileStockBatch(
       id: field('id'),
       medicineId: field('medicine_id'),
