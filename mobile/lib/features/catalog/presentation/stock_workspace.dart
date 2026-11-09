@@ -297,6 +297,22 @@ class _StockBodyState extends State<_StockBody> {
             ),
           ),
         ),
+        if (_locations.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 12),
+          Text(
+            s.location,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 8),
+          ..._locations.map(
+            (String id) => Card(
+              child: ListTile(
+                leading: const Icon(Icons.place_outlined),
+                title: Text(id),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         FilledButton.icon(
           onPressed: null,
