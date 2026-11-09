@@ -66,6 +66,7 @@ Route::prefix('/v1/mobile')
         Route::post('/medicines/duplicate-check', MobileMedicineDuplicateCheckController::class);
         Route::post('/medicines', MobileMedicineCreateController::class);
         Route::get('/stock-locations', [MobileStockLocationController::class, 'index']);
+        Route::get('/stock-location-branches', [MobileStockLocationController::class, 'branches']);
         Route::post('/stock-locations', [MobileStockLocationController::class, 'store']);
         Route::post('/sync/push', MobileSyncPushController::class);
         Route::get('/sync/pull/{stream}', MobileSyncPullController::class);
