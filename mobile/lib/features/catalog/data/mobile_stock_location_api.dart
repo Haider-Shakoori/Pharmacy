@@ -113,9 +113,15 @@ class MobileStockLocationApi {
         final dynamic body = jsonDecode(response.body);
         if (body is Map && body['errors'] is Map) {
           final Map<dynamic, dynamic> errors = body['errors'] as Map;
-          for (final String field in <String>['code', 'name', 'branch_id', 'kind']) {
+          for (final String field in <String>[
+            'code',
+            'name',
+            'branch_id',
+            'kind',
+          ]) {
             final dynamic messages = errors[field];
-            if (messages is List && messages.isNotEmpty &&
+            if (messages is List &&
+                messages.isNotEmpty &&
                 messages.first is String) {
               throw StateError(messages.first as String);
             }
