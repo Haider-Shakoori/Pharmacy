@@ -144,6 +144,10 @@ class MobileSyncApiTest extends TestCase
         );
 
         $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/stock-location-branches')
+            ->assertForbidden();
+
+        $this->withToken($this->accessToken)
             ->postJson('/api/v1/mobile/stock-locations', [
                 'branch_id' => $branchId,
                 'code' => 'NEW',
@@ -161,6 +165,10 @@ class MobileSyncApiTest extends TestCase
     {
         $this->withToken('')
             ->getJson('/api/v1/mobile/stock-locations')
+            ->assertUnauthorized();
+
+        $this->withToken('')
+            ->getJson('/api/v1/mobile/stock-location-branches')
             ->assertUnauthorized();
 
         $this->withToken('')
