@@ -137,7 +137,9 @@ class _StockBodyState extends State<_StockBody> {
                     children: <Widget>[
                       DropdownButtonFormField<String>(
                         initialValue: branchId,
-                        decoration: InputDecoration(labelText: strings.storageBranch),
+                        decoration: InputDecoration(
+                          labelText: strings.storageBranch,
+                        ),
                         items: _serverLocations!
                             .map((MobileStockLocation item) => item.branchId)
                             .toSet()
@@ -157,16 +159,22 @@ class _StockBodyState extends State<_StockBody> {
                       TextField(
                         controller: code,
                         maxLength: 60,
-                        decoration: InputDecoration(labelText: strings.storageCode),
+                        decoration: InputDecoration(
+                          labelText: strings.storageCode,
+                        ),
                       ),
                       TextField(
                         controller: name,
                         maxLength: 160,
-                        decoration: InputDecoration(labelText: strings.storageName),
+                        decoration: InputDecoration(
+                          labelText: strings.storageName,
+                        ),
                       ),
                       DropdownButtonFormField<String>(
                         initialValue: kind,
-                        decoration: InputDecoration(labelText: strings.storageType),
+                        decoration: InputDecoration(
+                          labelText: strings.storageType,
+                        ),
                         items:
                             const <String>[
                                   'store',
