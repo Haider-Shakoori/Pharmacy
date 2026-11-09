@@ -35,6 +35,55 @@ void main() {
     'kind': 'store',
   };
 
+  test('transfer posts idempotency key and returns paired movements', () async {
+    final http.Client client = MockClient((http.Request request) async {
+      expect(request.method, 'POST');
+      expect(request.url.path, endsWith('/stock-location-transfers'));
+      final Map<String, dynamic> payload =
+          jsonDecode(request.body) as Map<String, dynamic>;
+      expect(payload['request_id'], '17eb9752-3900-41a1-a182-fdb75c96f7be');
+      expect(payload['quantity'], '2.0000');
+      return http.Response(jsonEncode(<String, Object>{
+        'data': <String, Object>{
+          'source_movement_id': 'movement-out',
+          'destination_movement_id': 'movement-in',
+          'replayed': false,
+        },
+      }), 200);
+    });
+    addTearDown(client.close);
+    final MobileStockTransferResult result = await MobileStockLocationApi(
+      environment: environment,
+      client: client,
+    ).transfer(
+      registration: registration(<String>['inventory.manage']),
+      batchId: 'batch-1',
+      destinationId: 'location-2',
+      quantity: '2.0000',
+      requestId: '17eb9752-3900-41a1-a182-fdb75c96f7be',
+    );
+    expect(result.sourceMovementId, 'movement-out');
+    expect(result.destinationMovementId, 'movement-in');
+    expect(result.replayed, isFalse);
+  });
+
+  test('cashier cannot submit stock transfer', () async {
+    final http.Client client = MockClient(
+      (_) async => throw StateError('Unexpected network request'),
+    );
+    addTearDown(client.close);
+    await expectLater(
+      MobileStockLocationApi(environment: environment, client: client).transfer(
+        registration: registration(<String>['pos.sell']),
+        batchId: 'batch-1',
+        destinationId: 'location-2',
+        quantity: '1',
+        requestId: '17eb9752-3900-41a1-a182-fdb75c96f7be',
+      ),
+      throwsA(isA<StateError>()),
+    );
+  });
+
   test('manager reads paginated inventory without changing stock', () async {
     final http.Client client = MockClient((http.Request request) async {
       expect(request.method, 'GET');
