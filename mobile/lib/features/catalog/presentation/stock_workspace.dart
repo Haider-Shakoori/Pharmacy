@@ -268,8 +268,9 @@ class _StockBodyState extends State<_StockBody> {
           !mounted ||
           generation != _serverGeneration ||
           batchId == null ||
-          destinationId == null)
+          destinationId == null) {
         return;
+      }
       final MobileStockTransferResult result = await api.transfer(
         registration: registration,
         batchId: batchId!,
