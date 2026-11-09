@@ -89,6 +89,12 @@ class ModuleStrings {
   String get noStorageLocations => _t('noStorageLocations');
   String get storageBody => _t('storageBody');
   String get addStorageLocation => _t('addStorageLocation');
+  String get storageBranch => _t('storageBranch');
+  String get storageCode => _t('storageCode');
+  String get storageName => _t('storageName');
+  String get storageType => _t('storageType');
+  String get storageCancel => _t('storageCancel');
+  String get storageCreate => _t('storageCreate');
   String get storageComingSoon => _t('storageComingSoon');
 
   // Reports
@@ -226,6 +232,12 @@ class ModuleStrings {
       'noStorageLocations': 'No recorded storage locations on this device yet.',
       'storageBody': 'Recorded stock locations are shown below. Creating locations and moving batches are not available yet.',
       'addStorageLocation': 'Add storage location',
+      'storageBranch': 'Branch',
+      'storageCode': 'Code',
+      'storageName': 'Name',
+      'storageType': 'Type',
+      'storageCancel': 'Cancel',
+      'storageCreate': 'Create',
       'storageComingSoon': 'Coming soon: create locations, assign batches, stock counts and transfers.',
       'reports': 'Reports',
       'reportsSubtitle':
@@ -356,6 +368,12 @@ class ModuleStrings {
           'هنوز هیچ محل انبار ثبت‌شده‌ای روی این دستگاه وجود ندارد.',
       'storageBody': 'محل‌های ثبت‌شدهٔ موجودی در پایین نمایش داده می‌شوند. ایجاد محل جدید و انتقال بچ‌ها هنوز فعال نیست.',
       'addStorageLocation': 'افزودن محل انبار',
+      'storageBranch': 'شعبه',
+      'storageCode': 'کد',
+      'storageName': 'نام',
+      'storageType': 'نوع',
+      'storageCancel': 'لغو',
+      'storageCreate': 'ایجاد',
       'storageComingSoon':
           'به‌زودی: ایجاد محل، تخصیص بچ‌ها، شمارش موجودی و انتقال.',
       'reports': 'گزارش‌ها',
@@ -486,6 +504,12 @@ class ModuleStrings {
           'تر اوسه په دې وسیله کې د ذخیرې کوم ثبت شوی ځای نشته.',
       'storageBody': 'د موجودۍ ثبت شوي ځایونه لاندې ښودل کېږي. د نوو ځایونو جوړول او د بستو لېږدول لا نه دي فعال شوي.',
       'addStorageLocation': 'د ذخیرې ځای زیات کړئ',
+      'storageBranch': 'څانګه',
+      'storageCode': 'کوډ',
+      'storageName': 'نوم',
+      'storageType': 'ډول',
+      'storageCancel': 'لغوه کول',
+      'storageCreate': 'جوړول',
       'storageComingSoon':
           'ژر راځي: ځایونه جوړول، بستې ټاکل، د ذخیرې شمېرل او لېږدول.',
       'reports': 'راپورونه',
