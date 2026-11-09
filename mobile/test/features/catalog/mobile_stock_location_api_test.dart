@@ -43,25 +43,29 @@ void main() {
           jsonDecode(request.body) as Map<String, dynamic>;
       expect(payload['request_id'], '17eb9752-3900-41a1-a182-fdb75c96f7be');
       expect(payload['quantity'], '2.0000');
-      return http.Response(jsonEncode(<String, Object>{
-        'data': <String, Object>{
-          'source_movement_id': 'movement-out',
-          'destination_movement_id': 'movement-in',
-          'replayed': false,
-        },
-      }), 200);
+      return http.Response(
+        jsonEncode(<String, Object>{
+          'data': <String, Object>{
+            'source_movement_id': 'movement-out',
+            'destination_movement_id': 'movement-in',
+            'replayed': false,
+          },
+        }),
+        200,
+      );
     });
     addTearDown(client.close);
-    final MobileStockTransferResult result = await MobileStockLocationApi(
-      environment: environment,
-      client: client,
-    ).transfer(
-      registration: registration(<String>['inventory.manage']),
-      batchId: 'batch-1',
-      destinationId: 'location-2',
-      quantity: '2.0000',
-      requestId: '17eb9752-3900-41a1-a182-fdb75c96f7be',
-    );
+    final MobileStockTransferResult result =
+        await MobileStockLocationApi(
+          environment: environment,
+          client: client,
+        ).transfer(
+          registration: registration(<String>['inventory.manage']),
+          batchId: 'batch-1',
+          destinationId: 'location-2',
+          quantity: '2.0000',
+          requestId: '17eb9752-3900-41a1-a182-fdb75c96f7be',
+        );
     expect(result.sourceMovementId, 'movement-out');
     expect(result.destinationMovementId, 'movement-in');
     expect(result.replayed, isFalse);
