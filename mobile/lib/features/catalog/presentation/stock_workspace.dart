@@ -119,6 +119,7 @@ class _StockBodyState extends State<_StockBody> {
     }
     final MobileRegistration registration = widget.registration;
     final int generation = _serverGeneration;
+    final ModuleStrings strings = ModuleStrings.of(context);
     final TextEditingController code = TextEditingController();
     final TextEditingController name = TextEditingController();
     String branchId = _serverLocations!.first.branchId;
