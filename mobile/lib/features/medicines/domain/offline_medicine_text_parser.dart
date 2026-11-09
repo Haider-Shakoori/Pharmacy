@@ -33,27 +33,32 @@ class OfflineMedicineTextParser {
         .where((line) => line.isNotEmpty)
         .toList();
     final text = cleaned.join('\n');
+    const regionalDigits = '٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹';
+    final normalized = text.replaceAllMapped(
+      RegExp('[${RegExp.escape(regionalDigits)}]'),
+      (match) => '${regionalDigits.indexOf(match.group(0)!) % 10}',
+    );
     final strength = RegExp(
       r'\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|g|ml|iu|%)\b',
       caseSensitive: false,
-    ).firstMatch(text)?.group(0);
+    ).firstMatch(normalized)?.group(0);
     final batch = RegExp(
-      r'\b(?:batch|lot|b\.?no\.?)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]{2,})\b',
+      r'(?:batch|lot|b\.?no\.?|بچ|شماره بچ|شماره لات)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]{2,})',
       caseSensitive: false,
     ).firstMatch(text)?.group(1);
     final expiryMatch = RegExp(
-      r'\b(?:exp|expiry|expires)\s*[:.-]?\s*(\d{1,2}[/.-]\d{4}|\d{4}[/.-]\d{1,2})\b',
+      r'(?:exp|expiry|expires|انقضا|انتهاء|تاریخ انقضا|د ختم نېټه)\s*[:.-]?\s*(\d{1,2}[/.-]\d{2,4}|\d{4}[/.-]\d{1,2})',
       caseSensitive: false,
-    ).firstMatch(text);
+    ).firstMatch(normalized);
     final dosage = RegExp(
-      r'\b(tablets?|capsules?|syrup|suspension|injection|cream|ointment|drops)\b',
+      r'(?:\b(?:tablets?|capsules?|syrup|suspension|injection|cream|ointment|drops)\b|قرص|تابلیت|کپسول|شربت|تزریق|پیچکاری|کریم|قطره|څاڅکي)',
       caseSensitive: false,
     ).firstMatch(text)?.group(0);
     // The first non-metadata line is a candidate, never a verified brand.
     final brandCandidates = cleaned.where(
       (line) =>
           !RegExp(
-            r'^(?:batch|lot|exp|expiry|mfg|manufactured|ingredients?)\b',
+            r'^(?:batch|lot|exp|expiry|mfg|manufactured|ingredients?)\b|^(?:بچ|شماره|انقضا|تاریخ|تولید|ترکیبات|د ختم)',
             caseSensitive: false,
           ).hasMatch(line) &&
           RegExp(r'[\p{L}]', unicode: true).hasMatch(line),
