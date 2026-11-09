@@ -297,11 +297,11 @@ class _StockBodyState extends State<_StockBody> {
             ),
           ),
         ),
-        if (_locations.isEmpty) ...<Widget>[
+        if (!_loading && _error == null && _locations.isEmpty) ...<Widget>[
           const SizedBox(height: 12),
           Text(s.noStorageLocations),
         ],
-        if (_locations.isNotEmpty) ...<Widget>[
+        if (!_loading && _error == null && _locations.isNotEmpty) ...<Widget>[
           const SizedBox(height: 12),
           Text(s.location, style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
