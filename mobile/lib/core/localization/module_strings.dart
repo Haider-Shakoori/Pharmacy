@@ -86,6 +86,7 @@ class ModuleStrings {
   String get expires => _t('expires');
   String get expired => _t('expired');
   String get storageTitle => _t('storageTitle');
+  String get noStorageLocations => _t('noStorageLocations');
   String get storageBody => _t('storageBody');
   String get addStorageLocation => _t('addStorageLocation');
   String get storageComingSoon => _t('storageComingSoon');
@@ -222,6 +223,7 @@ class ModuleStrings {
       'expires': 'Expires',
       'expired': 'Expired',
       'storageTitle': 'Medicine storage',
+      'noStorageLocations': 'No recorded storage locations on this device yet.',
       'storageBody': 'Recorded stock locations are shown below. Creating locations and moving batches are not available yet.',
       'addStorageLocation': 'Add storage location',
       'storageComingSoon': 'Coming soon: create locations, assign batches, stock counts and transfers.',
@@ -350,6 +352,7 @@ class ModuleStrings {
       'expires': 'انقضا',
       'expired': 'منقضی',
       'storageTitle': 'انبار دوا',
+      'noStorageLocations': 'هنوز هیچ محل انبار ثبت‌شده‌ای روی این دستگاه وجود ندارد.',
       'storageBody': 'محل‌های ثبت‌شدهٔ موجودی در پایین نمایش داده می‌شوند. ایجاد محل جدید و انتقال بچ‌ها هنوز فعال نیست.',
       'addStorageLocation': 'افزودن محل انبار',
       'storageComingSoon':
@@ -478,6 +481,7 @@ class ModuleStrings {
       'expires': 'ختمېږي',
       'expired': 'تېر شوی',
       'storageTitle': 'د درملو ذخیره ځای',
+      'noStorageLocations': 'تر اوسه په دې وسیله کې د ذخیرې کوم ثبت شوی ځای نشته.',
       'storageBody': 'د موجودۍ ثبت شوي ځایونه لاندې ښودل کېږي. د نوو ځایونو جوړول او د بستو لېږدول لا نه دي فعال شوي.',
       'addStorageLocation': 'د ذخیرې ځای زیات کړئ',
       'storageComingSoon':
