@@ -183,9 +183,17 @@ class _StockBodyState extends State<_StockBody> {
               setState(() => _tab = selection.first),
         ),
         const SizedBox(height: 12),
-        if (_tab == 3)
-          _buildStorage(context)
-        else ...<Widget>[
+        if (_tab == 3) ...<Widget>[
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(28),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_error != null)
+            _Notice(message: _error!)
+          else
+            _buildStorage(context),
+        ] else ...<Widget>[
           Row(
             children: <Widget>[
               Expanded(
