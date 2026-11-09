@@ -56,10 +56,30 @@ jobs:
       - name: Run Flutter tests
         run: flutter test
 
-      - name: Build without Apple signing
+      - name: Configure Flutter release for device without signing
         run: |
-          flutter build ios --release --no-codesign \
+          flutter build ios --config-only --release --no-codesign \
             --dart-define=API_BASE_URL=https://darmaltoon.com
+
+      - name: Compile unsigned device app with Xcode
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/darmaltoon-ios" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+          app="$RUNNER_TEMP/darmaltoon-ios/Build/Products/Release-iphoneos/Runner.app"
+          test -d "$app"
+          test -s "$app/Runner"
+          mkdir -p build/ios/iphoneos
+          cp -R "$app" build/ios/iphoneos/Runner.app
 
       - name: Package unsigned Runner.app as IPA
         shell: bash
