@@ -40,44 +40,54 @@ void main() {
     final http.Client client = MockClient((http.Request request) async {
       cursors.add(request.url.queryParameters['after_id']);
       final bool second = request.url.queryParameters['after_id'] == 'cursor-1';
-      return http.Response(jsonEncode(<String, Object?>{
-        'data': <Map<String, String>>[
-          <String, String>{
-            'id': second ? 'batch-2' : 'batch-1',
-            'medicine_id': 'medicine-1',
-            'stock_location_id': 'location-1',
-            'available_quantity': '5.0000',
-            'status': 'active',
-          },
-        ],
-        'next_after_id': second ? null : 'cursor-1',
-      }), 200);
+      return http.Response(
+        jsonEncode(<String, Object?>{
+          'data': <Map<String, String>>[
+            <String, String>{
+              'id': second ? 'batch-2' : 'batch-1',
+              'medicine_id': 'medicine-1',
+              'stock_location_id': 'location-1',
+              'available_quantity': '5.0000',
+              'status': 'active',
+            },
+          ],
+          'next_after_id': second ? null : 'cursor-1',
+        }),
+        200,
+      );
     });
     addTearDown(client.close);
-    final List<MobileStockBatch> batches = await MobileStockLocationApi(
-      environment: environment,
-      client: client,
-    ).allBatches(
-      registration: registration(<String>['inventory.manage']),
-      stockLocationId: 'location-1',
-    );
+    final List<MobileStockBatch> batches =
+        await MobileStockLocationApi(
+          environment: environment,
+          client: client,
+        ).allBatches(
+          registration: registration(<String>['inventory.manage']),
+          stockLocationId: 'location-1',
+        );
     expect(batches.map((MobileStockBatch batch) => batch.id), <String>[
-      'batch-1', 'batch-2',
+      'batch-1',
+      'batch-2',
     ]);
     expect(cursors, <String?>[null, 'cursor-1']);
   });
 
   test('allBatches rejects repeating cursor', () async {
-    final http.Client client = MockClient((http.Request request) async =>
-      http.Response(jsonEncode(<String, Object?>{
-        'data': <Object>[],
-        'next_after_id': 'repeat',
-      }), 200),
+    final http.Client client = MockClient(
+      (http.Request request) async => http.Response(
+        jsonEncode(<String, Object?>{
+          'data': <Object>[],
+          'next_after_id': 'repeat',
+        }),
+        200,
+      ),
     );
     addTearDown(client.close);
     await expectLater(
-      MobileStockLocationApi(environment: environment, client: client)
-          .allBatches(
+      MobileStockLocationApi(
+        environment: environment,
+        client: client,
+      ).allBatches(
         registration: registration(<String>['inventory.manage']),
         stockLocationId: 'location-1',
       ),
