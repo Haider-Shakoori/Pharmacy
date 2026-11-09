@@ -151,8 +151,10 @@ class _AppShellState extends ConsumerState<AppShell> {
               const ReportsWorkspace(),
             if (_selectedIndex == 2) ...<Widget>[
               const SizedBox(height: 16),
-              if (canScanMedicines)
-                ExpansionTile(
+              ExpansionTile(
+                  key: const ValueKey<String>('medicine-ocr-entry'),
+                  initiallyExpanded: true,
+                  leading: const Icon(Icons.document_scanner_outlined),
                   title: Text(s.scanLabel),
                   subtitle: Text(s.scanDraftNote),
                   children: [
