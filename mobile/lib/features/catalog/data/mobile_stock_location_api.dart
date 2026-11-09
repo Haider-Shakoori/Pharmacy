@@ -152,5 +152,4 @@ class MobileStockLocation {
   final String code;
   final String name;
   final String kind;
-
 }
