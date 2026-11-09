@@ -174,7 +174,9 @@ class MobileStockLocationApi {
       }
       afterId = next;
     }
-    throw StateError('Too many batches to load; narrow the inventory selection');
+    throw StateError(
+      'Too many batches to load; narrow the inventory selection',
+    );
   }
 
   Future<MobileStockTransferResult> transfer({
