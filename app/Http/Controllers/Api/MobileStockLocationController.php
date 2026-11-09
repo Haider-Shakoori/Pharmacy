@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Models\StockLocation;
 use App\Services\Mobile\MobileAccessService;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -28,6 +29,19 @@ class MobileStockLocationController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'branch_id', 'code', 'name', 'kind', 'is_default']),
+        ]));
+    }
+
+    public function branches(Request $request, MobileAccessService $access): JsonResponse
+    {
+        $context = $access->authenticate($request);
+        abort_unless(in_array('inventory.manage', $context->permissions, true), 403);
+
+        return $context->tenant->run(fn (): JsonResponse => response()->json([
+            'data' => Branch::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'code', 'name']),
         ]));
     }
 
