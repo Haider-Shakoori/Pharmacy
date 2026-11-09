@@ -70,8 +70,9 @@ class MobileStockLocationApi {
       throw StateError('Inventory management permission is required');
     }
     _endpoint(registration);
-    final Uri endpoint = environment.apiBaseUri!
-        .resolve('api/v1/mobile/stock-location-branches');
+    final Uri endpoint = environment.apiBaseUri!.resolve(
+      'api/v1/mobile/stock-location-branches',
+    );
     final http.Response response;
     try {
       response = await client
