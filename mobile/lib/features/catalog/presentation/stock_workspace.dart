@@ -4,8 +4,8 @@ import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/core/localization/module_strings.dart';
-import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/catalog/data/mobile_stock_location_api.dart';
+import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -73,6 +73,7 @@ class _StockBodyState extends State<_StockBody> {
   int _page = 0;
   int _tab = 0; // 0 = Stock, 1 = Batches, 2 = Expiry, 3 = Storage
   int _generation = 0;
+  int _serverGeneration = 0;
 
   @override
   void initState() {
@@ -82,7 +83,8 @@ class _StockBodyState extends State<_StockBody> {
   }
 
   Future<void> _loadServerLocations() async {
-    if (_serverLocationsLoading) return;
+    final int generation = ++_serverGeneration;
+    final MobileRegistration registration = widget.registration;
     setState(() {
       _serverLocationsLoading = true;
       _serverLocationsError = null;
@@ -92,15 +94,17 @@ class _StockBodyState extends State<_StockBody> {
       final List<MobileStockLocation> locations = await MobileStockLocationApi(
         environment: AppEnvironment.current,
         client: client,
-      ).list(widget.registration);
-      if (!mounted) return;
+      ).list(registration);
+      if (!mounted || generation != _serverGeneration) return;
       setState(() => _serverLocations = locations);
     } on Object catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _serverGeneration) return;
       setState(() => _serverLocationsError = error.toString());
     } finally {
       client.close();
-      if (mounted) setState(() => _serverLocationsLoading = false);
+      if (mounted && generation == _serverGeneration) {
+        setState(() => _serverLocationsLoading = false);
+      }
     }
   }
 
@@ -127,6 +131,7 @@ class _StockBodyState extends State<_StockBody> {
 
   @override
   void dispose() {
+    ++_serverGeneration;
     _search.dispose();
     super.dispose();
   }
