@@ -23,7 +23,71 @@ class _OfflineOcr implements NativeMedicineOcr {
   ];
 }
 
+class _CancelledImages implements LocalMedicineImageSource {
+  @override
+  Future<String?> captureImage() async => null;
+
+  @override
+  Future<String?> chooseLocalImage() async => null;
+}
+
+class _FailingImages implements LocalMedicineImageSource {
+  @override
+  Future<String?> captureImage() async => throw StateError('camera unavailable');
+
+  @override
+  Future<String?> chooseLocalImage() async => throw StateError('gallery unavailable');
+}
+
 void main() {
+  testWidgets('cancelled camera capture resets busy state without draft', (
+    WidgetTester tester,
+  ) async {
+    final confirmed = <ReviewedMedicineScan>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MedicineScanFlow(
+            images: MedicineImageAcquisition(_CancelledImages()),
+            scanner: MedicineScanCoordinator(ocr: _OfflineOcr()),
+            onConfirmed: confirmed.add,
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Camera'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text('Camera'), findsOneWidget);
+    expect(find.text('Review scanned medicine details'), findsNothing);
+    expect(confirmed, isEmpty);
+  });
+
+  testWidgets('camera failure shows manual-entry fallback without saving', (
+    WidgetTester tester,
+  ) async {
+    final confirmed = <ReviewedMedicineScan>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MedicineScanFlow(
+            images: MedicineImageAcquisition(_FailingImages()),
+            scanner: MedicineScanCoordinator(ocr: _OfflineOcr()),
+            onConfirmed: confirmed.add,
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Camera'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Unable to scan offline. Enter medicine details manually.'),
+      findsOneWidget,
+    );
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(confirmed, isEmpty);
+  });
+
   testWidgets('scan requires review and can be discarded without saving', (
     WidgetTester tester,
   ) async {
