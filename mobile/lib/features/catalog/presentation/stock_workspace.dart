@@ -148,11 +148,9 @@ class _StockBodyState extends State<_StockBody> {
               (MobileStockLocation location) => location.id == sourceId,
             );
             final List<MobileStockLocation> destinations = locations
-                .where(
-                  (MobileStockLocation location) =>
-                      location.id != sourceId &&
-                      location.branchId == source.branchId,
-                )
+                .where((MobileStockLocation location) =>
+                    location.id != sourceId &&
+                    location.branchId == source.branchId)
                 .toList();
             return AlertDialog(
               title: const Text('Transfer stock'),
@@ -162,18 +160,12 @@ class _StockBodyState extends State<_StockBody> {
                   children: <Widget>[
                     DropdownButtonFormField<String>(
                       initialValue: sourceId,
-                      decoration: const InputDecoration(
-                        labelText: 'From location',
-                      ),
-                      items: locations
-                          .map(
-                            (MobileStockLocation location) =>
-                                DropdownMenuItem<String>(
-                                  value: location.id,
-                                  child: Text(location.name),
-                                ),
-                          )
-                          .toList(),
+                      decoration: const InputDecoration(labelText: 'From location'),
+                      items: locations.map((MobileStockLocation location) =>
+                        DropdownMenuItem<String>(
+                          value: location.id,
+                          child: Text(location.name),
+                        )).toList(),
                       onChanged: (String? value) async {
                         if (value == null) return;
                         update(() {
@@ -202,47 +194,28 @@ class _StockBodyState extends State<_StockBody> {
                     DropdownButtonFormField<String>(
                       key: ValueKey<String>('destination-$sourceId'),
                       initialValue: destinationId,
-                      decoration: const InputDecoration(
-                        labelText: 'To location',
-                      ),
-                      items: destinations
-                          .map(
-                            (MobileStockLocation location) =>
-                                DropdownMenuItem<String>(
-                                  value: location.id,
-                                  child: Text(location.name),
-                                ),
-                          )
-                          .toList(),
-                      onChanged: (String? value) =>
-                          update(() => destinationId = value),
+                      decoration: const InputDecoration(labelText: 'To location'),
+                      items: destinations.map((MobileStockLocation location) =>
+                        DropdownMenuItem<String>(
+                          value: location.id,
+                          child: Text(location.name),
+                        )).toList(),
+                      onChanged: (String? value) => update(() => destinationId = value),
                     ),
                     DropdownButtonFormField<String>(
                       key: ValueKey<String>('batch-$sourceId'),
                       initialValue: batchId,
-                      decoration: const InputDecoration(
-                        labelText: 'Medicine batch',
-                      ),
-                      items: batches
-                          .map(
-                            (
-                              MobileStockBatch batch,
-                            ) => DropdownMenuItem<String>(
-                              value: batch.id,
-                              child: Text(
-                                '${batch.medicineId} · ${batch.availableQuantity}',
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (String? value) =>
-                          update(() => batchId = value),
+                      decoration: const InputDecoration(labelText: 'Medicine batch'),
+                      items: batches.map((MobileStockBatch batch) =>
+                        DropdownMenuItem<String>(
+                          value: batch.id,
+                          child: Text('${batch.medicineId} · ${batch.availableQuantity}'),
+                        )).toList(),
+                      onChanged: (String? value) => update(() => batchId = value),
                     ),
                     TextField(
                       controller: quantity,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(labelText: 'Quantity'),
                     ),
                   ],
@@ -264,13 +237,8 @@ class _StockBodyState extends State<_StockBody> {
           },
         ),
       );
-      if (confirmed != true ||
-          !mounted ||
-          generation != _serverGeneration ||
-          batchId == null ||
-          destinationId == null) {
-        return;
-      }
+      if (confirmed != true || !mounted || generation != _serverGeneration ||
+          batchId == null || destinationId == null) return;
       final MobileStockTransferResult result = await api.transfer(
         registration: registration,
         batchId: batchId!,
@@ -279,20 +247,17 @@ class _StockBodyState extends State<_StockBody> {
         requestId: const Uuid().v4(),
       );
       if (mounted && generation == _serverGeneration) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              result.replayed
-                  ? 'Transfer already recorded'
-                  : 'Stock transferred successfully',
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(result.replayed
+              ? 'Transfer already recorded'
+              : 'Stock transferred successfully'),
+        ));
       }
     } on Object catch (error) {
       if (mounted && generation == _serverGeneration) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
       }
     } finally {
       client.close();
@@ -999,3 +964,37 @@ class _Metric extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 19, color: const Color(0xFF1557C0)),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(label, style: const TextStyle(fontSize: 11)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Notice extends StatelessWidget {
+  const _Notice({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(padding: const EdgeInsets.all(20), child: Text(message)),
+    );
+  }
+}
