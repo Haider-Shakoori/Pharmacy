@@ -214,7 +214,9 @@ class MobileStockLocationApi {
           )
           .timeout(const Duration(seconds: 20));
     } on TimeoutException {
-      throw StockTransferUncertainException('Transfer timed out. Retry with the same request ID.');
+      throw StockTransferUncertainException(
+        'Transfer timed out. Retry with the same request ID.',
+      );
     } on http.ClientException {
       throw StateError(
         'Transfer connection failed. Retry with the same request ID.',
