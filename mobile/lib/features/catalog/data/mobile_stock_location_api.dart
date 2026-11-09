@@ -158,7 +158,253 @@ class MobileStockLocationApi {
       throw StateError('Inventory management permission is required');
     }
     if (batchId.isEmpty || destinationId.isEmpty ||
-        !RegExp(r'^\\d{1,12}(?:\\.\\d{1,4})?$').hasMatch(quantity) ||
+        !RegExp(r'^\d{1,12}(?:\.\d{1,4})?).hasMatch(quantity) ||
+        !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(requestId)) {
+      throw ArgumentError('Invalid transfer details');
+    }
+    _endpoint(registration);
+    final Uri endpoint = environment.apiBaseUri!.resolve(
+      'api/v1/mobile/stock-location-transfers',
+    );
+    final http.Response response;
+    try {
+      response = await client.post(
+        endpoint,
+        headers: _headers(registration),
+        body: jsonEncode(<String, String>{
+          'batch_id': batchId,
+          'destination_id': destinationId,
+          'quantity': quantity,
+          'request_id': requestId,
+        }),
+      ).timeout(const Duration(seconds: 20));
+    } on TimeoutException {
+      throw StateError('Transfer timed out. Check its status before retrying.');
+    } on http.ClientException {
+      throw StateError('Transfer connection failed. Retry with the same request ID.');
+    }
+    if (response.statusCode != 200) {
+      throw StateError('Transfer rejected (${response.statusCode})');
+    }
+    final dynamic payload = jsonDecode(response.body);
+    if (payload is! Map || payload['data'] is! Map) {
+      throw const FormatException('Invalid transfer response');
+    }
+    final Map<dynamic, dynamic> result = payload['data'] as Map;
+    if (result['source_movement_id'] is! String ||
+        result['destination_movement_id'] is! String ||
+        result['replayed'] is! bool) {
+      throw const FormatException('Invalid transfer movement details');
+    }
+    return MobileStockTransferResult(
+      sourceMovementId: result['source_movement_id'] as String,
+      destinationMovementId: result['destination_movement_id'] as String,
+      replayed: result['replayed'] as bool,
+    );
+  }
+
+  Future<MobileStockLocation> create({
+    required MobileRegistration registration,
+    required String branchId,
+    required String code,
+    required String name,
+    required String kind,
+  }) async {
+    if (!registration.permissions.contains('inventory.manage')) {
+      throw StateError('Inventory management permission is required');
+    }
+    final String cleanCode = code.trim();
+    final String cleanName = name.trim();
+    if (branchId.trim().isEmpty || cleanCode.isEmpty || cleanName.isEmpty) {
+      throw ArgumentError('Branch, location code and name are required');
+    }
+    if (!const <String>{
+      'store',
+      'warehouse',
+      'shelf',
+      'quarantine',
+      'other',
+    }.contains(kind)) {
+      throw ArgumentError.value(kind, 'kind', 'Invalid location type');
+    }
+    final http.Response response;
+    try {
+      response = await client
+          .post(
+            _endpoint(registration),
+            headers: _headers(registration),
+            body: jsonEncode(<String, String>{
+              'branch_id': branchId.trim(),
+              'code': cleanCode,
+              'name': cleanName,
+              'kind': kind,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      throw StateError('Location creation timed out; refresh before retrying');
+    } on http.ClientException {
+      throw StateError('Connection failed; refresh before retrying creation');
+    }
+    if (response.statusCode == 422) {
+      // Laravel validation errors are untrusted server text: show the
+      // field-specific message without treating a rejected write as success.
+      try {
+        final dynamic body = jsonDecode(response.body);
+        if (body is Map && body['errors'] is Map) {
+          final Map<dynamic, dynamic> errors = body['errors'] as Map;
+          for (final String field in <String>[
+            'code',
+            'name',
+            'branch_id',
+            'kind',
+          ]) {
+            final dynamic messages = errors[field];
+            if (messages is List &&
+                messages.isNotEmpty &&
+                messages.first is String) {
+              throw StateError(messages.first as String);
+            }
+          }
+        }
+      } on FormatException {
+        // Keep the generic validation error for malformed responses.
+      }
+      throw StateError('Invalid location details (422)');
+    }
+    if (response.statusCode != 201) {
+      throw StateError('Location creation failed (${response.statusCode})');
+    }
+    final dynamic payload = jsonDecode(response.body);
+    if (payload is! Map) {
+      throw const FormatException('Invalid location creation response');
+    }
+    return MobileStockLocation.fromJson(payload['data']);
+  }
+}
+
+class MobileStockLocation {
+  const MobileStockLocation({
+    required this.id,
+    required this.branchId,
+    required this.code,
+    required this.name,
+    required this.kind,
+  });
+
+  factory MobileStockLocation.fromJson(dynamic value) {
+    if (value is! Map) {
+      throw const FormatException('Invalid stock location entry');
+    }
+    String requiredField(String key) {
+      final dynamic item = value[key];
+      if (item is! String || item.trim().isEmpty) {
+        throw FormatException('Missing stock location field: $key');
+      }
+      return item;
+    }
+
+    return MobileStockLocation(
+      id: requiredField('id'),
+      branchId: requiredField('branch_id'),
+      code: requiredField('code'),
+      name: requiredField('name'),
+      kind: requiredField('kind'),
+    );
+  }
+
+  final String id;
+  final String branchId;
+  final String code;
+  final String name;
+  final String kind;
+}
+
+class MobileStockBranch {
+  const MobileStockBranch({
+    required this.id,
+    required this.code,
+    required this.name,
+  });
+
+  factory MobileStockBranch.fromJson(dynamic value) {
+    if (value is! Map ||
+        value['id'] is! String ||
+        (value['id'] as String).trim().isEmpty ||
+        value['code'] is! String ||
+        value['name'] is! String) {
+      throw const FormatException('Invalid stock branch');
+    }
+    return MobileStockBranch(
+      id: value['id'] as String,
+      code: value['code'] as String,
+      name: value['name'] as String,
+    );
+  }
+
+  final String id;
+  final String code;
+  final String name;
+}
+
+class MobileStockBatchPage {
+  const MobileStockBatchPage({
+    required this.batches,
+    required this.nextAfterId,
+  });
+  final List<MobileStockBatch> batches;
+  final String? nextAfterId;
+}
+
+class MobileStockBatch {
+  const MobileStockBatch({
+    required this.id,
+    required this.medicineId,
+    required this.locationId,
+    required this.availableQuantity,
+    required this.status,
+  });
+
+  factory MobileStockBatch.fromJson(dynamic value) {
+    if (value is! Map) {
+      throw const FormatException('Invalid inventory batch entry');
+    }
+    String field(String name) {
+      final dynamic v = value[name];
+      if (v is! String || v.trim().isEmpty) {
+        throw FormatException('Missing inventory batch field: $name');
+      }
+      return v;
+    }
+
+    return MobileStockBatch(
+      id: field('id'),
+      medicineId: field('medicine_id'),
+      locationId: field('stock_location_id'),
+      availableQuantity: field('available_quantity'),
+      status: field('status'),
+    );
+  }
+
+  final String id;
+  final String medicineId;
+  final String locationId;
+  final String availableQuantity;
+  final String status;
+}
+
+class MobileStockTransferResult {
+  const MobileStockTransferResult({
+    required this.sourceMovementId,
+    required this.destinationMovementId,
+    required this.replayed,
+  });
+
+  final String sourceMovementId;
+  final String destinationMovementId;
+  final bool replayed;
+}
+).hasMatch(quantity) ||
         !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(requestId)) {
       throw ArgumentError('Invalid transfer details');
     }
