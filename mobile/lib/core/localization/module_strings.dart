@@ -96,6 +96,16 @@ class ModuleStrings {
   String get storageCancel => _t('storageCancel');
   String get storageCreate => _t('storageCreate');
   String get storageComingSoon => _t('storageComingSoon');
+  String get transferStock => _t('transferStock');
+  String get transferFrom => _t('transferFrom');
+  String get transferTo => _t('transferTo');
+  String get transferBatch => _t('transferBatch');
+  String get transferQuantity => _t('transferQuantity');
+  String get transferCancel => _t('transferCancel');
+  String get transferSubmit => _t('transferSubmit');
+  String get transferAlreadyRecorded => _t('transferAlreadyRecorded');
+  String get transferSuccess => _t('transferSuccess');
+  String get retryPendingTransfer => _t('retryPendingTransfer');
 
   // Reports
   String get reports => _t('reports');
@@ -238,8 +248,17 @@ class ModuleStrings {
       'storageType': 'Type',
       'storageCancel': 'Cancel',
       'storageCreate': 'Create',
-      'storageComingSoon':
-          'Coming soon: batch assignments, stock counts and transfers.',
+      'storageComingSoon': 'Coming soon: stock counts and batch assignments.',
+      'transferStock': 'Transfer stock',
+      'transferFrom': 'From location',
+      'transferTo': 'To location',
+      'transferBatch': 'Medicine batch',
+      'transferQuantity': 'Quantity',
+      'transferCancel': 'Cancel',
+      'transferSubmit': 'Transfer',
+      'transferAlreadyRecorded': 'Transfer already recorded',
+      'transferSuccess': 'Stock transferred successfully',
+      'retryPendingTransfer': 'Retry pending transfer',
       'reports': 'Reports',
       'reportsSubtitle':
           'Totals on this device. Company-wide reports need server data.',
@@ -375,7 +394,17 @@ class ModuleStrings {
       'storageType': 'نوع',
       'storageCancel': 'لغو',
       'storageCreate': 'ایجاد',
-      'storageComingSoon': 'به‌زودی: تخصیص بچ‌ها، شمارش موجودی و انتقال.',
+      'storageComingSoon': 'به‌زودی: شمارش موجودی و تخصیص بچ‌ها.',
+      'transferStock': 'انتقال موجودی',
+      'transferFrom': 'از محل',
+      'transferTo': 'به محل',
+      'transferBatch': 'بچ دوا',
+      'transferQuantity': 'مقدار',
+      'transferCancel': 'لغو',
+      'transferSubmit': 'انتقال',
+      'transferAlreadyRecorded': 'انتقال قبلاً ثبت شده است',
+      'transferSuccess': 'موجودی با موفقیت انتقال یافت',
+      'retryPendingTransfer': 'تلاش دوباره برای انتقال در انتظار',
       'reports': 'گزارش‌ها',
       'reportsSubtitle': 'مجموع‌ها روی این دستگاه. گزارش‌های سراسری به داده‌های سرور نیاز دارند.',
       'registerToViewReports': 'برای مشاهدهٔ گزارش‌ها، این دستگاه را ثبت کنید.',
@@ -510,7 +539,17 @@ class ModuleStrings {
       'storageType': 'ډول',
       'storageCancel': 'لغوه کول',
       'storageCreate': 'جوړول',
-      'storageComingSoon': 'ژر راځي: د بستو ټاکنه، د ذخیرې شمېرل او لېږدول.',
+      'storageComingSoon': 'ژر راځي: د زېرمو شمېرنه او د بستو ټاکنه.',
+      'transferStock': 'د زېرمو لېږد',
+      'transferFrom': 'له ځای څخه',
+      'transferTo': 'ځای ته',
+      'transferBatch': 'د درملو بسته',
+      'transferQuantity': 'اندازه',
+      'transferCancel': 'لغوه کول',
+      'transferSubmit': 'لېږدول',
+      'transferAlreadyRecorded': 'لېږد مخکې ثبت شوی دی',
+      'transferSuccess': 'زېرمه په بریالیتوب ولېږدول شوه',
+      'retryPendingTransfer': 'د پاتې لېږد بیا هڅه',
       'reports': 'راپورونه',
       'reportsSubtitle':
           'پدې وسیله کې ټولې. د ټولې شرکت راپورونه د سرور معلومات غواړي.',
