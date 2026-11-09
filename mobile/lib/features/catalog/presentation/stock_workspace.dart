@@ -547,12 +547,17 @@ class _StockBodyState extends State<_StockBody> {
             ),
           ),
         ],
-        if (!_serverLocationsLoading && _serverLocations == null &&
-            !_loading && _error == null && _locations.isEmpty) ...<Widget>[
+        if (!_serverLocationsLoading &&
+            _serverLocations == null &&
+            !_loading &&
+            _error == null &&
+            _locations.isEmpty) ...<Widget>[
           const SizedBox(height: 12),
           Text(s.noStorageLocations),
         ],
-        if (_serverLocations == null && !_loading && _error == null &&
+        if (_serverLocations == null &&
+            !_loading &&
+            _error == null &&
             _locations.isNotEmpty) ...<Widget>[
           const SizedBox(height: 12),
           Text(s.location, style: Theme.of(context).textTheme.titleSmall),
