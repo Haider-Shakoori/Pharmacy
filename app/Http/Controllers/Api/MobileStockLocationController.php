@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\ProductBatch;
 use App\Models\StockLocation;
 use App\Services\Mobile\MobileAccessService;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -43,6 +44,36 @@ class MobileStockLocationController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'code', 'name']),
         ]));
+    }
+
+    public function batches(Request $request, MobileAccessService $access): JsonResponse
+    {
+        $context = $access->authenticate($request);
+        abort_unless(in_array('inventory.manage', $context->permissions, true), 403);
+
+        return $context->tenant->run(function () use ($request): JsonResponse {
+            $data = Validator::make($request->query(), [
+                'stock_location_id' => [
+                    'required',
+                    'ulid',
+                    Rule::exists('stock_locations', 'id')->where('is_active', true),
+                ],
+            ])->validate();
+
+            return response()->json([
+                'data' => ProductBatch::query()
+                    ->where('stock_location_id', $data['stock_location_id'])
+                    ->where('available_quantity', '>', 0)
+                    ->orderBy('expires_at')
+                    ->orderBy('id')
+                    ->limit(100)
+                    ->get([
+                        'id', 'medicine_id', 'branch_id', 'stock_location_id',
+                        'batch_number', 'batch_key', 'status',
+                        'expires_at', 'available_quantity',
+                    ]),
+            ]);
+        });
     }
 
     public function store(Request $request, MobileAccessService $access): JsonResponse
