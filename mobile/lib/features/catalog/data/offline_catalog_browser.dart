@@ -202,10 +202,11 @@ class OfflineCatalogBrowser {
 
   Future<List<String>> stockLocations() async {
     final List<QueryRow> rows = await _database.customSelect('''
-      SELECT DISTINCT stock_location_id
-      FROM local_inventory_batches
-      WHERE is_deleted = 0
-      ORDER BY stock_location_id
+      SELECT DISTINCT b.stock_location_id
+      FROM local_inventory_batches b
+      JOIN local_medicines m ON m.id = b.medicine_id
+      WHERE b.is_deleted = 0 AND m.is_deleted = 0
+      ORDER BY b.stock_location_id
       ''').get();
     return rows
         .map((QueryRow row) => row.read<String>('stock_location_id'))
