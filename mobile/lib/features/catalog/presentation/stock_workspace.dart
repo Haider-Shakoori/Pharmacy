@@ -116,6 +116,7 @@ class _StockBodyState extends State<_StockBody> {
         _serverLocationsLoading) {
       return;
     }
+    setState(() => _creatingLocation = true);
     final MobileRegistration registration = widget.registration;
     final int generation = _serverGeneration;
     final ModuleStrings strings = ModuleStrings.of(context);
@@ -134,6 +135,9 @@ class _StockBodyState extends State<_StockBody> {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(error.toString())));
       }
+      if (mounted && generation == _serverGeneration) {
+        setState(() => _creatingLocation = false);
+      }
       return;
     } finally {
       branchClient.close();
@@ -143,6 +147,9 @@ class _StockBodyState extends State<_StockBody> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No active branch is available.')),
         );
+      }
+      if (mounted && generation == _serverGeneration) {
+        setState(() => _creatingLocation = false);
       }
       return;
     }
@@ -240,7 +247,6 @@ class _StockBodyState extends State<_StockBody> {
       if (confirmed != true || !mounted || generation != _serverGeneration) {
         return;
       }
-      setState(() => _creatingLocation = true);
       final http.Client client = http.Client();
       try {
         await MobileStockLocationApi(
@@ -270,6 +276,9 @@ class _StockBodyState extends State<_StockBody> {
     } finally {
       code.dispose();
       name.dispose();
+      if (mounted && generation == _serverGeneration) {
+        setState(() => _creatingLocation = false);
+      }
     }
   }
 
