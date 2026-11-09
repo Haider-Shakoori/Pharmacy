@@ -161,10 +161,25 @@ class MobileSyncApiTest extends TestCase
         });
     }
 
+    public function test_cashier_cannot_access_transfer_batch_inventory(): void
+    {
+        $locationId = $this->tenant->run(
+            fn () => StockLocation::query()->where('code', 'MAIN')->value('id')
+        );
+
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/stock-location-batches?stock_location_id='.$locationId)
+            ->assertForbidden();
+    }
+
     public function test_stock_location_endpoints_require_mobile_authentication(): void
     {
         $this->withToken('')
             ->getJson('/api/v1/mobile/stock-locations')
+            ->assertUnauthorized();
+
+        $this->withToken('')
+            ->getJson('/api/v1/mobile/stock-location-batches?stock_location_id=invalid')
             ->assertUnauthorized();
 
         $this->withToken('')
