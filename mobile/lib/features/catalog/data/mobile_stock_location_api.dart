@@ -158,7 +158,7 @@ class MobileStockLocationApi {
       throw StateError('Inventory management permission is required');
     }
     if (batchId.isEmpty || destinationId.isEmpty ||
-        !RegExp(r'^\d{1,12}(?:\.\d{1,4})? ||
+        !RegExp(r'^\d{1,12}(?:\.\d{1,4})?$').hasMatch(quantity) ||
         !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(requestId)) {
       throw ArgumentError('Invalid transfer details');
     }
