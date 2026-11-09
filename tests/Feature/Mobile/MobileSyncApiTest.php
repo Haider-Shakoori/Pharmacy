@@ -15,6 +15,7 @@ use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Inventory\StockMovementService;
+use App\Services\Inventory\StockTransferService;
 use App\Services\Mobile\MobileGoodsReceiptService;
 use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -158,6 +159,67 @@ class MobileSyncApiTest extends TestCase
 
         $this->tenant->run(function (): void {
             $this->assertDatabaseMissing('stock_locations', ['code' => 'NEW']);
+        });
+    }
+
+    public function test_stock_transfer_preserves_totals_and_is_idempotent(): void
+    {
+        $this->tenant->run(function (): void {
+            $source = ProductBatch::query()->where('batch_key', 'SYNC-LOT')->firstOrFail();
+            $destination = StockLocation::query()->create([
+                'branch_id' => $source->branch_id,
+                'code' => 'SECOND',
+                'name' => 'Second Store',
+                'kind' => 'store',
+                'is_default' => false,
+                'is_active' => true,
+            ]);
+            $service = app(StockTransferService::class);
+            $before = ProductBatch::query()->sum('available_quantity');
+            $first = $service->transfer($source->id, $destination->id, '5.0000', 'transfer-test-1', null);
+            $again = $service->transfer($source->id, $destination->id, '5.0000', 'transfer-test-1', null);
+
+            $this->assertFalse($first['replayed']);
+            $this->assertTrue($again['replayed']);
+            $this->assertSame($first['source_movement_id'], $again['source_movement_id']);
+            $this->assertEquals('15.0000', $source->fresh()->available_quantity);
+            $this->assertEquals('5.0000', ProductBatch::query()
+                ->where('stock_location_id', $destination->id)->firstOrFail()->available_quantity);
+            $this->assertEquals($before, ProductBatch::query()->sum('available_quantity'));
+            $this->assertSame(2, \App\Models\StockMovement::query()
+                ->where('source_id', 'transfer-test-1')->count());
+
+            try {
+                $service->transfer($source->id, $destination->id, '6.0000', 'transfer-test-1', null);
+                $this->fail('Reused key with different quantity must be rejected');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('request_id', $exception->errors());
+            }
+            $this->assertEquals($before, ProductBatch::query()->sum('available_quantity'));
+        });
+    }
+
+    public function test_stock_transfer_rejects_insufficient_quantity_without_movements(): void
+    {
+        $this->tenant->run(function (): void {
+            $source = ProductBatch::query()->where('batch_key', 'SYNC-LOT')->firstOrFail();
+            $destination = StockLocation::query()->create([
+                'branch_id' => $source->branch_id,
+                'code' => 'THIRD',
+                'name' => 'Third Store',
+                'kind' => 'store',
+                'is_active' => true,
+            ]);
+            $before = \App\Models\StockMovement::query()->count();
+            try {
+                app(StockTransferService::class)->transfer(
+                    $source->id, $destination->id, '999.0000', 'transfer-too-large', null
+                );
+                $this->fail('Insufficient quantity must be rejected');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('quantity', $exception->errors());
+            }
+            $this->assertSame($before, \App\Models\StockMovement::query()->count());
         });
     }
 
