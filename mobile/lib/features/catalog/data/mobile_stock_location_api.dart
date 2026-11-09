@@ -218,7 +218,7 @@ class MobileStockLocationApi {
         'Transfer timed out. Retry with the same request ID.',
       );
     } on http.ClientException {
-      throw StateError(
+      throw StockTransferUncertainException(
         'Transfer connection failed. Retry with the same request ID.',
       );
     }
