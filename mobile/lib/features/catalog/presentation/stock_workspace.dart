@@ -113,8 +113,7 @@ class _StockBodyState extends State<_StockBody> {
   Future<void> _createLocation() async {
     if (_creatingLocation ||
         !widget.registration.permissions.contains('inventory.manage') ||
-        _serverLocations == null ||
-        _serverLocations!.isEmpty) {
+        _serverLocationsLoading) {
       return;
     }
     final MobileRegistration registration = widget.registration;
@@ -122,8 +121,32 @@ class _StockBodyState extends State<_StockBody> {
     final ModuleStrings strings = ModuleStrings.of(context);
     final TextEditingController code = TextEditingController();
     final TextEditingController name = TextEditingController();
-    String branchId = _serverLocations!.first.branchId;
     String kind = 'store';
+    final http.Client branchClient = http.Client();
+    late final List<MobileStockBranch> branches;
+    try {
+      branches = await MobileStockLocationApi(
+        environment: AppEnvironment.current,
+        client: branchClient,
+      ).branches(registration);
+    } on Object catch (error) {
+      if (mounted && generation == _serverGeneration) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+      return;
+    } finally {
+      branchClient.close();
+    }
+    if (!mounted || generation != _serverGeneration || branches.isEmpty) {
+      if (mounted && generation == _serverGeneration) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No active branch is available.')),
+        );
+      }
+      return;
+    }
+    String branchId = branches.first.id;
     try {
       final bool? confirmed = await showDialog<bool>(
         context: context,
@@ -140,14 +163,13 @@ class _StockBodyState extends State<_StockBody> {
                         decoration: InputDecoration(
                           labelText: strings.storageBranch,
                         ),
-                        items: _serverLocations!
-                            .map((MobileStockLocation item) => item.branchId)
-                            .toSet()
+                        items: branches
                             .map(
-                              (String id) => DropdownMenuItem<String>(
-                                value: id,
-                                child: Text(id),
-                              ),
+                              (MobileStockBranch branch) =>
+                                  DropdownMenuItem<String>(
+                                    value: branch.id,
+                                    child: Text(branch.name),
+                                  ),
                             )
                             .toList(),
                         onChanged: (String? value) {
@@ -576,8 +598,6 @@ class _StockBodyState extends State<_StockBody> {
           onPressed:
               _creatingLocation ||
                   _serverLocationsLoading ||
-                  _serverLocations == null ||
-                  _serverLocations!.isEmpty ||
                   !widget.registration.permissions.contains('inventory.manage')
               ? null
               : _createLocation,
