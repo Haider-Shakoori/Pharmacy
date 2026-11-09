@@ -131,6 +131,48 @@ class MobileSyncApiTest extends TestCase
         $this->accessToken = $registration->json('data.access_token');
     }
 
+    public function test_cashier_can_list_active_stock_locations_but_cannot_create_them(): void
+    {
+        $response = $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/stock-locations')
+            ->assertOk();
+
+        $this->assertContains('MAIN', collect($response->json('data'))->pluck('code')->all());
+
+        $branchId = $this->tenant->run(
+            fn () => Branch::query()->where('code', 'SYNC')->value('id')
+        );
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/stock-locations', [
+                'branch_id' => $branchId,
+                'code' => 'NEW',
+                'name' => 'New Warehouse',
+                'kind' => 'warehouse',
+            ])
+            ->assertForbidden();
+
+        $this->tenant->run(function (): void {
+            $this->assertDatabaseMissing('stock_locations', ['code' => 'NEW']);
+        });
+    }
+
+    public function test_stock_location_endpoints_require_mobile_authentication(): void
+    {
+        $this->withToken('')
+            ->getJson('/api/v1/mobile/stock-locations')
+            ->assertUnauthorized();
+
+        $this->withToken('')
+            ->postJson('/api/v1/mobile/stock-locations', [
+                'branch_id' => 'not-a-branch',
+                'code' => 'NEW',
+                'name' => 'New Warehouse',
+                'kind' => 'warehouse',
+            ])
+            ->assertUnauthorized();
+    }
+
     public function test_revoked_device_cannot_pull_or_refresh_with_existing_token(): void
     {
         $this->withToken($this->accessToken)
