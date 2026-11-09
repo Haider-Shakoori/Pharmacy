@@ -35,6 +35,42 @@ void main() {
     'kind': 'store',
   };
 
+  test('manager can fetch branches before any location exists', () async {
+    final http.Client client = MockClient((http.Request request) async {
+      expect(request.url.path, endsWith('/api/v1/mobile/stock-location-branches'));
+      return http.Response(
+        jsonEncode(<String, Object>{
+          'data': <Object>[
+            <String, String>{
+              'id': 'branch-1',
+              'code': 'MAIN',
+              'name': 'Main Branch',
+            },
+          ],
+        }),
+        200,
+      );
+    });
+    addTearDown(client.close);
+    final List<MobileStockBranch> branches = await MobileStockLocationApi(
+      environment: environment,
+      client: client,
+    ).branches(registration(<String>['inventory.manage']));
+    expect(branches.single.name, 'Main Branch');
+  });
+
+  test('cashier cannot fetch storage creation branch options', () async {
+    final http.Client client = MockClient(
+      (_) async => throw StateError('Request must not be sent'),
+    );
+    addTearDown(client.close);
+    await expectLater(
+      MobileStockLocationApi(environment: environment, client: client)
+          .branches(registration(<String>['pos.sell'])),
+      throwsA(isA<StateError>()),
+    );
+  });
+
   test('cashier can list active server locations', () async {
     final http.Client client = MockClient((http.Request request) async {
       expect(request.method, 'GET');
