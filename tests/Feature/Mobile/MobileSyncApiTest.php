@@ -224,6 +224,75 @@ class MobileSyncApiTest extends TestCase
         });
     }
 
+    public function test_stock_transfer_rejects_same_location_and_other_branch(): void
+    {
+        $this->tenant->run(function (): void {
+            $source = ProductBatch::query()->where('batch_key', 'SYNC-LOT')->firstOrFail();
+            $before = StockMovement::query()->count();
+            try {
+                app(StockTransferService::class)->transfer(
+                    $source->id, $source->stock_location_id, '1', 'same-location', null
+                );
+                $this->fail('Same-location transfers must be rejected');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('destination_id', $exception->errors());
+            }
+
+            $otherBranch = Branch::query()->create([
+                'code' => 'OTHER',
+                'name' => 'Other Branch',
+                'is_active' => true,
+            ]);
+            $otherLocation = StockLocation::query()->create([
+                'branch_id' => $otherBranch->id,
+                'code' => 'OTHER',
+                'name' => 'Other Branch Store',
+                'kind' => 'store',
+                'is_active' => true,
+            ]);
+            try {
+                app(StockTransferService::class)->transfer(
+                    $source->id, $otherLocation->id, '1', 'other-branch', null
+                );
+                $this->fail('Cross-branch transfers must be rejected');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('destination_id', $exception->errors());
+            }
+            $this->assertSame($before, StockMovement::query()->count());
+        });
+    }
+
+    public function test_stock_transfer_merges_existing_destination_batch(): void
+    {
+        $this->tenant->run(function (): void {
+            $source = ProductBatch::query()->where('batch_key', 'SYNC-LOT')->firstOrFail();
+            $destination = StockLocation::query()->create([
+                'branch_id' => $source->branch_id,
+                'code' => 'MERGE',
+                'name' => 'Merge Store',
+                'kind' => 'store',
+                'is_active' => true,
+            ]);
+            $target = $source->replicate();
+            $target->stock_location_id = $destination->id;
+            $target->received_quantity = '2.0000';
+            $target->available_quantity = '2.0000';
+            $target->purchase_cost = '6.0000';
+            $target->save();
+
+            app(StockTransferService::class)->transfer(
+                $source->id, $destination->id, '2.0000', 'merge-test', null
+            );
+
+            $this->assertSame(1, ProductBatch::query()
+                ->where('stock_location_id', $destination->id)
+                ->where('batch_key', 'SYNC-LOT')->count());
+            $this->assertEquals('4.0000', $target->fresh()->available_quantity);
+            $this->assertEquals('5.0000', $target->fresh()->purchase_cost);
+            $this->assertEquals('18.0000', $source->fresh()->available_quantity);
+        });
+    }
+
     public function test_cashier_cannot_transfer_stock(): void
     {
         $this->withToken($this->accessToken)
