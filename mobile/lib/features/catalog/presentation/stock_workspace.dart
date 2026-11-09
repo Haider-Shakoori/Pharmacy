@@ -295,13 +295,16 @@ class _StockBodyState extends State<_StockBody> {
           SnackBar(
             content: Text(
               result.replayed
-                  ? 'Transfer already recorded'
-                  : 'Stock transferred successfully',
+                  ? ModuleStrings.of(context).transferAlreadyRecorded
+                  : ModuleStrings.of(context).transferSuccess,
             ),
           ),
         );
       }
     } on Object catch (error) {
+      if (error is! StockTransferUncertainException) {
+        _pendingTransfer = null;
+      }
       if (mounted && generation == _serverGeneration) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(error.toString())));
@@ -345,6 +348,9 @@ class _StockBodyState extends State<_StockBody> {
         );
       }
     } on Object catch (error) {
+      if (error is! StockTransferUncertainException) {
+        _pendingTransfer = null;
+      }
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(error.toString())));
