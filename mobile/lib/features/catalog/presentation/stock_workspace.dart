@@ -163,7 +163,7 @@ class _StockBodyState extends State<_StockBody> {
                   children: <Widget>[
                     DropdownButtonFormField<String>(
                       initialValue: sourceId,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: ModuleStrings.of(context).transferFrom,
                       ),
                       items: locations
@@ -203,7 +203,7 @@ class _StockBodyState extends State<_StockBody> {
                     DropdownButtonFormField<String>(
                       key: ValueKey<String>('destination-$sourceId'),
                       initialValue: destinationId,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: ModuleStrings.of(context).transferTo,
                       ),
                       items: destinations
@@ -221,7 +221,7 @@ class _StockBodyState extends State<_StockBody> {
                     DropdownButtonFormField<String>(
                       key: ValueKey<String>('batch-$sourceId'),
                       initialValue: batchId,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: ModuleStrings.of(context).transferBatch,
                       ),
                       items: batches
@@ -244,7 +244,7 @@ class _StockBodyState extends State<_StockBody> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(labelText: ModuleStrings.of(context).transferQuantity),
+                      decoration: InputDecoration(labelText: ModuleStrings.of(context).transferQuantity),
                     ),
                   ],
                 ),
