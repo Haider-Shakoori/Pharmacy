@@ -32,7 +32,9 @@ class MobileStockLocationApi {
         'Content-Type': 'application/json',
       };
 
-  Future<List<MobileStockLocation>> list(MobileRegistration registration) async {
+  Future<List<MobileStockLocation>> list(
+    MobileRegistration registration,
+  ) async {
     if (!registration.permissions.contains('inventory.manage') &&
         !registration.permissions.contains('pos.sell')) {
       throw StateError('Inventory viewing permission is required');
@@ -48,7 +50,9 @@ class MobileStockLocationApi {
       throw StateError('Unable to connect to the stock location server');
     }
     if (response.statusCode != 200) {
-      throw StateError('Stock location request failed (${response.statusCode})');
+      throw StateError(
+        'Stock location request failed (${response.statusCode})',
+      );
     }
     final dynamic payload = jsonDecode(response.body);
     if (payload is! Map || payload['data'] is! List) {
