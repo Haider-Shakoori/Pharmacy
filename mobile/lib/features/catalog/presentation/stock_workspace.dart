@@ -74,6 +74,23 @@ class _StockBodyState extends State<_StockBody> {
   }
 
   @override
+  void didUpdateWidget(covariant _StockBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.database, widget.database)) {
+      // A tenant/database switch must not display cached stock from the
+      // previous database while the replacement tenant loads.
+      _locations = <String>[];
+      _medicines = <StockMedicineSnapshot>[];
+      _expiring = <StockMedicineSnapshot>[];
+      _overview = null;
+      _location = null;
+      _page = 0;
+      _search.clear();
+      _load();
+    }
+  }
+
+  @override
   void dispose() {
     _search.dispose();
     super.dispose();
