@@ -147,6 +147,36 @@ class MobileStockLocationApi {
     );
   }
 
+  /// Fetch all available pages before offering a transfer batch selection.
+  /// A bounded scan prevents unbounded memory/network use on large pharmacies.
+  Future<List<MobileStockBatch>> allBatches({
+    required MobileRegistration registration,
+    required String stockLocationId,
+    int maxPages = 50,
+  }) async {
+    if (maxPages < 1 || maxPages > 100) {
+      throw ArgumentError.value(maxPages, 'maxPages');
+    }
+    final List<MobileStockBatch> result = <MobileStockBatch>[];
+    final Set<String> cursors = <String>{};
+    String? afterId;
+    for (int page = 0; page < maxPages; page++) {
+      final MobileStockBatchPage response = await batches(
+        registration: registration,
+        stockLocationId: stockLocationId,
+        afterId: afterId,
+      );
+      result.addAll(response.batches);
+      final String? next = response.nextAfterId;
+      if (next == null) return result;
+      if (next == afterId || !cursors.add(next)) {
+        throw const FormatException('Inventory pagination cursor repeated');
+      }
+      afterId = next;
+    }
+    throw StateError('Too many batches to load; narrow the inventory selection');
+  }
+
   Future<MobileStockTransferResult> transfer({
     required MobileRegistration registration,
     required String batchId,
