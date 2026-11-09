@@ -938,6 +938,32 @@ void main() {
       ),
     );
 
+    // A reconnect may replay the same inventory page. The unresolved sale
+    // must be reserved once, not deducted again from already adjusted stock.
+    await repository.applyPullPage(
+      const SyncPullPage(
+        stream: 'inventory',
+        data: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'batch-1',
+            'medicine_id': 'med-1',
+            'stock_location_id': 'main',
+            'batch_number': 'LOT-1',
+            'expires_at': '2027-01-01',
+            'available_quantity': '20.0000',
+            'sale_price': '10.0000',
+            'purchase_cost': '4.0000',
+            'status': 'active',
+            'is_deleted': false,
+            'server_created_at': '2026-09-01T00:00:00Z',
+            'server_updated_at': '2026-09-28T10:00:00Z',
+          },
+        ],
+        nextCursor: 'inventory-cursor-1',
+        hasMore: false,
+      ),
+    );
+
     final QueryRow batch = await database
         .customSelect(
           'SELECT available_quantity FROM local_inventory_batches WHERE id = ?',
