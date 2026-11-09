@@ -41,28 +41,32 @@ void main() {
       expect(request.url.path, endsWith('/stock-location-batches'));
       expect(request.url.queryParameters['stock_location_id'], 'location-1');
       expect(request.url.queryParameters['limit'], '1');
-      return http.Response(jsonEncode(<String, Object?>{
-        'data': <Object>[
-          <String, String>{
-            'id': 'batch-1',
-            'medicine_id': 'medicine-1',
-            'stock_location_id': 'location-1',
-            'available_quantity': '3.0000',
-            'status': 'active',
-          },
-        ],
-        'next_after_id': 'batch-1',
-      }), 200);
+      return http.Response(
+        jsonEncode(<String, Object?>{
+          'data': <Object>[
+            <String, String>{
+              'id': 'batch-1',
+              'medicine_id': 'medicine-1',
+              'stock_location_id': 'location-1',
+              'available_quantity': '3.0000',
+              'status': 'active',
+            },
+          ],
+          'next_after_id': 'batch-1',
+        }),
+        200,
+      );
     });
     addTearDown(client.close);
-    final MobileStockBatchPage page = await MobileStockLocationApi(
-      environment: environment,
-      client: client,
-    ).batches(
-      registration: registration(<String>['inventory.manage']),
-      stockLocationId: 'location-1',
-      limit: 1,
-    );
+    final MobileStockBatchPage page =
+        await MobileStockLocationApi(
+          environment: environment,
+          client: client,
+        ).batches(
+          registration: registration(<String>['inventory.manage']),
+          stockLocationId: 'location-1',
+          limit: 1,
+        );
     expect(page.batches.single.availableQuantity, '3.0000');
     expect(page.nextAfterId, 'batch-1');
   });
