@@ -1,11 +1,14 @@
 import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
 import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
+import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/core/localization/module_strings.dart';
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
+import 'package:businessos_pharmacy/features/catalog/data/mobile_stock_location_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 
 /// Compact, read-only stock workspace: Stock, Batches, Expiry and Storage.
 ///
@@ -38,7 +41,7 @@ class StockWorkspace extends ConsumerWidget {
             .when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (Object error, StackTrace trace) => Text(error.toString()),
-              data: (PharmacyDatabase db) => _StockBody(database: db),
+              data: (PharmacyDatabase db) => _StockBody(database: db, registration: user),
             );
       },
     );
@@ -46,9 +49,10 @@ class StockWorkspace extends ConsumerWidget {
 }
 
 class _StockBody extends StatefulWidget {
-  const _StockBody({required this.database});
+  const _StockBody({required this.database, required this.registration});
 
   final PharmacyDatabase database;
+  final MobileRegistration registration;
 
   @override
   State<_StockBody> createState() => _StockBodyState();
@@ -57,6 +61,9 @@ class _StockBody extends StatefulWidget {
 class _StockBodyState extends State<_StockBody> {
   final TextEditingController _search = TextEditingController();
   List<String> _locations = <String>[];
+  List<MobileStockLocation>? _serverLocations;
+  String? _serverLocationsError;
+  bool _serverLocationsLoading = false;
   List<StockMedicineSnapshot> _medicines = <StockMedicineSnapshot>[];
   List<StockMedicineSnapshot> _expiring = <StockMedicineSnapshot>[];
   InventoryOverview? _overview;
@@ -71,14 +78,41 @@ class _StockBodyState extends State<_StockBody> {
   void initState() {
     super.initState();
     _load();
+    _loadServerLocations();
+  }
+
+  Future<void> _loadServerLocations() async {
+    if (_serverLocationsLoading) return;
+    setState(() {
+      _serverLocationsLoading = true;
+      _serverLocationsError = null;
+    });
+    final http.Client client = http.Client();
+    try {
+      final List<MobileStockLocation> locations = await MobileStockLocationApi(
+        environment: AppEnvironment.current,
+        client: client,
+      ).list(widget.registration);
+      if (!mounted) return;
+      setState(() => _serverLocations = locations);
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _serverLocationsError = error.toString());
+    } finally {
+      client.close();
+      if (mounted) setState(() => _serverLocationsLoading = false);
+    }
   }
 
   @override
   void didUpdateWidget(covariant _StockBody oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.database, widget.database)) {
+    if (!identical(oldWidget.database, widget.database) ||
+        oldWidget.registration.tenantId != widget.registration.tenantId) {
       // A tenant/database switch must not display cached stock from the
       // previous database while the replacement tenant loads.
+      _serverLocations = null;
+      _serverLocationsError = null;
       _locations = <String>[];
       _medicines = <StockMedicineSnapshot>[];
       _expiring = <StockMedicineSnapshot>[];
@@ -87,6 +121,7 @@ class _StockBodyState extends State<_StockBody> {
       _page = 0;
       _search.clear();
       _load();
+      _loadServerLocations();
     }
   }
 
@@ -341,6 +376,25 @@ class _StockBodyState extends State<_StockBody> {
             ),
           ),
         ),
+        if (_serverLocationsLoading)
+          const LinearProgressIndicator()
+        else if (_serverLocationsError != null)
+          ListTile(
+            title: Text(_serverLocationsError!),
+            trailing: IconButton(
+              onPressed: _loadServerLocations,
+              icon: const Icon(Icons.refresh),
+            ),
+          )
+        else if (_serverLocations != null) ...<Widget>[
+          ..._serverLocations!.map(
+            (MobileStockLocation location) => ListTile(
+              leading: const Icon(Icons.warehouse_outlined),
+              title: Text(location.name),
+              subtitle: Text('${location.code} · ${location.kind}'),
+            ),
+          ),
+        ],
         if (!_loading && _error == null && _locations.isEmpty) ...<Widget>[
           const SizedBox(height: 12),
           Text(s.noStorageLocations),
