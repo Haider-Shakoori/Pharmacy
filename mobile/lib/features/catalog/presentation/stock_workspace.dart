@@ -41,7 +41,8 @@ class StockWorkspace extends ConsumerWidget {
             .when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (Object error, StackTrace trace) => Text(error.toString()),
-              data: (PharmacyDatabase db) => _StockBody(database: db, registration: user),
+              data: (PharmacyDatabase db) =>
+                  _StockBody(database: db, registration: user),
             );
       },
     );
