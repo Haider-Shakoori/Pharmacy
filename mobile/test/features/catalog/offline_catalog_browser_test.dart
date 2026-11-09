@@ -68,6 +68,18 @@ void main() {
     expect(await browser.stockLocations(), <String>['main', 'secondary']);
   });
 
+  test('storage locations ignore batches of deleted medicines', () async {
+    await database.customStatement("""
+      INSERT INTO local_inventory_batches
+      (id, medicine_id, stock_location_id, batch_number,
+       available_quantity, sale_price, purchase_cost, status, is_deleted)
+      VALUES ('lot-hidden', 'med-2', 'hidden-location', 'HIDDEN-LOT',
+              '1.0000', '12.0000', '8.0000', 'active', 0)
+    """);
+
+    expect(await browser.stockLocations(), <String>['main', 'secondary']);
+  });
+
   test(
     'location filter excludes other location and never mutates stock',
     () async {
