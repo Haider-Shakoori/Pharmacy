@@ -352,7 +352,8 @@ class ModuleStrings {
       'expires': 'انقضا',
       'expired': 'منقضی',
       'storageTitle': 'انبار دوا',
-      'noStorageLocations': 'هنوز هیچ محل انبار ثبت‌شده‌ای روی این دستگاه وجود ندارد.',
+      'noStorageLocations':
+          'هنوز هیچ محل انبار ثبت‌شده‌ای روی این دستگاه وجود ندارد.',
       'storageBody': 'محل‌های ثبت‌شدهٔ موجودی در پایین نمایش داده می‌شوند. ایجاد محل جدید و انتقال بچ‌ها هنوز فعال نیست.',
       'addStorageLocation': 'افزودن محل انبار',
       'storageComingSoon':
@@ -481,7 +482,8 @@ class ModuleStrings {
       'expires': 'ختمېږي',
       'expired': 'تېر شوی',
       'storageTitle': 'د درملو ذخیره ځای',
-      'noStorageLocations': 'تر اوسه په دې وسیله کې د ذخیرې کوم ثبت شوی ځای نشته.',
+      'noStorageLocations':
+          'تر اوسه په دې وسیله کې د ذخیرې کوم ثبت شوی ځای نشته.',
       'storageBody': 'د موجودۍ ثبت شوي ځایونه لاندې ښودل کېږي. د نوو ځایونو جوړول او د بستو لېږدول لا نه دي فعال شوي.',
       'addStorageLocation': 'د ذخیرې ځای زیات کړئ',
       'storageComingSoon':
