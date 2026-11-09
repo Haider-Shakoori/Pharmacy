@@ -118,34 +118,41 @@ void main() {
     );
   });
 
-  test('server duplicate code validation is shown without claiming success', () async {
-    final http.Client client = MockClient(
-      (_) async => http.Response(
-        jsonEncode(<String, Object>{
-          'message': 'Validation failed',
-          'errors': <String, Object>{
-            'code': <String>['A stock location with this code already exists.'],
-          },
-        }),
-        422,
-      ),
-    );
-    addTearDown(client.close);
-    await expectLater(
-      MobileStockLocationApi(environment: environment, client: client).create(
-        registration: registration(<String>['inventory.manage']),
-        branchId: 'branch-id',
-        code: 'MAIN',
-        name: 'Duplicate',
-        kind: 'store',
-      ),
-      throwsA(isA<StateError>().having(
-        (StateError error) => error.message,
-        'message',
-        contains('already exists'),
-      )),
-    );
-  });
+  test(
+    'server duplicate code validation is shown without claiming success',
+    () async {
+      final http.Client client = MockClient(
+        (_) async => http.Response(
+          jsonEncode(<String, Object>{
+            'message': 'Validation failed',
+            'errors': <String, Object>{
+              'code': <String>[
+                'A stock location with this code already exists.',
+              ],
+            },
+          }),
+          422,
+        ),
+      );
+      addTearDown(client.close);
+      await expectLater(
+        MobileStockLocationApi(environment: environment, client: client).create(
+          registration: registration(<String>['inventory.manage']),
+          branchId: 'branch-id',
+          code: 'MAIN',
+          name: 'Duplicate',
+          kind: 'store',
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (StateError error) => error.message,
+            'message',
+            contains('already exists'),
+          ),
+        ),
+      );
+    },
+  );
 
   test('connection failure never reports a successful creation', () async {
     final http.Client client = MockClient(
