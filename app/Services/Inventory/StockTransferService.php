@@ -24,6 +24,8 @@ class StockTransferService
         return DB::transaction(function () use ($batchId, $destinationId, $quantity, $requestId, $actorId): array {
             $sourceKey = 'mobile-transfer:'.$requestId.':out';
             $destinationKey = 'mobile-transfer:'.$requestId.':in';
+            // Serialize competing requests for this batch before checking replay.
+            $source = ProductBatch::query()->lockForUpdate()->findOrFail($batchId);
             $existing = StockMovement::query()->where('idempotency_key', $sourceKey)->first();
             if ($existing) {
                 $metadata = $existing->metadata ?? [];
@@ -37,9 +39,11 @@ class StockTransferService
                 return ['source_movement_id' => $existing->id, 'destination_movement_id' => $incoming->id, 'replayed' => true];
             }
 
-            $source = ProductBatch::query()->lockForUpdate()->findOrFail($batchId);
             $destination = StockLocation::query()->where('is_active', true)->findOrFail($destinationId);
-            if ($source->stock_location_id === $destination->id ||
+            $sourceLocation = StockLocation::query()->where('is_active', true)->findOrFail($source->stock_location_id);
+            if ($sourceLocation->kind === 'quarantine' ||
+                $destination->kind === 'quarantine' ||
+                $source->stock_location_id === $destination->id ||
                 $source->branch_id !== $destination->branch_id ||
                 $source->status !== 'active' || $source->isExpired()) {
                 throw ValidationException::withMessages(['destination_id' => 'Transfer requires a different active location in the same branch and a sellable source batch.']);
@@ -55,6 +59,9 @@ class StockTransferService
                 ->where('stock_location_id', $destination->id)
                 ->where('batch_key', $source->batch_key)
                 ->lockForUpdate()->first();
+            if ($target && ($target->status !== 'active' && $target->status !== 'depleted')) {
+                throw ValidationException::withMessages(['destination_id' => 'The destination batch is not available for transfer.']);
+            }
             if (! $target) {
                 $target = ProductBatch::query()->create([
                     'medicine_id' => $source->medicine_id,
