@@ -157,7 +157,8 @@ class MobileStockLocationApi {
     if (!registration.permissions.contains('inventory.manage')) {
       throw StateError('Inventory management permission is required');
     }
-    if (batchId.isEmpty || destinationId.isEmpty ||
+    if (batchId.isEmpty ||
+        destinationId.isEmpty ||
         !RegExp(r'^\d{1,12}(?:\.\d{1,4})?$').hasMatch(quantity) ||
         !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(requestId)) {
       throw ArgumentError('Invalid transfer details');
@@ -168,20 +169,24 @@ class MobileStockLocationApi {
     );
     final http.Response response;
     try {
-      response = await client.post(
-        endpoint,
-        headers: _headers(registration),
-        body: jsonEncode(<String, String>{
-          'batch_id': batchId,
-          'destination_id': destinationId,
-          'quantity': quantity,
-          'request_id': requestId,
-        }),
-      ).timeout(const Duration(seconds: 20));
+      response = await client
+          .post(
+            endpoint,
+            headers: _headers(registration),
+            body: jsonEncode(<String, String>{
+              'batch_id': batchId,
+              'destination_id': destinationId,
+              'quantity': quantity,
+              'request_id': requestId,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
     } on TimeoutException {
       throw StateError('Transfer timed out. Check its status before retrying.');
     } on http.ClientException {
-      throw StateError('Transfer connection failed. Retry with the same request ID.');
+      throw StateError(
+        'Transfer connection failed. Retry with the same request ID.',
+      );
     }
     if (response.statusCode != 200) {
       throw StateError('Transfer rejected (${response.statusCode})');
