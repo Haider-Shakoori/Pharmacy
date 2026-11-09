@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\MobileDeviceRegistrationController;
 use App\Http\Controllers\Api\MobileMedicineCreateController;
 use App\Http\Controllers\Api\MobileMedicineDuplicateCheckController;
 use App\Http\Controllers\Api\MobileSessionRefreshController;
+use App\Http\Controllers\Api\MobileStockLocationController;
 use App\Http\Controllers\Api\MobileSyncPullController;
 use App\Http\Controllers\Api\MobileSyncPushController;
 use App\Http\Controllers\Api\TrialDeviceRegistrationController;
@@ -64,6 +65,8 @@ Route::prefix('/v1/mobile')
         Route::post('/session/refresh', MobileSessionRefreshController::class);
         Route::post('/medicines/duplicate-check', MobileMedicineDuplicateCheckController::class);
         Route::post('/medicines', MobileMedicineCreateController::class);
+        Route::get('/stock-locations', [MobileStockLocationController::class, 'index']);
+        Route::post('/stock-locations', [MobileStockLocationController::class, 'store']);
         Route::post('/sync/push', MobileSyncPushController::class);
         Route::get('/sync/pull/{stream}', MobileSyncPullController::class);
     });
