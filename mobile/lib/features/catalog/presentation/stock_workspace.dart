@@ -130,14 +130,14 @@ class _StockBodyState extends State<_StockBody> {
         builder: (BuildContext dialogContext) => StatefulBuilder(
           builder: (BuildContext context, StateSetter updateDialog) =>
               AlertDialog(
-                title: const Text('Add storage location'),
+                title: Text(strings.addStorageLocation),
                 content: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       DropdownButtonFormField<String>(
                         initialValue: branchId,
-                        decoration: const InputDecoration(labelText: 'Branch'),
+                        decoration: InputDecoration(labelText: strings.storageBranch),
                         items: _serverLocations!
                             .map((MobileStockLocation item) => item.branchId)
                             .toSet()
@@ -157,16 +157,16 @@ class _StockBodyState extends State<_StockBody> {
                       TextField(
                         controller: code,
                         maxLength: 60,
-                        decoration: const InputDecoration(labelText: 'Code'),
+                        decoration: InputDecoration(labelText: strings.storageCode),
                       ),
                       TextField(
                         controller: name,
                         maxLength: 160,
-                        decoration: const InputDecoration(labelText: 'Name'),
+                        decoration: InputDecoration(labelText: strings.storageName),
                       ),
                       DropdownButtonFormField<String>(
                         initialValue: kind,
-                        decoration: const InputDecoration(labelText: 'Type'),
+                        decoration: InputDecoration(labelText: strings.storageType),
                         items:
                             const <String>[
                                   'store',
@@ -192,7 +192,7 @@ class _StockBodyState extends State<_StockBody> {
                 actions: <Widget>[
                   TextButton(
                     onPressed: () => Navigator.pop(dialogContext, false),
-                    child: const Text('Cancel'),
+                    child: Text(strings.storageCancel),
                   ),
                   FilledButton(
                     onPressed: () {
@@ -201,7 +201,7 @@ class _StockBodyState extends State<_StockBody> {
                         Navigator.pop(dialogContext, true);
                       }
                     },
-                    child: const Text('Create'),
+                    child: Text(strings.storageCreate),
                   ),
                 ],
               ),
