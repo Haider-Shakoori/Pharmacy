@@ -9,6 +9,7 @@ import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browse
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 
 /// Compact, read-only stock workspace: Stock, Batches, Expiry and Storage.
 ///
@@ -66,6 +67,7 @@ class _StockBodyState extends State<_StockBody> {
   String? _serverLocationsError;
   bool _serverLocationsLoading = false;
   bool _creatingLocation = false;
+  bool _transferringStock = false;
   List<StockMedicineSnapshot> _medicines = <StockMedicineSnapshot>[];
   List<StockMedicineSnapshot> _expiring = <StockMedicineSnapshot>[];
   InventoryOverview? _overview;
@@ -106,6 +108,162 @@ class _StockBodyState extends State<_StockBody> {
       client.close();
       if (mounted && generation == _serverGeneration) {
         setState(() => _serverLocationsLoading = false);
+      }
+    }
+  }
+
+  Future<void> _transferStock() async {
+    if (_transferringStock ||
+        !widget.registration.permissions.contains('inventory.manage')) {
+      return;
+    }
+    final List<MobileStockLocation> locations =
+        _serverLocations ?? <MobileStockLocation>[];
+    if (locations.length < 2) return;
+    setState(() => _transferringStock = true);
+    final int generation = _serverGeneration;
+    final MobileRegistration registration = widget.registration;
+    final TextEditingController quantity = TextEditingController();
+    String sourceId = locations.first.id;
+    String? destinationId;
+    String? batchId;
+    List<MobileStockBatch> batches = <MobileStockBatch>[];
+    final http.Client client = http.Client();
+    final MobileStockLocationApi api = MobileStockLocationApi(
+      environment: AppEnvironment.current,
+      client: client,
+    );
+    try {
+      final MobileStockBatchPage firstPage = await api.batches(
+        registration: registration,
+        stockLocationId: sourceId,
+      );
+      batches = firstPage.batches;
+      if (!mounted || generation != _serverGeneration) return;
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) => StatefulBuilder(
+          builder: (BuildContext context, StateSetter update) {
+            final MobileStockLocation source = locations.firstWhere(
+              (MobileStockLocation location) => location.id == sourceId,
+            );
+            final List<MobileStockLocation> destinations = locations
+                .where((MobileStockLocation location) =>
+                    location.id != sourceId &&
+                    location.branchId == source.branchId)
+                .toList();
+            return AlertDialog(
+              title: const Text('Transfer stock'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    DropdownButtonFormField<String>(
+                      initialValue: sourceId,
+                      decoration: const InputDecoration(labelText: 'From location'),
+                      items: locations.map((MobileStockLocation location) =>
+                        DropdownMenuItem<String>(
+                          value: location.id,
+                          child: Text(location.name),
+                        )).toList(),
+                      onChanged: (String? value) async {
+                        if (value == null) return;
+                        update(() {
+                          sourceId = value;
+                          batchId = null;
+                          destinationId = null;
+                          batches = <MobileStockBatch>[];
+                        });
+                        try {
+                          final MobileStockBatchPage page = await api.batches(
+                            registration: registration,
+                            stockLocationId: value,
+                          );
+                          if (dialogContext.mounted && sourceId == value) {
+                            update(() => batches = page.batches);
+                          }
+                        } on Object catch (error) {
+                          if (dialogContext.mounted) {
+                            ScaffoldMessenger.of(dialogContext).showSnackBar(
+                              SnackBar(content: Text(error.toString())),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey<String>('destination-$sourceId'),
+                      initialValue: destinationId,
+                      decoration: const InputDecoration(labelText: 'To location'),
+                      items: destinations.map((MobileStockLocation location) =>
+                        DropdownMenuItem<String>(
+                          value: location.id,
+                          child: Text(location.name),
+                        )).toList(),
+                      onChanged: (String? value) => update(() => destinationId = value),
+                    ),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey<String>('batch-$sourceId'),
+                      initialValue: batchId,
+                      decoration: const InputDecoration(labelText: 'Medicine batch'),
+                      items: batches.map((MobileStockBatch batch) =>
+                        DropdownMenuItem<String>(
+                          value: batch.id,
+                          child: Text('${batch.medicineId} · ${batch.availableQuantity}'),
+                        )).toList(),
+                      onChanged: (String? value) => update(() => batchId = value),
+                    ),
+                    TextField(
+                      controller: quantity,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(labelText: 'Quantity'),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: batchId != null && destinationId != null
+                      ? () => Navigator.pop(dialogContext, true)
+                      : null,
+                  child: const Text('Transfer'),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+      if (confirmed != true || !mounted || generation != _serverGeneration ||
+          batchId == null || destinationId == null) return;
+      final MobileStockTransferResult result = await api.transfer(
+        registration: registration,
+        batchId: batchId!,
+        destinationId: destinationId!,
+        quantity: quantity.text.trim(),
+        requestId: const Uuid().v4(),
+      );
+      if (mounted && generation == _serverGeneration) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(result.replayed
+              ? 'Transfer already recorded'
+              : 'Stock transferred successfully'),
+        ));
+      }
+    } on Object catch (error) {
+      if (mounted && generation == _serverGeneration) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
+      }
+    } finally {
+      client.close();
+      quantity.dispose();
+      if (mounted && generation == _serverGeneration) {
+        setState(() => _transferringStock = false);
       }
     }
   }
@@ -614,6 +772,13 @@ class _StockBodyState extends State<_StockBody> {
           label: Text(s.addStorageLocation),
         ),
         const SizedBox(height: 8),
+        if ((_serverLocations?.length ?? 0) > 1 &&
+            widget.registration.permissions.contains('inventory.manage'))
+          OutlinedButton.icon(
+            onPressed: _transferringStock ? null : _transferStock,
+            icon: const Icon(Icons.swap_horiz),
+            label: const Text('Transfer stock'),
+          ),
         Text(s.storageComingSoon),
       ],
     );
