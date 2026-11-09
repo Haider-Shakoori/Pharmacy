@@ -1,12 +1,13 @@
 name: Flutter iOS Unsigned IPA
 
-# Unsigned iOS test IPA: manual builds and an explicit workflow-file update on the integration branch.
+# Unsigned iOS test IPA: manual builds and explicit workflow-file updates on test branches.
 # Ordinary application commits do not automatically build an IPA.
 on:
   workflow_dispatch:
   push:
     branches:
       - feature/mobile-release-integration-20261106
+      - test/mobile-integration-gates-20261108
     paths:
       - .github/workflows/flutter-ios-unsigned.yml
 
