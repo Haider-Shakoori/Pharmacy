@@ -297,6 +297,11 @@ class _StockBodyState extends State<_StockBody> {
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
+                    IconButton(
+                      tooltip: s.refresh,
+                      onPressed: _loading ? null : _load,
+                      icon: const Icon(Icons.refresh),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
