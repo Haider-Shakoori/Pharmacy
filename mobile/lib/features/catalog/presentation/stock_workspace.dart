@@ -68,6 +68,7 @@ class _StockBodyState extends State<_StockBody> {
   bool _serverLocationsLoading = false;
   bool _creatingLocation = false;
   bool _transferringStock = false;
+  _PendingStockTransfer? _pendingTransfer;
   List<StockMedicineSnapshot> _medicines = <StockMedicineSnapshot>[];
   List<StockMedicineSnapshot> _expiring = <StockMedicineSnapshot>[];
   InventoryOverview? _overview;
@@ -134,11 +135,11 @@ class _StockBodyState extends State<_StockBody> {
       client: client,
     );
     try {
-      final MobileStockBatchPage firstPage = await api.batches(
+      final List<MobileStockBatch> loadedBatches = await api.allBatches(
         registration: registration,
         stockLocationId: sourceId,
       );
-      batches = firstPage.batches;
+      batches = loadedBatches;
       if (!mounted || generation != _serverGeneration) return;
       final bool? confirmed = await showDialog<bool>(
         context: context,
@@ -155,7 +156,7 @@ class _StockBodyState extends State<_StockBody> {
                 )
                 .toList();
             return AlertDialog(
-              title: const Text('Transfer stock'),
+              title: Text(ModuleStrings.of(context).transferStock),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -163,7 +164,7 @@ class _StockBodyState extends State<_StockBody> {
                     DropdownButtonFormField<String>(
                       initialValue: sourceId,
                       decoration: const InputDecoration(
-                        labelText: 'From location',
+                        labelText: ModuleStrings.of(context).transferFrom,
                       ),
                       items: locations
                           .map(
@@ -183,12 +184,12 @@ class _StockBodyState extends State<_StockBody> {
                           batches = <MobileStockBatch>[];
                         });
                         try {
-                          final MobileStockBatchPage page = await api.batches(
+                          final List<MobileStockBatch> page = await api.allBatches(
                             registration: registration,
                             stockLocationId: value,
                           );
                           if (dialogContext.mounted && sourceId == value) {
-                            update(() => batches = page.batches);
+                            update(() => batches = page);
                           }
                         } on Object catch (error) {
                           if (dialogContext.mounted) {
@@ -203,7 +204,7 @@ class _StockBodyState extends State<_StockBody> {
                       key: ValueKey<String>('destination-$sourceId'),
                       initialValue: destinationId,
                       decoration: const InputDecoration(
-                        labelText: 'To location',
+                        labelText: ModuleStrings.of(context).transferTo,
                       ),
                       items: destinations
                           .map(
@@ -221,7 +222,7 @@ class _StockBodyState extends State<_StockBody> {
                       key: ValueKey<String>('batch-$sourceId'),
                       initialValue: batchId,
                       decoration: const InputDecoration(
-                        labelText: 'Medicine batch',
+                        labelText: ModuleStrings.of(context).transferBatch,
                       ),
                       items: batches
                           .map(
@@ -243,7 +244,7 @@ class _StockBodyState extends State<_StockBody> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(labelText: 'Quantity'),
+                      decoration: const InputDecoration(labelText: ModuleStrings.of(context).transferQuantity),
                     ),
                   ],
                 ),
@@ -251,13 +252,13 @@ class _StockBodyState extends State<_StockBody> {
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('Cancel'),
+                  child: Text(ModuleStrings.of(context).transferCancel),
                 ),
                 FilledButton(
                   onPressed: batchId != null && destinationId != null
                       ? () => Navigator.pop(dialogContext, true)
                       : null,
-                  child: const Text('Transfer'),
+                  child: Text(ModuleStrings.of(context).transferSubmit),
                 ),
               ],
             );
@@ -271,13 +272,21 @@ class _StockBodyState extends State<_StockBody> {
           destinationId == null) {
         return;
       }
-      final MobileStockTransferResult result = await api.transfer(
-        registration: registration,
+      final _PendingStockTransfer pending = _PendingStockTransfer(
         batchId: batchId!,
         destinationId: destinationId!,
         quantity: quantity.text.trim(),
         requestId: const Uuid().v4(),
       );
+      _pendingTransfer = pending;
+      final MobileStockTransferResult result = await api.transfer(
+        registration: registration,
+        batchId: pending.batchId,
+        destinationId: pending.destinationId,
+        quantity: pending.quantity,
+        requestId: pending.requestId,
+      );
+      _pendingTransfer = null;
       if (mounted && generation == _serverGeneration) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -300,6 +309,42 @@ class _StockBodyState extends State<_StockBody> {
       if (mounted && generation == _serverGeneration) {
         setState(() => _transferringStock = false);
       }
+    }
+  }
+
+  Future<void> _retryTransfer() async {
+    final _PendingStockTransfer? pending = _pendingTransfer;
+    if (pending == null || _transferringStock) return;
+    setState(() => _transferringStock = true);
+    final http.Client client = http.Client();
+    try {
+      final MobileStockTransferResult result = await MobileStockLocationApi(
+        environment: AppEnvironment.current,
+        client: client,
+      ).transfer(
+        registration: widget.registration,
+        batchId: pending.batchId,
+        destinationId: pending.destinationId,
+        quantity: pending.quantity,
+        requestId: pending.requestId,
+      );
+      _pendingTransfer = null;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(result.replayed
+              ? ModuleStrings.of(context).transferAlreadyRecorded
+              : ModuleStrings.of(context).transferSuccess),
+        ));
+      }
+    } on Object catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
+      }
+    } finally {
+      client.close();
+      if (mounted) setState(() => _transferringStock = false);
     }
   }
 
@@ -807,12 +852,19 @@ class _StockBodyState extends State<_StockBody> {
           label: Text(s.addStorageLocation),
         ),
         const SizedBox(height: 8),
-        if ((_serverLocations?.length ?? 0) > 1 &&
+        if (_pendingTransfer != null)
+          OutlinedButton.icon(
+            onPressed: _transferringStock ? null : _retryTransfer,
+            icon: const Icon(Icons.replay),
+            label: Text(s.retryPendingTransfer),
+          ),
+        if (_pendingTransfer == null &&
+            (_serverLocations?.length ?? 0) > 1 &&
             widget.registration.permissions.contains('inventory.manage'))
           OutlinedButton.icon(
             onPressed: _transferringStock ? null : _transferStock,
             icon: const Icon(Icons.swap_horiz),
-            label: const Text('Transfer stock'),
+            label: Text(s.transferStock),
           ),
         Text(s.storageComingSoon),
       ],
@@ -1032,4 +1084,18 @@ class _Notice extends StatelessWidget {
       child: Padding(padding: const EdgeInsets.all(20), child: Text(message)),
     );
   }
+}
+
+class _PendingStockTransfer {
+  const _PendingStockTransfer({
+    required this.batchId,
+    required this.destinationId,
+    required this.quantity,
+    required this.requestId,
+  });
+
+  final String batchId;
+  final String destinationId;
+  final String quantity;
+  final String requestId;
 }
