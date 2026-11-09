@@ -214,7 +214,7 @@ class MobileStockLocationApi {
           )
           .timeout(const Duration(seconds: 20));
     } on TimeoutException {
-      throw StateError('Transfer timed out. Check its status before retrying.');
+      throw StockTransferUncertainException('Transfer timed out. Retry with the same request ID.');
     } on http.ClientException {
       throw StateError(
         'Transfer connection failed. Retry with the same request ID.',
@@ -440,4 +440,13 @@ class MobileStockTransferResult {
   final String sourceMovementId;
   final String destinationMovementId;
   final bool replayed;
+}
+
+class StockTransferUncertainException implements Exception {
+  const StockTransferUncertainException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
