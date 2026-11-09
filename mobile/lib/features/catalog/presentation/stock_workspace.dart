@@ -184,10 +184,11 @@ class _StockBodyState extends State<_StockBody> {
                           batches = <MobileStockBatch>[];
                         });
                         try {
-                          final List<MobileStockBatch> page = await api.allBatches(
-                            registration: registration,
-                            stockLocationId: value,
-                          );
+                          final List<MobileStockBatch> page = await api
+                              .allBatches(
+                                registration: registration,
+                                stockLocationId: value,
+                              );
                           if (dialogContext.mounted && sourceId == value) {
                             update(() => batches = page);
                           }
@@ -244,7 +245,9 @@ class _StockBodyState extends State<_StockBody> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: InputDecoration(labelText: ModuleStrings.of(context).transferQuantity),
+                      decoration: InputDecoration(
+                        labelText: ModuleStrings.of(context).transferQuantity,
+                      ),
                     ),
                   ],
                 ),
@@ -318,29 +321,33 @@ class _StockBodyState extends State<_StockBody> {
     setState(() => _transferringStock = true);
     final http.Client client = http.Client();
     try {
-      final MobileStockTransferResult result = await MobileStockLocationApi(
-        environment: AppEnvironment.current,
-        client: client,
-      ).transfer(
-        registration: widget.registration,
-        batchId: pending.batchId,
-        destinationId: pending.destinationId,
-        quantity: pending.quantity,
-        requestId: pending.requestId,
-      );
+      final MobileStockTransferResult result =
+          await MobileStockLocationApi(
+            environment: AppEnvironment.current,
+            client: client,
+          ).transfer(
+            registration: widget.registration,
+            batchId: pending.batchId,
+            destinationId: pending.destinationId,
+            quantity: pending.quantity,
+            requestId: pending.requestId,
+          );
       _pendingTransfer = null;
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(result.replayed
-              ? ModuleStrings.of(context).transferAlreadyRecorded
-              : ModuleStrings.of(context).transferSuccess),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.replayed
+                  ? ModuleStrings.of(context).transferAlreadyRecorded
+                  : ModuleStrings.of(context).transferSuccess,
+            ),
+          ),
+        );
       }
     } on Object catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       client.close();
