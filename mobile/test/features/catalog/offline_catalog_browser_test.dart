@@ -80,6 +80,20 @@ void main() {
     expect(await browser.stockLocations(), <String>['main', 'secondary']);
   });
 
+  test('storage locations omit blank location identifiers', () async {
+    await database.customStatement("""
+      INSERT INTO local_inventory_batches
+      (id, medicine_id, stock_location_id, batch_number,
+       available_quantity, sale_price, purchase_cost, status, is_deleted)
+      VALUES ('lot-empty', 'med-1', '', 'EMPTY-LOT',
+              '1.0000', '12.0000', '8.0000', 'active', 0),
+             ('lot-spaces', 'med-1', '   ', 'SPACES-LOT',
+              '1.0000', '12.0000', '8.0000', 'active', 0)
+    """);
+
+    expect(await browser.stockLocations(), <String>['main', 'secondary']);
+  });
+
   test(
     'location filter excludes other location and never mutates stock',
     () async {
