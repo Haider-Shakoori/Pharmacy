@@ -206,6 +206,7 @@ class OfflineCatalogBrowser {
       FROM local_inventory_batches b
       JOIN local_medicines m ON m.id = b.medicine_id
       WHERE b.is_deleted = 0 AND m.is_deleted = 0
+        AND TRIM(b.stock_location_id) <> ''
       ORDER BY b.stock_location_id
       ''').get();
     return rows
