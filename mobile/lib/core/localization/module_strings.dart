@@ -222,7 +222,7 @@ class ModuleStrings {
       'expires': 'Expires',
       'expired': 'Expired',
       'storageTitle': 'Medicine storage',
-      'storageBody': 'Storage locations (branch, room, rack, shelf and bin) are not available on this device yet. Batches stay in their recorded location until this feature is enabled.',
+      'storageBody': 'Recorded stock locations are shown below. Creating locations and moving batches are not available yet.',
       'addStorageLocation': 'Add storage location',
       'storageComingSoon': 'Coming soon: create locations, assign batches, stock counts and transfers.',
       'reports': 'Reports',
@@ -350,7 +350,7 @@ class ModuleStrings {
       'expires': 'انقضا',
       'expired': 'منقضی',
       'storageTitle': 'انبار دوا',
-      'storageBody': 'محل‌های انبار (شاخه، اتاق، قفسه، طبقه و جعبه) هنوز روی این دستگاه فعال نیستند. تا فعال شدن این قابلیت، بچ‌ها در محل ثبت‌شدهٔ خود باقی می‌مانند.',
+      'storageBody': 'محل‌های ثبت‌شدهٔ موجودی در پایین نمایش داده می‌شوند. ایجاد محل جدید و انتقال بچ‌ها هنوز فعال نیست.',
       'addStorageLocation': 'افزودن محل انبار',
       'storageComingSoon':
           'به‌زودی: ایجاد محل، تخصیص بچ‌ها، شمارش موجودی و انتقال.',
@@ -478,7 +478,7 @@ class ModuleStrings {
       'expires': 'ختمېږي',
       'expired': 'تېر شوی',
       'storageTitle': 'د درملو ذخیره ځای',
-      'storageBody': 'د ذخیرې ځايونه (څانګه، کوټه، ریک، رف او بکس) تر اوسه پدې وسیله کې شتون نه لري. تر هغې چې دا ځانګړتیا فعاله شي، بستې په خپل ثبت شوي ځای کې پاتې کېږي.',
+      'storageBody': 'د موجودۍ ثبت شوي ځایونه لاندې ښودل کېږي. د نوو ځایونو جوړول او د بستو لېږدول لا نه دي فعال شوي.',
       'addStorageLocation': 'د ذخیرې ځای زیات کړئ',
       'storageComingSoon':
           'ژر راځي: ځایونه جوړول، بستې ټاکل، د ذخیرې شمېرل او لېږدول.',
