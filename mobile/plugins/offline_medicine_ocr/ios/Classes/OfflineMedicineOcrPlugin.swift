@@ -54,7 +54,18 @@ public class OfflineMedicineOcrPlugin: NSObject, FlutterPlugin {
         DispatchQueue.global(qos: .userInitiated).async {
             let request = VNRecognizeTextRequest()
             request.recognitionLevel = .accurate
-            request.usesLanguageCorrection = false
+            request.usesLanguageCorrection = true
+            // Ask Vision for every supported target language rather than
+            // assuming that the device only recognizes English.
+            // Unsupported languages are never passed to the request.
+            let preferred = ["fa-IR", "fa-AF", "ps-AF", "en-US"]
+            if let supported = try? request.supportedRecognitionLanguages() {
+                let selected = preferred.filter { supported.contains($0) }
+                if !selected.isEmpty {
+                    request.recognitionLanguages = selected
+                    request.automaticallyDetectsLanguage = true
+                }
+            }
 
             do {
                 // Vision reads the file locally and handles supported image orientation.
