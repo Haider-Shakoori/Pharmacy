@@ -887,7 +887,7 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
   }
 
   void _onDetect(BarcodeCapture capture) {
-    if (_handled || capture.barcodes.isEmpty) return;
+    if (!mounted || _handled || capture.barcodes.isEmpty) return;
     String? value;
     for (final Barcode barcode in capture.barcodes) {
       final String? candidate = barcode.rawValue;
