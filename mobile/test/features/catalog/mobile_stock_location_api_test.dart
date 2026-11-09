@@ -154,6 +154,23 @@ void main() {
     },
   );
 
+  test('transfer HTTP 500 is uncertain rather than a definite rejection', () async {
+    final http.Client client = MockClient(
+      (http.Request request) async => http.Response('server error', 500),
+    );
+    addTearDown(client.close);
+    await expectLater(
+      MobileStockLocationApi(environment: environment, client: client).transfer(
+        registration: registration(<String>['inventory.manage']),
+        batchId: 'batch-1',
+        destinationId: 'location-2',
+        quantity: '1.0000',
+        requestId: '17eb9752-3900-41a1-a182-fdb75c96f7be',
+      ),
+      throwsA(isA<StockTransferUncertainException>()),
+    );
+  });
+
   test('cashier cannot submit stock transfer', () async {
     final http.Client client = MockClient(
       (_) async => throw StateError('Unexpected network request'),
