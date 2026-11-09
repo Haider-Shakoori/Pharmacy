@@ -58,20 +58,28 @@ class MobileStockLocationController extends Controller
                     'ulid',
                     Rule::exists('stock_locations', 'id')->where('is_active', true),
                 ],
+                'limit' => ['sometimes', 'integer', 'min:1', 'max:100'],
+                'after_id' => ['sometimes', 'ulid'],
             ])->validate();
 
+            $limit = (int) ($data['limit'] ?? 100);
+            $query = ProductBatch::query()
+                ->where('stock_location_id', $data['stock_location_id'])
+                ->where('available_quantity', '>', 0)
+                ->when(isset($data['after_id']), fn ($query) => $query->where('id', '>', $data['after_id']))
+                ->orderBy('id');
+
+            $batches = $query->limit($limit + 1)->get([
+                'id', 'medicine_id', 'branch_id', 'stock_location_id',
+                'batch_number', 'batch_key', 'status',
+                'expires_at', 'available_quantity',
+            ]);
+            $hasMore = $batches->count() > $limit;
+            $page = $batches->take($limit)->values();
+
             return response()->json([
-                'data' => ProductBatch::query()
-                    ->where('stock_location_id', $data['stock_location_id'])
-                    ->where('available_quantity', '>', 0)
-                    ->orderBy('expires_at')
-                    ->orderBy('id')
-                    ->limit(100)
-                    ->get([
-                        'id', 'medicine_id', 'branch_id', 'stock_location_id',
-                        'batch_number', 'batch_key', 'status',
-                        'expires_at', 'available_quantity',
-                    ]),
+                'data' => $page,
+                'next_after_id' => $hasMore ? $page->last()->id : null,
             ]);
         });
     }
