@@ -299,10 +299,7 @@ class _StockBodyState extends State<_StockBody> {
         ),
         if (_locations.isNotEmpty) ...<Widget>[
           const SizedBox(height: 12),
-          Text(
-            s.location,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
+          Text(s.location, style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
           ..._locations.map(
             (String id) => Card(
