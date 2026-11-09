@@ -63,6 +63,36 @@ class MobileStockLocationApi {
         .toList(growable: false);
   }
 
+  Future<List<MobileStockBranch>> branches(
+    MobileRegistration registration,
+  ) async {
+    if (!registration.permissions.contains('inventory.manage')) {
+      throw StateError('Inventory management permission is required');
+    }
+    final Uri endpoint = _endpoint(registration)
+        .resolve('api/v1/mobile/stock-location-branches');
+    final http.Response response;
+    try {
+      response = await client
+          .get(endpoint, headers: _headers(registration))
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      throw StateError('Loading branches timed out');
+    } on http.ClientException {
+      throw StateError('Unable to connect to the branch server');
+    }
+    if (response.statusCode != 200) {
+      throw StateError('Branch request failed (${response.statusCode})');
+    }
+    final dynamic payload = jsonDecode(response.body);
+    if (payload is! Map || payload['data'] is! List) {
+      throw const FormatException('Invalid branch response');
+    }
+    return (payload['data'] as List<dynamic>)
+        .map((dynamic item) => MobileStockBranch.fromJson(item))
+        .toList(growable: false);
+  }
+
   Future<MobileStockLocation> create({
     required MobileRegistration registration,
     required String branchId,
@@ -178,4 +208,31 @@ class MobileStockLocation {
   final String code;
   final String name;
   final String kind;
+}
+
+class MobileStockBranch {
+  const MobileStockBranch({
+    required this.id,
+    required this.code,
+    required this.name,
+  });
+
+  factory MobileStockBranch.fromJson(dynamic value) {
+    if (value is! Map ||
+        value['id'] is! String ||
+        (value['id'] as String).trim().isEmpty ||
+        value['code'] is! String ||
+        value['name'] is! String) {
+      throw const FormatException('Invalid stock branch');
+    }
+    return MobileStockBranch(
+      id: value['id'] as String,
+      code: value['code'] as String,
+      name: value['name'] as String,
+    );
+  }
+
+  final String id;
+  final String code;
+  final String name;
 }
