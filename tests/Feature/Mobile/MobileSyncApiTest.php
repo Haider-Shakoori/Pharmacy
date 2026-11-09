@@ -224,6 +224,18 @@ class MobileSyncApiTest extends TestCase
         });
     }
 
+    public function test_cashier_cannot_transfer_stock(): void
+    {
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/stock-location-transfers', [
+                'batch_id' => '01J00000000000000000000000',
+                'destination_id' => '01J00000000000000000000001',
+                'quantity' => '1.0000',
+                'request_id' => '17eb9752-3900-41a1-a182-fdb75c96f7be',
+            ])
+            ->assertForbidden();
+    }
+
     public function test_cashier_cannot_access_transfer_batch_inventory(): void
     {
         $locationId = $this->tenant->run(
@@ -239,6 +251,10 @@ class MobileSyncApiTest extends TestCase
     {
         $this->withToken('')
             ->getJson('/api/v1/mobile/stock-locations')
+            ->assertUnauthorized();
+
+        $this->withToken('')
+            ->postJson('/api/v1/mobile/stock-location-transfers', [])
             ->assertUnauthorized();
 
         $this->withToken('')
