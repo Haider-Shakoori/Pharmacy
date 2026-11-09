@@ -48,7 +48,7 @@ class MedicineScanCoordinator {
     if (!await ocr.isAvailable) {
       throw StateError('Native offline OCR is unavailable on this device');
     }
-    final lines = await ocr.recognizeLocalImage(imagePath);
+    final lines = await ocr.recognizeLocalImage(imagePath.trim());
     if (lines.every((line) => line.trim().isEmpty)) {
       throw StateError(
         'No medicine text was recognized; enter details manually',
