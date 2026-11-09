@@ -51,20 +51,18 @@ class MobileStockLocationController extends Controller
         abort_unless(in_array('inventory.manage', $context->permissions, true), 403);
 
         return $context->tenant->run(function () use ($request): JsonResponse {
-            $data = Validator::make($request->all(), [
+            $input = $request->all();
+            foreach (['code', 'name'] as $field) {
+                if (is_string($input[$field] ?? null)) {
+                    $input[$field] = trim($input[$field]);
+                }
+            }
+            $data = Validator::make($input, [
                 'branch_id' => ['required', 'ulid', Rule::exists('branches', 'id')->where('is_active', true)],
                 'code' => ['required', 'string', 'max:60', Rule::unique('stock_locations', 'code')->where('branch_id', $request->input('branch_id'))],
                 'name' => ['required', 'string', 'max:160'],
                 'kind' => ['required', Rule::in(['store', 'warehouse', 'shelf', 'quarantine', 'other'])],
             ])->validate();
-
-            $data['code'] = trim($data['code']);
-            $data['name'] = trim($data['name']);
-            if ($data['code'] === '' || $data['name'] === '') {
-                throw ValidationException::withMessages([
-                    'code' => 'Location code and name cannot be blank.',
-                ]);
-            }
 
             try {
                 $location = StockLocation::query()->create([
