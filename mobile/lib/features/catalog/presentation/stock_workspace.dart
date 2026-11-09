@@ -190,7 +190,21 @@ class _StockBodyState extends State<_StockBody> {
               child: Center(child: CircularProgressIndicator()),
             )
           else if (_error != null)
-            _Notice(message: _error!)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _Notice(message: _error!),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    onPressed: _load,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(s.refresh),
+                  ),
+                ),
+              ],
+            )
           else
             _buildStorage(context),
         ] else ...<Widget>[
