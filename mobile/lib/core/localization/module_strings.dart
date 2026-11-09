@@ -230,7 +230,7 @@ class ModuleStrings {
       'expired': 'Expired',
       'storageTitle': 'Medicine storage',
       'noStorageLocations': 'No recorded storage locations on this device yet.',
-      'storageBody': 'Recorded stock locations are shown below. Creating locations and moving batches are not available yet.',
+      'storageBody': 'Synced stock locations are shown below. Managers can create locations online; moving batches is not available yet.',
       'addStorageLocation': 'Add storage location',
       'storageBranch': 'Branch',
       'storageCode': 'Code',
@@ -238,7 +238,7 @@ class ModuleStrings {
       'storageType': 'Type',
       'storageCancel': 'Cancel',
       'storageCreate': 'Create',
-      'storageComingSoon': 'Coming soon: create locations, assign batches, stock counts and transfers.',
+      'storageComingSoon': 'Coming soon: batch assignments, stock counts and transfers.',
       'reports': 'Reports',
       'reportsSubtitle':
           'Totals on this device. Company-wide reports need server data.',
@@ -366,7 +366,7 @@ class ModuleStrings {
       'storageTitle': 'انبار دوا',
       'noStorageLocations':
           'هنوز هیچ محل انبار ثبت‌شده‌ای روی این دستگاه وجود ندارد.',
-      'storageBody': 'محل‌های ثبت‌شدهٔ موجودی در پایین نمایش داده می‌شوند. ایجاد محل جدید و انتقال بچ‌ها هنوز فعال نیست.',
+      'storageBody': 'محل‌های ثبت‌شدهٔ موجودی در پایین نمایش داده می‌شوند. مدیران می‌توانند محل جدید را آنلاین ایجاد کنند؛ انتقال بچ‌ها هنوز فعال نیست.',
       'addStorageLocation': 'افزودن محل انبار',
       'storageBranch': 'شعبه',
       'storageCode': 'کد',
@@ -375,7 +375,7 @@ class ModuleStrings {
       'storageCancel': 'لغو',
       'storageCreate': 'ایجاد',
       'storageComingSoon':
-          'به‌زودی: ایجاد محل، تخصیص بچ‌ها، شمارش موجودی و انتقال.',
+          'به‌زودی: تخصیص بچ‌ها، شمارش موجودی و انتقال.',
       'reports': 'گزارش‌ها',
       'reportsSubtitle': 'مجموع‌ها روی این دستگاه. گزارش‌های سراسری به داده‌های سرور نیاز دارند.',
       'registerToViewReports': 'برای مشاهدهٔ گزارش‌ها، این دستگاه را ثبت کنید.',
@@ -502,7 +502,7 @@ class ModuleStrings {
       'storageTitle': 'د درملو ذخیره ځای',
       'noStorageLocations':
           'تر اوسه په دې وسیله کې د ذخیرې کوم ثبت شوی ځای نشته.',
-      'storageBody': 'د موجودۍ ثبت شوي ځایونه لاندې ښودل کېږي. د نوو ځایونو جوړول او د بستو لېږدول لا نه دي فعال شوي.',
+      'storageBody': 'د موجودۍ ثبت شوي ځایونه لاندې ښودل کېږي. مدیران کولای شي نوي ځایونه آنلاین جوړ کړي؛ د بستو لېږد لا نه دی فعال.',
       'addStorageLocation': 'د ذخیرې ځای زیات کړئ',
       'storageBranch': 'څانګه',
       'storageCode': 'کوډ',
@@ -511,7 +511,7 @@ class ModuleStrings {
       'storageCancel': 'لغوه کول',
       'storageCreate': 'جوړول',
       'storageComingSoon':
-          'ژر راځي: ځایونه جوړول، بستې ټاکل، د ذخیرې شمېرل او لېږدول.',
+          'ژر راځي: د بستو ټاکنه، د ذخیرې شمېرل او لېږدول.',
       'reports': 'راپورونه',
       'reportsSubtitle':
           'پدې وسیله کې ټولې. د ټولې شرکت راپورونه د سرور معلومات غواړي.',
