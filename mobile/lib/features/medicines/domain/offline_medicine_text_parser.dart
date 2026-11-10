@@ -38,7 +38,7 @@ class OfflineMedicineTextParser {
       RegExp('[${RegExp.escape(regionalDigits)}]'),
       (match) => '${regionalDigits.indexOf(match.group(0)!) % 10}',
     );
-    final strength = RegExp(
+    // Normalize Persian/Arabic numeric glyphs only for extraction. Keep the\n    // original OCR text intact so the pharmacist can compare the label.\n    final strength = RegExp(
       r'\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|g|ml|iu|%)\b',
       caseSensitive: false,
     ).firstMatch(normalized)?.group(0);
@@ -54,7 +54,27 @@ class OfflineMedicineTextParser {
       r'(?:\b(?:tablets?|capsules?|syrup|suspension|injection|cream|ointment|drops)\b|قرص|تابلیت|کپسول|شربت|تزریق|پیچکاری|کریم|قطره|څاڅکي)',
       caseSensitive: false,
     ).firstMatch(text)?.group(0);
-    // The first non-metadata line is a candidate, never a verified brand.
+    // Generic/active ingredient is a candidate only when explicitly labeled.\n    final genericMatch = RegExp(\n      r'^(?:generic(?: name)?|active ingredient|ingredient|نام جنریک|نام علمی|ماده موثره|ماده مؤثره|فعال ماده|جنریک نوم|فعاله ماده)\\s*[:：-]\\s*(.+)\
+    final brandCandidates = cleaned.where(
+      (line) =>
+          !RegExp(
+            r'^(?:batch|lot|exp|expiry|mfg|manufactured|ingredients?)\b|^(?:بچ|شماره|انقضا|تاریخ|تولید|ترکیبات|د ختم)',
+            caseSensitive: false,
+          ).hasMatch(line) &&
+          RegExp(r'[\p{L}]', unicode: true).hasMatch(line),
+    );
+    return MedicineScanDraft(
+      brandName: brandCandidates.isEmpty ? null : brandCandidates.first,
+      genericName: generic == null || generic.isEmpty ? null : generic,\n      strength: strength,
+      dosageForm: dosage,
+      batchNumber: batch,
+      expiresAt: expiryMatch?.group(1),
+      barcode: barcode,
+      sourceText: text,
+    );
+  }
+}
+,\n      caseSensitive: false,\n      multiLine: true,\n    ).firstMatch(text);\n    final generic = genericMatch?.group(1)?.trim();\n    // The first non-metadata line is a candidate, never a verified brand.
     final brandCandidates = cleaned.where(
       (line) =>
           !RegExp(
