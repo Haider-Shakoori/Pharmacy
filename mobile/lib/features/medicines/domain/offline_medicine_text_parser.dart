@@ -39,7 +39,7 @@ class OfflineMedicineTextParser {
 
     // Normalize numeric glyphs only for extraction; retain original OCR text.
     final strength = RegExp(
-      r'\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|g|ml|iu|%)\b',
+      r'\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|g|ml|iu)\b|\b\d+(?:[.,]\d+)?\s?%',
       caseSensitive: false,
     ).firstMatch(normalized)?.group(0);
     final batch = RegExp(
