@@ -825,10 +825,17 @@ class _StockBodyState extends State<_StockBody> {
           )
         else if (_serverLocations != null) ...<Widget>[
           ..._serverLocations!.map(
-            (MobileStockLocation location) => ListTile(
-              leading: const Icon(Icons.warehouse_outlined),
-              title: Text(location.name),
-              subtitle: Text('${location.code} · ${location.kind}'),
+            (MobileStockLocation location) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: const Icon(Icons.warehouse_outlined),
+                title: Text(
+                  location.name,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text('${location.code} · ${location.kind}'),
+                isThreeLine: false,
+              ),
             ),
           ),
         ],
