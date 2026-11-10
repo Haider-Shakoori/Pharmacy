@@ -24,6 +24,8 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
   late final TextEditingController _strength;
   late final TextEditingController _dosage;
   late final TextEditingController _barcode;
+  late final TextEditingController _batch;
+  late final TextEditingController _expiry;
   bool _confirmed = false;
 
   @override
@@ -34,6 +36,8 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
     _strength = TextEditingController(text: widget.draft.strength);
     _dosage = TextEditingController(text: widget.draft.dosageForm);
     _barcode = TextEditingController(text: widget.draft.barcode);
+    _batch = TextEditingController(text: widget.draft.batchNumber);
+    _expiry = TextEditingController(text: widget.draft.expiresAt);
     _brand.addListener(_refreshBrandValidation);
   }
 
@@ -44,7 +48,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
   @override
   void dispose() {
     _brand.removeListener(_refreshBrandValidation);
-    for (final controller in [_brand, _generic, _strength, _dosage, _barcode]) {
+    for (final controller in [_brand, _generic, _strength, _dosage, _barcode, _batch, _expiry]) {
       controller.dispose();
     }
     super.dispose();
@@ -77,14 +81,25 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           controller: _barcode,
           decoration: const InputDecoration(labelText: 'Barcode'),
         ),
-        if (widget.draft.batchNumber != null || widget.draft.expiresAt != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              'Batch and expiry belong to stock receiving, not medicine registration.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
+        const SizedBox(height: 12),
+        Text(
+          'Stock receiving details (review only)',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        TextField(
+          controller: _batch,
+          readOnly: true,
+          decoration: const InputDecoration(labelText: 'Detected batch number'),
+        ),
+        TextField(
+          controller: _expiry,
+          readOnly: true,
+          decoration: const InputDecoration(labelText: 'Detected expiry date'),
+        ),
+        const Text(
+          'Batch and expiry are not saved to the medicine catalog. '
+          'Verify them when receiving stock.',
+        ),
         ExpansionTile(
           title: const Text('Recognized source text'),
           children: [SelectableText(widget.draft.sourceText)],
