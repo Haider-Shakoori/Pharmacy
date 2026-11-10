@@ -28,9 +28,9 @@ import 'package:businessos_pharmacy/features/settings/presentation/connection_mo
 import 'package:businessos_pharmacy/features/shell/presentation/home_dashboard.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
 class AppShell extends ConsumerStatefulWidget {
