@@ -128,8 +128,10 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
       children: [
         Row(
           children: [
-            Icon(Icons.document_scanner_outlined,
-                color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.document_scanner_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
