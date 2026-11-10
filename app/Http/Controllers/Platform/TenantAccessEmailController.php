@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Platform;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str as MessageStr;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
+use Illuminate\Support\Str as MessageStr;
 use Throwable;
 
 class TenantAccessEmailController extends Controller
@@ -56,6 +56,7 @@ class TenantAccessEmailController extends Controller
                     'updated_at' => now(),
                 ]);
             report($exception);
+
             return back()->withErrors(['email' => 'Email could not be submitted. Check mail settings.']);
         }
 
