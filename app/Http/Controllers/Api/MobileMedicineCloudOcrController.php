@@ -64,10 +64,11 @@ class MobileMedicineCloudOcrController extends Controller
                 'model' => (string) config('services.medicine_ocr.model', 'gpt-4.1-mini'),
                 'store' => false,
                 'max_output_tokens' => 350,
+                'text' => ['format' => ['type' => 'json_object']],
                 'input' => [[
                     'role' => 'user',
                     'content' => [
-                        ['type' => 'input_text', 'text' => 'Read this medicine label in English, Dari or Pashto. Return only a JSON object with a suggestions object containing brand_name, generic_name, strength, dosage_form, batch_number and expires_at. Use null for uncertain fields. Never invent details. Offline OCR text: '.($data['offline_text'] ?? '')],
+                        ['type' => 'input_text', 'text' => 'Read this medicine label in English, Dari or Pashto. Return only a valid JSON object with a suggestions object containing brand_name, generic_name, strength, dosage_form, batch_number and expires_at. Use null for uncertain fields. Never invent details. Offline OCR text: '.($data['offline_text'] ?? '')],
                         ['type' => 'input_image', 'image_url' => 'data:'.$mime.';base64,'.$data['image_base64']],
                     ],
                 ]],
@@ -94,8 +95,9 @@ class MobileMedicineCloudOcrController extends Controller
             $output = $response->json('output', []);
             $text = '';
             foreach (is_array($output) ? $output : [] as $item) {
-                foreach (($item['content'] ?? []) as $part) {
-                    if (($part['type'] ?? '') === 'output_text' && is_string($part['text'] ?? null)) {
+                $parts = $item['content'] ?? [];
+                foreach (is_array($parts) ? $parts : [] as $part) {
+                    if (is_array($part) && ($part['type'] ?? '') === 'output_text' && is_string($part['text'] ?? null)) {
                         $text .= $part['text'];
                     }
                 }
