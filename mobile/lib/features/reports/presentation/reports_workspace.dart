@@ -141,11 +141,12 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
         ),
         const SizedBox(height: 4),
         Text(s.reportsSubtitle, style: text.bodySmall),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         ..._reportList(s).map(
           (_ReportInfo info) => Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               leading: CircleAvatar(
                 backgroundColor: info.available
                     ? const Color(0xFFDDEAFF)
@@ -161,7 +162,10 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
                 info.title,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
-              subtitle: Text(info.detail),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(info.detail),
+              ),
               trailing: info.available
                   ? const Icon(Icons.chevron_right_rounded)
                   : Chip(
