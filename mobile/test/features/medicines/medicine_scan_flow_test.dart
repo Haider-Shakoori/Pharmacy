@@ -1,3 +1,5 @@
+import 'package:businessos_pharmacy/features/medicines/domain/medicine_cloud_fallback.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/offline_medicine_text_parser.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coordinator.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
@@ -41,7 +43,64 @@ class _FailingImages implements LocalMedicineImageSource {
       throw StateError('gallery unavailable');
 }
 
+class _CloudGateway implements MedicineCloudVisionGateway {
+  int calls = 0;
+
+  @override
+  Future<MedicineScanDraft> suggestFromImage({
+    required String localImagePath,
+    required MedicineScanDraft offlineDraft,
+  }) async {
+    calls++;
+    return MedicineScanDraft(
+      brandName: 'Cloud suggestion',
+      sourceText: offlineDraft.sourceText,
+    );
+  }
+}
+
 void main() {
+  testWidgets('cloud analysis requires consent and never auto-registers', (
+    WidgetTester tester,
+  ) async {
+    final gateway = _CloudGateway();
+    final confirmed = <ReviewedMedicineScan>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: SingleChildScrollView(
+        child: MedicineScanFlow(
+          images: MedicineImageAcquisition(_LocalImages()),
+          scanner: MedicineScanCoordinator(ocr: _OfflineOcr()),
+          cloudFallback: MedicineCloudFallback(gateway),
+          onConfirmed: confirmed.add,
+        ),
+      )),
+    ));
+    await tester.tap(find.text('Gallery'));
+    await tester.pumpAndSettle();
+    expect(gateway.calls, 0);
+    final button = find.text('Get optional cloud suggestions');
+    expect(tester.widget<OutlinedButton>(
+      find.ancestor(of: button, matching: find.byType(OutlinedButton)),
+    ).onPressed, isNull);
+    await tester.ensureVisible(find.text(
+      'I consent to sending this label image for cloud AI suggestions',
+    ));
+    await tester.tap(find.text(
+      'I consent to sending this label image for cloud AI suggestions',
+    ));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(gateway.calls, 1);
+    expect(find.text('Review scanned medicine details'), findsOneWidget);
+    expect(confirmed, isEmpty);
+    expect(tester.widget<CheckboxListTile>(
+      find.byType(CheckboxListTile).first,
+    ).value, isFalse);
+  });
+
+
   testWidgets('cancelled camera capture resets busy state without draft', (
     WidgetTester tester,
   ) async {
