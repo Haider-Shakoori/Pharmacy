@@ -73,7 +73,10 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
     final fallback = widget.cloudFallback;
     final draft = _draft;
     final imagePath = _lastImagePath;
-    if (_busy || fallback == null || draft == null || imagePath == null ||
+    if (_busy ||
+        fallback == null ||
+        draft == null ||
+        imagePath == null ||
         !_cloudConsent) {
       return;
     }
@@ -96,7 +99,8 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _error = 'Cloud suggestions unavailable. Offline results are preserved.';
+          _error =
+              'Cloud suggestions unavailable. Offline results are preserved.';
           _cloudConsent = false;
         });
       }
@@ -153,9 +157,11 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
           if (widget.cloudFallback != null && _lastImagePath != null) ...[
             CheckboxListTile(
               value: _cloudConsent,
-              onChanged: _busy ? null : (value) => setState(() {
-                _cloudConsent = value ?? false;
-              }),
+              onChanged: _busy
+                  ? null
+                  : (value) => setState(() {
+                      _cloudConsent = value ?? false;
+                    }),
               title: const Text(
                 'I consent to sending this label image for cloud AI suggestions',
               ),
