@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'medicine_ocr' => [
+        'endpoint' => env('MEDICINE_OCR_PROVIDER_ENDPOINT', ''),
+        'token' => env('MEDICINE_OCR_PROVIDER_TOKEN', ''),
+    ],
+
 ];
