@@ -509,8 +509,10 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Icon(Icons.point_of_sale_rounded,
-                color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.point_of_sale_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
