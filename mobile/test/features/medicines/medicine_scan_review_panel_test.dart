@@ -44,6 +44,9 @@ void main() {
       isNotNull,
     );
     await tester.ensureVisible(find.byType(FilledButton));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byType(FilledButton));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(FilledButton));
     expect(result?.brandName, 'Corrected brand');
     expect(result?.strength, '250 mg');
