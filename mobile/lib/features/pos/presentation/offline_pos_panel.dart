@@ -732,12 +732,15 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                             : () => _changeQuantity(entry, true),
                         icon: const Icon(Icons.add),
                       ),
-                      const Spacer(),
-                      Text(
-                        '${FixedDecimal.parse(entry.unitPrice).compact} AFN ${s.eachSuffix}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
                     ],
+                  ),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Text(
+                      '${FixedDecimal.parse(entry.unitPrice).compact} AFN ${s.eachSuffix}',
+                      textAlign: TextAlign.end,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ),
                 ],
               ),
