@@ -118,11 +118,12 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
       children: <Widget>[
         GridView.count(
           shrinkWrap: true,
+          padding: EdgeInsets.zero,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: 1.7,
+          childAspectRatio: MediaQuery.sizeOf(context).width < 360 ? 1.35 : 1.7,
           children: <Widget>[
             _KpiTile(
               label: s.salesToday,
@@ -260,8 +261,9 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
 
     return GridView.count(
       shrinkWrap: true,
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 4,
+      crossAxisCount: MediaQuery.sizeOf(context).width < 360 ? 3 : 4,
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
       childAspectRatio: 0.9,
