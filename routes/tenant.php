@@ -30,9 +30,9 @@ use App\Http\Controllers\Pharmacy\SettingsController as PharmacySettingsControll
 use App\Http\Controllers\Pharmacy\SupplierController;
 use App\Http\Controllers\Pharmacy\SupplierPaymentController;
 use App\Http\Controllers\Pharmacy\UserController as PharmacyUserController;
+use App\Http\Controllers\Platform\PharmacyAccessSetupController;
 use App\Http\Middleware\SetTenantRouteDefaults;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Platform\PharmacyAccessSetupController;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
