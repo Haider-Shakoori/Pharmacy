@@ -1,0 +1,158 @@
+<?php
+
+namespace App\Http\Controllers\Platform;
+
+use App\Enums\TenantStatus;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Platform\StoreTenantRequest;
+use App\Http\Requests\Platform\UpdateTenantRequest;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Services\Tenancy\TenantProvisioningService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+
+class TenantController extends Controller
+{
+    public function index(Request $request): View
+    {
+        $search = trim((string) $request->query('search'));
+        $status = (string) $request->query('status');
+
+        $tenants = Tenant::query()
+            ->with(['business', 'domains'])
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->whereHas('business', function ($query) use ($search): void {
+                    $query->where('pharmacy_name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%")
+                        ->orWhere('owner_email', 'like', "%{$search}%")
+                        ->orWhere('phone_whatsapp', 'like', "%{$search}%");
+                });
+            })
+            ->when(TenantStatus::tryFrom($status), fn ($query, TenantStatus $tenantStatus) => $query->where('status', $tenantStatus))
+            ->latest()
+            ->paginate(config('pharmacy.performance.default_page_size'))
+            ->withQueryString();
+
+        $lastLogins = [];
+        foreach ($tenants->getCollection() as $tenant) {
+            if ($tenant->provisioning_status !== 'application_ready') {
+                continue;
+            }
+
+            try {
+                $lastLogins[$tenant->id] = $tenant->run(function (): ?array {
+                    $user = User::query()
+                        ->whereNotNull('last_login_at')
+                        ->orderByDesc('last_login_at')
+                        ->first(['name', 'email', 'last_login_at']);
+
+                    return $user ? [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'at' => $user->last_login_at?->toIso8601String(),
+                    ] : null;
+                });
+            } catch (\Throwable $exception) {
+                report($exception);
+                $lastLogins[$tenant->id] = ['unavailable' => true];
+            }
+        }
+
+        $emailAttempts = DB::connection('central')->table('pharmacy_access_email_attempts')
+            ->whereIn('tenant_id', $tenants->getCollection()->pluck('id'))
+            ->orderByDesc('created_at')->get()->groupBy('tenant_id');
+
+        return view('platform.tenants.index', compact('tenants', 'search', 'status', 'lastLogins', 'emailAttempts'));
+    }
+
+    public function logins(Tenant $tenant): View
+    {
+        $tenant->load('business');
+
+        $users = collect();
+        $unavailable = false;
+
+        if ($tenant->provisioning_status === 'application_ready') {
+            try {
+                $users = $tenant->run(fn () => User::query()
+                    ->select(['name', 'email', 'last_login_at'])
+                    ->orderByDesc('last_login_at')
+                    ->get()
+                    ->map(fn (User $user): array => [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'at' => $user->last_login_at?->toIso8601String(),
+                    ])
+                    ->all());
+            } catch (\Throwable $exception) {
+                report($exception);
+                $unavailable = true;
+            }
+        }
+
+        return view('platform.tenants.logins', compact('tenant', 'users', 'unavailable'));
+    }
+
+    public function create(): View
+    {
+        return view('platform.tenants.create');
+    }
+
+    public function store(
+        StoreTenantRequest $request,
+        TenantProvisioningService $provisioner,
+    ): RedirectResponse {
+        [$tenant, $licenseKey] = $provisioner->provision($request->validated());
+
+        $response = redirect()
+            ->route('platform.tenants.edit', $tenant)
+            ->with(
+                'success',
+                $tenant->provisioning_status === 'application_ready'
+                    ? 'Pharmacy application provisioned with isolated database, domain, and owner account. The hosted trial can now be started explicitly.'
+                    : 'Pharmacy database and owner are provisioned; the hosted trial becomes available after domain/TLS readiness.',
+            );
+
+        if ($licenseKey !== null) {
+            $response->with('generated_license_key', $licenseKey);
+        }
+
+        return $response;
+    }
+
+    public function edit(Tenant $tenant): View
+    {
+        $tenant->load(['business.subscription.plan', 'business.subscription.license', 'domains', 'provisioningEvents']);
+
+        return view('platform.tenants.edit', compact('tenant'));
+    }
+
+    public function update(UpdateTenantRequest $request, Tenant $tenant): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        DB::connection('central')->transaction(function () use ($tenant, $validated): void {
+            $tenant->business()->firstOrFail()->update([
+                'pharmacy_name' => $validated['name'],
+                'slug' => $validated['slug'],
+                'contact_person' => $validated['contact_person'],
+                'phone_whatsapp' => $validated['phone_whatsapp'],
+                'location' => $validated['location'],
+                'billing_currency' => strtoupper($validated['currency']),
+                'default_timezone' => $validated['timezone'],
+                'default_locale' => $validated['locale'],
+                'desktop_cloud_sync_enabled' => $validated['desktop_cloud_sync_enabled'],
+            ]);
+
+            $domain = $validated['slug'].'.'.config('pharmacy.tenant_domain');
+            $tenant->domains()->first()?->update(['domain' => $domain]);
+        });
+
+        return redirect()
+            ->route('platform.tenants.edit', $tenant)
+            ->with('success', 'Pharmacy commercial profile updated.');
+    }
+}
