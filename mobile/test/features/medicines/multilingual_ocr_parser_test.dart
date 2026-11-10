@@ -64,6 +64,12 @@ void main() {
     expect(draft.genericName, isNull);
   });
 
+  test('extracts percentage concentration from a cream label', () {
+    final draft = parser.parse(['Test cream', 'Hydrocortisone 1% cream']);
+    expect(draft.strength, '1%');
+    expect(draft.dosageForm, 'cream');
+  });
+
   test('keeps original text available for manual review', () {
     final draft = parser.parse(['Unknown medicine', 'نوی درمل']);
     expect(draft.sourceText, 'Unknown medicine\nنوی درمل');
