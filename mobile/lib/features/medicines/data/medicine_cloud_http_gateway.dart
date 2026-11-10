@@ -24,9 +24,12 @@ class MedicineCloudHttpGateway implements MedicineCloudVisionGateway {
     required String localImagePath,
     required MedicineScanDraft offlineDraft,
   }) async {
-    if (endpoint.scheme != 'https' || endpoint.host.isEmpty ||
-        endpoint.userInfo.isNotEmpty || endpoint.hasFragment ||
-        endpoint.hasQuery || endpoint.port != 443) {
+    if (endpoint.scheme != 'https' ||
+        endpoint.host.isEmpty ||
+        endpoint.userInfo.isNotEmpty ||
+        endpoint.hasFragment ||
+        endpoint.hasQuery ||
+        endpoint.port != 443) {
       throw StateError('Cloud OCR requires a secure HTTPS endpoint');
     }
     if (accessToken.trim().isEmpty) {
@@ -37,30 +40,36 @@ class MedicineCloudHttpGateway implements MedicineCloudVisionGateway {
         (imageUri.hasScheme && imageUri.scheme != 'file') ||
         (imageUri.scheme == 'file' && imageUri.host.isNotEmpty) ||
         (imageUri.scheme.isEmpty && !localImagePath.startsWith('/'))) {
-      throw ArgumentError.value(localImagePath, 'localImagePath', 'Local image required');
+      throw ArgumentError.value(
+        localImagePath,
+        'localImagePath',
+        'Local image required',
+      );
     }
-    final file = File.fromUri(imageUri.scheme == 'file'
-        ? imageUri
-        : Uri.file(localImagePath));
+    final file = File.fromUri(
+      imageUri.scheme == 'file' ? imageUri : Uri.file(localImagePath),
+    );
     if (!await file.exists()) throw StateError('Image not found');
     final length = await file.length();
     if (length == 0 || length > 8 * 1024 * 1024) {
       throw StateError('Image must be between 1 byte and 8 MB');
     }
     final bytes = await file.readAsBytes();
-    final response = await _client.post(
-      endpoint,
-      headers: {
+    final response = await _client
+        .post(
+          endpoint,
+          headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-      },
-      body: jsonEncode({
+          },
+          body: jsonEncode({
         'consent': true,
         'image_base64': base64Encode(bytes),
         'offline_text': offlineDraft.sourceText,
-      }),
-    ).timeout(const Duration(seconds: 25));
+          }),
+        )
+        .timeout(const Duration(seconds: 25));
     if (response.statusCode != 200) {
       throw StateError('Cloud OCR unavailable (${response.statusCode})');
     }
@@ -76,6 +85,7 @@ class MedicineCloudHttpGateway implements MedicineCloudVisionGateway {
       final trimmed = value.trim();
       return trimmed.isEmpty ? null : trimmed;
     }
+
     // Suggestions are not persisted. The pharmacist must review the draft.
     return MedicineScanDraft(
       brandName: field('brand_name') ?? offlineDraft.brandName,
