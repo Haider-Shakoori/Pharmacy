@@ -30,6 +30,7 @@ use App\Http\Controllers\Pharmacy\SettingsController as PharmacySettingsControll
 use App\Http\Controllers\Pharmacy\SupplierController;
 use App\Http\Controllers\Pharmacy\SupplierPaymentController;
 use App\Http\Controllers\Pharmacy\UserController as PharmacyUserController;
+use App\Http\Controllers\Platform\PharmacyAccessSetupController;
 use App\Http\Middleware\SetTenantRouteDefaults;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -41,6 +42,10 @@ Route::domain('{pharmacy}.'.config('pharmacy.tenant_domain'))->middleware([
     PreventAccessFromCentralDomains::class,
     SetTenantRouteDefaults::class,
 ])->name('pharmacy.')->group(function (): void {
+    Route::get('/set-password', [PharmacyAccessSetupController::class, 'show'])
+        ->middleware(['signed', 'throttle:10,1'])->name('access.setup');
+    Route::post('/set-password', [PharmacyAccessSetupController::class, 'update'])
+        ->middleware(['signed', 'throttle:5,1'])->name('access.update');
     Route::get('/login', [PharmacyLoginController::class, 'create'])->name('login');
     Route::post('/login', [PharmacyLoginController::class, 'store'])
         ->middleware('throttle:pharmacy-login')

@@ -61,7 +61,11 @@ class TenantController extends Controller
             }
         }
 
-        return view('platform.tenants.index', compact('tenants', 'search', 'status', 'lastLogins'));
+        $emailAttempts = DB::connection('central')->table('pharmacy_access_email_attempts')
+            ->whereIn('tenant_id', $tenants->getCollection()->pluck('id'))
+            ->orderByDesc('created_at')->get()->groupBy('tenant_id');
+
+        return view('platform.tenants.index', compact('tenants', 'search', 'status', 'lastLogins', 'emailAttempts'));
     }
 
     public function logins(Tenant $tenant): View

@@ -9,6 +9,7 @@ use App\Http\Controllers\Platform\LicenseController;
 use App\Http\Controllers\Platform\PlanController;
 use App\Http\Controllers\Platform\SubscriptionController;
 use App\Http\Controllers\Platform\SubscriptionMonitoringController;
+use App\Http\Controllers\Platform\TenantAccessEmailController;
 use App\Http\Controllers\Platform\TenantController;
 use App\Http\Controllers\Platform\TenantProvisioningRetryController;
 use App\Http\Controllers\Platform\TenantStatusController;
@@ -43,6 +44,9 @@ $platformRoutes = static function (): void {
         Route::put('/tenants/{tenant}/status/{status}', TenantStatusController::class)
             ->whereIn('status', ['active', 'suspended', 'archived'])
             ->name('tenants.status');
+
+        Route::post('/tenants/{tenant}/send-access-email', TenantAccessEmailController::class)
+            ->middleware('throttle:5,1')->name('tenants.send-access-email');
 
         Route::post('/tenants/{tenant}/retry-provisioning', TenantProvisioningRetryController::class)
             ->name('tenants.retry-provisioning');
