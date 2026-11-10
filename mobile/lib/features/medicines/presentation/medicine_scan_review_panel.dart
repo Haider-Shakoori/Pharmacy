@@ -150,7 +150,6 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           children: [SelectableText(widget.draft.sourceText)],
         ),
         CheckboxListTile(
-          isThreeLine: true,
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
           value: _confirmed,
