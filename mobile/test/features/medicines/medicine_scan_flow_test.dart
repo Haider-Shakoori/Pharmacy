@@ -1,8 +1,8 @@
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_cloud_fallback.dart';
-import 'package:businessos_pharmacy/features/medicines/domain/offline_medicine_text_parser.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_coordinator.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/offline_medicine_text_parser.dart';
 import 'package:businessos_pharmacy/features/medicines/presentation/medicine_scan_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
