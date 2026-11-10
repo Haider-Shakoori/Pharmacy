@@ -63,7 +63,9 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
         });
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+      }
     }
   }
 
@@ -72,20 +74,32 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
     final draft = _draft;
     final imagePath = _lastImagePath;
     if (_busy || fallback == null || draft == null || imagePath == null ||
-        !_cloudConsent) return;
-    setState(() { _busy = true; _error = null; });
+        !_cloudConsent) {
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     try {
       final suggestion = await fallback.suggest(
         localImagePath: imagePath,
         offlineDraft: draft,
         userConsented: _cloudConsent,
       );
-      if (mounted) setState(() { _draft = suggestion; _cloudConsent = false; });
+      if (mounted) {
+        setState(() {
+          _draft = suggestion;
+          _cloudConsent = false;
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() {
-        _error = 'Cloud suggestions unavailable. Offline results are preserved.';
-        _cloudConsent = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Cloud suggestions unavailable. Offline results are preserved.';
+          _cloudConsent = false;
+        });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -142,11 +156,17 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
               onChanged: _busy ? null : (value) => setState(() {
                 _cloudConsent = value ?? false;
               }),
-              title: const Text('I consent to sending this label image for cloud AI suggestions'),
-              subtitle: const Text('Optional. The image is uploaded only when you request analysis.'),
+              title: const Text(
+                'I consent to sending this label image for cloud AI suggestions',
+              ),
+              subtitle: const Text(
+                'Optional. The image is uploaded only when you request analysis.',
+              ),
             ),
             OutlinedButton.icon(
-              onPressed: _busy || !_cloudConsent ? null : _requestCloudSuggestions,
+              onPressed: _busy || !_cloudConsent
+                  ? null
+                  : _requestCloudSuggestions,
               icon: const Icon(Icons.cloud_outlined),
               label: const Text('Get optional cloud suggestions'),
             ),
