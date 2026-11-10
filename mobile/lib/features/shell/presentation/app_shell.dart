@@ -540,6 +540,10 @@ class _AppShellState extends ConsumerState<AppShell> {
             .map(
               (_ShellDestination destination) => NavigationDestination(
                 icon: Icon(destination.icon),
+                selectedIcon: Icon(
+                  destination.icon,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 label: destination.label,
               ),
             )
