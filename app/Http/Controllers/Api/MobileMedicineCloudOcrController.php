@@ -37,7 +37,7 @@ class MobileMedicineCloudOcrController extends Controller
         $url = parse_url($endpoint);
         // Require a separately configured trusted HTTPS provider; no redirect
         // following and no provider credentials are sent to the mobile app.
-        if ($token === '' || ! is_array($url) || ($url['scheme'] ?? '') !== 'https'
+        if ($token === '' || !is_array($url) || ($url['scheme'] ?? '') !== 'https'
             || empty($url['host']) || isset($url['user']) || isset($url['pass'])
             || isset($url['fragment'])) {
             return response()->json(['message' => 'Cloud OCR is not configured.'], 503);
