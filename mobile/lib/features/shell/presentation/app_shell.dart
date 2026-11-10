@@ -647,7 +647,8 @@ class _ModuleTile extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 module.label,
-                maxLines: 1,
+                textAlign: TextAlign.center,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 12,
