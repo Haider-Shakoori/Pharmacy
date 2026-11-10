@@ -65,9 +65,8 @@ public class OfflineMedicineOcrPlugin: NSObject, FlutterPlugin {
             // When Persian/Pashto are unavailable, Vision's default OCR
             // remains useful for Latin labels but is not claimed to support
             // those scripts.
-            let passes: [String?] = available.isEmpty
-                ? [nil]
-                : available.map { Optional($0) }
+            // Retain default Vision recognition for mixed-script labels.
+            let passes: [String?] = [nil] + available.map { Optional($0) }
             var merged: [String] = []
             var seen = Set<String>()
             var succeeded = false
