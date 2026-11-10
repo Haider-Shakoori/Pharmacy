@@ -780,7 +780,10 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _paymentMethod,
-            decoration: InputDecoration(labelText: strings.posPaymentMethod),
+            decoration: InputDecoration(
+              labelText: strings.posPaymentMethod,
+              prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
+            ),
             items: <DropdownMenuItem<String>>[
               DropdownMenuItem<String>(
                 value: 'cash',
@@ -795,13 +798,15 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                 child: Text(strings.posMobile),
               ),
             ],
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  _paymentMethod = value;
-                });
-              }
-            },
+            onChanged: _checkingOut
+                ? null
+                : (String? value) {
+                    if (value != null) {
+                      setState(() {
+                        _paymentMethod = value;
+                      });
+                    }
+                  },
           ),
           const SizedBox(height: 12),
           Row(
