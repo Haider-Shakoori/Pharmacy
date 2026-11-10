@@ -77,7 +77,6 @@ public class OfflineMedicineOcrPlugin: NSObject, FlutterPlugin {
                 request.usesLanguageCorrection = true
                 if let language = language {
                     request.recognitionLanguages = [language]
-                    request.automaticallyDetectsLanguage = false
                 }
                 do {
                     let handler = VNImageRequestHandler(url: url, options: [:])
