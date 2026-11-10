@@ -4,6 +4,9 @@ name: Flutter iOS Unsigned IPA
 # Ordinary application commits do not automatically build an IPA.
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/flutter-ios-unsigned.yml'
   push:
     branches:
       - feature/mobile-release-integration-20261106
