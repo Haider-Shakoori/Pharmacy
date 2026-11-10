@@ -32,7 +32,16 @@ class MedicineCloudHttpGateway implements MedicineCloudVisionGateway {
     if (accessToken.trim().isEmpty) {
       throw StateError('Authenticated session required for cloud OCR');
     }
-    final file = File.fromUri(Uri.file(localImagePath));
+    final imageUri = Uri.tryParse(localImagePath);
+    if (imageUri == null ||
+        (imageUri.hasScheme && imageUri.scheme != 'file') ||
+        (imageUri.scheme == 'file' && imageUri.host.isNotEmpty) ||
+        (imageUri.scheme.isEmpty && !localImagePath.startsWith('/'))) {
+      throw ArgumentError.value(localImagePath, 'localImagePath', 'Local image required');
+    }
+    final file = File.fromUri(imageUri.scheme == 'file'
+        ? imageUri
+        : Uri.file(localImagePath));
     if (!await file.exists()) throw StateError('Image not found');
     final length = await file.length();
     if (length == 0 || length > 8 * 1024 * 1024) {
