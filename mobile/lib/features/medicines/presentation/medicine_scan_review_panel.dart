@@ -69,8 +69,10 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
       children: [
         Row(
           children: [
-            Icon(Icons.fact_check_outlined,
-                color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.fact_check_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
