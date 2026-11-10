@@ -721,18 +721,13 @@ class _StockBodyState extends State<_StockBody> {
                   },
                 ),
               ),
-              const SizedBox(width: 8),
-              // Filters are not built yet; shown disabled to match the design.
-              const IconButton.outlined(
-                onPressed: null,
-                icon: Icon(Icons.tune_rounded),
-              ),
             ],
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             key: ValueKey('stock-location-${_location ?? 'all'}'),
             initialValue: _location ?? '',
+            isExpanded: true,
             decoration: InputDecoration(labelText: s.location),
             items: <DropdownMenuItem<String>>[
               DropdownMenuItem<String>(value: '', child: Text(s.allLocations)),
