@@ -8,8 +8,8 @@ import 'package:businessos_pharmacy/features/alerts/presentation/operational_ale
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/stock_workspace.dart';
-import 'package:businessos_pharmacy/features/medicines/data/medicine_duplicate_preflight.dart';
 import 'package:businessos_pharmacy/features/medicines/data/medicine_cloud_http_gateway.dart';
+import 'package:businessos_pharmacy/features/medicines/data/medicine_duplicate_preflight.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_cloud_fallback.dart';
 import 'package:businessos_pharmacy/features/medicines/data/medicine_registration_catalog_refresh.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
