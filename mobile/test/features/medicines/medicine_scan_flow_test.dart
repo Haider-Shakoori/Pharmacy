@@ -65,29 +65,42 @@ void main() {
   ) async {
     final gateway = _CloudGateway();
     final confirmed = <ReviewedMedicineScan>[];
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: SingleChildScrollView(
-        child: MedicineScanFlow(
-          images: MedicineImageAcquisition(_LocalImages()),
-          scanner: MedicineScanCoordinator(ocr: _OfflineOcr()),
-          cloudFallback: MedicineCloudFallback(gateway),
-          onConfirmed: confirmed.add,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: MedicineScanFlow(
+              images: MedicineImageAcquisition(_LocalImages()),
+              scanner: MedicineScanCoordinator(ocr: _OfflineOcr()),
+              cloudFallback: MedicineCloudFallback(gateway),
+              onConfirmed: confirmed.add,
+            ),
+          ),
         ),
-      )),
-    ));
+      ),
+    );
     await tester.tap(find.text('Gallery'));
     await tester.pumpAndSettle();
     expect(gateway.calls, 0);
     final button = find.text('Get optional cloud suggestions');
-    expect(tester.widget<OutlinedButton>(
-      find.ancestor(of: button, matching: find.byType(OutlinedButton)),
-    ).onPressed, isNull);
-    await tester.ensureVisible(find.text(
-      'I consent to sending this label image for cloud AI suggestions',
-    ));
-    await tester.tap(find.text(
-      'I consent to sending this label image for cloud AI suggestions',
-    ));
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.ancestor(of: button, matching: find.byType(OutlinedButton)),
+          )
+          .onPressed,
+      isNull,
+    );
+    await tester.ensureVisible(
+      find.text(
+        'I consent to sending this label image for cloud AI suggestions',
+      ),
+    );
+    await tester.tap(
+      find.text(
+        'I consent to sending this label image for cloud AI suggestions',
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.ensureVisible(button);
     await tester.tap(button);
@@ -95,11 +108,13 @@ void main() {
     expect(gateway.calls, 1);
     expect(find.text('Review scanned medicine details'), findsOneWidget);
     expect(confirmed, isEmpty);
-    expect(tester.widget<CheckboxListTile>(
-      find.byType(CheckboxListTile).first,
-    ).value, isFalse);
+    expect(
+      tester
+          .widget<CheckboxListTile>(find.byType(CheckboxListTile).first)
+          .value,
+      isFalse,
+    );
   });
-
 
   testWidgets('cancelled camera capture resets busy state without draft', (
     WidgetTester tester,
