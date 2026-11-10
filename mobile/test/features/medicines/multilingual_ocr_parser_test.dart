@@ -28,14 +28,14 @@ void main() {
     expect(draft.expiresAt, '12/2027');
   });
 
-  test('normalizes Persian digits in batch numbers without changing source', () {
-    final draft = parser.parse([
-      'نمونه درمل',
-      'شماره بچ: AB۱۲۳۴',
-    ]);
-    expect(draft.batchNumber, 'AB1234');
-    expect(draft.sourceText, contains('AB۱۲۳۴'));
-  });
+  test(
+    'normalizes Persian digits in batch numbers without changing source',
+    () {
+      final draft = parser.parse(['نمونه درمل', 'شماره بچ: AB۱۲۳۴']);
+      expect(draft.batchNumber, 'AB1234');
+      expect(draft.sourceText, contains('AB۱۲۳۴'));
+    },
+  );
 
   test('keeps original text available for manual review', () {
     final draft = parser.parse(['Unknown medicine', 'نوی درمل']);
