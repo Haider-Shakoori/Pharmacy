@@ -1,4 +1,3 @@
-import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/offline_medicine_text_parser.dart';
 import 'package:flutter/material.dart';
@@ -63,17 +62,6 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
     super.dispose();
   }
 
-  String _label(BuildContext context, String en, String fa, String ps) {
-    final locale = AppLocale.fromCode(
-      Localizations.localeOf(context).languageCode,
-    );
-    return switch (locale) {
-      AppLocale.dari => fa,
-      AppLocale.pashto => ps,
-      AppLocale.english => en,
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -88,7 +76,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                _label(context, 'Review scanned medicine details', 'بررسی جزئیات دوا از اسکن', 'د سکین شوي درملو معلومات وڅېړئ'),
+                'Review scanned medicine details',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -96,21 +84,21 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         ),
         const SizedBox(height: 8),
         Text(
-          _label(context, 'Check every field against the package before continuing.', 'پیش از ادامه، تمام معلومات را با بسته دوا مقایسه کنید.', 'له دوام مخکې ټول معلومات د درملو له بسته سره پرتله کړئ.'),
+          'Check every field against the package before continuing.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 16),
         TextField(
           controller: _brand,
           decoration: const InputDecoration(
-            labelText: _label(context, 'Brand name *', 'نام تجارتی *', 'سوداګریز نوم *'),
+            labelText: 'Brand name *',
             prefixIcon: Icon(Icons.medication_outlined),
           ),
         ),
         TextField(
           controller: _generic,
           decoration: const InputDecoration(
-            labelText: _label(context, 'Generic name', 'نام عمومی', 'عمومي نوم'),
+            labelText: 'Generic name',
             prefixIcon: Icon(Icons.science_outlined),
           ),
         ),
@@ -125,20 +113,20 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         TextField(
           controller: _barcode,
           decoration: const InputDecoration(
-            labelText: _label(context, 'Barcode', 'بارکود', 'بارکوډ'),
+            labelText: 'Barcode',
             prefixIcon: Icon(Icons.qr_code_outlined),
           ),
         ),
         const SizedBox(height: 20),
         Text(
-          _label(context, 'Stock receiving details (review only)', 'جزئیات دریافت موجودی (فقط بررسی)', 'د زېرمتون د ترلاسه کولو معلومات (یوازې کتنه)'),
+          'Stock receiving details (review only)',
           style: Theme.of(context).textTheme.titleSmall,
         ),
         TextField(
           controller: _batch,
           readOnly: true,
           decoration: const InputDecoration(
-            labelText: _label(context, 'Detected batch number', 'شماره بچ شناسایی‌شده', 'د پېژندل شوې بستې شمېره'),
+            labelText: 'Detected batch number',
             prefixIcon: Icon(Icons.inventory_2_outlined),
           ),
         ),
@@ -146,7 +134,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           controller: _expiry,
           readOnly: true,
           decoration: const InputDecoration(
-            labelText: _label(context, 'Detected expiry date', 'تاریخ انقضای شناسایی‌شده', 'د پېژندل شوې پای نېټه'),
+            labelText: 'Detected expiry date',
             prefixIcon: Icon(Icons.event_outlined),
           ),
         ),
@@ -158,15 +146,16 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         ),
         const SizedBox(height: 8),
         ExpansionTile(
-          title: Text(_label(context, _label(context, 'Recognized source text', 'متن شناسایی‌شده', 'پېژندل شوی متن'), 'متن شناسایی‌شده', 'پېژندل شوی متن')),
+          title: const Text('Recognized source text'),
           children: [SelectableText(widget.draft.sourceText)],
         ),
         CheckboxListTile(
+          isThreeLine: true,
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
           value: _confirmed,
           onChanged: (value) => setState(() => _confirmed = value ?? false),
-          title: Text(_label(context, _label(context, 'I have checked the medicine label and details', 'برچسب و جزئیات دوا را بررسی کرده‌ام', 'ما د درملو لیبل او معلومات کتلي دي'), 'برچسب و جزئیات دوا را بررسی کرده‌ام', 'ما د درملو لیبل او معلومات کتلي دي')),
+          title: const Text('I have checked the medicine label and details'),
         ),
         FilledButton(
           onPressed: !_confirmed || _brand.text.trim().isEmpty
@@ -183,7 +172,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
                   );
                   widget.onConfirmed(reviewed);
                 },
-          child: Text(_label(context, _label(context, 'Use reviewed details', 'استفاده از جزئیات بررسی‌شده', 'کتل شوي معلومات وکاروئ'), 'استفاده از جزئیات بررسی‌شده', 'کتل شوي معلومات وکاروئ')),
+          child: const Text('Use reviewed details'),
         ),
         const SizedBox(height: 12),
       ],
