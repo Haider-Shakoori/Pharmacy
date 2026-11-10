@@ -48,7 +48,15 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
   @override
   void dispose() {
     _brand.removeListener(_refreshBrandValidation);
-    for (final controller in [_brand, _generic, _strength, _dosage, _barcode, _batch, _expiry]) {
+    for (final controller in [
+      _brand,
+      _generic,
+      _strength,
+      _dosage,
+      _barcode,
+      _batch,
+      _expiry,
+    ]) {
       controller.dispose();
     }
     super.dispose();
