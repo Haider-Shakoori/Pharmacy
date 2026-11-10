@@ -32,6 +32,7 @@ class MobileMedicineCloudOcrController extends Controller
             return response()->json(['message' => 'Unsupported image format.'], 422);
         }
 
+        $driver = (string) config('services.medicine_ocr.driver', 'custom');
         $endpoint = (string) config('services.medicine_ocr.endpoint', '');
         $token = (string) config('services.medicine_ocr.token', '');
         $url = parse_url($endpoint);
@@ -48,17 +49,38 @@ class MobileMedicineCloudOcrController extends Controller
             return response()->json(['message' => 'Cloud OCR is not configured.'], 503);
         }
 
+        if (! in_array($driver, ['custom', 'openai'], true)
+            || ($driver === 'openai' && ($host !== 'api.openai.com' || ($url['path'] ?? '') !== '/v1/responses'))) {
+            return response()->json(['message' => 'Cloud OCR is not configured.'], 503);
+        }
+
+        $payload = [
+            'image_base64' => $data['image_base64'],
+            'mime_type' => $mime,
+            'offline_text' => $data['offline_text'] ?? '',
+        ];
+        if ($driver === 'openai') {
+            $payload = [
+                'model' => (string) config('services.medicine_ocr.model', 'gpt-4.1-mini'),
+                'store' => false,
+                'max_output_tokens' => 350,
+                'input' => [[
+                    'role' => 'user',
+                    'content' => [
+                        ['type' => 'input_text', 'text' => 'Read this medicine label in English, Dari or Pashto. Return only a JSON object with a suggestions object containing brand_name, generic_name, strength, dosage_form, batch_number and expires_at. Use null for uncertain fields. Never invent details. Offline OCR text: '.($data['offline_text'] ?? '')],
+                        ['type' => 'input_image', 'image_url' => 'data:'.$mime.';base64,'.$data['image_base64']],
+                    ],
+                ]],
+            ];
+        }
+
         try {
             $response = Http::withToken($token)
                 ->acceptJson()
                 ->timeout(20)
                 ->connectTimeout(5)
                 ->withoutRedirecting()
-                ->post($endpoint, [
-                    'image_base64' => $data['image_base64'],
-                    'mime_type' => $mime,
-                    'offline_text' => $data['offline_text'] ?? '',
-                ]);
+                ->post($endpoint, $payload);
         } catch (ConnectionException $exception) {
             return response()->json(['message' => 'Cloud OCR is temporarily unavailable.'], 502);
         }
@@ -68,6 +90,19 @@ class MobileMedicineCloudOcrController extends Controller
         }
 
         $suggestions = $response->json('suggestions');
+        if ($driver === 'openai') {
+            $output = $response->json('output', []);
+            $text = '';
+            foreach (is_array($output) ? $output : [] as $item) {
+                foreach (($item['content'] ?? []) as $part) {
+                    if (($part['type'] ?? '') === 'output_text' && is_string($part['text'] ?? null)) {
+                        $text .= $part['text'];
+                    }
+                }
+            }
+            $decoded = json_decode($text, true);
+            $suggestions = is_array($decoded) ? ($decoded['suggestions'] ?? null) : null;
+        }
         if (! is_array($suggestions)) {
             return response()->json(['message' => 'Invalid OCR provider response.'], 502);
         }
