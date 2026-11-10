@@ -14,6 +14,7 @@ class PharmacyAccessSetupController extends Controller
     {
         $email = tenancy()->central(fn () => Cache::get('pharmacy-access:'.$request->query('token')));
         abort_unless(is_string($email) && $email === $request->query('email'), 403);
+
         return view('platform.tenants.access-setup', ['login' => route('pharmacy.login')]);
     }
 
@@ -26,6 +27,7 @@ class PharmacyAccessSetupController extends Controller
         $user = User::where('email', $email)->firstOrFail();
         $user->forceFill(['password' => $data['password'], 'must_change_password' => false])->save();
         tenancy()->central(fn () => Cache::forget($key));
+
         return redirect()->route('pharmacy.login')->with('status', 'Your password has been set. Please sign in.');
     }
 }
