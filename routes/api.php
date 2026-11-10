@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\DesktopUpdateManifestController;
 use App\Http\Controllers\Api\LicenseActivationController;
 use App\Http\Controllers\Api\MobileDeviceRegistrationController;
 use App\Http\Controllers\Api\MobileMedicineCreateController;
+use App\Http\Controllers\Api\MobileMedicineCloudOcrController;
 use App\Http\Controllers\Api\MobileMedicineDuplicateCheckController;
 use App\Http\Controllers\Api\MobileSessionRefreshController;
 use App\Http\Controllers\Api\MobileStockLocationController;
@@ -64,6 +65,8 @@ Route::prefix('/v1/mobile')
     ->group(function (): void {
         Route::post('/session/refresh', MobileSessionRefreshController::class);
         Route::post('/medicines/duplicate-check', MobileMedicineDuplicateCheckController::class);
+        Route::post('/medicines/cloud-ocr', MobileMedicineCloudOcrController::class)
+            ->middleware('throttle:5,1');
         Route::post('/medicines', MobileMedicineCreateController::class);
         Route::get('/stock-locations', [MobileStockLocationController::class, 'index']);
         Route::get('/stock-location-branches', [MobileStockLocationController::class, 'branches']);
