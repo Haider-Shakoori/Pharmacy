@@ -52,31 +52,60 @@ public class OfflineMedicineOcrPlugin: NSObject, FlutterPlugin {
         }
 
         DispatchQueue.global(qos: .userInitiated).async {
-            let request = VNRecognizeTextRequest()
-            request.recognitionLevel = .accurate
-            request.usesLanguageCorrection = true
-            // Ask Vision for every supported target language rather than
-            // assuming that the device only recognizes English.
-            // Unsupported languages are never passed to the request.
-            let preferred = ["fa-IR", "fa-AF", "ps-AF", "en-US"]
-            if let supported = try? request.supportedRecognitionLanguages() {
-                let selected = preferred.filter { supported.contains($0) }
-                if !selected.isEmpty {
-                    request.recognitionLanguages = selected
-                    request.automaticallyDetectsLanguage = true
+            // Vision's language coverage depends on the installed iOS version.
+            // Run separate supported-script passes to avoid English dominating
+            // mixed English/Dari/Pashto pharmaceutical packaging.
+            let probe = VNRecognizeTextRequest()
+            probe.recognitionLevel = .accurate
+            let supported = (try? probe.supportedRecognitionLanguages()) ?? []
+            let preferred = ["fa-AF", "fa-IR", "ps-AF", "en-US"]
+            let available = preferred.filter { supported.contains($0) }
+
+            // No language pack downloads or network requests are made.
+            // When Persian/Pashto are unavailable, Vision's default OCR
+            // remains useful for Latin labels but is not claimed to support
+            // those scripts.
+            let passes: [String?] = available.isEmpty
+                ? [nil]
+                : available.map { Optional($0) }
+            var merged: [String] = []
+            var seen = Set<String>()
+            var succeeded = false
+
+            for language in passes {
+                let request = VNRecognizeTextRequest()
+                request.recognitionLevel = .accurate
+                request.usesLanguageCorrection = true
+                if let language = language {
+                    request.recognitionLanguages = [language]
+                    request.automaticallyDetectsLanguage = false
+                }
+                do {
+                    let handler = VNImageRequestHandler(url: url, options: [:])
+                    try handler.perform([request])
+                    succeeded = true
+                    for observation in request.results ?? [] {
+                        guard let line = observation.topCandidates(1).first?.string
+                            .trimmingCharacters(in: .whitespacesAndNewlines),
+                            !line.isEmpty else { continue }
+                        let key = line.folding(
+                            options: [.caseInsensitive, .diacriticInsensitive],
+                            locale: Locale(identifier: "en_US_POSIX")
+                        )
+                        if seen.insert(key).inserted {
+                            merged.append(line)
+                        }
+                    }
+                } catch {
+                    // A failed language pass must not discard successful passes.
+                    continue
                 }
             }
 
-            do {
-                // Vision reads the file locally and handles supported image orientation.
-                let handler = VNImageRequestHandler(url: url, options: [:])
-                try handler.perform([request])
-                let lines = (request.results ?? []).compactMap {
-                    $0.topCandidates(1).first?.string
-                }
-                DispatchQueue.main.async { result(lines) }
-            } catch {
-                DispatchQueue.main.async {
+            DispatchQueue.main.async {
+                if succeeded {
+                    result(merged)
+                } else {
                     result(FlutterError(
                         code: "recognition_failed",
                         message: "On-device Vision text recognition failed",
