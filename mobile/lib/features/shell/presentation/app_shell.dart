@@ -9,6 +9,8 @@ import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browse
 import 'package:businessos_pharmacy/features/catalog/presentation/offline_catalog_panels.dart';
 import 'package:businessos_pharmacy/features/catalog/presentation/stock_workspace.dart';
 import 'package:businessos_pharmacy/features/medicines/data/medicine_duplicate_preflight.dart';
+import 'package:businessos_pharmacy/features/medicines/data/medicine_cloud_http_gateway.dart';
+import 'package:businessos_pharmacy/features/medicines/domain/medicine_cloud_fallback.dart';
 import 'package:businessos_pharmacy/features/medicines/data/medicine_registration_catalog_refresh.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_image_acquisition.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_registration_handoff.dart';
@@ -165,6 +167,28 @@ class _AppShellState extends ConsumerState<AppShell> {
                     scanner: const MedicineScanCoordinator(
                       ocr: PlatformMedicineOcr(),
                     ),
+                    cloudFallback: (() {
+                      final registration = ref
+                          .watch(mobileRegistrationProvider)
+                          .asData
+                          ?.value;
+                      final base = AppEnvironment.current.apiBaseUri;
+                      if (registration == null ||
+                          registration.accessExpired ||
+                          !canScanMedicines ||
+                          base == null ||
+                          base.scheme != 'https') {
+                        return null;
+                      }
+                      return MedicineCloudFallback(
+                        MedicineCloudHttpGateway(
+                          endpoint: base.resolve(
+                            'api/v1/mobile/medicines/cloud-ocr',
+                          ),
+                          accessToken: registration.accessToken,
+                        ),
+                      );
+                    })(),
                     onConfirmed: (ReviewedMedicineScan reviewed) {
                       setState(() {
                         _reviewedScan = reviewed;
