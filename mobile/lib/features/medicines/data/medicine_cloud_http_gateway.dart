@@ -59,14 +59,14 @@ class MedicineCloudHttpGateway implements MedicineCloudVisionGateway {
         .post(
           endpoint,
           headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
           body: jsonEncode({
-        'consent': true,
-        'image_base64': base64Encode(bytes),
-        'offline_text': offlineDraft.sourceText,
+            'consent': true,
+            'image_base64': base64Encode(bytes),
+            'offline_text': offlineDraft.sourceText,
           }),
         )
         .timeout(const Duration(seconds: 25));
