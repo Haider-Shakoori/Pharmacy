@@ -264,15 +264,18 @@ class _SalesReportState extends State<_SalesReport> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        SegmentedButton<int>(
-          segments: <ButtonSegment<int>>[
-            ButtonSegment<int>(value: 1, label: Text(s.today)),
-            ButtonSegment<int>(value: 7, label: Text(s.days7)),
-            ButtonSegment<int>(value: 30, label: Text(s.days30)),
-          ],
-          selected: <int>{_days},
-          onSelectionChanged: (Set<int> selection) =>
-              setState(() => _days = selection.first),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SegmentedButton<int>(
+            segments: <ButtonSegment<int>>[
+              ButtonSegment<int>(value: 1, label: Text(s.today)),
+              ButtonSegment<int>(value: 7, label: Text(s.days7)),
+              ButtonSegment<int>(value: 30, label: Text(s.days30)),
+            ],
+            selected: <int>{_days},
+            onSelectionChanged: (Set<int> selection) =>
+                setState(() => _days = selection.first),
+          ),
         ),
         const SizedBox(height: 12),
         FutureBuilder<_SalesData>(
