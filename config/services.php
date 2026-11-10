@@ -38,6 +38,8 @@ return [
     'medicine_ocr' => [
         'endpoint' => env('MEDICINE_OCR_PROVIDER_ENDPOINT', ''),
         'token' => env('MEDICINE_OCR_PROVIDER_TOKEN', ''),
+        // Explicitly trusted DNS hostname(s); never accept arbitrary URLs.
+        'allowed_hosts' => array_filter(array_map('trim', explode(',', (string) env('MEDICINE_OCR_ALLOWED_HOSTS', '')))),
     ],
 
 ];
