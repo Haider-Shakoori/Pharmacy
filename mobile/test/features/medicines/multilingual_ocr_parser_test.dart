@@ -37,6 +37,33 @@ void main() {
     },
   );
 
+  test('extracts explicitly labeled Dari generic name', () {
+    final draft = parser.parse([
+      'برند آزمایشی',
+      'نام جنریک: پاراستامول',
+      'شربت ۱۲۵ mg',
+    ]);
+    expect(draft.brandName, 'برند آزمایشی');
+    expect(draft.genericName, 'پاراستامول');
+    expect(draft.strength, '125 mg');
+  });
+
+  test('extracts explicitly labeled Pashto generic name and batch', () {
+    final draft = parser.parse([
+      'نمونه درمل',
+      'جنریک نوم: پاراسټامول',
+      'د بچ شمېره: AB۱۲۳۴',
+    ]);
+    expect(draft.brandName, 'نمونه درمل');
+    expect(draft.genericName, 'پاراسټامول');
+    expect(draft.batchNumber, 'AB1234');
+  });
+
+  test('does not guess generic name without an explicit label', () {
+    final draft = parser.parse(['Brand X', 'Unknown text']);
+    expect(draft.genericName, isNull);
+  });
+
   test('keeps original text available for manual review', () {
     final draft = parser.parse(['Unknown medicine', 'نوی درمل']);
     expect(draft.sourceText, 'Unknown medicine\nنوی درمل');
