@@ -7,6 +7,7 @@ use App\Services\Mobile\MobileAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\ConnectionException;
 
 class MobileMedicineCloudOcrController extends Controller
 {
@@ -42,16 +43,20 @@ class MobileMedicineCloudOcrController extends Controller
             return response()->json(['message' => 'Cloud OCR is not configured.'], 503);
         }
 
-        $response = Http::withToken($token)
-            ->acceptJson()
-            ->timeout(20)
-            ->connectTimeout(5)
-            ->withoutRedirecting()
-            ->post($endpoint, [
-                'image_base64' => $data['image_base64'],
-                'mime_type' => $mime,
-                'offline_text' => $data['offline_text'] ?? '',
-            ]);
+        try {
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->timeout(20)
+                ->connectTimeout(5)
+                ->withoutRedirecting()
+                ->post($endpoint, [
+                    'image_base64' => $data['image_base64'],
+                    'mime_type' => $mime,
+                    'offline_text' => $data['offline_text'] ?? '',
+                ]);
+        } catch (ConnectionException $exception) {
+            return response()->json(['message' => 'Cloud OCR is temporarily unavailable.'], 502);
+        }
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Cloud OCR is temporarily unavailable.'], 502);
