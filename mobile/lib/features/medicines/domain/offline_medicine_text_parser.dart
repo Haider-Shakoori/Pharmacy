@@ -45,7 +45,7 @@ class OfflineMedicineTextParser {
     final batch = RegExp(
       r'(?:batch|lot|b\.?no\.?|بچ|شماره بچ|شماره لات)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]{2,})',
       caseSensitive: false,
-    ).firstMatch(text)?.group(1);
+    ).firstMatch(normalized)?.group(1);
     final expiryMatch = RegExp(
       r'(?:exp|expiry|expires|انقضا|انتهاء|تاریخ انقضا|د ختم نېټه)\s*[:.-]?\s*(\d{1,2}[/.-]\d{2,4}|\d{4}[/.-]\d{1,2})',
       caseSensitive: false,
