@@ -659,10 +659,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         if (_cart.isEmpty)
           Card(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 24,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
                 children: <Widget>[
                   Icon(
