@@ -28,7 +28,7 @@ class MobileMedicineCloudOcrController extends Controller
         }
         $imageInfo = @getimagesizefromstring($image);
         $mime = $imageInfo['mime'] ?? null;
-        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+        if (! in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
             return response()->json(['message' => 'Unsupported image format.'], 422);
         }
 
@@ -37,7 +37,7 @@ class MobileMedicineCloudOcrController extends Controller
         $url = parse_url($endpoint);
         // Require a separately configured trusted HTTPS provider; no redirect
         // following and no provider credentials are sent to the mobile app.
-        if ($token === '' || !is_array($url) || ($url['scheme'] ?? '') !== 'https'
+        if ($token === '' || ! is_array($url) || ($url['scheme'] ?? '') !== 'https'
             || empty($url['host']) || isset($url['user']) || isset($url['pass'])
             || isset($url['fragment'])) {
             return response()->json(['message' => 'Cloud OCR is not configured.'], 503);
@@ -58,12 +58,12 @@ class MobileMedicineCloudOcrController extends Controller
             return response()->json(['message' => 'Cloud OCR is temporarily unavailable.'], 502);
         }
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             return response()->json(['message' => 'Cloud OCR is temporarily unavailable.'], 502);
         }
 
         $suggestions = $response->json('suggestions');
-        if (!is_array($suggestions)) {
+        if (! is_array($suggestions)) {
             return response()->json(['message' => 'Invalid OCR provider response.'], 502);
         }
         $allowed = ['brand_name', 'generic_name', 'strength', 'dosage_form', 'batch_number', 'expires_at'];
