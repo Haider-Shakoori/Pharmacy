@@ -657,16 +657,19 @@ class _StockBodyState extends State<_StockBody> {
             ],
           ),
         const SizedBox(height: 12),
-        SegmentedButton<int>(
-          segments: <ButtonSegment<int>>[
-            ButtonSegment<int>(value: 0, label: Text(s.tabStock)),
-            ButtonSegment<int>(value: 1, label: Text(s.tabBatches)),
-            ButtonSegment<int>(value: 2, label: Text(s.tabExpiry)),
-            ButtonSegment<int>(value: 3, label: Text(s.tabStorage)),
-          ],
-          selected: <int>{_tab},
-          onSelectionChanged: (Set<int> selection) =>
-              setState(() => _tab = selection.first),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SegmentedButton<int>(
+            segments: <ButtonSegment<int>>[
+              ButtonSegment<int>(value: 0, label: Text(s.tabStock)),
+              ButtonSegment<int>(value: 1, label: Text(s.tabBatches)),
+              ButtonSegment<int>(value: 2, label: Text(s.tabExpiry)),
+              ButtonSegment<int>(value: 3, label: Text(s.tabStorage)),
+            ],
+            selected: <int>{_tab},
+            onSelectionChanged: (Set<int> selection) =>
+                setState(() => _tab = selection.first),
+          ),
         ),
         const SizedBox(height: 12),
         if (_tab == 3) ...<Widget>[
