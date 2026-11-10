@@ -91,16 +91,16 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         TextField(
           controller: _brand,
           decoration: const InputDecoration(
-          labelText: 'Brand name *',
-          prefixIcon: Icon(Icons.medication_outlined),
-        ),
+            labelText: 'Brand name *',
+            prefixIcon: Icon(Icons.medication_outlined),
+          ),
         ),
         TextField(
           controller: _generic,
           decoration: const InputDecoration(
-          labelText: 'Generic name',
-          prefixIcon: Icon(Icons.science_outlined),
-        ),
+            labelText: 'Generic name',
+            prefixIcon: Icon(Icons.science_outlined),
+          ),
         ),
         TextField(
           controller: _strength,
@@ -113,9 +113,9 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         TextField(
           controller: _barcode,
           decoration: const InputDecoration(
-          labelText: 'Barcode',
-          prefixIcon: Icon(Icons.qr_code_outlined),
-        ),
+            labelText: 'Barcode',
+            prefixIcon: Icon(Icons.qr_code_outlined),
+          ),
         ),
         const SizedBox(height: 20),
         Text(
@@ -126,17 +126,17 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           controller: _batch,
           readOnly: true,
           decoration: const InputDecoration(
-          labelText: 'Detected batch number',
-          prefixIcon: Icon(Icons.inventory_2_outlined),
-        ),
+            labelText: 'Detected batch number',
+            prefixIcon: Icon(Icons.inventory_2_outlined),
+          ),
         ),
         TextField(
           controller: _expiry,
           readOnly: true,
           decoration: const InputDecoration(
-          labelText: 'Detected expiry date',
-          prefixIcon: Icon(Icons.event_outlined),
-        ),
+            labelText: 'Detected expiry date',
+            prefixIcon: Icon(Icons.event_outlined),
+          ),
         ),
         const SizedBox(height: 8),
         Text(
