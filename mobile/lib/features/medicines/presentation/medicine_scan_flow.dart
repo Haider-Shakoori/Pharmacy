@@ -27,19 +27,28 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
   bool _busy = false;
   String? _error;
   MedicineScanDraft? _draft;
+  final List<String> _recognizedPages = <String>[];
 
   Future<void> _scan(MedicineImageOrigin origin) async {
     if (_busy) return;
     setState(() {
       _busy = true;
       _error = null;
-      _draft = null;
     });
     try {
       final image = await widget.images.acquire(origin);
       if (image == null) return;
       final draft = await widget.scanner.scanLocalImage(image.localPath);
-      if (mounted) setState(() => _draft = draft);
+      if (mounted) {
+        setState(() {
+          _recognizedPages.add(draft.sourceText);
+          // Reparse all captured sides together so a second image can supply
+          // missing fields without discarding recognized text from the first.
+          _draft = widget.scanner.parser.parse(
+            _recognizedPages.expand((page) => page.split('\n')).toList(),
+          );
+        });
+      }
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -54,7 +63,10 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
   void _confirm(ReviewedMedicineScan reviewed) {
     widget.onConfirmed(reviewed);
     if (mounted) {
-      setState(() => _draft = null);
+      setState(() {
+        _draft = null;
+        _recognizedPages.clear();
+      });
     }
   }
 
@@ -89,13 +101,18 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         if (_draft != null) ...[
+          Text('Images scanned: ${_recognizedPages.length}'),
+          const Text('Scan another side to add missing label details.'),
           MedicineScanReviewPanel(
             key: ValueKey(_draft),
             draft: _draft!,
             onConfirmed: _confirm,
           ),
           TextButton.icon(
-            onPressed: () => setState(() => _draft = null),
+            onPressed: () => setState(() {
+              _draft = null;
+              _recognizedPages.clear();
+            }),
             icon: const Icon(Icons.delete_outline),
             label: const Text('Discard scan'),
           ),
