@@ -35,6 +35,7 @@
                         <th class="px-4 py-3 text-start">Domain</th>
                         <th class="px-4 py-3 text-start">Locale</th>
                         <th class="px-4 py-3 text-start">Last login</th>
+                        <th class="px-4 py-3 text-start">Access email</th>
                         <th class="px-4 py-3 text-end">Actions</th>
                     </tr>
                 </thead>
@@ -61,6 +62,21 @@
                                     <span class="text-slate-500">Never logged in</span>
                                 @endif
                             </td>
+                            <td class="px-4 py-3 text-xs">
+                                @php($attempts = $emailAttempts[$tenant->id] ?? collect())
+                                @if ($attempts->isEmpty())
+                                    <span class="text-slate-500">No recorded attempt</span>
+                                @else
+                                    @php($latest = $attempts->first())
+                                    <p class="font-semibold">{{ ucfirst($latest->status) }}</p>
+                                    <p class="text-slate-500">{{ $latest->created_at }}</p>
+                                    <details><summary class="cursor-pointer">History ({{ $attempts->count() }})</summary>
+                                        @foreach ($attempts as $attempt)
+                                            <p>{{ $attempt->created_at }} — {{ $attempt->status }}</p>
+                                        @endforeach
+                                    </details>
+                                @endif
+                            </td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-2">
                                     <a href="{{ route('platform.tenants.logins', $tenant) }}" class="rounded-lg border border-teal-300 px-2.5 py-1.5 text-xs font-semibold text-teal-800">User logins</a>
@@ -78,7 +94,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="px-4 py-10 text-center text-slate-500">No pharmacies match this filter.</td></tr>
+                        <tr><td colspan="8" class="px-4 py-10 text-center text-slate-500">No pharmacies match this filter.</td></tr>
                     @endforelse
                 </tbody>
             </table>
