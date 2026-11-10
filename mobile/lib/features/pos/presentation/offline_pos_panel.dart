@@ -579,21 +579,34 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         ..._results.map(
           (OfflinePosCatalogItem item) => Card(
             margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              title: Text(
-                item.brandName,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              subtitle: Text(
-                '${item.genericName ?? ''} • '
-                '${strings.posAvailable}: ${item.availableQuantity.compact} '
-                '${item.saleUnit}',
-              ),
-              trailing: FilledButton(
-                onPressed: () => _add(item),
-                child: Text(
-                  '${strings.posAdd} • ${item.salePrice.compact} AFN',
-                ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(
+                    item.brandName,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${item.genericName ?? ''} • '
+                    '${strings.posAvailable}: ${item.availableQuantity.compact} '
+                    '${item.saleUnit}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: FilledButton.icon(
+                      onPressed: _checkingOut ? null : () => _add(item),
+                      icon: const Icon(Icons.add_shopping_cart_outlined),
+                      label: Text(
+                        '${strings.posAdd} • ${item.salePrice.compact} AFN',
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
