@@ -123,7 +123,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
           crossAxisCount: 2,
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: MediaQuery.sizeOf(context).width < 360 ? 1.35 : 1.7,
+          childAspectRatio: MediaQuery.sizeOf(context).width < 360 ? 1.2 : 1.5,
           children: <Widget>[
             _KpiTile(
               label: s.salesToday,
@@ -392,7 +392,7 @@ class _KpiTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 12, color: color),
                 ),
