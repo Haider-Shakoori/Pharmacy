@@ -126,10 +126,28 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Scan medicine label (offline)'),
+        Row(
+          children: [
+            Icon(Icons.document_scanner_outlined,
+                color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Scan medicine label (offline)',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
+        Text(
+          'Capture a clear label photo. You can scan more than one side.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
         Wrap(
           spacing: 8,
+          runSpacing: 8,
           children: [
             OutlinedButton.icon(
               onPressed: _busy ? null : () => _scan(MedicineImageOrigin.camera),
@@ -145,15 +163,35 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
             ),
           ],
         ),
-        if (_busy) const LinearProgressIndicator(),
+        if (_busy) ...[
+          const SizedBox(height: 12),
+          const LinearProgressIndicator(),
+        ],
         if (_error != null)
           Text(
             _error!,
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         if (_draft != null) ...[
-          Text('Images scanned: ${_recognizedPages.length}'),
-          const Text('Scan another side to add missing label details.'),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.check_circle_outline, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Images scanned: ${_recognizedPages.length}',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Scan another side to add missing label details.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
           if (widget.cloudFallback != null && _lastImagePath != null) ...[
             CheckboxListTile(
               value: _cloudConsent,
