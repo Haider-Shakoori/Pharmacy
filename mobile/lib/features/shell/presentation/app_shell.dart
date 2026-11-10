@@ -97,7 +97,8 @@ class _AppShellState extends ConsumerState<AppShell> {
             Flexible(
               child: Text(
                 'Darmaltoon',
-                maxLines: 1,
+                maxLines: 2,
+                textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
@@ -632,7 +633,7 @@ class _ModuleTile extends StatelessWidget {
         ? const Color(0xFF1557C0)
         : Colors.blueGrey;
     return Material(
-      color: selected ? const Color(0xFFDDEAFF) : Colors.white,
+      color: selected ? colors.primaryContainer : colors.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
