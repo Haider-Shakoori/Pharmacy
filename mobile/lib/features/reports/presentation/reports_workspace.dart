@@ -146,7 +146,10 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
           (_ReportInfo info) => Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 6,
+              ),
               leading: CircleAvatar(
                 backgroundColor: info.available
                     ? const Color(0xFFDDEAFF)
