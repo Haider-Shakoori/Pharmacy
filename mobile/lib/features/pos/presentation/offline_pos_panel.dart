@@ -657,9 +657,28 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
         if (_cart.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(strings.posEmptyCart),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 24,
+              ),
+              child: Column(
+                children: <Widget>[
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    size: 32,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    strings.posEmptyCart,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
           ),
         ..._cart.map(
           (_CartEntry entry) => Card(
@@ -673,7 +692,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                     children: <Widget>[
                       Expanded(
                         child: InkWell(
-                          onTap: () => _edit(entry),
+                          onTap: _checkingOut ? null : () => _edit(entry),
                           child: Text(
                             entry.item.brandName,
                             style: const TextStyle(fontWeight: FontWeight.w700),
@@ -682,11 +701,13 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                       ),
                       IconButton(
                         tooltip: strings.posRemove,
-                        onPressed: () {
-                          setState(() {
-                            _cart.remove(entry);
-                          });
-                        },
+                        onPressed: _checkingOut
+                            ? null
+                            : () {
+                                setState(() {
+                                  _cart.remove(entry);
+                                });
+                              },
                         icon: const Icon(Icons.delete_outline_rounded),
                       ),
                     ],
