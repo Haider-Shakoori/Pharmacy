@@ -67,8 +67,25 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Review scanned medicine details'),
+        Row(
+          children: [
+            Icon(Icons.fact_check_outlined,
+                color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Review scanned medicine details',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
+        Text(
+          'Check every field against the package before continuing.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 16),
         TextField(
           controller: _brand,
           decoration: const InputDecoration(labelText: 'Brand name *'),
@@ -89,7 +106,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           controller: _barcode,
           decoration: const InputDecoration(labelText: 'Barcode'),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
         Text(
           'Stock receiving details (review only)',
           style: Theme.of(context).textTheme.titleSmall,
@@ -104,15 +121,20 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           readOnly: true,
           decoration: const InputDecoration(labelText: 'Detected expiry date'),
         ),
-        const Text(
+        const SizedBox(height: 8),
+        Text(
           'Batch and expiry are not saved to the medicine catalog. '
           'Verify them when receiving stock.',
+          style: Theme.of(context).textTheme.bodySmall,
         ),
+        const SizedBox(height: 8),
         ExpansionTile(
           title: const Text('Recognized source text'),
           children: [SelectableText(widget.draft.sourceText)],
         ),
         CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
           value: _confirmed,
           onChanged: (value) => setState(() => _confirmed = value ?? false),
           title: const Text('I have checked the medicine label and details'),
@@ -134,6 +156,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
                 },
           child: const Text('Use reviewed details'),
         ),
+        const SizedBox(height: 12),
       ],
     );
   }
