@@ -27,12 +27,10 @@ class _SuppliersPanelState extends ConsumerState<SuppliersPanel> {
     if (registration == null) return;
     final client = http.Client();
     setState(() {
-      _suppliers = MobileSupplierApi(
-        environment: AppEnvironment.current,
-        client: client,
-      ).list(registration: registration, search: _search.text).whenComplete(
-        client.close,
-      );
+      _suppliers =
+          MobileSupplierApi(environment: AppEnvironment.current, client: client)
+              .list(registration: registration, search: _search.text)
+              .whenComplete(client.close);
     });
   }
 
@@ -83,19 +81,26 @@ class _SuppliersPanelState extends ConsumerState<SuppliersPanel> {
               final suppliers = snapshot.data ?? <MobileSupplier>[];
               if (suppliers.isEmpty) return const Text('No suppliers found.');
               return Column(
-                children: suppliers.map((supplier) => ListTile(
-                  leading: const Icon(Icons.storefront_outlined),
-                  title: Text(supplier.name),
-                  subtitle: Text([
-                    if (supplier.code != null) supplier.code!,
-                    if (supplier.contactPerson != null) supplier.contactPerson!,
-                    if (supplier.phone != null) supplier.phone!,
-                    if (supplier.city != null) supplier.city!,
-                  ].join(' • ')),
-                  trailing: supplier.isActive
-                      ? const Icon(Icons.check_circle_outline)
-                      : const Icon(Icons.block_outlined),
-                )).toList(growable: false),
+                children: suppliers
+                    .map(
+                      (supplier) => ListTile(
+                        leading: const Icon(Icons.storefront_outlined),
+                        title: Text(supplier.name),
+                        subtitle: Text(
+                          [
+                            if (supplier.code != null) supplier.code!,
+                            if (supplier.contactPerson != null)
+                              supplier.contactPerson!,
+                            if (supplier.phone != null) supplier.phone!,
+                            if (supplier.city != null) supplier.city!,
+                          ].join(' • '),
+                        ),
+                        trailing: supplier.isActive
+                            ? const Icon(Icons.check_circle_outline)
+                            : const Icon(Icons.block_outlined),
+                      ),
+                    )
+                    .toList(growable: false),
               );
             },
           ),
