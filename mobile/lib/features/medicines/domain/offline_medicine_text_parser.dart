@@ -51,7 +51,7 @@ class OfflineMedicineTextParser {
       caseSensitive: false,
     ).firstMatch(normalized);
     final dosage = RegExp(
-      r'(?:\b(?:tablets?|capsules?|syrup|suspension|injection|cream|ointment|drops)\b|قرص|تابلیت|کپسول|شربت|تزریق|پیچکاری|کریم|قطره|څاڅکي)',
+      r'(?:\b(?:tablets|tablet|capsules|capsule|syrup|suspension|injection|cream|ointment|drops)\b|قرص|تابلیت|کپسول|شربت|تزریق|پیچکاری|کریم|قطره|څاڅکي)',
       caseSensitive: false,
     ).firstMatch(text)?.group(0);
 
@@ -77,7 +77,9 @@ class OfflineMedicineTextParser {
       ).hasMatch(line)) {
         score += 5;
       }
-      if (RegExp(r'\d').hasMatch(line)) score -= 3;
+      if (RegExp(r'\d').hasMatch(line)) score -= 7;
+      if (RegExp(r'\b(?:mg|mcg|tablets?|capsules?|ml)\b', caseSensitive: false).hasMatch(line)) score -= 8;
+      if (words == 1 && !RegExp(r'\d').hasMatch(line)) score += 2;
       if (line.length > 42) score -= 5;
       if (RegExp(
         r'\b(?:pvt|ltd|limited|company|global|certified)\b',
@@ -90,52 +92,58 @@ class OfflineMedicineTextParser {
 
     brandCandidates.sort((a, b) => brandScore(b).compareTo(brandScore(a)));
 
-    // Extract a labelled generic field, or explicit composition lines.
+    // Identify composition by nearby ingredient/strength pairs, not by
+    // a fixed medicine-name dictionary or a particular package position.
+    final amountPattern = RegExp(
+      r'\\b\\d+(?:[.,]\\d+)?\\s?(?:mg|mcg|µg|g|ml|iu|%)\\b',
+      caseSensitive: false,
+    );
+    final composition = <String>[];
+    final ingredients = <String>[];
     final genericMatch = RegExp(
-      r'^(?:generic(?: name)?|active ingredient|ingredient|نام جنریک|نام علمی|ماده موثره|ماده مؤثره|فعال ماده|جنریک نوم|فعاله ماده)\s*[:：-]\s*(.+)$',
+      r'^(?:generic(?: name)?|active ingredients?|ingredients?|composition|نام جنریک|نام علمی|ماده موثره|ماده مؤثره|فعال ماده|جنریک نوم|فعاله ماده)\\s*[:：-]\\s*(.+)$',
       caseSensitive: false,
       multiLine: true,
     ).firstMatch(text);
-    String? generic = genericMatch?.group(1)?.trim();
-    if (generic == null || generic.isEmpty) {
-      final ingredients = <String>[];
-      for (final line in cleaned) {
-        for (final match in RegExp(
-          r'\b(paracetamol|diclofenac sodium|magnesium trisilicate)\b',
-          caseSensitive: false,
-        ).allMatches(line)) {
-          final ingredient = match.group(1)!;
-          if (!ingredients.any(
-            (value) => value.toLowerCase() == ingredient.toLowerCase(),
-          )) {
-            ingredients.add(ingredient);
-          }
-        }
-      }
-      if (ingredients.isNotEmpty) generic = ingredients.join(', ');
-    }
-
-    // Collect distinct strengths only from explicit composition lines.
-    // The first strength remains the fallback for ordinary single-drug labels.
-    String? combinedStrength = strength;
-    final composition = <String>[];
-    for (final line in cleaned) {
-      if (!RegExp(
-        r'\b(paracetamol|diclofenac|magnesium trisilicate)\b',
-        caseSensitive: false,
-      ).hasMatch(line)) {
+    final labelledGeneric = genericMatch?.group(1)?.trim();
+    final compositionHeader = RegExp(
+      r'(?:each\\s+(?:uncoated\\s+)?(?:tablet|capsule)\\s+contains|composition|active ingredients?|ترکیبات|اجزا)',
+      caseSensitive: false,
+    );
+    final stopComposition = RegExp(
+      r'^(?:colour|color|dosage|store|storage|warning|prescription|manufactured|mfg|batch|lot|exp|expiry|شماره|انقضا|تولید)',
+      caseSensitive: false,
+    );
+    var inComposition = false;
+    for (var i = 0; i < cleaned.length; i++) {
+      final line = cleaned[i];
+      if (compositionHeader.hasMatch(line)) {
+        inComposition = true;
         continue;
       }
-      final amounts = RegExp(
-        r'\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|g|ml|iu)\b',
-        caseSensitive: false,
-      ).allMatches(line);
+      if (stopComposition.hasMatch(line)) inComposition = false;
+      if (!inComposition) continue;
+      final amounts = amountPattern.allMatches(line).toList();
+      if (amounts.isEmpty) continue;
       for (final amount in amounts) {
-        final value = amount.group(0)!;
-        if (!composition.contains(value)) composition.add(value);
+        final before = line.substring(0, amount.start).replaceAll(
+          RegExp(r'\\b(?:IP|BP|USP|EP)\\b', caseSensitive: false),
+          '',
+        ).trim();
+        final ingredient = before.replaceAll(RegExp(r'[^\\p{L}\\s-]', unicode: true), '').trim();
+        if (ingredient.length < 3) continue;
+        if (!ingredients.any((value) => value.toLowerCase() == ingredient.toLowerCase())) {
+          ingredients.add(ingredient);
+          composition.add(amount.group(0)!);
+        }
       }
     }
-    if (composition.length > 1) combinedStrength = composition.join(' + ');
+    final generic = ingredients.isNotEmpty
+        ? ingredients.join(', ')
+        : labelledGeneric;
+    final combinedStrength = composition.length > 1
+        ? composition.join(' + ')
+        : strength;
 
     return MedicineScanDraft(
       brandName: brandCandidates.isEmpty ? null : brandCandidates.first,
