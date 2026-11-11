@@ -114,7 +114,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         TextField(
           controller: _generic,
           textInputAction: TextInputAction.next,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: _localized(context, 'Generic name', 'نام عمومی', 'عمومي نوم'),
             prefixIcon: Icon(Icons.science_outlined),
           ),
@@ -122,18 +122,18 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         TextField(
           controller: _strength,
           textInputAction: TextInputAction.next,
-          decoration: const InputDecoration(labelText: _localized(context, 'Strength', 'قدرت دوا', 'د درملو قوت')),
+          decoration: InputDecoration(labelText: _localized(context, 'Strength', 'قدرت دوا', 'د درملو قوت')),
         ),
         TextField(
           controller: _dosage,
           textInputAction: TextInputAction.next,
-          decoration: const InputDecoration(labelText: _localized(context, 'Dosage form', 'شکل دوا', 'د درملو بڼه')),
+          decoration: InputDecoration(labelText: _localized(context, 'Dosage form', 'شکل دوا', 'د درملو بڼه')),
         ),
         TextField(
           controller: _barcode,
           textInputAction: TextInputAction.done,
           keyboardType: TextInputType.text,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: _localized(context, 'Barcode', 'بارکود', 'بارکوډ'),
             prefixIcon: Icon(Icons.qr_code_outlined),
           ),
@@ -146,7 +146,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         TextField(
           controller: _batch,
           readOnly: true,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: _localized(context, 'Detected batch number', 'شماره بچ شناسایی‌شده', 'د پېژندل شوې بستې شمېره'),
             prefixIcon: Icon(Icons.inventory_2_outlined),
           ),
@@ -154,7 +154,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         TextField(
           controller: _expiry,
           readOnly: true,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: _localized(context, 'Detected expiry date', 'تاریخ انقضای شناسایی‌شده', 'د پېژندل شوې پای نېټه'),
             prefixIcon: Icon(Icons.event_outlined),
           ),
