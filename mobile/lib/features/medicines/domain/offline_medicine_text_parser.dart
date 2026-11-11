@@ -95,19 +95,19 @@ class OfflineMedicineTextParser {
     // Identify composition by nearby ingredient/strength pairs, not by
     // a fixed medicine-name dictionary or a particular package position.
     final amountPattern = RegExp(
-      r'\\b\\d+(?:[.,]\\d+)?\\s?(?:mg|mcg|µg|g|ml|iu|%)\\b',
+      r'\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|g|ml|iu|%)\b',
       caseSensitive: false,
     );
     final composition = <String>[];
     final ingredients = <String>[];
     final genericMatch = RegExp(
-      r'^(?:generic(?: name)?|active ingredients?|ingredients?|composition|نام جنریک|نام علمی|ماده موثره|ماده مؤثره|فعال ماده|جنریک نوم|فعاله ماده)\\s*[:：-]\\s*(.+)$',
+      r'^(?:generic(?: name)?|active ingredients?|ingredients?|composition|نام جنریک|نام علمی|ماده موثره|ماده مؤثره|فعال ماده|جنریک نوم|فعاله ماده)\s*[:：-]\s*(.+)$',
       caseSensitive: false,
       multiLine: true,
     ).firstMatch(text);
     final labelledGeneric = genericMatch?.group(1)?.trim();
     final compositionHeader = RegExp(
-      r'(?:each\\s+(?:uncoated\\s+)?(?:tablet|capsule)\\s+contains|composition|active ingredients?|ترکیبات|اجزا)',
+      r'(?:each\s+(?:uncoated\s+)?(?:tablet|capsule)\s+contains|composition|active ingredients?|ترکیبات|اجزا)',
       caseSensitive: false,
     );
     final stopComposition = RegExp(
@@ -127,10 +127,10 @@ class OfflineMedicineTextParser {
       if (amounts.isEmpty) continue;
       for (final amount in amounts) {
         final before = line.substring(0, amount.start).replaceAll(
-          RegExp(r'\\b(?:IP|BP|USP|EP)\\b', caseSensitive: false),
+          RegExp(r'\b(?:IP|BP|USP|EP)\b', caseSensitive: false),
           '',
         ).trim();
-        final ingredient = before.replaceAll(RegExp(r'[^\\p{L}\\s-]', unicode: true), '').trim();
+        final ingredient = before.replaceAll(RegExp(r'[^\p{L}\s-]', unicode: true), '').trim();
         if (ingredient.length < 3) continue;
         if (!ingredients.any((value) => value.toLowerCase() == ingredient.toLowerCase())) {
           ingredients.add(ingredient);
