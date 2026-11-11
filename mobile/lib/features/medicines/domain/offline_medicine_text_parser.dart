@@ -225,6 +225,14 @@ class OfflineMedicineTextParser {
               (repeatedGenericCandidates.isEmpty
                   ? null
                   : repeatedGenericCandidates.first));
+    // An ingredient identified from a split salt name is not a brand.
+    // Remove it before ranking the visible trade name.
+    if (generic != null && generic.isNotEmpty) {
+      final genericWords = generic.toLowerCase().split(RegExp(r'\\s+'));
+      brandCandidates.removeWhere(
+        (candidate) => genericWords.contains(candidate.toLowerCase()),
+      );
+    }
     final combinedStrength = composition.length > 1
         ? composition.join(' + ')
         : strength;
