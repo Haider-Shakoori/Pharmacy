@@ -69,9 +69,10 @@ class OfflineMedicineTextParser {
     final brandCandidates = cleaned.where((line) {
       if (!RegExp(r'[\p{L}]', unicode: true).hasMatch(line)) return false;
       if (line.trim().length < 4) return false;
-      if (RegExp(
-        r'(?:prazol(?:e)?|cillin|mycin|sartan|statin)
-      if (RegExp(
+      if (line.toLowerCase().endsWith('prazole') ||
+          line.toLowerCase().endsWith('prazol')) {
+        return false;
+      }
         r'^(?:each|contains|paracetamol|diclofenac|magnesium|colour|dosage|store|prescription|manufactured|manufacturer|mfg|batch|lot|exp|expiry|generic|active|ingredients?|tablets?|capsules?|rx\b|ip\b|mg\b|شماره|انقضا|تاریخ|تولید|ترکیبات|نام جنریک|نام علمی|ماده|فعال ماده)',
         caseSensitive: false,
       ).hasMatch(line)) {
