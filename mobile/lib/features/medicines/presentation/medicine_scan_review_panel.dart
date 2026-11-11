@@ -91,7 +91,12 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                _localized(context, 'Review scanned medicine details', 'بررسی جزئیات دوای اسکن‌شده', 'د سکین شويو درملو معلومات وڅېړئ'),
+                _localized(
+                  context,
+                  'Review scanned medicine details',
+                  'بررسی جزئیات دوای اسکن‌شده',
+                  'د سکین شويو درملو معلومات وڅېړئ',
+                ),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -99,7 +104,12 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         ),
         const SizedBox(height: 8),
         Text(
-          _localized(context, 'Check every field against the package before continuing.', 'پیش از ادامه، هر بخش را با بسته دوا مقایسه کنید.', 'له دوام مخکې هره برخه د درملو له بسته سره پرتله کړئ.'),
+          _localized(
+            context,
+            'Check every field against the package before continuing.',
+            'پیش از ادامه، هر بخش را با بسته دوا مقایسه کنید.',
+            'له دوام مخکې هره برخه د درملو له بسته سره پرتله کړئ.',
+          ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 16),
@@ -107,7 +117,12 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           controller: _brand,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
-            labelText: _localized(context, 'Brand name *', 'نام تجارتی *', 'سوداګریز نوم *'),
+            labelText: _localized(
+              context,
+              'Brand name *',
+              'نام تجارتی *',
+              'سوداګریز نوم *',
+            ),
             prefixIcon: Icon(Icons.medication_outlined),
           ),
         ),
@@ -115,19 +130,38 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           controller: _generic,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
-            labelText: _localized(context, 'Generic name', 'نام عمومی', 'عمومي نوم'),
+            labelText: _localized(
+              context,
+              'Generic name',
+              'نام عمومی',
+              'عمومي نوم',
+            ),
             prefixIcon: Icon(Icons.science_outlined),
           ),
         ),
         TextField(
           controller: _strength,
           textInputAction: TextInputAction.next,
-          decoration: InputDecoration(labelText: _localized(context, 'Strength', 'قدرت دوا', 'د درملو قوت')),
+          decoration: InputDecoration(
+            labelText: _localized(
+              context,
+              'Strength',
+              'قدرت دوا',
+              'د درملو قوت',
+            ),
+          ),
         ),
         TextField(
           controller: _dosage,
           textInputAction: TextInputAction.next,
-          decoration: InputDecoration(labelText: _localized(context, 'Dosage form', 'شکل دوا', 'د درملو بڼه')),
+          decoration: InputDecoration(
+            labelText: _localized(
+              context,
+              'Dosage form',
+              'شکل دوا',
+              'د درملو بڼه',
+            ),
+          ),
         ),
         TextField(
           controller: _barcode,
@@ -140,14 +174,24 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         ),
         const SizedBox(height: 20),
         Text(
-          _localized(context, 'Stock receiving details (review only)', 'جزئیات دریافت موجودی (فقط بررسی)', 'د توکو د ترلاسه کولو معلومات (یوازې کتنه)'),
+          _localized(
+            context,
+            'Stock receiving details (review only)',
+            'جزئیات دریافت موجودی (فقط بررسی)',
+            'د توکو د ترلاسه کولو معلومات (یوازې کتنه)',
+          ),
           style: Theme.of(context).textTheme.titleSmall,
         ),
         TextField(
           controller: _batch,
           readOnly: true,
           decoration: InputDecoration(
-            labelText: _localized(context, 'Detected batch number', 'شماره بچ شناسایی‌شده', 'د پېژندل شوې بستې شمېره'),
+            labelText: _localized(
+              context,
+              'Detected batch number',
+              'شماره بچ شناسایی‌شده',
+              'د پېژندل شوې بستې شمېره',
+            ),
             prefixIcon: Icon(Icons.inventory_2_outlined),
           ),
         ),
@@ -155,7 +199,12 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           controller: _expiry,
           readOnly: true,
           decoration: InputDecoration(
-            labelText: _localized(context, 'Detected expiry date', 'تاریخ انقضای شناسایی‌شده', 'د پېژندل شوې پای نېټه'),
+            labelText: _localized(
+              context,
+              'Detected expiry date',
+              'تاریخ انقضای شناسایی‌شده',
+              'د پېژندل شوې پای نېټه',
+            ),
             prefixIcon: Icon(Icons.event_outlined),
           ),
         ),
@@ -171,7 +220,14 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         ),
         const SizedBox(height: 8),
         ExpansionTile(
-          title: Text(_localized(context, 'Recognized source text', 'متن شناسایی‌شده', 'پېژندل شوی متن')),
+          title: Text(
+            _localized(
+              context,
+              'Recognized source text',
+              'متن شناسایی‌شده',
+              'پېژندل شوی متن',
+            ),
+          ),
           children: [SelectableText(widget.draft.sourceText)],
         ),
         CheckboxListTile(
@@ -179,7 +235,14 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           controlAffinity: ListTileControlAffinity.leading,
           value: _confirmed,
           onChanged: (value) => setState(() => _confirmed = value ?? false),
-          title: Text(_localized(context, 'I have checked the medicine label and details', 'برچسب و جزئیات دوا را بررسی کرده‌ام', 'ما د درملو لیبل او معلومات کتلي دي')),
+          title: Text(
+            _localized(
+              context,
+              'I have checked the medicine label and details',
+              'برچسب و جزئیات دوا را بررسی کرده‌ام',
+              'ما د درملو لیبل او معلومات کتلي دي',
+            ),
+          ),
         ),
         FilledButton(
           onPressed: !_confirmed || _brand.text.trim().isEmpty
@@ -196,7 +259,14 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
                   );
                   widget.onConfirmed(reviewed);
                 },
-          child: Text(_localized(context, 'Use reviewed details', 'استفاده از جزئیات بررسی‌شده', 'کتل شوي معلومات وکاروئ')),
+          child: Text(
+            _localized(
+              context,
+              'Use reviewed details',
+              'استفاده از جزئیات بررسی‌شده',
+              'کتل شوي معلومات وکاروئ',
+            ),
+          ),
         ),
         const SizedBox(height: 12),
       ],
