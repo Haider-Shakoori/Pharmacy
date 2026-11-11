@@ -113,6 +113,31 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 16),
+        if (widget.draft.packQuantity != null) ...[
+          Text(
+            _localized(
+              context,
+              'Detected pack: ${widget.draft.packQuantity} (review only)',
+              'تعداد بسته: ${widget.draft.packQuantity} (فقط بررسی)',
+              'د بستې شمېر: ${widget.draft.packQuantity} (یوازې کتنه)',
+            ),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (widget.draft.brandName != null &&
+            widget.draft.sourceText.split('\\n').length > 1) ...[
+          Text(
+            _localized(
+              context,
+              'OCR brand spelling may be inaccurate. Compare it with the box.',
+              'املای نام تجارتی ممکن نادرست باشد. با بسته مقایسه کنید.',
+              'د سوداګریز نوم املا ښايي ناسمه وي. له بستې سره یې پرتله کړئ.',
+            ),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+        ],
         TextField(
           controller: _brand,
           textInputAction: TextInputAction.next,
