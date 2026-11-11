@@ -6,6 +6,7 @@ class MedicineScanDraft {
     this.genericName,
     this.strength,
     this.dosageForm,
+    this.packQuantity,
     this.batchNumber,
     this.expiresAt,
     this.barcode,
@@ -16,6 +17,7 @@ class MedicineScanDraft {
   final String? genericName;
   final String? strength;
   final String? dosageForm;
+  final String? packQuantity;
   final String? batchNumber;
   final String? expiresAt;
   final String? barcode;
@@ -54,6 +56,11 @@ class OfflineMedicineTextParser {
       r'(?:\b(?:tablets|tablet|capsules|capsule|syrup|suspension|injection|cream|ointment|drops)\b|قرص|تابلیت|کپسول|شربت|تزریق|پیچکاری|کریم|قطره|څاڅکي)',
       caseSensitive: false,
     ).allMatches(text).map((match) => match.group(0)!).toList();
+    // Pack count is separate from the dosage form and is review-only.
+    final packQuantity = RegExp(
+      r'\\b\\d+\\s*(?:capsules?|tablets?|vials?|ampoules?)\\b',
+      caseSensitive: false,
+    ).firstMatch(normalized)?.group(0);
     final dosage =
         dosageMatches
             .where(
@@ -215,6 +222,7 @@ class OfflineMedicineTextParser {
       genericName: generic == null || generic.isEmpty ? null : generic,
       strength: combinedStrength,
       dosageForm: dosage,
+      packQuantity: packQuantity,
       batchNumber: batch,
       expiresAt: expiryMatch?.group(1),
       barcode: barcode,
