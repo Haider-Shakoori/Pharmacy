@@ -146,7 +146,11 @@ class OfflineMedicineTextParser {
         : strength;
 
     return MedicineScanDraft(
-      brandName: brandCandidates.isEmpty ? null : brandCandidates.first,
+      brandName: brandCandidates.isNotEmpty
+          ? brandCandidates.first
+          : (cleaned.length == 1 && cleaned.first.length >= 4
+                ? cleaned.first
+                : null),
       genericName: generic == null || generic.isEmpty ? null : generic,
       strength: combinedStrength,
       dosageForm: dosage,
