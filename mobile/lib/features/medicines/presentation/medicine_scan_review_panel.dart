@@ -179,7 +179,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           controlAffinity: ListTileControlAffinity.leading,
           value: _confirmed,
           onChanged: (value) => setState(() => _confirmed = value ?? false),
-          title: const Text(_localized(context, 'I have checked the medicine label and details', 'برچسب و جزئیات دوا را بررسی کرده‌ام', 'ما د درملو لیبل او معلومات کتلي دي')),
+          title: Text(_localized(context, 'I have checked the medicine label and details', 'برچسب و جزئیات دوا را بررسی کرده‌ام', 'ما د درملو لیبل او معلومات کتلي دي')),
         ),
         FilledButton(
           onPressed: !_confirmed || _brand.text.trim().isEmpty
