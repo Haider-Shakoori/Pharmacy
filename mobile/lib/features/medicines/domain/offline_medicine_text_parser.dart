@@ -71,19 +71,23 @@ class OfflineMedicineTextParser {
     int brandScore(String line) {
       final words = RegExp(r'[\p{L}]+', unicode: true).allMatches(line).length;
       var score = words >= 2 && words <= 4 ? 4 : 0;
-      if (RegExp(r'\b(?:plus|forte|extra)\b', caseSensitive: false)
-          .hasMatch(line)) {
+      if (RegExp(
+        r'\b(?:plus|forte|extra)\b',
+        caseSensitive: false,
+      ).hasMatch(line)) {
         score += 5;
       }
       if (RegExp(r'\d').hasMatch(line)) score -= 3;
       if (line.length > 42) score -= 5;
-      if (RegExp(r'\b(?:pvt|ltd|limited|company|global|certified)\b',
-              caseSensitive: false)
-          .hasMatch(line)) {
+      if (RegExp(
+        r'\b(?:pvt|ltd|limited|company|global|certified)\b',
+        caseSensitive: false,
+      ).hasMatch(line)) {
         score -= 8;
       }
       return score;
     }
+
     brandCandidates.sort((a, b) => brandScore(b).compareTo(brandScore(a)));
 
     // Extract a labelled generic field, or explicit composition lines.
