@@ -63,6 +63,7 @@ void main() {
     expect(draft.genericName, 'Esomeprazole');
     expect(draft.strength, '20mg');
     expect(draft.dosageForm, 'Capsules');
+    expect(draft.packQuantity, '14 Capsules');
     expect(draft.sourceText, contains('Essoger'));
   });
 
