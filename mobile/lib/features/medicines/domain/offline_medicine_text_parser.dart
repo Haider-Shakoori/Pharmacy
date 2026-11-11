@@ -50,10 +50,13 @@ class OfflineMedicineTextParser {
       r'(?:exp|expiry|expires|انقضا|انتهاء|تاریخ انقضا|د ختم نېټه)\s*[:.-]?\s*(\d{1,2}[/.-]\d{2,4}|\d{4}[/.-]\d{1,2})',
       caseSensitive: false,
     ).firstMatch(normalized);
-    final dosage = RegExp(
+    final dosageMatches = RegExp(
       r'(?:\b(?:tablets|tablet|capsules|capsule|syrup|suspension|injection|cream|ointment|drops)\b|قرص|تابلیت|کپسول|شربت|تزریق|پیچکاری|کریم|قطره|څاڅکي)',
       caseSensitive: false,
-    ).firstMatch(text)?.group(0);
+    ).allMatches(text).map((match) => match.group(0)!).toList();
+    final dosage = dosageMatches.where(
+      (value) => value.toLowerCase() == 'tablets' || value.toLowerCase() == 'capsules',
+    ).firstOrNull ?? (dosageMatches.isEmpty ? null : dosageMatches.first);
 
     // Prefer a visible product name over OCR fragments or legal text.
     // Keep the original order as a tie-breaker.
