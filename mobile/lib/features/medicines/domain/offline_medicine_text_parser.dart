@@ -54,9 +54,15 @@ class OfflineMedicineTextParser {
       r'(?:\b(?:tablets|tablet|capsules|capsule|syrup|suspension|injection|cream|ointment|drops)\b|قرص|تابلیت|کپسول|شربت|تزریق|پیچکاری|کریم|قطره|څاڅکي)',
       caseSensitive: false,
     ).allMatches(text).map((match) => match.group(0)!).toList();
-    final dosage = dosageMatches.where(
-      (value) => value.toLowerCase() == 'tablets' || value.toLowerCase() == 'capsules',
-    ).firstOrNull ?? (dosageMatches.isEmpty ? null : dosageMatches.first);
+    final dosage =
+        dosageMatches
+            .where(
+              (value) =>
+                  value.toLowerCase() == 'tablets' ||
+                  value.toLowerCase() == 'capsules',
+            )
+            .firstOrNull ??
+        (dosageMatches.isEmpty ? null : dosageMatches.first);
 
     // Prefer a visible product name over OCR fragments or legal text.
     // Keep the original order as a tie-breaker.
@@ -81,7 +87,11 @@ class OfflineMedicineTextParser {
         score += 5;
       }
       if (RegExp(r'\d').hasMatch(line)) score -= 7;
-      if (RegExp(r'\b(?:mg|mcg|tablets?|capsules?|ml)\b', caseSensitive: false).hasMatch(line)) score -= 8;
+      if (RegExp(
+        r'\b(?:mg|mcg|tablets?|capsules?|ml)\b',
+        caseSensitive: false,
+      ).hasMatch(line))
+        score -= 8;
       if (words == 1 && !RegExp(r'\d').hasMatch(line)) score += 2;
       if (line.length > 42) score -= 5;
       if (RegExp(
@@ -129,13 +139,20 @@ class OfflineMedicineTextParser {
       final amounts = amountPattern.allMatches(line).toList();
       if (amounts.isEmpty) continue;
       for (final amount in amounts) {
-        final before = line.substring(0, amount.start).replaceAll(
-          RegExp(r'\b(?:IP|BP|USP|EP)\b', caseSensitive: false),
-          '',
-        ).trim();
-        final ingredient = before.replaceAll(RegExp(r'[^\p{L}\s-]', unicode: true), '').trim();
+        final before = line
+            .substring(0, amount.start)
+            .replaceAll(
+              RegExp(r'\b(?:IP|BP|USP|EP)\b', caseSensitive: false),
+              '',
+            )
+            .trim();
+        final ingredient = before
+            .replaceAll(RegExp(r'[^\p{L}\s-]', unicode: true), '')
+            .trim();
         if (ingredient.length < 3) continue;
-        if (!ingredients.any((value) => value.toLowerCase() == ingredient.toLowerCase())) {
+        if (!ingredients.any(
+          (value) => value.toLowerCase() == ingredient.toLowerCase(),
+        )) {
           ingredients.add(ingredient);
           composition.add(amount.group(0)!);
         }
