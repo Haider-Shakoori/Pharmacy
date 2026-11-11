@@ -73,6 +73,7 @@ class OfflineMedicineTextParser {
           line.toLowerCase().endsWith('prazol')) {
         return false;
       }
+      if (RegExp(
         r'^(?:each|contains|paracetamol|diclofenac|magnesium|colour|dosage|store|prescription|manufactured|manufacturer|mfg|batch|lot|exp|expiry|generic|active|ingredients?|tablets?|capsules?|rx\b|ip\b|mg\b|شماره|انقضا|تاریخ|تولید|ترکیبات|نام جنریک|نام علمی|ماده|فعال ماده)',
         caseSensitive: false,
       ).hasMatch(line)) {
