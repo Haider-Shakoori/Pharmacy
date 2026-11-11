@@ -61,9 +61,10 @@ void main() {
     });
     addTearDown(client.close);
     await expectLater(
-      MobileSupplierApi(environment: environment, client: client).list(
-        registration: registration([]),
-      ),
+      MobileSupplierApi(
+        environment: environment,
+        client: client,
+      ).list(registration: registration([])),
       throwsStateError,
     );
   });
