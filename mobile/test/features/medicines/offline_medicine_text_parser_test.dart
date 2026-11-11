@@ -49,6 +49,23 @@ void main() {
     expect(draft.dosageForm?.toLowerCase(), 'tablets');
   });
 
+  test('repeated OCR readings beat manufacturer logo on rotated pack', () {
+    final draft = parser.parse([
+      'APHL',
+      'Esomeprazol',
+      'Assoger',
+      '14 Capsules',
+      'Esomeprazole',
+      'Essoger',
+      '20mg',
+    ]);
+    expect(draft.brandName, 'Assoger');
+    expect(draft.genericName, 'Esomeprazole');
+    expect(draft.strength, '20mg');
+    expect(draft.dosageForm, 'Capsules');
+    expect(draft.sourceText, contains('Essoger'));
+  });
+
   test('empty recognition yields empty draft', () {
     final draft = parser.parse([]);
     expect(draft.brandName, isNull);
