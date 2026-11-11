@@ -32,25 +32,26 @@ void main() {
       expect(request.url.path, '/api/v1/mobile/suppliers');
       expect(request.url.queryParameters['search'], 'Kabul & Co');
       expect(request.headers['Authorization'], 'Bearer token');
-      return http.Response(jsonEncode({
-        'data': [
-          {
-            'id': 'supplier-1',
-            'name': 'Kabul Pharma',
-            'code': 'KP',
-            'is_active': true,
-          },
-        ],
-      }), 200);
+      return http.Response(
+        jsonEncode({
+          'data': [
+            {
+              'id': 'supplier-1',
+              'name': 'Kabul Pharma',
+              'code': 'KP',
+              'is_active': true,
+            },
+          ],
+        }),
+        200,
+      );
     });
     addTearDown(client.close);
-    final result = await MobileSupplierApi(
-      environment: environment,
-      client: client,
-    ).list(
-      registration: registration(['inventory.manage']),
-      search: 'Kabul & Co',
-    );
+    final result =
+        await MobileSupplierApi(environment: environment, client: client).list(
+          registration: registration(['inventory.manage']),
+          search: 'Kabul & Co',
+        );
     expect(result.single.name, 'Kabul Pharma');
     expect(result.single.isActive, isTrue);
   });
