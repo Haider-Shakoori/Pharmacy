@@ -63,15 +63,14 @@ class OfflineMedicineTextParser {
     ).firstMatch(normalized)?.group(0);
     final dosage = cleaned.any((line) => line.toLowerCase() == 'eye drops')
         ? 'Eye Drops'
-        :
-        dosageMatches
-            .where(
-              (value) =>
-                  value.toLowerCase() == 'tablets' ||
-                  value.toLowerCase() == 'capsules',
-            )
-            .firstOrNull ??
-        (dosageMatches.isEmpty ? null : dosageMatches.first);
+        : dosageMatches
+                  .where(
+                    (value) =>
+                        value.toLowerCase() == 'tablets' ||
+                        value.toLowerCase() == 'capsules',
+                  )
+                  .firstOrNull ??
+              (dosageMatches.isEmpty ? null : dosageMatches.first);
 
     // Prefer a visible product name over OCR fragments or legal text.
     // Keep the original order as a tie-breaker.
@@ -221,7 +220,8 @@ class OfflineMedicineTextParser {
     }
     final generic = ingredients.isNotEmpty
         ? ingredients.join(', ')
-        : (splitSaltGeneric ?? labelledGeneric ??
+        : (splitSaltGeneric ??
+              labelledGeneric ??
               (repeatedGenericCandidates.isEmpty
                   ? null
                   : repeatedGenericCandidates.first));
