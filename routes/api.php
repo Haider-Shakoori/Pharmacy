@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\MobileMedicineCreateController;
 use App\Http\Controllers\Api\MobileMedicineDuplicateCheckController;
 use App\Http\Controllers\Api\MobileSessionRefreshController;
 use App\Http\Controllers\Api\MobileStockLocationController;
+use App\Http\Controllers\Api\MobileSupplierController;
 use App\Http\Controllers\Api\MobileSyncPullController;
 use App\Http\Controllers\Api\MobileSyncPushController;
 use App\Http\Controllers\Api\TrialDeviceRegistrationController;
@@ -68,6 +69,7 @@ Route::prefix('/v1/mobile')
         Route::post('/medicines/cloud-ocr', MobileMedicineCloudOcrController::class)
             ->middleware('throttle:5,1');
         Route::post('/medicines', MobileMedicineCreateController::class);
+        Route::get('/suppliers', [MobileSupplierController::class, 'index']);
         Route::get('/stock-locations', [MobileStockLocationController::class, 'index']);
         Route::get('/stock-location-branches', [MobileStockLocationController::class, 'branches']);
         Route::get('/stock-location-batches', [MobileStockLocationController::class, 'batches']);
