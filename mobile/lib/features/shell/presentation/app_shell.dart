@@ -27,8 +27,8 @@ import 'package:businessos_pharmacy/features/reports/presentation/reports_worksp
 import 'package:businessos_pharmacy/features/settings/presentation/connection_mode_card.dart';
 import 'package:businessos_pharmacy/features/shell/presentation/home_dashboard.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
-import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
 import 'package:businessos_pharmacy/features/suppliers/presentation/suppliers_panel.dart';
+import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
