@@ -90,8 +90,9 @@ class OfflineMedicineTextParser {
       if (RegExp(
         r'\b(?:mg|mcg|tablets?|capsules?|ml)\b',
         caseSensitive: false,
-      ).hasMatch(line))
+      ).hasMatch(line)) {
         score -= 8;
+      }
       if (words == 1 && !RegExp(r'\d').hasMatch(line)) score += 2;
       if (line.length > 42) score -= 5;
       if (RegExp(
