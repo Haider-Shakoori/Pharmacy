@@ -67,6 +67,24 @@ void main() {
     expect(draft.sourceText, contains('Essoger'));
   });
 
+  test('eye drop carton separates brand and split generic', () {
+    final draft = parser.parse([
+      'RX',
+      'Olopatadine',
+      'Hydrochloride',
+      'Ophthalmic',
+      'Solution USP 0.2% w/v',
+      'DELOP',
+      'Eye Drops',
+      '10',
+    ]);
+    expect(draft.brandName, 'DELOP');
+    expect(draft.genericName, 'Olopatadine Hydrochloride');
+    expect(draft.strength, '0.2%');
+    expect(draft.dosageForm, 'Eye Drops');
+    expect(draft.packQuantity, isNull);
+  });
+
   test('empty recognition yields empty draft', () {
     final draft = parser.parse([]);
     expect(draft.brandName, isNull);
