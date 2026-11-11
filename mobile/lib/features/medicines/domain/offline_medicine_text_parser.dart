@@ -69,7 +69,7 @@ class OfflineMedicineTextParser {
     final brandCandidates = cleaned.where((line) {
       if (!RegExp(r'[\p{L}]', unicode: true).hasMatch(line)) return false;
       if (line.trim().length < 4) return false;
-      if (RegExp(r'(?:prazol(?:e)?|cillin|mycin|sartan|statin)
+      if (RegExp(r'(?:prazol(?:e)?|cillin|mycin|sartan|statin)$', caseSensitive: false).hasMatch(line)) return false;
       if (RegExp(
         r'^(?:each|contains|paracetamol|diclofenac|magnesium|colour|dosage|store|prescription|manufactured|manufacturer|mfg|batch|lot|exp|expiry|generic|active|ingredients?|tablets?|capsules?|rx\b|ip\b|mg\b|شماره|انقضا|تاریخ|تولید|ترکیبات|نام جنریک|نام علمی|ماده|فعال ماده)',
         caseSensitive: false,
@@ -185,10 +185,22 @@ class OfflineMedicineTextParser {
         }
       }
     }
-    // A generic name printed twice can be recognized with a missing
-    // character. Prefer the longer repeated reading; never fabricate text.
+    // Repeated generic readings may differ by a single OCR character.
     final repeatedGenericCandidates = cleaned.where((line) {
-      if (!RegExp(r'^[A-Za-z]{6,}
+      if (!RegExp(r'^[A-Za-z]{6,}$').hasMatch(line)) return false;
+      if (brandCandidates.contains(line)) return false;
+      return cleaned.any(
+        (other) => other != line && similarity(line, other) > 0,
+      );
+    }).toList();
+    repeatedGenericCandidates.sort((a, b) => b.length.compareTo(a.length));
+    final generic = ingredients.isNotEmpty
+        ? ingredients.join(', ')
+        : (labelledGeneric != null && labelledGeneric.isNotEmpty
+              ? labelledGeneric
+              : (repeatedGenericCandidates.isEmpty
+                    ? null
+                    : repeatedGenericCandidates.first));
     final combinedStrength = composition.length > 1
         ? composition.join(' + ')
         : strength;
