@@ -78,7 +78,6 @@ class OfflineMedicineTextParser {
     final brandCandidates = cleaned.where((line) {
       if (!RegExp(r'[\p{L}]', unicode: true).hasMatch(line)) return false;
       if (line.trim().length < 4) return false;
-      if (RegExp(
       if (line.toLowerCase() == 'eye drops' ||
           line.toLowerCase() == 'ophthalmic' ||
           line.toLowerCase() == 'solution' ||
