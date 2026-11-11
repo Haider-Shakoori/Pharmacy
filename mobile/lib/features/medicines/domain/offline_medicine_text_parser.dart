@@ -58,10 +58,10 @@ class OfflineMedicineTextParser {
     // Prefer a visible product name over OCR fragments or legal text.
     // Keep the original order as a tie-breaker.
     final brandCandidates = cleaned.where((line) {
-      if (!RegExp(r'[\\p{L}]', unicode: true).hasMatch(line)) return false;
+      if (!RegExp(r'[\p{L}]', unicode: true).hasMatch(line)) return false;
       if (line.trim().length < 4) return false;
       if (RegExp(
-        r'^(?:each|contains|paracetamol|diclofenac|magnesium|colour|dosage|store|prescription|manufactured|manufacturer|mfg|batch|lot|exp|expiry|generic|active|ingredients?|tablets?|capsules?|rx\\b|ip\\b|mg\\b|شماره|انقضا|تاریخ|تولید|ترکیبات|نام جنریک|نام علمی|ماده|فعال ماده)',
+        r'^(?:each|contains|paracetamol|diclofenac|magnesium|colour|dosage|store|prescription|manufactured|manufacturer|mfg|batch|lot|exp|expiry|generic|active|ingredients?|tablets?|capsules?|rx\b|ip\b|mg\b|شماره|انقضا|تاریخ|تولید|ترکیبات|نام جنریک|نام علمی|ماده|فعال ماده)',
         caseSensitive: false,
       ).hasMatch(line)) {
         return false;
@@ -69,15 +69,15 @@ class OfflineMedicineTextParser {
       return true;
     }).toList();
     int brandScore(String line) {
-      final words = RegExp(r'[\\p{L}]+', unicode: true).allMatches(line).length;
+      final words = RegExp(r'[\p{L}]+', unicode: true).allMatches(line).length;
       var score = words >= 2 && words <= 4 ? 4 : 0;
-      if (RegExp(r'\\b(?:plus|forte|extra)\\b', caseSensitive: false)
+      if (RegExp(r'\b(?:plus|forte|extra)\b', caseSensitive: false)
           .hasMatch(line)) {
         score += 5;
       }
-      if (RegExp(r'\\d').hasMatch(line)) score -= 3;
+      if (RegExp(r'\d').hasMatch(line)) score -= 3;
       if (line.length > 42) score -= 5;
-      if (RegExp(r'\\b(?:pvt|ltd|limited|company|global|certified)\\b',
+      if (RegExp(r'\b(?:pvt|ltd|limited|company|global|certified)\b',
               caseSensitive: false)
           .hasMatch(line)) {
         score -= 8;
@@ -88,7 +88,7 @@ class OfflineMedicineTextParser {
 
     // Extract a labelled generic field, or explicit composition lines.
     final genericMatch = RegExp(
-      r'^(?:generic(?: name)?|active ingredient|ingredient|نام جنریک|نام علمی|ماده موثره|ماده مؤثره|فعال ماده|جنریک نوم|فعاله ماده)\\s*[:：-]\\s*(.+)$',
+      r'^(?:generic(?: name)?|active ingredient|ingredient|نام جنریک|نام علمی|ماده موثره|ماده مؤثره|فعال ماده|جنریک نوم|فعاله ماده)\s*[:：-]\s*(.+)$',
       caseSensitive: false,
       multiLine: true,
     ).firstMatch(text);
@@ -97,7 +97,7 @@ class OfflineMedicineTextParser {
       final ingredients = <String>[];
       for (final line in cleaned) {
         for (final match in RegExp(
-          r'\\b(paracetamol|diclofenac sodium|magnesium trisilicate)\\b',
+          r'\b(paracetamol|diclofenac sodium|magnesium trisilicate)\b',
           caseSensitive: false,
         ).allMatches(line)) {
           final ingredient = match.group(1)!;
@@ -117,13 +117,13 @@ class OfflineMedicineTextParser {
     final composition = <String>[];
     for (final line in cleaned) {
       if (!RegExp(
-        r'\\b(paracetamol|diclofenac|magnesium trisilicate)\\b',
+        r'\b(paracetamol|diclofenac|magnesium trisilicate)\b',
         caseSensitive: false,
       ).hasMatch(line)) {
         continue;
       }
       final amounts = RegExp(
-        r'\\b\\d+(?:[.,]\\d+)?\\s?(?:mg|mcg|µg|g|ml|iu)\\b',
+        r'\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|g|ml|iu)\b',
         caseSensitive: false,
       ).allMatches(line);
       for (final amount in amounts) {
