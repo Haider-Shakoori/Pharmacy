@@ -28,6 +28,7 @@ import 'package:businessos_pharmacy/features/settings/presentation/connection_mo
 import 'package:businessos_pharmacy/features/shell/presentation/home_dashboard.dart';
 import 'package:businessos_pharmacy/features/status/presentation/connectivity_banner.dart';
 import 'package:businessos_pharmacy/features/sync/presentation/sync_status_card.dart';
+import 'package:businessos_pharmacy/features/suppliers/presentation/suppliers_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -517,6 +518,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               const SizedBox(height: 16),
               if (_moreSection == 'Customers') const OfflineCustomersPanel(),
               if (_moreSection == 'Purchases') const OfflinePurchasingPanel(),
+              if (_moreSection == 'Suppliers') const SuppliersPanel(),
               if (_moreSection == 'Alerts') const OperationalAlertsCard(),
               if (_moreSection == 'Sync') const SyncStatusCard(),
               if (_moreSection == 'Settings') ...<Widget>[
@@ -581,7 +583,11 @@ List<_MoreModule> _moreModules(ModuleStrings s) => <_MoreModule>[
     icon: Icons.people_alt_rounded,
     section: 'Customers',
   ),
-  _MoreModule(label: s.moduleSuppliers, icon: Icons.storefront_outlined),
+  _MoreModule(
+    label: s.moduleSuppliers,
+    icon: Icons.storefront_outlined,
+    section: 'Suppliers',
+  ),
   _MoreModule(label: s.moduleReports, icon: Icons.bar_chart_rounded, tab: 3),
   _MoreModule(label: s.moduleFinance, icon: Icons.account_balance_outlined),
   _MoreModule(label: s.moduleTransfers, icon: Icons.swap_horiz_rounded),
