@@ -58,7 +58,7 @@ class OfflineMedicineTextParser {
     ).allMatches(text).map((match) => match.group(0)!).toList();
     // Pack count is separate from the dosage form and is review-only.
     final packQuantity = RegExp(
-      r'\\b\\d+\\s*(?:capsules?|tablets?|vials?|ampoules?)\\b',
+      r'\b\d+\s*(?:capsules?|tablets?|vials?|ampoules?)\b',
       caseSensitive: false,
     ).firstMatch(normalized)?.group(0);
     final dosage =
