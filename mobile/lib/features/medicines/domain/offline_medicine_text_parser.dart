@@ -213,15 +213,19 @@ class OfflineMedicineTextParser {
     repeatedGenericCandidates.sort((a, b) => b.length.compareTo(a.length));
     String? splitSaltGeneric;
     for (var i = 1; i < cleaned.length; i++) {
-      if (RegExp(r'^(?:hydrochloride|sodium|potassium)
+      if (cleaned[i].toLowerCase() == 'hydrochloride' &&
+          cleaned[i - 1].length >= 6 &&
+          cleaned[i - 1].split(' ').length == 1) {
+        splitSaltGeneric = cleaned[i - 1] + ' ' + cleaned[i];
+        break;
+      }
+    }
+    final generic = ingredients.isNotEmpty
         ? ingredients.join(', ')
-        : (splitSaltGeneric != null
-              ? splitSaltGeneric
-              : (labelledGeneric != null && labelledGeneric.isNotEmpty
-              ? labelledGeneric
-              : (repeatedGenericCandidates.isEmpty
-                    ? null
-                    : repeatedGenericCandidates.first)));
+        : (splitSaltGeneric ?? labelledGeneric ??
+              (repeatedGenericCandidates.isEmpty
+                  ? null
+                  : repeatedGenericCandidates.first));
     final combinedStrength = composition.length > 1
         ? composition.join(' + ')
         : strength;
