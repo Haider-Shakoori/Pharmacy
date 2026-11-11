@@ -65,17 +65,24 @@ class MobileSupplierApi {
     if (base == null || base.scheme != 'https' || registration.accessExpired) {
       throw StateError('An active secure mobile connection is required');
     }
-    final endpoint = base.resolve('api/v1/mobile/suppliers').replace(
-      queryParameters: <String, String>{
-        if (search.trim().isNotEmpty) 'search': search.trim(),
-      },
-    );
+    final endpoint = base
+        .resolve('api/v1/mobile/suppliers')
+        .replace(
+          queryParameters: <String, String>{
+            if (search.trim().isNotEmpty) 'search': search.trim(),
+          },
+        );
     final http.Response response;
     try {
-      response = await client.get(endpoint, headers: <String, String>{
-        'Authorization': 'Bearer ${registration.accessToken}',
-        'Accept': 'application/json',
-      }).timeout(const Duration(seconds: 15));
+      response = await client
+          .get(
+            endpoint,
+            headers: <String, String>{
+              'Authorization': 'Bearer ${registration.accessToken}',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
     } on TimeoutException {
       throw StateError('Supplier request timed out');
     } on http.ClientException {
