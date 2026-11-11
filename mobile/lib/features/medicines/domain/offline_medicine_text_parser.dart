@@ -214,7 +214,7 @@ class OfflineMedicineTextParser {
       if (cleaned[i].toLowerCase() == 'hydrochloride' &&
           cleaned[i - 1].length >= 6 &&
           cleaned[i - 1].split(' ').length == 1) {
-        splitSaltGeneric = cleaned[i - 1] + ' ' + cleaned[i];
+        splitSaltGeneric = '${cleaned[i - 1]} ${cleaned[i]}';
         break;
       }
     }
