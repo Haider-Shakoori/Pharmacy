@@ -90,6 +90,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         const SizedBox(height: 16),
         TextField(
           controller: _brand,
+          textInputAction: TextInputAction.next,
           decoration: const InputDecoration(
             labelText: 'Brand name *',
             prefixIcon: Icon(Icons.medication_outlined),
@@ -97,6 +98,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         ),
         TextField(
           controller: _generic,
+          textInputAction: TextInputAction.next,
           decoration: const InputDecoration(
             labelText: 'Generic name',
             prefixIcon: Icon(Icons.science_outlined),
@@ -104,14 +106,18 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
         ),
         TextField(
           controller: _strength,
+          textInputAction: TextInputAction.next,
           decoration: const InputDecoration(labelText: 'Strength'),
         ),
         TextField(
           controller: _dosage,
+          textInputAction: TextInputAction.next,
           decoration: const InputDecoration(labelText: 'Dosage form'),
         ),
         TextField(
           controller: _barcode,
+          textInputAction: TextInputAction.done,
+          keyboardType: TextInputType.text,
           decoration: const InputDecoration(
             labelText: 'Barcode',
             prefixIcon: Icon(Icons.qr_code_outlined),
