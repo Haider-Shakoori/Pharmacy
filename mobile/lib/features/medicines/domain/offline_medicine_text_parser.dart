@@ -79,7 +79,12 @@ class OfflineMedicineTextParser {
       if (!RegExp(r'[\p{L}]', unicode: true).hasMatch(line)) return false;
       if (line.trim().length < 4) return false;
       if (RegExp(
-        r'^(?:eye drops?|ophthalmic|solution|hydrochloride|rx)
+      if (line.toLowerCase() == 'eye drops' ||
+          line.toLowerCase() == 'ophthalmic' ||
+          line.toLowerCase() == 'solution' ||
+          line.toLowerCase() == 'hydrochloride') {
+        return false;
+      }
       if (line.toLowerCase().endsWith('prazole') ||
           line.toLowerCase().endsWith('prazol')) {
         return false;
