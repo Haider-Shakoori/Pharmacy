@@ -18,11 +18,14 @@ class MobileSupplier {
   });
 
   factory MobileSupplier.fromJson(Object? value) {
-    if (value is! Map || value['id'] is! String || value['name'] is! String ||
+    if (value is! Map ||
+        value['id'] is! String ||
+        value['name'] is! String ||
         value['is_active'] is! bool) {
       throw const FormatException('Invalid supplier data');
     }
-    String? optional(String key) => value[key] is String ? value[key] as String : null;
+    String? optional(String key) =>
+        value[key] is String ? value[key] as String : null;
     return MobileSupplier(
       id: value['id'] as String,
       name: value['name'] as String,
