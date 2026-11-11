@@ -143,7 +143,8 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Capture a clear label photo. You can scan more than one side.',
+          'Photograph the full package, keeping all text in focus. '
+          'Medicine labels vary; review every extracted field.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 12),
@@ -190,7 +191,7 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Scan another side to add missing label details.',
+            'Missing details? Scan another side or edit the fields below.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 12),
@@ -217,31 +218,6 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
               label: const Text('Get optional cloud suggestions'),
             ),
           ],
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Medicine packs place details differently. OCR suggestions '
-                      'may be incomplete or incorrect. Check the brand, all '
-                      'ingredients and strengths against the package before '
-                      'confirming.',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
           MedicineScanReviewPanel(
             key: ValueKey(_draft),
             draft: _draft!,
