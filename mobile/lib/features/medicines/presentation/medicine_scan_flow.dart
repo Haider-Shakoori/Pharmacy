@@ -217,6 +217,31 @@ class _MedicineScanFlowState extends State<MedicineScanFlow> {
               label: const Text('Get optional cloud suggestions'),
             ),
           ],
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Medicine packs place details differently. OCR suggestions '
+                      'may be incomplete or incorrect. Check the brand, all '
+                      'ingredients and strengths against the package before '
+                      'confirming.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           MedicineScanReviewPanel(
             key: ValueKey(_draft),
             draft: _draft!,
