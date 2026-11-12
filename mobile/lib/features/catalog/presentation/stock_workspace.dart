@@ -706,7 +706,9 @@ class _StockBodyState extends State<_StockBody> {
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: IconButton(
                       key: const ValueKey('stock-search-action'),
-                      tooltip: _search.text.isEmpty ? s.refresh : s.searchMedicine,
+                      tooltip: _search.text.isEmpty
+                          ? s.refresh
+                          : s.searchMedicine,
                       icon: Icon(
                         _search.text.isEmpty
                             ? Icons.refresh_rounded
