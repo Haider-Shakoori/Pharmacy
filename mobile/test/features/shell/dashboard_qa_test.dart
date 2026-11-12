@@ -53,6 +53,32 @@ Future<void> _pumpDashboard(
 }
 
 void main() {
+  for (final ({Size size, AppLocale locale, int columns}) config
+      in <({Size size, AppLocale locale, int columns})>[
+        (size: const Size(320, 720), locale: AppLocale.english, columns: 2),
+        (size: const Size(390, 844), locale: AppLocale.dari, columns: 3),
+        (size: const Size(900, 1100), locale: AppLocale.english, columns: 4),
+      ]) {
+    testWidgets('More grid responds to ${config.size.width}px '
+        '${config.locale.code}', (WidgetTester tester) async {
+      await _pumpDashboard(tester, locale: config.locale, size: config.size);
+      final Finder destinations = find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.byType(NavigationDestination),
+      );
+      await tester.tap(destinations.last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final GridView grid = tester.widget<GridView>(find.byType(GridView));
+      final SliverGridDelegateWithFixedCrossAxisCount delegate =
+          grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+      expect(delegate.crossAxisCount, config.columns);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
   for (final ({Size size, AppLocale locale, double scale}) config
       in <({Size size, AppLocale locale, double scale})>[
         (size: const Size(320, 720), locale: AppLocale.english, scale: 1),

@@ -86,9 +86,26 @@ class ModuleStrings {
   String get expires => _t('expires');
   String get expired => _t('expired');
   String get storageTitle => _t('storageTitle');
+  String get noStorageLocations => _t('noStorageLocations');
   String get storageBody => _t('storageBody');
   String get addStorageLocation => _t('addStorageLocation');
+  String get storageBranch => _t('storageBranch');
+  String get storageCode => _t('storageCode');
+  String get storageName => _t('storageName');
+  String get storageType => _t('storageType');
+  String get storageCancel => _t('storageCancel');
+  String get storageCreate => _t('storageCreate');
   String get storageComingSoon => _t('storageComingSoon');
+  String get transferStock => _t('transferStock');
+  String get transferFrom => _t('transferFrom');
+  String get transferTo => _t('transferTo');
+  String get transferBatch => _t('transferBatch');
+  String get transferQuantity => _t('transferQuantity');
+  String get transferCancel => _t('transferCancel');
+  String get transferSubmit => _t('transferSubmit');
+  String get transferAlreadyRecorded => _t('transferAlreadyRecorded');
+  String get transferSuccess => _t('transferSuccess');
+  String get retryPendingTransfer => _t('retryPendingTransfer');
 
   // Reports
   String get reports => _t('reports');
@@ -222,9 +239,26 @@ class ModuleStrings {
       'expires': 'Expires',
       'expired': 'Expired',
       'storageTitle': 'Medicine storage',
-      'storageBody': 'Storage locations (branch, room, rack, shelf and bin) are not available on this device yet. Batches stay in their recorded location until this feature is enabled.',
+      'noStorageLocations': 'No recorded storage locations on this device yet.',
+      'storageBody': 'Synced stock locations are shown below. Managers can create locations online; moving batches is not available yet.',
       'addStorageLocation': 'Add storage location',
-      'storageComingSoon': 'Coming soon: create locations, assign batches, stock counts and transfers.',
+      'storageBranch': 'Branch',
+      'storageCode': 'Code',
+      'storageName': 'Name',
+      'storageType': 'Type',
+      'storageCancel': 'Cancel',
+      'storageCreate': 'Create',
+      'storageComingSoon': 'Coming soon: stock counts and batch assignments.',
+      'transferStock': 'Transfer stock',
+      'transferFrom': 'From location',
+      'transferTo': 'To location',
+      'transferBatch': 'Medicine batch',
+      'transferQuantity': 'Quantity',
+      'transferCancel': 'Cancel',
+      'transferSubmit': 'Transfer',
+      'transferAlreadyRecorded': 'Transfer already recorded',
+      'transferSuccess': 'Stock transferred successfully',
+      'retryPendingTransfer': 'Retry pending transfer',
       'reports': 'Reports',
       'reportsSubtitle':
           'Totals on this device. Company-wide reports need server data.',
@@ -350,10 +384,27 @@ class ModuleStrings {
       'expires': 'انقضا',
       'expired': 'منقضی',
       'storageTitle': 'انبار دوا',
-      'storageBody': 'محل‌های انبار (شاخه، اتاق، قفسه، طبقه و جعبه) هنوز روی این دستگاه فعال نیستند. تا فعال شدن این قابلیت، بچ‌ها در محل ثبت‌شدهٔ خود باقی می‌مانند.',
+      'noStorageLocations':
+          'هنوز هیچ محل انبار ثبت‌شده‌ای روی این دستگاه وجود ندارد.',
+      'storageBody': 'محل‌های ثبت‌شدهٔ موجودی در پایین نمایش داده می‌شوند. مدیران می‌توانند محل جدید را آنلاین ایجاد کنند؛ انتقال بچ‌ها هنوز فعال نیست.',
       'addStorageLocation': 'افزودن محل انبار',
-      'storageComingSoon':
-          'به‌زودی: ایجاد محل، تخصیص بچ‌ها، شمارش موجودی و انتقال.',
+      'storageBranch': 'شعبه',
+      'storageCode': 'کد',
+      'storageName': 'نام',
+      'storageType': 'نوع',
+      'storageCancel': 'لغو',
+      'storageCreate': 'ایجاد',
+      'storageComingSoon': 'به‌زودی: شمارش موجودی و تخصیص بچ‌ها.',
+      'transferStock': 'انتقال موجودی',
+      'transferFrom': 'از محل',
+      'transferTo': 'به محل',
+      'transferBatch': 'بچ دوا',
+      'transferQuantity': 'مقدار',
+      'transferCancel': 'لغو',
+      'transferSubmit': 'انتقال',
+      'transferAlreadyRecorded': 'انتقال قبلاً ثبت شده است',
+      'transferSuccess': 'موجودی با موفقیت انتقال یافت',
+      'retryPendingTransfer': 'تلاش دوباره برای انتقال در انتظار',
       'reports': 'گزارش‌ها',
       'reportsSubtitle': 'مجموع‌ها روی این دستگاه. گزارش‌های سراسری به داده‌های سرور نیاز دارند.',
       'registerToViewReports': 'برای مشاهدهٔ گزارش‌ها، این دستگاه را ثبت کنید.',
@@ -478,10 +529,27 @@ class ModuleStrings {
       'expires': 'ختمېږي',
       'expired': 'تېر شوی',
       'storageTitle': 'د درملو ذخیره ځای',
-      'storageBody': 'د ذخیرې ځايونه (څانګه، کوټه، ریک، رف او بکس) تر اوسه پدې وسیله کې شتون نه لري. تر هغې چې دا ځانګړتیا فعاله شي، بستې په خپل ثبت شوي ځای کې پاتې کېږي.',
+      'noStorageLocations':
+          'تر اوسه په دې وسیله کې د ذخیرې کوم ثبت شوی ځای نشته.',
+      'storageBody': 'د موجودۍ ثبت شوي ځایونه لاندې ښودل کېږي. مدیران کولای شي نوي ځایونه آنلاین جوړ کړي؛ د بستو لېږد لا نه دی فعال.',
       'addStorageLocation': 'د ذخیرې ځای زیات کړئ',
-      'storageComingSoon':
-          'ژر راځي: ځایونه جوړول، بستې ټاکل، د ذخیرې شمېرل او لېږدول.',
+      'storageBranch': 'څانګه',
+      'storageCode': 'کوډ',
+      'storageName': 'نوم',
+      'storageType': 'ډول',
+      'storageCancel': 'لغوه کول',
+      'storageCreate': 'جوړول',
+      'storageComingSoon': 'ژر راځي: د زېرمو شمېرنه او د بستو ټاکنه.',
+      'transferStock': 'د زېرمو لېږد',
+      'transferFrom': 'له ځای څخه',
+      'transferTo': 'ځای ته',
+      'transferBatch': 'د درملو بسته',
+      'transferQuantity': 'اندازه',
+      'transferCancel': 'لغوه کول',
+      'transferSubmit': 'لېږدول',
+      'transferAlreadyRecorded': 'لېږد مخکې ثبت شوی دی',
+      'transferSuccess': 'زېرمه په بریالیتوب ولېږدول شوه',
+      'retryPendingTransfer': 'د پاتې لېږد بیا هڅه',
       'reports': 'راپورونه',
       'reportsSubtitle':
           'پدې وسیله کې ټولې. د ټولې شرکت راپورونه د سرور معلومات غواړي.',

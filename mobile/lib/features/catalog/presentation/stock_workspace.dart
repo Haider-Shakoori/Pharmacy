@@ -1,11 +1,15 @@
 import 'package:businessos_pharmacy/core/auth/mobile_registration.dart';
 import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart';
+import 'package:businessos_pharmacy/core/config/app_environment.dart';
 import 'package:businessos_pharmacy/core/database/database_providers.dart';
 import 'package:businessos_pharmacy/core/database/pharmacy_database.dart';
 import 'package:businessos_pharmacy/core/localization/module_strings.dart';
+import 'package:businessos_pharmacy/features/catalog/data/mobile_stock_location_api.dart';
 import 'package:businessos_pharmacy/features/catalog/data/offline_catalog_browser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 
 /// Compact, read-only stock workspace: Stock, Batches, Expiry and Storage.
 ///
@@ -38,7 +42,8 @@ class StockWorkspace extends ConsumerWidget {
             .when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (Object error, StackTrace trace) => Text(error.toString()),
-              data: (PharmacyDatabase db) => _StockBody(database: db),
+              data: (PharmacyDatabase db) =>
+                  _StockBody(database: db, registration: user),
             );
       },
     );
@@ -46,9 +51,10 @@ class StockWorkspace extends ConsumerWidget {
 }
 
 class _StockBody extends StatefulWidget {
-  const _StockBody({required this.database});
+  const _StockBody({required this.database, required this.registration});
 
   final PharmacyDatabase database;
+  final MobileRegistration registration;
 
   @override
   State<_StockBody> createState() => _StockBodyState();
@@ -57,6 +63,12 @@ class _StockBody extends StatefulWidget {
 class _StockBodyState extends State<_StockBody> {
   final TextEditingController _search = TextEditingController();
   List<String> _locations = <String>[];
+  List<MobileStockLocation>? _serverLocations;
+  String? _serverLocationsError;
+  bool _serverLocationsLoading = false;
+  bool _creatingLocation = false;
+  bool _transferringStock = false;
+  _PendingStockTransfer? _pendingTransfer;
   List<StockMedicineSnapshot> _medicines = <StockMedicineSnapshot>[];
   List<StockMedicineSnapshot> _expiring = <StockMedicineSnapshot>[];
   InventoryOverview? _overview;
@@ -66,15 +78,489 @@ class _StockBodyState extends State<_StockBody> {
   int _page = 0;
   int _tab = 0; // 0 = Stock, 1 = Batches, 2 = Expiry, 3 = Storage
   int _generation = 0;
+  int _serverGeneration = 0;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _loadServerLocations();
+  }
+
+  Future<void> _loadServerLocations() async {
+    final int generation = ++_serverGeneration;
+    final MobileRegistration registration = widget.registration;
+    setState(() {
+      _serverLocationsLoading = true;
+      _serverLocationsError = null;
+    });
+    final http.Client client = http.Client();
+    try {
+      final List<MobileStockLocation> locations = await MobileStockLocationApi(
+        environment: AppEnvironment.current,
+        client: client,
+      ).list(registration);
+      if (!mounted || generation != _serverGeneration) return;
+      setState(() => _serverLocations = locations);
+    } on Object catch (error) {
+      if (!mounted || generation != _serverGeneration) return;
+      setState(() => _serverLocationsError = error.toString());
+    } finally {
+      client.close();
+      if (mounted && generation == _serverGeneration) {
+        setState(() => _serverLocationsLoading = false);
+      }
+    }
+  }
+
+  Future<void> _transferStock() async {
+    if (_transferringStock ||
+        !widget.registration.permissions.contains('inventory.manage')) {
+      return;
+    }
+    final List<MobileStockLocation> locations =
+        _serverLocations ?? <MobileStockLocation>[];
+    if (locations.length < 2) return;
+    setState(() => _transferringStock = true);
+    final int generation = _serverGeneration;
+    final MobileRegistration registration = widget.registration;
+    final TextEditingController quantity = TextEditingController();
+    String sourceId = locations.first.id;
+    String? destinationId;
+    String? batchId;
+    List<MobileStockBatch> batches = <MobileStockBatch>[];
+    final http.Client client = http.Client();
+    final MobileStockLocationApi api = MobileStockLocationApi(
+      environment: AppEnvironment.current,
+      client: client,
+    );
+    try {
+      final List<MobileStockBatch> loadedBatches = await api.allBatches(
+        registration: registration,
+        stockLocationId: sourceId,
+      );
+      batches = loadedBatches;
+      if (!mounted || generation != _serverGeneration) return;
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) => StatefulBuilder(
+          builder: (BuildContext context, StateSetter update) {
+            final MobileStockLocation source = locations.firstWhere(
+              (MobileStockLocation location) => location.id == sourceId,
+            );
+            final List<MobileStockLocation> destinations = locations
+                .where(
+                  (MobileStockLocation location) =>
+                      location.id != sourceId &&
+                      location.branchId == source.branchId,
+                )
+                .toList();
+            return AlertDialog(
+              title: Text(ModuleStrings.of(context).transferStock),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    DropdownButtonFormField<String>(
+                      initialValue: sourceId,
+                      decoration: InputDecoration(
+                        labelText: ModuleStrings.of(context).transferFrom,
+                      ),
+                      items: locations
+                          .map(
+                            (MobileStockLocation location) =>
+                                DropdownMenuItem<String>(
+                                  value: location.id,
+                                  child: Text(location.name),
+                                ),
+                          )
+                          .toList(),
+                      onChanged: (String? value) async {
+                        if (value == null) return;
+                        update(() {
+                          sourceId = value;
+                          batchId = null;
+                          destinationId = null;
+                          batches = <MobileStockBatch>[];
+                        });
+                        try {
+                          final List<MobileStockBatch> page = await api
+                              .allBatches(
+                                registration: registration,
+                                stockLocationId: value,
+                              );
+                          if (dialogContext.mounted && sourceId == value) {
+                            update(() => batches = page);
+                          }
+                        } on Object catch (error) {
+                          if (dialogContext.mounted) {
+                            ScaffoldMessenger.of(dialogContext).showSnackBar(
+                              SnackBar(content: Text(error.toString())),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey<String>('destination-$sourceId'),
+                      initialValue: destinationId,
+                      decoration: InputDecoration(
+                        labelText: ModuleStrings.of(context).transferTo,
+                      ),
+                      items: destinations
+                          .map(
+                            (MobileStockLocation location) =>
+                                DropdownMenuItem<String>(
+                                  value: location.id,
+                                  child: Text(location.name),
+                                ),
+                          )
+                          .toList(),
+                      onChanged: (String? value) =>
+                          update(() => destinationId = value),
+                    ),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey<String>('batch-$sourceId'),
+                      initialValue: batchId,
+                      decoration: InputDecoration(
+                        labelText: ModuleStrings.of(context).transferBatch,
+                      ),
+                      items: batches
+                          .map(
+                            (
+                              MobileStockBatch batch,
+                            ) => DropdownMenuItem<String>(
+                              value: batch.id,
+                              child: Text(
+                                '${batch.medicineId} · ${batch.availableQuantity}',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (String? value) =>
+                          update(() => batchId = value),
+                    ),
+                    TextField(
+                      controller: quantity,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: ModuleStrings.of(context).transferQuantity,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: Text(ModuleStrings.of(context).transferCancel),
+                ),
+                FilledButton(
+                  onPressed: batchId != null && destinationId != null
+                      ? () => Navigator.pop(dialogContext, true)
+                      : null,
+                  child: Text(ModuleStrings.of(context).transferSubmit),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+      if (confirmed != true ||
+          !mounted ||
+          generation != _serverGeneration ||
+          batchId == null ||
+          destinationId == null) {
+        return;
+      }
+      final _PendingStockTransfer pending = _PendingStockTransfer(
+        batchId: batchId!,
+        destinationId: destinationId!,
+        quantity: quantity.text.trim(),
+        requestId: const Uuid().v4(),
+      );
+      _pendingTransfer = pending;
+      final MobileStockTransferResult result = await api.transfer(
+        registration: registration,
+        batchId: pending.batchId,
+        destinationId: pending.destinationId,
+        quantity: pending.quantity,
+        requestId: pending.requestId,
+      );
+      _pendingTransfer = null;
+      if (mounted && generation == _serverGeneration) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.replayed
+                  ? ModuleStrings.of(context).transferAlreadyRecorded
+                  : ModuleStrings.of(context).transferSuccess,
+            ),
+          ),
+        );
+      }
+    } on Object catch (error) {
+      if (error is! StockTransferUncertainException) {
+        _pendingTransfer = null;
+      }
+      if (mounted && generation == _serverGeneration) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      client.close();
+      quantity.dispose();
+      if (mounted && generation == _serverGeneration) {
+        setState(() => _transferringStock = false);
+      }
+    }
+  }
+
+  Future<void> _retryTransfer() async {
+    final _PendingStockTransfer? pending = _pendingTransfer;
+    if (pending == null || _transferringStock) return;
+    setState(() => _transferringStock = true);
+    final http.Client client = http.Client();
+    try {
+      final MobileStockTransferResult result =
+          await MobileStockLocationApi(
+            environment: AppEnvironment.current,
+            client: client,
+          ).transfer(
+            registration: widget.registration,
+            batchId: pending.batchId,
+            destinationId: pending.destinationId,
+            quantity: pending.quantity,
+            requestId: pending.requestId,
+          );
+      _pendingTransfer = null;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.replayed
+                  ? ModuleStrings.of(context).transferAlreadyRecorded
+                  : ModuleStrings.of(context).transferSuccess,
+            ),
+          ),
+        );
+      }
+    } on Object catch (error) {
+      if (error is! StockTransferUncertainException) {
+        _pendingTransfer = null;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      client.close();
+      if (mounted) setState(() => _transferringStock = false);
+    }
+  }
+
+  Future<void> _createLocation() async {
+    if (_creatingLocation ||
+        !widget.registration.permissions.contains('inventory.manage') ||
+        _serverLocationsLoading) {
+      return;
+    }
+    setState(() => _creatingLocation = true);
+    final MobileRegistration registration = widget.registration;
+    final int generation = _serverGeneration;
+    final ModuleStrings strings = ModuleStrings.of(context);
+    final TextEditingController code = TextEditingController();
+    final TextEditingController name = TextEditingController();
+    String kind = 'store';
+    final http.Client branchClient = http.Client();
+    late final List<MobileStockBranch> branches;
+    try {
+      branches = await MobileStockLocationApi(
+        environment: AppEnvironment.current,
+        client: branchClient,
+      ).branches(registration);
+    } on Object catch (error) {
+      if (mounted && generation == _serverGeneration) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+      if (mounted && generation == _serverGeneration) {
+        setState(() => _creatingLocation = false);
+      }
+      return;
+    } finally {
+      branchClient.close();
+    }
+    if (!mounted || generation != _serverGeneration || branches.isEmpty) {
+      if (mounted && generation == _serverGeneration) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No active branch is available.')),
+        );
+      }
+      if (mounted && generation == _serverGeneration) {
+        setState(() => _creatingLocation = false);
+      }
+      return;
+    }
+    String branchId = branches.first.id;
+    try {
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) => StatefulBuilder(
+          builder: (BuildContext context, StateSetter updateDialog) =>
+              AlertDialog(
+                title: Text(strings.addStorageLocation),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      DropdownButtonFormField<String>(
+                        initialValue: branchId,
+                        decoration: InputDecoration(
+                          labelText: strings.storageBranch,
+                        ),
+                        items: branches
+                            .map(
+                              (MobileStockBranch branch) =>
+                                  DropdownMenuItem<String>(
+                                    value: branch.id,
+                                    child: Text(branch.name),
+                                  ),
+                            )
+                            .toList(),
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            updateDialog(() => branchId = value);
+                          }
+                        },
+                      ),
+                      TextField(
+                        controller: code,
+                        maxLength: 60,
+                        decoration: InputDecoration(
+                          labelText: strings.storageCode,
+                        ),
+                      ),
+                      TextField(
+                        controller: name,
+                        maxLength: 160,
+                        decoration: InputDecoration(
+                          labelText: strings.storageName,
+                        ),
+                      ),
+                      DropdownButtonFormField<String>(
+                        initialValue: kind,
+                        decoration: InputDecoration(
+                          labelText: strings.storageType,
+                        ),
+                        items:
+                            const <String>[
+                                  'store',
+                                  'warehouse',
+                                  'shelf',
+                                  'quarantine',
+                                  'other',
+                                ]
+                                .map(
+                                  (String value) => DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (String? value) {
+                          if (value != null) updateDialog(() => kind = value);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext, false),
+                    child: Text(strings.storageCancel),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      if (code.text.trim().isNotEmpty &&
+                          name.text.trim().isNotEmpty) {
+                        Navigator.pop(dialogContext, true);
+                      }
+                    },
+                    child: Text(strings.storageCreate),
+                  ),
+                ],
+              ),
+        ),
+      );
+      if (confirmed != true || !mounted || generation != _serverGeneration) {
+        return;
+      }
+      final http.Client client = http.Client();
+      try {
+        await MobileStockLocationApi(
+          environment: AppEnvironment.current,
+          client: client,
+        ).create(
+          registration: registration,
+          branchId: branchId,
+          code: code.text,
+          name: name.text,
+          kind: kind,
+        );
+        if (mounted && generation == _serverGeneration) {
+          await _loadServerLocations();
+        }
+      } on Object catch (error) {
+        if (mounted && generation == _serverGeneration) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(error.toString())));
+        }
+      } finally {
+        client.close();
+        if (mounted && generation == _serverGeneration) {
+          setState(() => _creatingLocation = false);
+        }
+      }
+    } finally {
+      code.dispose();
+      name.dispose();
+      if (mounted && generation == _serverGeneration) {
+        setState(() => _creatingLocation = false);
+      }
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _StockBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.database, widget.database) ||
+        oldWidget.registration.tenantId != widget.registration.tenantId ||
+        oldWidget.registration.userId != widget.registration.userId ||
+        oldWidget.registration.accessToken != widget.registration.accessToken) {
+      // A tenant/database switch must not display cached stock from the
+      // previous database while the replacement tenant loads.
+      ++_serverGeneration;
+      _serverLocationsLoading = false;
+      _serverLocations = null;
+      _serverLocationsError = null;
+      _locations = <String>[];
+      _medicines = <StockMedicineSnapshot>[];
+      _expiring = <StockMedicineSnapshot>[];
+      _overview = null;
+      _location = null;
+      _page = 0;
+      _search.clear();
+      _load();
+      _loadServerLocations();
+    }
   }
 
   @override
   void dispose() {
+    ++_serverGeneration;
     _search.dispose();
     super.dispose();
   }
@@ -171,21 +657,46 @@ class _StockBodyState extends State<_StockBody> {
             ],
           ),
         const SizedBox(height: 12),
-        SegmentedButton<int>(
-          segments: <ButtonSegment<int>>[
-            ButtonSegment<int>(value: 0, label: Text(s.tabStock)),
-            ButtonSegment<int>(value: 1, label: Text(s.tabBatches)),
-            ButtonSegment<int>(value: 2, label: Text(s.tabExpiry)),
-            ButtonSegment<int>(value: 3, label: Text(s.tabStorage)),
-          ],
-          selected: <int>{_tab},
-          onSelectionChanged: (Set<int> selection) =>
-              setState(() => _tab = selection.first),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SegmentedButton<int>(
+            segments: <ButtonSegment<int>>[
+              ButtonSegment<int>(value: 0, label: Text(s.tabStock)),
+              ButtonSegment<int>(value: 1, label: Text(s.tabBatches)),
+              ButtonSegment<int>(value: 2, label: Text(s.tabExpiry)),
+              ButtonSegment<int>(value: 3, label: Text(s.tabStorage)),
+            ],
+            selected: <int>{_tab},
+            onSelectionChanged: (Set<int> selection) =>
+                setState(() => _tab = selection.first),
+          ),
         ),
         const SizedBox(height: 12),
-        if (_tab == 3)
-          _buildStorage(context)
-        else ...<Widget>[
+        if (_tab == 3) ...<Widget>[
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(28),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_error != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _Notice(message: _error!),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    onPressed: _load,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(s.refresh),
+                  ),
+                ),
+              ],
+            )
+          else
+            _buildStorage(context),
+        ] else ...<Widget>[
           Row(
             children: <Widget>[
               Expanded(
@@ -194,15 +705,29 @@ class _StockBodyState extends State<_StockBody> {
                     labelText: s.searchMedicine,
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: IconButton(
-                      tooltip: s.refresh,
-                      icon: const Icon(Icons.refresh),
-                      onPressed: _load,
+                      key: const ValueKey('stock-search-action'),
+                      tooltip: _search.text.isEmpty
+                          ? s.refresh
+                          : s.searchMedicine,
+                      icon: Icon(
+                        _search.text.isEmpty
+                            ? Icons.refresh_rounded
+                            : Icons.clear_rounded,
+                      ),
+                      onPressed: () {
+                        if (_search.text.isNotEmpty) {
+                          _search.clear();
+                          _page = 0;
+                        }
+                        _load();
+                      },
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   controller: _search,
+                  onChanged: (String value) => setState(() {}),
                   textInputAction: TextInputAction.search,
                   onSubmitted: (String value) {
                     _page = 0;
@@ -210,18 +735,13 @@ class _StockBodyState extends State<_StockBody> {
                   },
                 ),
               ),
-              const SizedBox(width: 8),
-              // Filters are not built yet; shown disabled to match the design.
-              const IconButton.outlined(
-                onPressed: null,
-                icon: Icon(Icons.tune_rounded),
-              ),
             ],
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             key: ValueKey('stock-location-${_location ?? 'all'}'),
             initialValue: _location ?? '',
+            isExpanded: true,
             decoration: InputDecoration(labelText: s.location),
             items: <DropdownMenuItem<String>>[
               DropdownMenuItem<String>(value: '', child: Text(s.allLocations)),
@@ -289,6 +809,11 @@ class _StockBodyState extends State<_StockBody> {
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
+                    IconButton(
+                      tooltip: s.refresh,
+                      onPressed: _loading ? null : _load,
+                      icon: const Icon(Icons.refresh),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -297,13 +822,82 @@ class _StockBodyState extends State<_StockBody> {
             ),
           ),
         ),
+        if (_serverLocationsLoading)
+          const LinearProgressIndicator()
+        else if (_serverLocationsError != null)
+          ListTile(
+            title: Text(_serverLocationsError!),
+            trailing: IconButton(
+              onPressed: _loadServerLocations,
+              icon: const Icon(Icons.refresh),
+            ),
+          )
+        else if (_serverLocations != null) ...<Widget>[
+          ..._serverLocations!.map(
+            (MobileStockLocation location) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: const Icon(Icons.warehouse_outlined),
+                title: Text(
+                  location.name,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text('${location.code} · ${location.kind}'),
+                isThreeLine: false,
+              ),
+            ),
+          ),
+        ],
+        if (!_serverLocationsLoading &&
+            _serverLocations == null &&
+            !_loading &&
+            _error == null &&
+            _locations.isEmpty) ...<Widget>[
+          const SizedBox(height: 12),
+          Text(s.noStorageLocations),
+        ],
+        if (_serverLocations == null &&
+            !_loading &&
+            _error == null &&
+            _locations.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 12),
+          Text(s.location, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+          ..._locations.map(
+            (String id) => Card(
+              child: ListTile(
+                leading: const Icon(Icons.place_outlined),
+                title: Text(id),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         FilledButton.icon(
-          onPressed: null,
+          onPressed:
+              _creatingLocation ||
+                  _serverLocationsLoading ||
+                  !widget.registration.permissions.contains('inventory.manage')
+              ? null
+              : _createLocation,
           icon: const Icon(Icons.add_location_alt_outlined),
           label: Text(s.addStorageLocation),
         ),
         const SizedBox(height: 8),
+        if (_pendingTransfer != null)
+          OutlinedButton.icon(
+            onPressed: _transferringStock ? null : _retryTransfer,
+            icon: const Icon(Icons.replay),
+            label: Text(s.retryPendingTransfer),
+          ),
+        if (_pendingTransfer == null &&
+            (_serverLocations?.length ?? 0) > 1 &&
+            widget.registration.permissions.contains('inventory.manage'))
+          OutlinedButton.icon(
+            onPressed: _transferringStock ? null : _transferStock,
+            icon: const Icon(Icons.swap_horiz),
+            label: Text(s.transferStock),
+          ),
         Text(s.storageComingSoon),
       ],
     );
@@ -522,4 +1116,18 @@ class _Notice extends StatelessWidget {
       child: Padding(padding: const EdgeInsets.all(20), child: Text(message)),
     );
   }
+}
+
+class _PendingStockTransfer {
+  const _PendingStockTransfer({
+    required this.batchId,
+    required this.destinationId,
+    required this.quantity,
+    required this.requestId,
+  });
+
+  final String batchId;
+  final String destinationId;
+  final String quantity;
+  final String requestId;
 }

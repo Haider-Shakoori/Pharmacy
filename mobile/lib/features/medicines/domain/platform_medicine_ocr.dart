@@ -48,7 +48,7 @@ class PlatformMedicineOcr implements NativeMedicineOcr {
     try {
       final lines = await _channel.invokeListMethod<String>(
         'recognizeLocalImage',
-        <String, String>{'path': imagePath},
+        <String, String>{'path': cleaned},
       );
       if (lines == null) {
         throw StateError('Offline OCR returned no text');

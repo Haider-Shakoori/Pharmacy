@@ -118,11 +118,12 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
       children: <Widget>[
         GridView.count(
           shrinkWrap: true,
+          padding: EdgeInsets.zero,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.7,
+          crossAxisCount: MediaQuery.sizeOf(context).width >= 720 ? 3 : 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: MediaQuery.sizeOf(context).width < 360 ? 1.2 : 1.5,
           children: <Widget>[
             _KpiTile(
               label: s.salesToday,
@@ -260,27 +261,33 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
 
     return GridView.count(
       shrinkWrap: true,
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 4,
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
+      crossAxisCount: MediaQuery.sizeOf(context).width >= 720
+          ? 6
+          : MediaQuery.sizeOf(context).width < 360
+          ? 3
+          : 4,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
       childAspectRatio: 0.9,
       children: links
           .map(
             (link) => Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
               child: InkWell(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 onTap: () => widget.onNavigate(link.tab, link.section),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    Icon(link.icon, color: const Color(0xFF1557C0)),
-                    const SizedBox(height: 6),
+                    Icon(link.icon, color: const Color(0xFF1557C0), size: 27),
+                    const SizedBox(height: 8),
                     Text(
                       link.label,
-                      maxLines: 1,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12,
@@ -377,7 +384,8 @@ class _KpiTile extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,7 +398,7 @@ class _KpiTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 12, color: color),
                 ),

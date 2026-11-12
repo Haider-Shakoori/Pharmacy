@@ -24,10 +24,49 @@ abstract final class AppTheme {
       colorScheme: colors,
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.background,
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFFE5EAF3),
+        thickness: 1,
+        space: 24,
+      ),
+      textTheme: const TextTheme(
+        headlineSmall: TextStyle(
+          color: Color(0xFF172B4D),
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.4,
+        ),
+        titleLarge: TextStyle(
+          color: Color(0xFF172B4D),
+          fontWeight: FontWeight.w700,
+        ),
+        titleMedium: TextStyle(
+          color: Color(0xFF253858),
+          fontWeight: FontWeight.w700,
+        ),
+        bodyMedium: TextStyle(color: Color(0xFF344563)),
+        bodySmall: TextStyle(color: Color(0xFF63738C)),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(0, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
       navigationBarTheme: const NavigationBarThemeData(
         backgroundColor: Colors.white,
         indicatorColor: AppColors.primaryContainer,
-        height: 72,
+        height: 76,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
       appBarTheme: const AppBarTheme(
         centerTitle: false,
@@ -42,7 +81,7 @@ abstract final class AppTheme {
         elevation: 0,
         color: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
+          borderRadius: BorderRadius.all(Radius.circular(18)),
         ),
       ),
       inputDecorationTheme: const InputDecorationTheme(

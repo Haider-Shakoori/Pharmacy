@@ -507,6 +507,22 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        Row(
+          children: <Widget>[
+            Icon(
+              Icons.point_of_sale_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                strings.pos,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -518,10 +534,27 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                     labelText: strings.posSearch,
                     hintText: strings.posSearchHint,
                     prefixIcon: const Icon(Icons.search_rounded),
-                    suffixIcon: IconButton(
-                      tooltip: sc.scanBarcodeTooltip,
-                      onPressed: _scanBarcode,
-                      icon: const Icon(Icons.qr_code_scanner_rounded),
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        IconButton(
+                          key: const ValueKey('pos-search-clear'),
+                          tooltip: MaterialLocalizations.of(context)
+                              .deleteButtonTooltip,
+                          onPressed: _checkingOut
+                              ? null
+                              : () {
+                                  _searchController.clear();
+                                  _search();
+                                },
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                        IconButton(
+                          tooltip: sc.scanBarcodeTooltip,
+                          onPressed: _checkingOut ? null : _scanBarcode,
+                          icon: const Icon(Icons.qr_code_scanner_rounded),
+                        ),
+                      ],
                     ),
                   ),
                   textInputAction: TextInputAction.search,
@@ -563,21 +596,34 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
         ..._results.map(
           (OfflinePosCatalogItem item) => Card(
             margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              title: Text(
-                item.brandName,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              subtitle: Text(
-                '${item.genericName ?? ''} • '
-                '${strings.posAvailable}: ${item.availableQuantity.compact} '
-                '${item.saleUnit}',
-              ),
-              trailing: FilledButton(
-                onPressed: () => _add(item),
-                child: Text(
-                  '${strings.posAdd} • ${item.salePrice.compact} AFN',
-                ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(
+                    item.brandName,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${item.genericName ?? ''} • '
+                    '${strings.posAvailable}: ${item.availableQuantity.compact} '
+                    '${item.saleUnit}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: FilledButton.icon(
+                      onPressed: _checkingOut ? null : () => _add(item),
+                      icon: const Icon(Icons.add_shopping_cart_outlined),
+                      label: Text(
+                        '${strings.posAdd} • ${item.salePrice.compact} AFN',
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -622,15 +668,45 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           ),
         ],
         const SizedBox(height: 16),
-        Text(
-          strings.posCart,
-          style: Theme.of(context).textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w800),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                strings.posCart,
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+            Badge(
+              key: const ValueKey('pos-cart-count'),
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              textColor: Theme.of(context).colorScheme.onPrimaryContainer,
+              label: Text('${_cart.length}'),
+              child: const Icon(Icons.shopping_cart_outlined),
+            ),
+            const SizedBox(width: 12),
+          ],
         ),
         if (_cart.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(strings.posEmptyCart),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Column(
+                children: <Widget>[
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    size: 32,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    strings.posEmptyCart,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
           ),
         ..._cart.map(
           (_CartEntry entry) => Card(
@@ -644,7 +720,7 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                     children: <Widget>[
                       Expanded(
                         child: InkWell(
-                          onTap: () => _edit(entry),
+                          onTap: _checkingOut ? null : () => _edit(entry),
                           child: Text(
                             entry.item.brandName,
                             style: const TextStyle(fontWeight: FontWeight.w700),
@@ -653,11 +729,13 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                       ),
                       IconButton(
                         tooltip: strings.posRemove,
-                        onPressed: () {
-                          setState(() {
-                            _cart.remove(entry);
-                          });
-                        },
+                        onPressed: _checkingOut
+                            ? null
+                            : () {
+                                setState(() {
+                                  _cart.remove(entry);
+                                });
+                              },
                         icon: const Icon(Icons.delete_outline_rounded),
                       ),
                     ],
@@ -685,12 +763,15 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                             : () => _changeQuantity(entry, true),
                         icon: const Icon(Icons.add),
                       ),
-                      const Spacer(),
-                      Text(
-                        '${FixedDecimal.parse(entry.unitPrice).compact} AFN ${s.eachSuffix}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
                     ],
+                  ),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Text(
+                      '${FixedDecimal.parse(entry.unitPrice).compact} AFN ${s.eachSuffix}',
+                      textAlign: TextAlign.end,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ),
                 ],
               ),
@@ -733,7 +814,10 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _paymentMethod,
-            decoration: InputDecoration(labelText: strings.posPaymentMethod),
+            decoration: InputDecoration(
+              labelText: strings.posPaymentMethod,
+              prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
+            ),
             items: <DropdownMenuItem<String>>[
               DropdownMenuItem<String>(
                 value: 'cash',
@@ -748,13 +832,15 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                 child: Text(strings.posMobile),
               ),
             ],
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  _paymentMethod = value;
-                });
-              }
-            },
+            onChanged: _checkingOut
+                ? null
+                : (String? value) {
+                    if (value != null) {
+                      setState(() {
+                        _paymentMethod = value;
+                      });
+                    }
+                  },
           ),
           const SizedBox(height: 12),
           Row(
@@ -887,7 +973,7 @@ class _PosBarcodeScannerState extends State<_PosBarcodeScanner> {
   }
 
   void _onDetect(BarcodeCapture capture) {
-    if (_handled || capture.barcodes.isEmpty) return;
+    if (!mounted || _handled || capture.barcodes.isEmpty) return;
     String? value;
     for (final Barcode barcode in capture.barcodes) {
       final String? candidate = barcode.rawValue;

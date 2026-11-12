@@ -11,9 +11,13 @@ use App\Http\Controllers\Api\DesktopSyncStatusController;
 use App\Http\Controllers\Api\DesktopUpdateManifestController;
 use App\Http\Controllers\Api\LicenseActivationController;
 use App\Http\Controllers\Api\MobileDeviceRegistrationController;
+use App\Http\Controllers\Api\MobileFinanceController;
+use App\Http\Controllers\Api\MobileMedicineCloudOcrController;
 use App\Http\Controllers\Api\MobileMedicineCreateController;
 use App\Http\Controllers\Api\MobileMedicineDuplicateCheckController;
 use App\Http\Controllers\Api\MobileSessionRefreshController;
+use App\Http\Controllers\Api\MobileStockLocationController;
+use App\Http\Controllers\Api\MobileSupplierController;
 use App\Http\Controllers\Api\MobileSyncPullController;
 use App\Http\Controllers\Api\MobileSyncPushController;
 use App\Http\Controllers\Api\TrialDeviceRegistrationController;
@@ -63,7 +67,17 @@ Route::prefix('/v1/mobile')
     ->group(function (): void {
         Route::post('/session/refresh', MobileSessionRefreshController::class);
         Route::post('/medicines/duplicate-check', MobileMedicineDuplicateCheckController::class);
+        Route::post('/medicines/cloud-ocr', MobileMedicineCloudOcrController::class)
+            ->middleware('throttle:5,1');
         Route::post('/medicines', MobileMedicineCreateController::class);
+        Route::get('/suppliers', [MobileSupplierController::class, 'index']);
+        Route::get('/suppliers/{supplier}', [MobileSupplierController::class, 'show']);
+        Route::get('/finance', [MobileFinanceController::class, 'index']);
+        Route::get('/stock-locations', [MobileStockLocationController::class, 'index']);
+        Route::get('/stock-location-branches', [MobileStockLocationController::class, 'branches']);
+        Route::get('/stock-location-batches', [MobileStockLocationController::class, 'batches']);
+        Route::post('/stock-location-transfers', [MobileStockLocationController::class, 'transfer']);
+        Route::post('/stock-locations', [MobileStockLocationController::class, 'store']);
         Route::post('/sync/push', MobileSyncPushController::class);
         Route::get('/sync/pull/{stream}', MobileSyncPullController::class);
     });

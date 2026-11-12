@@ -1,3 +1,4 @@
+import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/medicine_scan_review.dart';
 import 'package:businessos_pharmacy/features/medicines/domain/offline_medicine_text_parser.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,8 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
   late final TextEditingController _strength;
   late final TextEditingController _dosage;
   late final TextEditingController _barcode;
+  late final TextEditingController _batch;
+  late final TextEditingController _expiry;
   bool _confirmed = false;
 
   @override
@@ -34,20 +37,52 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
     _strength = TextEditingController(text: widget.draft.strength);
     _dosage = TextEditingController(text: widget.draft.dosageForm);
     _barcode = TextEditingController(text: widget.draft.barcode);
-    _brand.addListener(_refreshBrandValidation);
+    _batch = TextEditingController(text: widget.draft.batchNumber);
+    _expiry = TextEditingController(text: widget.draft.expiresAt);
+    for (final controller in [_brand, _generic, _strength, _dosage, _barcode]) {
+      controller.addListener(_onReviewFieldChanged);
+    }
   }
 
-  void _refreshBrandValidation() {
-    setState(() {});
+  void _onReviewFieldChanged() {
+    if (!mounted) return;
+    setState(() {
+      // Editing a field invalidates approval of the previous values.
+      _confirmed = false;
+    });
   }
 
   @override
   void dispose() {
-    _brand.removeListener(_refreshBrandValidation);
     for (final controller in [_brand, _generic, _strength, _dosage, _barcode]) {
+      controller.removeListener(_onReviewFieldChanged);
+    }
+    for (final controller in [
+      _brand,
+      _generic,
+      _strength,
+      _dosage,
+      _barcode,
+      _batch,
+      _expiry,
+    ]) {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  String _localized(BuildContext context, String en, String fa, String ps) {
+    final locale = AppLocale.fromCode(
+      Localizations.localeOf(context).languageCode,
+    );
+    switch (locale) {
+      case AppLocale.dari:
+        return fa;
+      case AppLocale.pashto:
+        return ps;
+      case AppLocale.english:
+        return en;
+    }
   }
 
   @override
@@ -55,44 +90,218 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Review scanned medicine details'),
+        Row(
+          children: [
+            Icon(
+              Icons.fact_check_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _localized(
+                  context,
+                  'Review scanned medicine details',
+                  'بررسی جزئیات دوای اسکن‌شده',
+                  'د سکین شويو درملو معلومات وڅېړئ',
+                ),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
+        Text(
+          _localized(
+            context,
+            'Check every field against the package before continuing.',
+            'پیش از ادامه، هر بخش را با بسته دوا مقایسه کنید.',
+            'له دوام مخکې هره برخه د درملو له بسته سره پرتله کړئ.',
+          ),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  Icons.verified_user_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _localized(
+                      context,
+                      'Review required before using OCR results. Editing any field requires approval again.',
+                      'پیش از استفاده از نتایج اسکن، بررسی ضروری است. پس از تغییر هر بخش، دوباره تأیید کنید.',
+                      'د سکین د پایلو کارولو مخکې کتنه اړینه ده. د هر معلوماتو له بدلولو وروسته بیا تایید وکړئ.',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (widget.draft.packQuantity != null) ...[
+          Text(
+            _localized(
+              context,
+              'Detected pack: ${widget.draft.packQuantity} (review only)',
+              'تعداد بسته: ${widget.draft.packQuantity} (فقط بررسی)',
+              'د بستې شمېر: ${widget.draft.packQuantity} (یوازې کتنه)',
+            ),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (widget.draft.brandName != null &&
+            widget.draft.sourceText.split('\\n').length > 1) ...[
+          Text(
+            _localized(
+              context,
+              'OCR brand spelling may be inaccurate. Compare it with the box.',
+              'املای نام تجارتی ممکن نادرست باشد. با بسته مقایسه کنید.',
+              'د سوداګریز نوم املا ښايي ناسمه وي. له بستې سره یې پرتله کړئ.',
+            ),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+        ],
         TextField(
           controller: _brand,
-          decoration: const InputDecoration(labelText: 'Brand name *'),
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: _localized(
+              context,
+              'Brand name *',
+              'نام تجارتی *',
+              'سوداګریز نوم *',
+            ),
+            prefixIcon: Icon(Icons.medication_outlined),
+          ),
         ),
         TextField(
           controller: _generic,
-          decoration: const InputDecoration(labelText: 'Generic name'),
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: _localized(
+              context,
+              'Generic name',
+              'نام عمومی',
+              'عمومي نوم',
+            ),
+            prefixIcon: Icon(Icons.science_outlined),
+          ),
         ),
         TextField(
           controller: _strength,
-          decoration: const InputDecoration(labelText: 'Strength'),
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: _localized(
+              context,
+              'Strength',
+              'قدرت دوا',
+              'د درملو قوت',
+            ),
+          ),
         ),
         TextField(
           controller: _dosage,
-          decoration: const InputDecoration(labelText: 'Dosage form'),
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: _localized(
+              context,
+              'Dosage form',
+              'شکل دوا',
+              'د درملو بڼه',
+            ),
+          ),
         ),
         TextField(
           controller: _barcode,
-          decoration: const InputDecoration(labelText: 'Barcode'),
+          textInputAction: TextInputAction.done,
+          keyboardType: TextInputType.text,
+          decoration: InputDecoration(
+            labelText: _localized(context, 'Barcode', 'بارکود', 'بارکوډ'),
+            prefixIcon: Icon(Icons.qr_code_outlined),
+          ),
         ),
-        if (widget.draft.batchNumber != null || widget.draft.expiresAt != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              'Batch and expiry belong to stock receiving, not medicine registration.',
-              style: Theme.of(context).textTheme.bodySmall,
+        const SizedBox(height: 20),
+        Text(
+          _localized(
+            context,
+            'Stock receiving details (review only)',
+            'جزئیات دریافت موجودی (فقط بررسی)',
+            'د توکو د ترلاسه کولو معلومات (یوازې کتنه)',
+          ),
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        TextField(
+          controller: _batch,
+          readOnly: true,
+          decoration: InputDecoration(
+            labelText: _localized(
+              context,
+              'Detected batch number',
+              'شماره بچ شناسایی‌شده',
+              'د پېژندل شوې بستې شمېره',
+            ),
+            prefixIcon: Icon(Icons.inventory_2_outlined),
+          ),
+        ),
+        TextField(
+          controller: _expiry,
+          readOnly: true,
+          decoration: InputDecoration(
+            labelText: _localized(
+              context,
+              'Detected expiry date',
+              'تاریخ انقضای شناسایی‌شده',
+              'د پېژندل شوې پای نېټه',
+            ),
+            prefixIcon: Icon(Icons.event_outlined),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _localized(
+            context,
+            'Batch and expiry are not saved to the medicine catalog. Verify them when receiving stock.',
+            'شماره بچ و تاریخ انقضا در فهرست دوا ذخیره نمی‌شوند. هنگام دریافت موجودی آن‌ها را بررسی کنید.',
+            'د بستې شمېره او د پای نېټه د درملو په لېست کې نه ساتل کېږي. د توکو د ترلاسه کولو پر مهال یې وګورئ.',
+          ),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        ExpansionTile(
+          title: Text(
+            _localized(
+              context,
+              'Recognized source text',
+              'متن شناسایی‌شده',
+              'پېژندل شوی متن',
             ),
           ),
-        ExpansionTile(
-          title: const Text('Recognized source text'),
           children: [SelectableText(widget.draft.sourceText)],
         ),
         CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
           value: _confirmed,
           onChanged: (value) => setState(() => _confirmed = value ?? false),
-          title: const Text('I have checked the medicine label and details'),
+          title: Text(
+            _localized(
+              context,
+              'I have checked the medicine label and details',
+              'برچسب و جزئیات دوا را بررسی کرده‌ام',
+              'ما د درملو لیبل او معلومات کتلي دي',
+            ),
+          ),
         ),
         FilledButton(
           onPressed: !_confirmed || _brand.text.trim().isEmpty
@@ -109,8 +318,16 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
                   );
                   widget.onConfirmed(reviewed);
                 },
-          child: const Text('Use reviewed details'),
+          child: Text(
+            _localized(
+              context,
+              'Use reviewed details',
+              'استفاده از جزئیات بررسی‌شده',
+              'کتل شوي معلومات وکاروئ',
+            ),
+          ),
         ),
+        const SizedBox(height: 12),
       ],
     );
   }

@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'medicine_ocr' => [
+        'endpoint' => env('MEDICINE_OCR_PROVIDER_ENDPOINT', ''),
+        'driver' => env('MEDICINE_OCR_PROVIDER_DRIVER', 'custom'),
+        'model' => env('MEDICINE_OCR_OPENAI_MODEL', 'gpt-4.1-mini'),
+        'token' => env('MEDICINE_OCR_PROVIDER_TOKEN', ''),
+        // Explicitly trusted DNS hostname(s); never accept arbitrary URLs.
+        'allowed_hosts' => array_filter(array_map('trim', explode(',', (string) env('MEDICINE_OCR_ALLOWED_HOSTS', '')))),
+    ],
+
 ];

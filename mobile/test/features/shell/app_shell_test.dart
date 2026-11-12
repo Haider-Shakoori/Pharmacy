@@ -67,13 +67,21 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Soon'), findsWidgets);
+    expect(find.text('Soon'), findsNothing);
+    expect(find.text('Finance'), findsOneWidget);
+    expect(find.text('Transfers'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Sync'));
     await tester.pump();
     await tester.tap(find.text('Sync'));
     await tester.pump();
     expect(find.byType(SyncStatusCard), findsOneWidget);
+    expect(find.byKey(const ValueKey('more-section-back')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('more-section-back')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const ValueKey('more-section-back')), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 100));
