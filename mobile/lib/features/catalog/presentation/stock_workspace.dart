@@ -705,15 +705,27 @@ class _StockBodyState extends State<_StockBody> {
                     labelText: s.searchMedicine,
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: IconButton(
-                      tooltip: s.refresh,
-                      icon: const Icon(Icons.refresh),
-                      onPressed: _load,
+                      key: const ValueKey('stock-search-action'),
+                      tooltip: _search.text.isEmpty ? s.refresh : s.searchMedicine,
+                      icon: Icon(
+                        _search.text.isEmpty
+                            ? Icons.refresh_rounded
+                            : Icons.clear_rounded,
+                      ),
+                      onPressed: () {
+                        if (_search.text.isNotEmpty) {
+                          _search.clear();
+                          _page = 0;
+                        }
+                        _load();
+                      },
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   controller: _search,
+                  onChanged: (String value) => setState(() {}),
                   textInputAction: TextInputAction.search,
                   onSubmitted: (String value) {
                     _page = 0;
