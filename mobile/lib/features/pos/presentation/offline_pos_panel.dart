@@ -534,10 +534,28 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                     labelText: strings.posSearch,
                     hintText: strings.posSearchHint,
                     prefixIcon: const Icon(Icons.search_rounded),
-                    suffixIcon: IconButton(
-                      tooltip: sc.scanBarcodeTooltip,
-                      onPressed: _scanBarcode,
-                      icon: const Icon(Icons.qr_code_scanner_rounded),
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        IconButton(
+                          key: const ValueKey('pos-search-clear'),
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).deleteButtonTooltip,
+                          onPressed: _checkingOut
+                              ? null
+                              : () {
+                                  _searchController.clear();
+                                  _search();
+                                },
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                        IconButton(
+                          tooltip: sc.scanBarcodeTooltip,
+                          onPressed: _checkingOut ? null : _scanBarcode,
+                          icon: const Icon(Icons.qr_code_scanner_rounded),
+                        ),
+                      ],
                     ),
                   ),
                   textInputAction: TextInputAction.search,
@@ -651,10 +669,24 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
           ),
         ],
         const SizedBox(height: 16),
-        Text(
-          strings.posCart,
-          style: Theme.of(context).textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w800),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                strings.posCart,
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+            Badge(
+              key: const ValueKey('pos-cart-count'),
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              textColor: Theme.of(context).colorScheme.onPrimaryContainer,
+              label: Text('${_cart.length}'),
+              child: const Icon(Icons.shopping_cart_outlined),
+            ),
+            const SizedBox(width: 12),
+          ],
         ),
         if (_cart.isEmpty)
           Card(
