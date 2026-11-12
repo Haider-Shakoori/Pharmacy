@@ -61,11 +61,7 @@ void main() {
       ]) {
     testWidgets('More grid responds to ${config.size.width}px '
         '${config.locale.code}', (WidgetTester tester) async {
-      await _pumpDashboard(
-        tester,
-        locale: config.locale,
-        size: config.size,
-      );
+      await _pumpDashboard(tester, locale: config.locale, size: config.size);
       final Finder destinations = find.descendant(
         of: find.byType(NavigationBar),
         matching: find.byType(NavigationDestination),
