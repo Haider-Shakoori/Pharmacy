@@ -39,13 +39,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
     _barcode = TextEditingController(text: widget.draft.barcode);
     _batch = TextEditingController(text: widget.draft.batchNumber);
     _expiry = TextEditingController(text: widget.draft.expiresAt);
-    for (final controller in [
-      _brand,
-      _generic,
-      _strength,
-      _dosage,
-      _barcode,
-    ]) {
+    for (final controller in [_brand, _generic, _strength, _dosage, _barcode]) {
       controller.addListener(_onReviewFieldChanged);
     }
   }
@@ -60,13 +54,7 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
 
   @override
   void dispose() {
-    for (final controller in [
-      _brand,
-      _generic,
-      _strength,
-      _dosage,
-      _barcode,
-    ]) {
+    for (final controller in [_brand, _generic, _strength, _dosage, _barcode]) {
       controller.removeListener(_onReviewFieldChanged);
     }
     for (final controller in [
