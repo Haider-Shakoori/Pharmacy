@@ -52,6 +52,40 @@ void main() {
     expect(result?.strength, '250 mg');
   });
 
+  testWidgets('editing an approved OCR field requires confirmation again', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: MedicineScanReviewPanel(
+              draft: draft,
+              onConfirmed: _ignoreReviewedMedicine,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.ensureVisible(find.byType(CheckboxListTile));
+    await tester.tap(find.byType(CheckboxListTile));
+    await tester.pump();
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNotNull,
+    );
+
+    await tester.enterText(find.byType(TextField).first, 'Updated after review');
+    await tester.pump();
+
+    expect(tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).value, isFalse);
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('empty brand blocks confirmation', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
