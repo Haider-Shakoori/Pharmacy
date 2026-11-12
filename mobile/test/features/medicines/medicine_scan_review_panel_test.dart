@@ -76,7 +76,10 @@ void main() {
       isNotNull,
     );
 
-    await tester.enterText(find.byType(TextField).first, 'Updated after review');
+    await tester.enterText(
+      find.byType(TextField).first,
+      'Updated after review',
+    );
     await tester.pump();
 
     expect(
