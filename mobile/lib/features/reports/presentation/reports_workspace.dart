@@ -142,6 +142,23 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
         const SizedBox(height: 4),
         Text(s.reportsSubtitle, style: text.bodySmall),
         const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            Chip(
+              avatar: const Icon(Icons.check_circle_outline, size: 18),
+              label: Text(
+                '${_reportList(s).where((info) => info.available).length} / ${_reportList(s).length}',
+              ),
+            ),
+            Chip(
+              avatar: const Icon(Icons.info_outline, size: 18),
+              label: Text(s.soon),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         ..._reportList(s).map(
           (_ReportInfo info) => Card(
             margin: const EdgeInsets.only(bottom: 8),
