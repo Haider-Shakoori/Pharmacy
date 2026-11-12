@@ -79,7 +79,10 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Updated after review');
     await tester.pump();
 
-    expect(tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).value, isFalse);
+    expect(
+      tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).value,
+      isFalse,
+    );
     expect(
       tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
       isNull,
