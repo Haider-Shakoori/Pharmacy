@@ -490,6 +490,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               if (_moreSection != null)
                 ListTile(
                   key: const ValueKey('more-section-back'),
+                  onTap: () => setState(() => _moreSection = null),
                   contentPadding: EdgeInsets.zero,
                   leading: IconButton(
                     tooltip: strings.more,
