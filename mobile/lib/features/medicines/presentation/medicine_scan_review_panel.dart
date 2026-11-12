@@ -39,16 +39,36 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
     _barcode = TextEditingController(text: widget.draft.barcode);
     _batch = TextEditingController(text: widget.draft.batchNumber);
     _expiry = TextEditingController(text: widget.draft.expiresAt);
-    _brand.addListener(_refreshBrandValidation);
+    for (final controller in [
+      _brand,
+      _generic,
+      _strength,
+      _dosage,
+      _barcode,
+    ]) {
+      controller.addListener(_onReviewFieldChanged);
+    }
   }
 
-  void _refreshBrandValidation() {
-    setState(() {});
+  void _onReviewFieldChanged() {
+    if (!mounted) return;
+    setState(() {
+      // Editing a field invalidates approval of the previous values.
+      _confirmed = false;
+    });
   }
 
   @override
   void dispose() {
-    _brand.removeListener(_refreshBrandValidation);
+    for (final controller in [
+      _brand,
+      _generic,
+      _strength,
+      _dosage,
+      _barcode,
+    ]) {
+      controller.removeListener(_onReviewFieldChanged);
+    }
     for (final controller in [
       _brand,
       _generic,
@@ -113,6 +133,32 @@ class _MedicineScanReviewPanelState extends State<MedicineScanReviewPanel> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  Icons.verified_user_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _localized(
+                      context,
+                      'Review required before using OCR results. Editing any field requires approval again.',
+                      'پیش از استفاده از نتایج اسکن، بررسی ضروری است. پس از تغییر هر بخش، دوباره تأیید کنید.',
+                      'د سکین د پایلو کارولو مخکې کتنه اړینه ده. د هر معلوماتو له بدلولو وروسته بیا تایید وکړئ.',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
         if (widget.draft.packQuantity != null) ...[
           Text(
             _localized(
