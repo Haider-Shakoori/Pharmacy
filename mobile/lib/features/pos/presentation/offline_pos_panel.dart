@@ -539,9 +539,8 @@ class _OfflinePosBodyState extends State<_OfflinePosBody> {
                       children: <Widget>[
                         IconButton(
                           key: const ValueKey('pos-search-clear'),
-                          tooltip: MaterialLocalizations.of(
-                            context,
-                          ).deleteButtonTooltip,
+                          tooltip: MaterialLocalizations.of(context)
+                              .deleteButtonTooltip,
                           onPressed: _checkingOut
                               ? null
                               : () {
