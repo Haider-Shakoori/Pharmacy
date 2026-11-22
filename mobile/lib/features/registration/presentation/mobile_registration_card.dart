@@ -30,7 +30,6 @@ class _MobileRegistrationCardState
 
   bool _registering = false;
   bool _credentialsStep = false;
-  bool _keyEntered = false;
   String? _error;
 
   @override
