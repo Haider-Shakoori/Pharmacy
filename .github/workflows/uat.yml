@@ -47,8 +47,18 @@ jobs:
       - name: Check PHP formatting
         run: vendor/bin/pint --test
 
-      - name: Audit Composer dependencies
-        run: composer audit --no-interaction
+      - name: Audit Composer dependencies (retry transient Packagist errors)
+        run: |
+          for attempt in 1 2 3 4; do
+            if composer audit --no-interaction; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 4 ]; then
+              echo "::error::Composer security audit failed after four attempts; release remains blocked."
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
 
       - name: Setup Node
         uses: actions/setup-node@v7
