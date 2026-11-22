@@ -1,0 +1,91 @@
+name: Flutter Android Emulator UAT
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-android-emulator-uat.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  emulator-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Flutter 3.47.5
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - name: Prepare Flutter app
+        working-directory: mobile
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter test test/features/registration/activation_gate_test.dart
+          flutter build apk --debug --dart-define=API_BASE_URL=https://darmaltoon.com
+      - name: Android emulator smoke test (isolated; no real pharmacy credentials)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          cores: 2
+          ram-size: 3072M
+          heap-size: 512M
+          disk-size: 6G
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: |
+            set -euo pipefail
+            mkdir -p mobile/build/emulator-uat
+            adb wait-for-device
+            adb shell getprop sys.boot_completed | tee mobile/build/emulator-uat/boot.txt
+            adb install -r mobile/build/app/outputs/flutter-apk/app-debug.apk
+            PKG="$(adb shell pm list packages | tr -d '\r' | grep -E 'package:.*(businessos|pharmacy|darmaltoon)' | head -1 | cut -d: -f2)"
+            if [ -z "$PKG" ]; then
+              echo "Cannot locate installed Darmaltoon package" >&2
+              exit 1
+            fi
+            echo "$PKG" > mobile/build/emulator-uat/package.txt
+            adb shell am force-stop "$PKG" || true
+            adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
+            sleep 18
+            adb shell screencap -p /sdcard/first-launch.png
+            adb pull /sdcard/first-launch.png mobile/build/emulator-uat/first-launch.png
+            adb shell dumpsys activity activities > mobile/build/emulator-uat/activity.txt
+            adb logcat -d -v time > mobile/build/emulator-uat/logcat.txt
+            if ! grep -Fq "$PKG" mobile/build/emulator-uat/activity.txt; then
+              echo "App is not present in Android activity state" >&2
+              exit 1
+            fi
+            if grep -E 'FATAL EXCEPTION|Process: '"$PKG"'.*|AndroidRuntime.*FATAL' mobile/build/emulator-uat/logcat.txt > mobile/build/emulator-uat/crash-lines.txt; then
+              echo "Android fatal crash detected" >&2
+              cat mobile/build/emulator-uat/crash-lines.txt
+              exit 1
+            fi
+            adb shell input keyevent KEYCODE_HOME
+            adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
+            sleep 5
+            adb shell screencap -p /sdcard/relaunch.png
+            adb pull /sdcard/relaunch.png mobile/build/emulator-uat/relaunch.png
+            echo "Emulator install, launch and relaunch smoke tests passed."
+      - name: Upload emulator screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: darmaltoon-android-emulator-uat-evidence
+          path: mobile/build/emulator-uat/
+          retention-days: 14
+          if-no-files-found: warn
