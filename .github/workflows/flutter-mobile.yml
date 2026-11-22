@@ -58,3 +58,14 @@ jobs:
 
       - name: Test
         run: flutter test
+
+      - name: Build Android test APK
+        run: flutter build apk --debug --dart-define=API_BASE_URL=https://darmaltoon.com
+
+      - name: Upload Android test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: darmaltoon-android-test-apk
+          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error
