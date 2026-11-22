@@ -1,0 +1,88 @@
+name: Flutter Android Customer APK
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-android-customer-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Flutter 3.47.5
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - name: Resolve dependencies and generate database
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+      - name: Analyze and test activation flow
+        run: |
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze
+          flutter test
+      - name: Build Android acceptance APK (debug signed; NOT for customer distribution)
+        run: flutter build apk --debug --dart-define=API_BASE_URL=https://darmaltoon.com
+      - name: Upload Android acceptance APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: darmaltoon-android-acceptance-debug
+          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error
+      - name: Check customer release signing availability
+        id: signing
+        env:
+          KEYSTORE_B64: ${{ secrets.DARMALTOON_ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.DARMALTOON_ANDROID_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.DARMALTOON_ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.DARMALTOON_ANDROID_KEY_PASSWORD }}
+        run: |
+          if [[ -n "$KEYSTORE_B64" && -n "$STORE_PASSWORD" && -n "$KEY_ALIAS" && -n "$KEY_PASSWORD" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Customer release APK not built: signing credentials are not configured."
+          fi
+      - name: Build signed customer release APK
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.DARMALTOON_ANDROID_KEYSTORE_BASE64 }}
+          DARMALTOON_ANDROID_STORE_PASSWORD: ${{ secrets.DARMALTOON_ANDROID_STORE_PASSWORD }}
+          DARMALTOON_ANDROID_KEY_ALIAS: ${{ secrets.DARMALTOON_ANDROID_KEY_ALIAS }}
+          DARMALTOON_ANDROID_KEY_PASSWORD: ${{ secrets.DARMALTOON_ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          export DARMALTOON_ANDROID_KEYSTORE="$RUNNER_TEMP/darmaltoon-release.jks"
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$DARMALTOON_ANDROID_KEYSTORE"
+          trap 'rm -f "$DARMALTOON_ANDROID_KEYSTORE"' EXIT
+          flutter build apk --release --dart-define=API_BASE_URL=https://darmaltoon.com
+          test -s build/app/outputs/flutter-apk/app-release.apk
+          shasum -a 256 build/app/outputs/flutter-apk/app-release.apk
+      - name: Upload signed customer release APK
+        if: steps.signing.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: darmaltoon-android-customer-release-signed
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+          if-no-files-found: error
