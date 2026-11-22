@@ -12,7 +12,8 @@ permissions:
 
 jobs:
   emulator-smoke:
-    runs-on: ubuntu-latest
+    # macOS provides emulator hardware acceleration; GitHub Linux runners lack /dev/kvm.
+    runs-on: macos-15
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
