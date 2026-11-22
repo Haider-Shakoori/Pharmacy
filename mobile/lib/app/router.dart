@@ -2,7 +2,6 @@ import 'package:businessos_pharmacy/core/auth/mobile_registration_providers.dart
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/features/registration/presentation/mobile_registration_card.dart';
 import 'package:businessos_pharmacy/features/shell/presentation/app_shell.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -38,7 +37,7 @@ class _RegistrationGate extends ConsumerWidget {
         if (current != null) {
           return AppShell(localeNotifier: localeNotifier);
         }
-        return const Scaffold(
+        return Scaffold(
           body: SafeArea(
             child: Center(
               child: SingleChildScrollView(
