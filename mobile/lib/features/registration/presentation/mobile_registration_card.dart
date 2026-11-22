@@ -30,6 +30,7 @@ class _MobileRegistrationCardState
   final TextEditingController _passwordController = TextEditingController();
 
   bool _registering = false;
+  bool _credentialsStep = false;
   bool _keyEntered = false;
   String? _error;
 
@@ -346,68 +347,89 @@ class _MobileRegistrationCardState
             }
 
             return Column(
+              key: const ValueKey('activation-flow'),
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Icon(Icons.medication_rounded, size: 48),
-                const SizedBox(height: 12),
                 Text(
                   'Darmaltoon',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: Theme.of(context).textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _keyEntered
+                  _credentialsStep
                       ? 'Step 2 of 2 — Sign in to your pharmacy'
                       : 'Step 1 of 2 — Enter your activation key',
                 ),
                 const SizedBox(height: 20),
-                if (!_keyEntered) ...<Widget>[
+                if (!_credentialsStep) ...<Widget>[
                   TextField(
-                    key: const ValueKey('activation-key-field'),
+                    key: const ValueKey('activation-key'),
                     controller: _licenseController,
                     autocorrect: false,
                     enableSuggestions: false,
-                    decoration: InputDecoration(labelText: strings.licenseKey),
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: strings.licenseKey,
+                      prefixIcon: const Icon(Icons.vpn_key_outlined),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                    onSubmitted: (_) {
+                      if (_licenseController.text.trim().isNotEmpty) {
+                        setState(() {
+                          _credentialsStep = true;
+                          _error = null;
+                        });
+                      }
+                    },
                   ),
                   const SizedBox(height: 16),
-                  FilledButton(
-                    key: const ValueKey('activation-key-next'),
-                    onPressed: _registering
+                  FilledButton.icon(
+                    key: const ValueKey('activation-continue'),
+                    onPressed: _licenseController.text.trim().isEmpty
                         ? null
-                        : () {
-                            if (_licenseController.text.trim().isEmpty) {
-                              setState(() {
-                                _error = 'Enter your activation key.';
-                              });
-                              return;
-                            }
-                            setState(() {
-                              _error = null;
-                              _keyEntered = true;
-                            });
-                          },
-                    child: const Text('Continue'),
+                        : () => setState(() {
+                            _credentialsStep = true;
+                            _error = null;
+                          }),
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                    label: const Text('Continue'),
                   ),
                 ] else ...<Widget>[
                   TextField(
-                    key: const ValueKey('activation-email-field'),
+                    key: const ValueKey('activation-email'),
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     autocorrect: false,
+                    enableSuggestions: false,
                     decoration: InputDecoration(labelText: strings.email),
                   ),
                   const SizedBox(height: 12),
                   TextField(
-                    key: const ValueKey('activation-password-field'),
+                    key: const ValueKey('activation-password'),
                     controller: _passwordController,
                     obscureText: true,
-                    autocorrect: false,
                     enableSuggestions: false,
+                    autocorrect: false,
                     decoration: InputDecoration(labelText: strings.password),
                     onSubmitted: (_) {
                       if (!_registering) _register();
                     },
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your activation key and credentials are verified together by the pharmacy server. No access is granted before successful registration.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (_error != null) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     key: const ValueKey('activation-sign-in'),
@@ -417,24 +439,17 @@ class _MobileRegistrationCardState
                       _registering ? strings.registering : 'Sign in',
                     ),
                   ),
-                  TextButton(
+                  TextButton.icon(
+                    key: const ValueKey('activation-back'),
                     onPressed: _registering
                         ? null
                         : () => setState(() {
-                            _keyEntered = false;
+                            _credentialsStep = false;
                             _passwordController.clear();
                             _error = null;
                           }),
-                    child: const Text('Change activation key'),
-                  ),
-                ],
-                if (_error != null) ...<Widget>[
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    label: const Text('Change activation key'),
                   ),
                 ],
               ],
