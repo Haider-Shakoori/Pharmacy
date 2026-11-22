@@ -281,7 +281,7 @@ class _MobileRegistrationCardState
                 const SizedBox(height: 20),
                 if (!_credentialsStep) ...<Widget>[
                   TextField(
-                    key: const ValueKey('activation-key'),
+                    key: const ValueKey('activation-key-field'),
                     controller: _licenseController,
                     autocorrect: false,
                     enableSuggestions: false,
@@ -300,21 +300,27 @@ class _MobileRegistrationCardState
                       }
                     },
                   ),
+                  if (_error != null) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ],
                   const SizedBox(height: 16),
                   FilledButton.icon(
-                    key: const ValueKey('activation-continue'),
-                    onPressed: _licenseController.text.trim().isEmpty
-                        ? null
-                        : () => setState(() {
-                            _credentialsStep = true;
-                            _error = null;
-                          }),
+                    key: const ValueKey('activation-key-next'),
+                    onPressed: () => setState(() {
+                      if (_licenseController.text.trim().isEmpty) {
+                        _error = 'Enter your activation key.';
+                      } else {
+                        _credentialsStep = true;
+                        _error = null;
+                      }
+                    }),
                     icon: const Icon(Icons.arrow_forward_rounded),
                     label: const Text('Continue'),
                   ),
                 ] else ...<Widget>[
                   TextField(
-                    key: const ValueKey('activation-email'),
+                    key: const ValueKey('activation-email-field'),
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     autocorrect: false,
@@ -323,7 +329,7 @@ class _MobileRegistrationCardState
                   ),
                   const SizedBox(height: 12),
                   TextField(
-                    key: const ValueKey('activation-password'),
+                    key: const ValueKey('activation-password-field'),
                     controller: _passwordController,
                     obscureText: true,
                     enableSuggestions: false,
