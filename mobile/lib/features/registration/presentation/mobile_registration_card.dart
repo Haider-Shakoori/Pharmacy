@@ -24,7 +24,6 @@ class MobileRegistrationCard extends ConsumerStatefulWidget {
 
 class _MobileRegistrationCardState
     extends ConsumerState<MobileRegistrationCard> {
-  final TextEditingController _pharmacyCodeController = TextEditingController();
   final TextEditingController _licenseController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -36,7 +35,6 @@ class _MobileRegistrationCardState
 
   @override
   void dispose() {
-    _pharmacyCodeController.dispose();
     _licenseController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -45,6 +43,12 @@ class _MobileRegistrationCardState
 
   Future<void> _register() async {
     final AppStrings strings = AppStrings.of(context);
+
+    if (!_credentialsStep || _licenseController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+      setState(() => _error = 'Enter your activation key, email and password.');
+      return;
+    }
 
     setState(() {
       _registering = true;
@@ -106,92 +110,6 @@ class _MobileRegistrationCardState
         profile: profile,
       );
 
-      _licenseController.clear();
-      _passwordController.clear();
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _registering = false;
-      });
-    } on MobileRegistrationException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _registering = false;
-        _error = error.message;
-      });
-    } on FormatException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _registering = false;
-        _error = error.message.toString();
-      });
-    } on Object {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _registering = false;
-        _error = 'Unable to save registration. Please try again.';
-      });
-    }
-  }
-
-  Future<void> _startTrial() async {
-    setState(() {
-      _registering = true;
-      _error = null;
-    });
-
-    try {
-      final SecureStore store = ref.read(secureStoreProvider);
-      final ConnectionProfileRepository profileRepository =
-          ConnectionProfileRepository(
-            store,
-            defaultCloudUri: AppEnvironment.current.apiBaseUri,
-          );
-      final ConnectionProfile profile = await profileRepository.load();
-      final Uri? apiBaseUri = AppEnvironment.current.apiBaseUri;
-      if (apiBaseUri == null) {
-        throw const MobileRegistrationException(
-          'The BusinessOS licensing server is not configured.',
-        );
-      }
-      final ServerEndpoint licensingEndpoint = ServerEndpoint.fromUri(
-        apiBaseUri,
-        ServerEndpointKind.cloud,
-      );
-      final DeviceIdentity device = await ref
-          .read(deviceIdentityServiceProvider)
-          .load();
-
-      final MobileRegistrationClient client = MobileRegistrationClient();
-      late final MobileRegistration registration;
-      try {
-        registration = await client.startTrial(
-          endpoint: licensingEndpoint,
-          device: device,
-          pharmacyCode: _pharmacyCodeController.text,
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-      } finally {
-        client.close();
-      }
-
-      await _persistRegistration(
-        registration,
-        profileRepository: profileRepository,
-        profile: profile,
-      );
-
-      _pharmacyCodeController.clear();
       _licenseController.clear();
       _passwordController.clear();
 
