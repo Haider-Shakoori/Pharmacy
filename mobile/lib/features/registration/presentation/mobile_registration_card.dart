@@ -43,8 +43,10 @@ class _MobileRegistrationCardState
   Future<void> _register() async {
     final AppStrings strings = AppStrings.of(context);
 
-    if (!_credentialsStep || _licenseController.text.trim().isEmpty ||
-        _emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+    if (!_credentialsStep ||
+        _licenseController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty) {
       setState(() => _error = 'Enter your activation key, email and password.');
       return;
     }
@@ -302,7 +304,12 @@ class _MobileRegistrationCardState
                   ),
                   if (_error != null) ...<Widget>[
                     const SizedBox(height: 8),
-                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 16),
                   FilledButton.icon(
@@ -358,9 +365,7 @@ class _MobileRegistrationCardState
                     key: const ValueKey('activation-sign-in'),
                     onPressed: _registering ? null : _register,
                     icon: const Icon(Icons.login_rounded),
-                    label: Text(
-                      _registering ? strings.registering : 'Sign in',
-                    ),
+                    label: Text(_registering ? strings.registering : 'Sign in'),
                   ),
                   TextButton.icon(
                     key: const ValueKey('activation-back'),
