@@ -1,0 +1,39 @@
+name: Refresh vulnerable Laravel lockfile
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/refresh-laravel-security-lock.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: true
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: Update vulnerable framework and required dependencies
+        run: |
+          composer update laravel/framework --with-all-dependencies --no-interaction --prefer-dist --no-progress --no-scripts
+          composer audit --no-interaction
+          php -r '$l=json_decode(file_get_contents("composer.lock"),true); foreach($l["packages"] as $p){if($p["name"]==="laravel/framework"){echo $p["version"],PHP_EOL; exit(version_compare(ltrim($p["version"],"v"),"13.40.0",">=")?0:1);}} exit(1);'
+      - name: Commit reviewed dependency lock update to PR branch
+        run: |
+          if git diff --quiet -- composer.lock; then
+            echo "No composer.lock change"; exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add composer.lock
+          git commit -m "fix(security): update Laravel framework beyond CVE-2026-128083"
+          git push origin "HEAD:${{ github.head_ref }}"
