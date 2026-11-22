@@ -29,9 +29,8 @@ class _RegistrationGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final registration = ref.watch(mobileRegistrationProvider);
     return registration.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
         body: Center(child: Text('Unable to load device registration.')),
       ),
