@@ -1,0 +1,81 @@
+name: Flutter Android Emulator UAT
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-android-emulator-uat.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  emulator-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Flutter 3.47.5
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - name: Prepare Flutter app
+        working-directory: mobile
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter test test/features/registration/activation_gate_test.dart
+          flutter build apk --debug --dart-define=API_BASE_URL=https://darmaltoon.com
+      - name: Validate emulator smoke script and ADB
+        run: |
+          set -euo pipefail
+          bash -n mobile/tool/android_emulator_smoke.sh
+          mkdir -p mobile/build/emulator-uat
+          ADB="$ANDROID_HOME/platform-tools/adb"
+          test -x "$ADB"
+          "$ADB" start-server 2>&1 | tee mobile/build/emulator-uat/adb-start.txt
+          "$ADB" version | tee mobile/build/emulator-uat/adb-version.txt
+          "$ADB" devices -l | tee mobile/build/emulator-uat/adb-devices-before.txt
+      - name: Enable KVM on Linux runner
+        run: |
+          if [ ! -e /dev/kvm ]; then
+            echo "::error::This runner does not expose /dev/kvm; hardware emulator cannot run."
+            exit 1
+          fi
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          test -r /dev/kvm && test -w /dev/kvm
+          ls -l /dev/kvm
+      - name: Android emulator smoke test (isolated; no real pharmacy credentials)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          cores: 2
+          ram-size: 2048M
+          heap-size: 256M
+          disk-size: 4G
+          disable-animations: true
+          emulator-boot-timeout: 420
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
+          # This action calls sh -c independently per YAML line; use one script command.
+          script: bash mobile/tool/android_emulator_smoke.sh
+      - name: Upload emulator screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: darmaltoon-android-emulator-uat-evidence
+          path: mobile/build/emulator-uat/
+          retention-days: 14
+          if-no-files-found: warn

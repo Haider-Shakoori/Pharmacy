@@ -9,6 +9,7 @@ class FakeNativeOcr implements NativeMedicineOcr {
   final List<String> lines;
   final bool available;
   int calls = 0;
+  String? lastImagePath;
 
   @override
   Future<bool> get isAvailable async => available;
@@ -16,6 +17,7 @@ class FakeNativeOcr implements NativeMedicineOcr {
   @override
   Future<List<String>> recognizeLocalImage(String imagePath) async {
     calls++;
+    lastImagePath = imagePath;
     return lines;
   }
 }
@@ -29,6 +31,13 @@ void main() {
     expect(draft.brandName, 'ExampleMed');
     expect(draft.strength, '250 mg');
     expect(draft.genericName, isNull);
+  });
+
+  test('normalizes local image path before invoking OCR', () async {
+    final ocr = FakeNativeOcr();
+    await MedicineScanCoordinator(ocr: ocr)
+        .scanLocalImage('  /local/medicine.jpg  ');
+    expect(ocr.lastImagePath, '/local/medicine.jpg');
   });
 
   test('does not invoke OCR when unavailable', () async {

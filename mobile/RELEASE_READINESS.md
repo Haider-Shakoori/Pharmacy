@@ -4,7 +4,7 @@ Development changes are kept on the feature branch until the final review. Do no
 
 ## Development integration gates (before physical-device testing)
 
-The feature branch has passed all five automated GitHub workflows at commit `8edeaeb2`. These gates still need explicit integration evidence; do not mark them complete from CI alone.
+Six GitHub workflows passed on integration commit `f70f43752138dcbdfa54fe24adbb8510feaa01b2` (2026-11-12): CI, Release Candidate UAT, Flutter Mobile Validation, Flutter Mobile CI, Flutter Windows Offline EXE, and Flutter iOS Unsigned IPA. Automated success does **not** close the remaining physical-device, pharmacy integration, or production release gates.
 
 - [ ] **Goods receiving:** Enqueue a receipt offline, replay the same idempotency key twice, confirm one server receipt and accepted acknowledgments, and confirm stock does not change before separate authorized inventory posting. Test over-receiving and permissions.
 - [ ] **Offline POS:** Verify offline sale creation, batch/expiry stock allocation, duplicate push replay, and balanced payments across disconnect/reconnect.
@@ -14,6 +14,30 @@ The feature branch has passed all five automated GitHub workflows at commit `8ed
 - [ ] **Localization:** Check English, Dari, Pashto, RTL layout and user-facing errors in all newly added flows.
 
 Do not claim these tests have passed until their results are recorded. The receiving validator intentionally rejects bonus-only receipts; support for that case would require coordinated mobile and server business-rule changes.
+
+## Current unsigned iPhone test artifact (2026-11-12)
+
+- GitHub Actions workflow: **Flutter iOS Unsigned IPA**, successful run [43219751223](https://github.com/Haider-Shakoori/Pharmacy/actions/runs/43219751223), commit `f70f43752138dcbdfa54fe24adbb8510feaa01b2`.
+- Artifact name: `darmaltoon-pharmacy-ios-unsigned`; downloadable from the run's **Artifacts** section.
+- The ZIP contains `Darmaltoon-Pharmacy-Unsigned.ipa`. It is explicitly **unsigned**, not an App Store or production release.
+- Artifact retention expires **2026-12-12**. Save the test artifact before that date if needed.
+- For Sideloadly, extract the IPA from the downloaded artifact ZIP first; Sideloadly handles test-device signing. An unsigned IPA is not directly installable without that signing step.
+- Do not use production pharmacy credentials or live tenant data for the test.
+
+### Physical iPhone test checklist — not yet verified
+
+- [ ] Download the artifact ZIP from the specific successful run and extract the IPA.
+- [ ] Install via Sideloadly, confirm app opens without crashing, and verify camera/photo permissions.
+- [ ] Register against a **test tenant**, verify correct tenant identity and permissions.
+- [ ] Scan an English medicine label and a Dari/Pashto label, including two sides of the package.
+- [ ] Correct an OCR field **after** checking approval, confirm approval resets and saving stays blocked until reconfirmed.
+- [ ] Verify detected batch/expiry stays review-only and is not written to stock by scan.
+- [ ] Test inventory Stock/Batches/Expiry/Storage, search clear and refresh, including offline and reconnect.
+- [ ] Test POS barcode search, cart quantity, discounts, offline checkout and receipt retrieval with **test data only**.
+- [ ] Test Reports, 12-module More navigation, RTL languages and narrow/large text layouts.
+- [ ] Confirm no sensitive production data, cross-tenant leaks, or accidental live-stock changes.
+
+Record the tester/device, iOS version, screenshots, and failures before changing any release-readiness checkbox. Successful CI or an artifact is **not** proof these checks passed.
 
 ## Native configuration
 

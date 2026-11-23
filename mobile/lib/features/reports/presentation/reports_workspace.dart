@@ -141,11 +141,32 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
         ),
         const SizedBox(height: 4),
         Text(s.reportsSubtitle, style: text.bodySmall),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            Chip(
+              avatar: const Icon(Icons.check_circle_outline, size: 18),
+              label: Text(
+                '${_reportList(s).where((info) => info.available).length} / ${_reportList(s).length}',
+              ),
+            ),
+            Chip(
+              avatar: const Icon(Icons.info_outline, size: 18),
+              label: Text(s.soon),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
         ..._reportList(s).map(
           (_ReportInfo info) => Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 6,
+              ),
               leading: CircleAvatar(
                 backgroundColor: info.available
                     ? const Color(0xFFDDEAFF)
@@ -161,7 +182,10 @@ class _ReportsWorkspaceState extends ConsumerState<ReportsWorkspace> {
                 info.title,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
-              subtitle: Text(info.detail),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(info.detail),
+              ),
               trailing: info.available
                   ? const Icon(Icons.chevron_right_rounded)
                   : Chip(
@@ -257,15 +281,18 @@ class _SalesReportState extends State<_SalesReport> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        SegmentedButton<int>(
-          segments: <ButtonSegment<int>>[
-            ButtonSegment<int>(value: 1, label: Text(s.today)),
-            ButtonSegment<int>(value: 7, label: Text(s.days7)),
-            ButtonSegment<int>(value: 30, label: Text(s.days30)),
-          ],
-          selected: <int>{_days},
-          onSelectionChanged: (Set<int> selection) =>
-              setState(() => _days = selection.first),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SegmentedButton<int>(
+            segments: <ButtonSegment<int>>[
+              ButtonSegment<int>(value: 1, label: Text(s.today)),
+              ButtonSegment<int>(value: 7, label: Text(s.days7)),
+              ButtonSegment<int>(value: 30, label: Text(s.days30)),
+            ],
+            selected: <int>{_days},
+            onSelectionChanged: (Set<int> selection) =>
+                setState(() => _days = selection.first),
+          ),
         ),
         const SizedBox(height: 12),
         FutureBuilder<_SalesData>(
@@ -642,18 +669,28 @@ class _Metric extends StatelessWidget {
         children: <Widget>[
           Icon(icon, size: 19, color: const Color(0xFF1557C0)),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 180),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              Text(label, style: const TextStyle(fontSize: 11)),
-            ],
+                Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ],
+            ),
           ),
         ],
       ),

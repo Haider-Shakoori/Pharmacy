@@ -13,6 +13,7 @@ import 'package:businessos_pharmacy/core/network/server_endpoint.dart';
 import 'package:businessos_pharmacy/core/storage/secure_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MobileRegistrationCard extends ConsumerStatefulWidget {
   const MobileRegistrationCard({super.key});
@@ -24,17 +25,30 @@ class MobileRegistrationCard extends ConsumerStatefulWidget {
 
 class _MobileRegistrationCardState
     extends ConsumerState<MobileRegistrationCard> {
-  final TextEditingController _pharmacyCodeController = TextEditingController();
   final TextEditingController _licenseController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  static final Uri _registrationUrl = Uri.parse(
+    'https://darmaltoon.com/demo.html?lang=en&request=trial',
+  );
+
+  Future<void> _openRegistration() async {
+    final bool opened = await launchUrl(
+      _registrationUrl,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && mounted) {
+      setState(() => _error = 'Unable to open registration page.');
+    }
+  }
+
   bool _registering = false;
+  bool _credentialsStep = false;
   String? _error;
 
   @override
   void dispose() {
-    _pharmacyCodeController.dispose();
     _licenseController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -43,6 +57,14 @@ class _MobileRegistrationCardState
 
   Future<void> _register() async {
     final AppStrings strings = AppStrings.of(context);
+
+    if (!_credentialsStep ||
+        _licenseController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty) {
+      setState(() => _error = 'Enter your activation key, email and password.');
+      return;
+    }
 
     setState(() {
       _registering = true;
@@ -104,92 +126,6 @@ class _MobileRegistrationCardState
         profile: profile,
       );
 
-      _licenseController.clear();
-      _passwordController.clear();
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _registering = false;
-      });
-    } on MobileRegistrationException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _registering = false;
-        _error = error.message;
-      });
-    } on FormatException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _registering = false;
-        _error = error.message.toString();
-      });
-    } on Object {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _registering = false;
-        _error = 'Unable to save registration. Please try again.';
-      });
-    }
-  }
-
-  Future<void> _startTrial() async {
-    setState(() {
-      _registering = true;
-      _error = null;
-    });
-
-    try {
-      final SecureStore store = ref.read(secureStoreProvider);
-      final ConnectionProfileRepository profileRepository =
-          ConnectionProfileRepository(
-            store,
-            defaultCloudUri: AppEnvironment.current.apiBaseUri,
-          );
-      final ConnectionProfile profile = await profileRepository.load();
-      final Uri? apiBaseUri = AppEnvironment.current.apiBaseUri;
-      if (apiBaseUri == null) {
-        throw const MobileRegistrationException(
-          'The BusinessOS licensing server is not configured.',
-        );
-      }
-      final ServerEndpoint licensingEndpoint = ServerEndpoint.fromUri(
-        apiBaseUri,
-        ServerEndpointKind.cloud,
-      );
-      final DeviceIdentity device = await ref
-          .read(deviceIdentityServiceProvider)
-          .load();
-
-      final MobileRegistrationClient client = MobileRegistrationClient();
-      late final MobileRegistration registration;
-      try {
-        registration = await client.startTrial(
-          endpoint: licensingEndpoint,
-          device: device,
-          pharmacyCode: _pharmacyCodeController.text,
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-      } finally {
-        client.close();
-      }
-
-      await _persistRegistration(
-        registration,
-        profileRepository: profileRepository,
-        profile: profile,
-      );
-
-      _pharmacyCodeController.clear();
       _licenseController.clear();
       _passwordController.clear();
 
@@ -345,100 +281,128 @@ class _MobileRegistrationCardState
             }
 
             return Column(
+              key: const ValueKey('activation-flow'),
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  strings.registrationTitle,
-                  style: Theme.of(context).textTheme.titleMedium
+                  'Darmaltoon',
+                  style: Theme.of(context).textTheme.headlineSmall
                       ?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 8),
-                Text(strings.registrationBody),
-                const SizedBox(height: 8),
                 Text(
-                  strings.registrationRequired,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'First time here? Start a one-time 7-day trial for an already provisioned BusinessOS pharmacy.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _pharmacyCodeController,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  decoration: const InputDecoration(
-                    labelText: 'Pharmacy code',
-                    hintText: 'e.g. kabul-central',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  decoration: InputDecoration(labelText: strings.email),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  enableSuggestions: false,
-                  autocorrect: false,
-                  decoration: InputDecoration(labelText: strings.password),
-                  onSubmitted: (_) {
-                    if (_registering) {
-                      return;
-                    }
-                    if (_pharmacyCodeController.text.trim().isNotEmpty &&
-                        _licenseController.text.trim().isEmpty) {
-                      _startTrial();
-                    } else {
-                      _register();
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _registering ? null : _startTrial,
-                  icon: const Icon(Icons.schedule_rounded),
-                  label: Text(
-                    _registering ? strings.registering : 'Start 7-Day Trial',
-                  ),
+                  _credentialsStep
+                      ? 'Step 2 of 2 — Sign in to your pharmacy'
+                      : 'Step 1 of 2 — Enter your activation key',
                 ),
                 const SizedBox(height: 20),
-                const Divider(),
-                const SizedBox(height: 12),
-                Text(
-                  'Already licensed? Register this device with your license key.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _licenseController,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  decoration: InputDecoration(labelText: strings.licenseKey),
-                ),
-                if (_error != null) ...<Widget>[
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                if (!_credentialsStep) ...<Widget>[
+                  TextField(
+                    key: const ValueKey('activation-key-field'),
+                    controller: _licenseController,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: strings.licenseKey,
+                      prefixIcon: const Icon(Icons.vpn_key_outlined),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                    onSubmitted: (_) {
+                      if (_licenseController.text.trim().isNotEmpty) {
+                        setState(() {
+                          _credentialsStep = true;
+                          _error = null;
+                        });
+                      }
+                    },
+                  ),
+                  if (_error != null) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  Center(
+                    child: TextButton(
+                      key: const ValueKey('activation-register-link'),
+                      onPressed: _openRegistration,
+                      child: const Text('Not registered? Register your pharmacy'),
                     ),
                   ),
-                ],
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: _registering ? null : _register,
-                  icon: const Icon(Icons.verified_user_outlined),
-                  label: Text(
-                    _registering ? strings.registering : strings.registerDevice,
+                  const SizedBox(height: 8),
+                  FilledButton.icon(
+                    key: const ValueKey('activation-key-next'),
+                    onPressed: () => setState(() {
+                      if (_licenseController.text.trim().isEmpty) {
+                        _error = 'Enter your activation key.';
+                      } else {
+                        _credentialsStep = true;
+                        _error = null;
+                      }
+                    }),
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                    label: const Text('Continue'),
                   ),
-                ),
+                ] else ...<Widget>[
+                  TextField(
+                    key: const ValueKey('activation-email-field'),
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    decoration: InputDecoration(labelText: strings.email),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const ValueKey('activation-password-field'),
+                    controller: _passwordController,
+                    obscureText: true,
+                    enableSuggestions: false,
+                    autocorrect: false,
+                    decoration: InputDecoration(labelText: strings.password),
+                    onSubmitted: (_) {
+                      if (!_registering) _register();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your activation key and credentials are verified together by the pharmacy server. No access is granted before successful registration.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (_error != null) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    key: const ValueKey('activation-sign-in'),
+                    onPressed: _registering ? null : _register,
+                    icon: const Icon(Icons.login_rounded),
+                    label: Text(_registering ? strings.registering : 'Sign in'),
+                  ),
+                  TextButton.icon(
+                    key: const ValueKey('activation-back'),
+                    onPressed: _registering
+                        ? null
+                        : () => setState(() {
+                            _credentialsStep = false;
+                            _passwordController.clear();
+                            _error = null;
+                          }),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    label: const Text('Change activation key'),
+                  ),
+                ],
               ],
             );
           },

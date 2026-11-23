@@ -1,6 +1,7 @@
 import 'package:businessos_pharmacy/app/router.dart';
 import 'package:businessos_pharmacy/core/localization/app_locale.dart';
 import 'package:businessos_pharmacy/core/theme/app_theme.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -42,9 +43,29 @@ class _BusinessOsPharmacyAppState extends State<BusinessOsPharmacyApp> {
           supportedLocales: AppLocale.values
               .map((AppLocale locale) => locale.locale)
               .toList(growable: false),
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            const _PashtoCupertinoFallback(),
+            ...GlobalMaterialLocalizations.delegates,
+          ],
         );
       },
     );
   }
+}
+
+/// Cupertino has no built-in Pashto translation in this Flutter SDK.
+/// Use Dari for Cupertino system controls while retaining Pashto app strings.
+class _PashtoCupertinoFallback
+    extends LocalizationsDelegate<CupertinoLocalizations> {
+  const _PashtoCupertinoFallback();
+
+  @override
+  bool isSupported(Locale locale) => locale.languageCode == 'ps';
+
+  @override
+  Future<CupertinoLocalizations> load(Locale locale) =>
+      GlobalCupertinoLocalizations.delegate.load(const Locale('fa'));
+
+  @override
+  bool shouldReload(_PashtoCupertinoFallback old) => false;
 }

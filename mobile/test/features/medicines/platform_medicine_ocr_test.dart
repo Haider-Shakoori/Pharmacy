@@ -39,6 +39,19 @@ void main() {
     expect(capturedPath, '/local/medicine.jpg');
   });
 
+  test('trims local image path before invoking native OCR', () async {
+    String? capturedPath;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          capturedPath = (call.arguments as Map)['path'] as String;
+          return <String>['ExampleMed'];
+        });
+    expect(await ocr.recognizeLocalImage('  /local/medicine.jpg  '), <String>[
+      'ExampleMed',
+    ]);
+    expect(capturedPath, '/local/medicine.jpg');
+  });
+
   test('native failure does not silently fall back to cloud OCR', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {

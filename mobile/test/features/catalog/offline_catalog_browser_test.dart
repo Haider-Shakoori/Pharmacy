@@ -54,6 +54,46 @@ void main() {
     expect(await browser.stockLocations(), <String>['main', 'secondary']);
   });
 
+  test('storage locations exclude deleted batches and duplicate ids', () async {
+    await database.customStatement("""
+      INSERT INTO local_inventory_batches
+      (id, medicine_id, stock_location_id, batch_number,
+       available_quantity, sale_price, purchase_cost, status, is_deleted)
+      VALUES ('lot-5', 'med-1', 'archived', 'LOT-5',
+              '1.0000', '12.0000', '8.0000', 'active', 1),
+             ('lot-6', 'med-1', 'secondary', 'LOT-6',
+              '1.0000', '12.0000', '8.0000', 'active', 0)
+    """);
+
+    expect(await browser.stockLocations(), <String>['main', 'secondary']);
+  });
+
+  test('storage locations ignore batches of deleted medicines', () async {
+    await database.customStatement("""
+      INSERT INTO local_inventory_batches
+      (id, medicine_id, stock_location_id, batch_number,
+       available_quantity, sale_price, purchase_cost, status, is_deleted)
+      VALUES ('lot-hidden', 'med-2', 'hidden-location', 'HIDDEN-LOT',
+              '1.0000', '12.0000', '8.0000', 'active', 0)
+    """);
+
+    expect(await browser.stockLocations(), <String>['main', 'secondary']);
+  });
+
+  test('storage locations omit blank location identifiers', () async {
+    await database.customStatement("""
+      INSERT INTO local_inventory_batches
+      (id, medicine_id, stock_location_id, batch_number,
+       available_quantity, sale_price, purchase_cost, status, is_deleted)
+      VALUES ('lot-empty', 'med-1', '', 'EMPTY-LOT',
+              '1.0000', '12.0000', '8.0000', 'active', 0),
+             ('lot-spaces', 'med-1', '   ', 'SPACES-LOT',
+              '1.0000', '12.0000', '8.0000', 'active', 0)
+    """);
+
+    expect(await browser.stockLocations(), <String>['main', 'secondary']);
+  });
+
   test(
     'location filter excludes other location and never mutates stock',
     () async {

@@ -29,6 +29,62 @@ void main() {
     expect(draft.genericName, isNull);
   });
 
+  test('extracts Oxypar Plus composition from one package image', () {
+    final draft = parser.parse([
+      'AR',
+      'Each uncoated tablet contains:',
+      'Paracetamol IP 325 mg',
+      'Diclofenac Sodium IP 50 mg',
+      'Magnesium Trisilicate IP 100 mg',
+      'COMBITIC GLOBAL CAPLET PVT. LTD.',
+      'OXY PAR PLUS',
+      'Tablets',
+    ]);
+    expect(draft.brandName, 'OXY PAR PLUS');
+    expect(
+      draft.genericName,
+      'Paracetamol, Diclofenac Sodium, Magnesium Trisilicate',
+    );
+    expect(draft.strength, '325 mg + 50 mg + 100 mg');
+    expect(draft.dosageForm?.toLowerCase(), 'tablets');
+  });
+
+  test('repeated OCR readings beat manufacturer logo on rotated pack', () {
+    final draft = parser.parse([
+      'APHL',
+      'Esomeprazol',
+      'Assoger',
+      '14 Capsules',
+      'Esomeprazole',
+      'Essoger',
+      '20mg',
+    ]);
+    expect(draft.brandName, 'Assoger');
+    expect(draft.genericName, 'Esomeprazole');
+    expect(draft.strength, '20mg');
+    expect(draft.dosageForm, 'Capsules');
+    expect(draft.packQuantity, '14 Capsules');
+    expect(draft.sourceText, contains('Essoger'));
+  });
+
+  test('eye drop carton separates brand and split generic', () {
+    final draft = parser.parse([
+      'RX',
+      'Olopatadine',
+      'Hydrochloride',
+      'Ophthalmic',
+      'Solution USP 0.2% w/v',
+      'DELOP',
+      'Eye Drops',
+      '10',
+    ]);
+    expect(draft.brandName, 'DELOP');
+    expect(draft.genericName, 'Olopatadine Hydrochloride');
+    expect(draft.strength, '0.2%');
+    expect(draft.dosageForm, 'Eye Drops');
+    expect(draft.packQuantity, isNull);
+  });
+
   test('empty recognition yields empty draft', () {
     final draft = parser.parse([]);
     expect(draft.brandName, isNull);

@@ -11,10 +11,12 @@ use App\Models\ProductBatch;
 use App\Models\PurchaseOrder;
 use App\Models\Sale;
 use App\Models\StockLocation;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Inventory\StockMovementService;
+use App\Services\Inventory\StockTransferService;
 use App\Services\Mobile\MobileGoodsReceiptService;
 use App\Services\Subscriptions\TrialProvisioner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -129,6 +131,217 @@ class MobileSyncApiTest extends TestCase
         ])->assertOk();
 
         $this->accessToken = $registration->json('data.access_token');
+    }
+
+    public function test_cashier_can_list_active_stock_locations_but_cannot_create_them(): void
+    {
+        $response = $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/stock-locations')
+            ->assertOk();
+
+        $this->assertContains('MAIN', collect($response->json('data'))->pluck('code')->all());
+
+        $branchId = $this->tenant->run(
+            fn () => Branch::query()->where('code', 'SYNC')->value('id')
+        );
+
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/stock-location-branches')
+            ->assertForbidden();
+
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/stock-locations', [
+                'branch_id' => $branchId,
+                'code' => 'NEW',
+                'name' => 'New Warehouse',
+                'kind' => 'warehouse',
+            ])
+            ->assertForbidden();
+
+        $this->tenant->run(function (): void {
+            $this->assertDatabaseMissing('stock_locations', ['code' => 'NEW']);
+        });
+    }
+
+    public function test_stock_transfer_preserves_totals_and_is_idempotent(): void
+    {
+        $this->tenant->run(function (): void {
+            $source = ProductBatch::query()->where('batch_key', 'SYNC-LOT')->firstOrFail();
+            $destination = StockLocation::query()->create([
+                'branch_id' => $source->branch_id,
+                'code' => 'SECOND',
+                'name' => 'Second Store',
+                'kind' => 'store',
+                'is_default' => false,
+                'is_active' => true,
+            ]);
+            $service = app(StockTransferService::class);
+            $before = ProductBatch::query()->sum('available_quantity');
+            $first = $service->transfer($source->id, $destination->id, '5.0000', 'transfer-test-1', null);
+            $again = $service->transfer($source->id, $destination->id, '5.0000', 'transfer-test-1', null);
+
+            $this->assertFalse($first['replayed']);
+            $this->assertTrue($again['replayed']);
+            $this->assertSame($first['source_movement_id'], $again['source_movement_id']);
+            $this->assertEquals('15.0000', $source->fresh()->available_quantity);
+            $this->assertEquals('5.0000', ProductBatch::query()
+                ->where('stock_location_id', $destination->id)->firstOrFail()->available_quantity);
+            $this->assertEquals($before, ProductBatch::query()->sum('available_quantity'));
+            $this->assertSame(2, StockMovement::query()
+                ->where('source_id', 'transfer-test-1')->count());
+
+            try {
+                $service->transfer($source->id, $destination->id, '6.0000', 'transfer-test-1', null);
+                $this->fail('Reused key with different quantity must be rejected');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('request_id', $exception->errors());
+            }
+            $this->assertEquals($before, ProductBatch::query()->sum('available_quantity'));
+        });
+    }
+
+    public function test_stock_transfer_rejects_insufficient_quantity_without_movements(): void
+    {
+        $this->tenant->run(function (): void {
+            $source = ProductBatch::query()->where('batch_key', 'SYNC-LOT')->firstOrFail();
+            $destination = StockLocation::query()->create([
+                'branch_id' => $source->branch_id,
+                'code' => 'THIRD',
+                'name' => 'Third Store',
+                'kind' => 'store',
+                'is_active' => true,
+            ]);
+            $before = StockMovement::query()->count();
+            try {
+                app(StockTransferService::class)->transfer(
+                    $source->id, $destination->id, '999.0000', 'transfer-too-large', null
+                );
+                $this->fail('Insufficient quantity must be rejected');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('quantity', $exception->errors());
+            }
+            $this->assertSame($before, StockMovement::query()->count());
+        });
+    }
+
+    public function test_stock_transfer_rejects_same_location_and_other_branch(): void
+    {
+        $this->tenant->run(function (): void {
+            $source = ProductBatch::query()->where('batch_key', 'SYNC-LOT')->firstOrFail();
+            $before = StockMovement::query()->count();
+            try {
+                app(StockTransferService::class)->transfer(
+                    $source->id, $source->stock_location_id, '1', 'same-location', null
+                );
+                $this->fail('Same-location transfers must be rejected');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('destination_id', $exception->errors());
+            }
+
+            $otherBranch = Branch::query()->create([
+                'code' => 'OTHER',
+                'name' => 'Other Branch',
+                'is_active' => true,
+            ]);
+            $otherLocation = StockLocation::query()->create([
+                'branch_id' => $otherBranch->id,
+                'code' => 'OTHER',
+                'name' => 'Other Branch Store',
+                'kind' => 'store',
+                'is_active' => true,
+            ]);
+            try {
+                app(StockTransferService::class)->transfer(
+                    $source->id, $otherLocation->id, '1', 'other-branch', null
+                );
+                $this->fail('Cross-branch transfers must be rejected');
+            } catch (ValidationException $exception) {
+                $this->assertArrayHasKey('destination_id', $exception->errors());
+            }
+            $this->assertSame($before, StockMovement::query()->count());
+        });
+    }
+
+    public function test_stock_transfer_merges_existing_destination_batch(): void
+    {
+        $this->tenant->run(function (): void {
+            $source = ProductBatch::query()->where('batch_key', 'SYNC-LOT')->firstOrFail();
+            $destination = StockLocation::query()->create([
+                'branch_id' => $source->branch_id,
+                'code' => 'MERGE',
+                'name' => 'Merge Store',
+                'kind' => 'store',
+                'is_active' => true,
+            ]);
+            $target = $source->replicate();
+            $target->stock_location_id = $destination->id;
+            $target->received_quantity = '2.0000';
+            $target->available_quantity = '2.0000';
+            $target->purchase_cost = '6.0000';
+            $target->save();
+
+            app(StockTransferService::class)->transfer(
+                $source->id, $destination->id, '2.0000', 'merge-test', null
+            );
+
+            $this->assertSame(1, ProductBatch::query()
+                ->where('stock_location_id', $destination->id)
+                ->where('batch_key', 'SYNC-LOT')->count());
+            $this->assertEquals('4.0000', $target->fresh()->available_quantity);
+            $this->assertEquals('5.0000', $target->fresh()->purchase_cost);
+            $this->assertEquals('18.0000', $source->fresh()->available_quantity);
+        });
+    }
+
+    public function test_cashier_cannot_transfer_stock(): void
+    {
+        $this->withToken($this->accessToken)
+            ->postJson('/api/v1/mobile/stock-location-transfers', [
+                'batch_id' => '01J00000000000000000000000',
+                'destination_id' => '01J00000000000000000000001',
+                'quantity' => '1.0000',
+                'request_id' => '17eb9752-3900-41a1-a182-fdb75c96f7be',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_cashier_cannot_access_transfer_batch_inventory(): void
+    {
+        $locationId = $this->tenant->run(
+            fn () => StockLocation::query()->where('code', 'MAIN')->value('id')
+        );
+
+        $this->withToken($this->accessToken)
+            ->getJson('/api/v1/mobile/stock-location-batches?stock_location_id='.$locationId)
+            ->assertForbidden();
+    }
+
+    public function test_stock_location_endpoints_require_mobile_authentication(): void
+    {
+        $this->withToken('')
+            ->getJson('/api/v1/mobile/stock-locations')
+            ->assertUnauthorized();
+
+        $this->withToken('')
+            ->postJson('/api/v1/mobile/stock-location-transfers', [])
+            ->assertUnauthorized();
+
+        $this->withToken('')
+            ->getJson('/api/v1/mobile/stock-location-batches?stock_location_id=invalid')
+            ->assertUnauthorized();
+
+        $this->withToken('')
+            ->getJson('/api/v1/mobile/stock-location-branches')
+            ->assertUnauthorized();
+
+        $this->withToken('')
+            ->postJson('/api/v1/mobile/stock-locations', [
+                'branch_id' => 'not-a-branch',
+                'code' => 'NEW',
+                'name' => 'New Warehouse',
+                'kind' => 'warehouse',
+            ])
+            ->assertUnauthorized();
     }
 
     public function test_revoked_device_cannot_pull_or_refresh_with_existing_token(): void
