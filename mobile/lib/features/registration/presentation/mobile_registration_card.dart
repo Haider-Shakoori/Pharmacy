@@ -13,6 +13,7 @@ import 'package:businessos_pharmacy/core/network/server_endpoint.dart';
 import 'package:businessos_pharmacy/core/storage/secure_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MobileRegistrationCard extends ConsumerStatefulWidget {
   const MobileRegistrationCard({super.key});
@@ -158,7 +159,7 @@ class _MobileRegistrationCardState
       final Uri? apiBaseUri = AppEnvironment.current.apiBaseUri;
       if (apiBaseUri == null) {
         throw const MobileRegistrationException(
-          'The BusinessOS licensing server is not configured.',
+          'The Darmaltoon licensing server is not configured.',
         );
       }
       final ServerEndpoint licensingEndpoint = ServerEndpoint.fromUri(
@@ -361,7 +362,7 @@ class _MobileRegistrationCardState
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'First time here? Start a one-time 7-day trial for an already provisioned BusinessOS pharmacy.',
+                  'Already have a Darmaltoon pharmacy? Start your 7-day trial.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
@@ -407,6 +408,19 @@ class _MobileRegistrationCardState
                   label: Text(
                     _registering ? strings.registering : 'Start 7-Day Trial',
                   ),
+                ),
+                const SizedBox(height: 12),
+                TextButton.icon(
+                  onPressed: () async {
+                    final Uri url = Uri.parse('https://darmaltoon.com/demo.html?lang=en&request=trial');
+                    if (!await launchUrl(url, mode: LaunchMode.externalApplication) && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Unable to open Darmaltoon registration page.')),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.open_in_browser_rounded),
+                  label: const Text('Not registered? Register your pharmacy'),
                 ),
                 const SizedBox(height: 20),
                 const Divider(),
