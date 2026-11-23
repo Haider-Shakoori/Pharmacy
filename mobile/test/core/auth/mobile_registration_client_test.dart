@@ -62,7 +62,8 @@ void main() {
     expect(requests, hasLength(1));
     expect(requests.single.method, 'POST');
     expect(requests.single.url.path, '/api/v1/mobile/register');
-    final Map<String, dynamic> payload = jsonDecode(requests.single.body);
+    final Map<String, dynamic> payload =
+        jsonDecode(requests.single.body) as Map<String, dynamic>;
     expect(payload['license_key'], 'TEST-KEY');
     expect(payload['email'], 'pharmacist@example.test');
     expect(payload['password'], 'incorrect-password');
