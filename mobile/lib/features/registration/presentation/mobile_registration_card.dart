@@ -30,7 +30,7 @@ class _MobileRegistrationCardState
   final TextEditingController _passwordController = TextEditingController();
 
   static final Uri _registrationUrl = Uri.parse(
-    'https://register.pharmacy.businessos.af/',
+    'https://darmaltoon.com/demo.html?lang=en&request=trial',
   );
 
   Future<void> _openRegistration() async {
