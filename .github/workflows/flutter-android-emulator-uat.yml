@@ -35,21 +35,31 @@ jobs:
           dart run build_runner build --delete-conflicting-outputs
           flutter test test/features/registration/activation_gate_test.dart
           flutter build apk --debug --dart-define=API_BASE_URL=https://darmaltoon.com
+      - name: Initialize and diagnose Android Debug Bridge
+        run: |
+          mkdir -p mobile/build/emulator-uat
+          adb kill-server || true
+          adb start-server 2>&1 | tee mobile/build/emulator-uat/adb-start.txt
+          adb version | tee mobile/build/emulator-uat/adb-version.txt
+          adb devices -l | tee mobile/build/emulator-uat/adb-devices-before.txt
       - name: Android emulator smoke test (isolated; no real pharmacy credentials)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: 33
           arch: arm64-v8a
           target: google_apis
           profile: pixel_6
           cores: 2
-          ram-size: 3072M
-          heap-size: 512M
-          disk-size: 6G
+          ram-size: 2048M
+          heap-size: 256M
+          disk-size: 4G
           disable-animations: true
-          emulator-boot-timeout: 600
+          emulator-boot-timeout: 420
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
           script: |
             set -euo pipefail
+            adb start-server
+            adb devices -l
             mkdir -p mobile/build/emulator-uat
             adb wait-for-device
             adb shell getprop sys.boot_completed | tee mobile/build/emulator-uat/boot.txt
