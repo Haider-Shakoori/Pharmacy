@@ -412,10 +412,20 @@ class _MobileRegistrationCardState
                 const SizedBox(height: 12),
                 TextButton.icon(
                   onPressed: () async {
-                    final Uri url = Uri.parse('https://darmaltoon.com/demo.html?lang=en&request=trial');
-                    if (!await launchUrl(url, mode: LaunchMode.externalApplication) && mounted) {
+                    final Uri url = Uri.parse(
+                      'https://darmaltoon.com/demo.html?lang=en&request=trial',
+                    );
+                    if (!await launchUrl(
+                          url,
+                          mode: LaunchMode.externalApplication,
+                        ) &&
+                        mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Unable to open Darmaltoon registration page.')),
+                        const SnackBar(
+                          content: Text(
+                            'Unable to open Darmaltoon registration page.',
+                          ),
+                        ),
                       );
                     }
                   },
