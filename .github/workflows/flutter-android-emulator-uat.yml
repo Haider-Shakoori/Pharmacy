@@ -34,13 +34,16 @@ jobs:
           dart run build_runner build --delete-conflicting-outputs
           flutter test test/features/registration/activation_gate_test.dart
           flutter build apk --debug --dart-define=API_BASE_URL=https://darmaltoon.com
-      - name: Initialize and diagnose Android Debug Bridge
+      - name: Validate emulator smoke script and ADB
         run: |
+          set -euo pipefail
+          bash -n mobile/tool/android_emulator_smoke.sh
           mkdir -p mobile/build/emulator-uat
-          adb kill-server || true
-          adb start-server 2>&1 | tee mobile/build/emulator-uat/adb-start.txt
-          adb version | tee mobile/build/emulator-uat/adb-version.txt
-          adb devices -l | tee mobile/build/emulator-uat/adb-devices-before.txt
+          ADB="$ANDROID_HOME/platform-tools/adb"
+          test -x "$ADB"
+          "$ADB" start-server 2>&1 | tee mobile/build/emulator-uat/adb-start.txt
+          "$ADB" version | tee mobile/build/emulator-uat/adb-version.txt
+          "$ADB" devices -l | tee mobile/build/emulator-uat/adb-devices-before.txt
       - name: Enable KVM on Linux runner
         run: |
           if [ ! -e /dev/kvm ]; then
@@ -66,42 +69,8 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 420
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
-          script: |
-            set -euo pipefail
-            adb start-server
-            adb devices -l
-            mkdir -p mobile/build/emulator-uat
-            adb wait-for-device
-            adb shell getprop sys.boot_completed | tee mobile/build/emulator-uat/boot.txt
-            adb install -r mobile/build/app/outputs/flutter-apk/app-debug.apk
-            PKG="$(adb shell pm list packages | tr -d '\r' | grep -E 'package:.*(businessos|pharmacy|darmaltoon)' | head -1 | cut -d: -f2)"
-            if [ -z "$PKG" ]; then
-              echo "Cannot locate installed Darmaltoon package" >&2
-              exit 1
-            fi
-            echo "$PKG" > mobile/build/emulator-uat/package.txt
-            adb shell am force-stop "$PKG" || true
-            adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
-            sleep 18
-            adb shell screencap -p /sdcard/first-launch.png
-            adb pull /sdcard/first-launch.png mobile/build/emulator-uat/first-launch.png
-            adb shell dumpsys activity activities > mobile/build/emulator-uat/activity.txt
-            adb logcat -d -v time > mobile/build/emulator-uat/logcat.txt
-            if ! grep -Fq "$PKG" mobile/build/emulator-uat/activity.txt; then
-              echo "App is not present in Android activity state" >&2
-              exit 1
-            fi
-            if grep -E 'FATAL EXCEPTION|Process: '"$PKG"'.*|AndroidRuntime.*FATAL' mobile/build/emulator-uat/logcat.txt > mobile/build/emulator-uat/crash-lines.txt; then
-              echo "Android fatal crash detected" >&2
-              cat mobile/build/emulator-uat/crash-lines.txt
-              exit 1
-            fi
-            adb shell input keyevent KEYCODE_HOME
-            adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
-            sleep 5
-            adb shell screencap -p /sdcard/relaunch.png
-            adb pull /sdcard/relaunch.png mobile/build/emulator-uat/relaunch.png
-            echo "Emulator install, launch and relaunch smoke tests passed."
+          # This action calls sh -c independently per YAML line; use one script command.
+          script: bash mobile/tool/android_emulator_smoke.sh
       - name: Upload emulator screenshots and logs
         if: always()
         uses: actions/upload-artifact@v4
