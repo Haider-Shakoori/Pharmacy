@@ -13,6 +13,7 @@ import 'package:businessos_pharmacy/core/network/server_endpoint.dart';
 import 'package:businessos_pharmacy/core/storage/secure_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MobileRegistrationCard extends ConsumerStatefulWidget {
   const MobileRegistrationCard({super.key});
@@ -27,6 +28,20 @@ class _MobileRegistrationCardState
   final TextEditingController _licenseController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  static final Uri _registrationUrl = Uri.parse(
+    'https://register.pharmacy.businessos.af/',
+  );
+
+  Future<void> _openRegistration() async {
+    final bool opened = await launchUrl(
+      _registrationUrl,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && mounted) {
+      setState(() => _error = 'Unable to open registration page.');
+    }
+  }
 
   bool _registering = false;
   bool _credentialsStep = false;
@@ -312,6 +327,14 @@ class _MobileRegistrationCardState
                     ),
                   ],
                   const SizedBox(height: 16),
+                  Center(
+                    child: TextButton(
+                      key: const ValueKey('activation-register-link'),
+                      onPressed: _openRegistration,
+                      child: const Text('Not registered? Register your pharmacy'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   FilledButton.icon(
                     key: const ValueKey('activation-key-next'),
                     onPressed: () => setState(() {
