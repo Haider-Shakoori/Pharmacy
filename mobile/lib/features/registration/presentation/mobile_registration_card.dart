@@ -415,12 +415,13 @@ class _MobileRegistrationCardState
                     final Uri url = Uri.parse(
                       'https://darmaltoon.com/demo.html?lang=en&request=trial',
                     );
-                    if (!await launchUrl(
-                          url,
-                          mode: LaunchMode.externalApplication,
-                        ) &&
-                        mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                    final bool opened = await launchUrl(
+                      url,
+                      mode: LaunchMode.externalApplication,
+                    );
+                    if (!mounted) return;
+                    if (!opened) {
+                      ScaffoldMessenger.of(this.context).showSnackBar(
                         const SnackBar(
                           content: Text(
                             'Unable to open Darmaltoon registration page.',
