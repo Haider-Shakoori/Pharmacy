@@ -22,6 +22,10 @@ void main() {
     );
     await tester.pump();
     expect(find.byKey(const ValueKey('activation-key-field')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('activation-register-link')),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('activation-email-field')), findsNothing);
     expect(
       find.byKey(const ValueKey('activation-password-field')),
