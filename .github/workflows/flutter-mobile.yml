@@ -59,6 +59,20 @@ jobs:
       - name: Test
         run: flutter test
 
+      - name: Prepare temporary test signing key
+        run: |
+          set -euo pipefail
+          KEYSTORE="$RUNNER_TEMP/darmaltoon-test.jks"
+          PASSWORD=$(openssl rand -hex 24)
+          echo "::add-mask::$PASSWORD"
+          keytool -genkeypair -keystore "$KEYSTORE" -storetype JKS -storepass "$PASSWORD" -keypass "$PASSWORD" -alias darmaltoon-test -keyalg RSA -keysize 2048 -validity 365 -dname "CN=Darmaltoon CI Test"
+          {
+            echo "DARMALTOON_ANDROID_KEYSTORE=$KEYSTORE"
+            echo "DARMALTOON_ANDROID_STORE_PASSWORD=$PASSWORD"
+            echo "DARMALTOON_ANDROID_KEY_ALIAS=darmaltoon-test"
+            echo "DARMALTOON_ANDROID_KEY_PASSWORD=$PASSWORD"
+          } >> "$GITHUB_ENV"
+
       - name: Build optimized Android test APKs
         run: flutter build apk --release --split-per-abi
 
