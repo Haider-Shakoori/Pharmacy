@@ -59,12 +59,29 @@ jobs:
       - name: Test
         run: flutter test
 
-      - name: Build installable Android APK
-        run: flutter build apk --debug
+      - name: Build optimized Android test APKs
+        run: flutter build apk --release --split-per-abi
 
-      - name: Upload Android APK
+      - name: Verify APK signatures and report sizes
+        run: |
+          set -euo pipefail
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          test -x "$APKSIGNER"
+          for apk in build/app/outputs/flutter-apk/app-*-release.apk; do
+            "$APKSIGNER" verify --verbose "$apk"
+            du -h "$apk"
+          done
+
+      - name: Upload ARM64 optimized test APK
         uses: actions/upload-artifact@v4
         with:
-          name: darmaltoon-android-apk
-          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
+          name: darmaltoon-android-arm64-test
+          path: mobile/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          if-no-files-found: error
+
+      - name: Upload ARM32 optimized test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: darmaltoon-android-arm32-test
+          path: mobile/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
           if-no-files-found: error
