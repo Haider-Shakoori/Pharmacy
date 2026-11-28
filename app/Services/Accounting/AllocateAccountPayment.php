@@ -71,6 +71,6 @@ class AllocateAccountPayment
     {
         $hash = hash('sha256', 'account-allocation:'.$key.':'.$index);
 
-        return substr($hash, 0, 8).'-'.substr($hash, 8, 4).'-4'.substr($hash, 13, 3).'-8'.substr($hash,17,3).'-'.substr($hash,20,12);
+        return substr($hash, 0, 8).'-'.substr($hash, 8, 4).'-4'.substr($hash, 13, 3).'-8'.substr($hash, 17, 3).'-'.substr($hash, 20, 12);
     }
 }
