@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Pharmacy\StoreCustomerRequest;
 use App\Http\Requests\Pharmacy\UpdateCustomerRequest;
 use App\Models\Customer;
+use App\Models\CustomerSettlement;
+use App\Services\Sales\RecordCustomerSettlement;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -49,7 +51,7 @@ class CustomerController extends Controller
 
         return view('pharmacy.customers.show', [
             'customer' => $customer,
-            'settlements' => \App\Models\CustomerSettlement::query()->with("paymentJournal")->whereIn('sale_id', $customer->sales()->select('id'))->latest('paid_at')->paginate(20, ['*'], 'payments_page'),
+            'settlements' => CustomerSettlement::query()->with('paymentJournal')->whereIn('sale_id', $customer->sales()->select('id'))->latest('paid_at')->paginate(20, ['*'], 'payments_page'),
             'outstandingSales' => $customer->sales()->where('status', 'completed')->where('due_total', '>', 0)->orderBy('business_date')->get(),
             'sales' => $sales,
             'salesTotal' => (string) $customer->sales()->where('status', 'completed')->sum('grand_total'),
@@ -57,7 +59,7 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function receivePayment(Request $request, Customer $customer, \App\Services\Sales\RecordCustomerSettlement $recorder): RedirectResponse
+    public function receivePayment(Request $request, Customer $customer, RecordCustomerSettlement $recorder): RedirectResponse
     {
         abort_unless($request->user()->hasPermission('pos.sell'), 403);
         $data = $request->validate([
@@ -70,7 +72,10 @@ class CustomerController extends Controller
         $saleId = $data['sale_id'];
         unset($data['sale_id']);
         $payment = $recorder->record($customer, $saleId, $data, $request->user()->id);
-        if ($request->boolean('print')) return redirect()->route('pharmacy.customers.payments.receipt', [$customer,$payment,'print'=>1]);
+        if ($request->boolean('print')) {
+            return redirect()->route('pharmacy.customers.payments.receipt', [$customer, $payment, 'print' => 1]);
+        }
+
         return back()->with('success', __('accounts.payment_recorded'));
     }
 

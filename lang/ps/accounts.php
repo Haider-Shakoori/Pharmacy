@@ -1,4 +1,5 @@
 <?php
+
 return [
     'statement' => 'د حساب بیان',
     'from' => 'له نېټې',

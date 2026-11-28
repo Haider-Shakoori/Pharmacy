@@ -1,9 +1,13 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-return new class extends Migration {
-    public function up(): void {
+
+return new class extends Migration
+{
+    public function up(): void
+    {
         Schema::create('customer_settlements', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignUlid('sale_id')->constrained('sales');
@@ -18,5 +22,9 @@ return new class extends Migration {
             $table->timestamps();
         });
     }
-    public function down(): void { Schema::dropIfExists('customer_settlements'); }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('customer_settlements');
+    }
 };

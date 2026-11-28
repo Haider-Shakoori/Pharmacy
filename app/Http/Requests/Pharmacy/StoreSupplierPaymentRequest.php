@@ -15,7 +15,7 @@ class StoreSupplierPaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'stock_location_id' => ['nullable','exists:stock_locations,id'],
+            'stock_location_id' => ['nullable', 'exists:stock_locations,id'],
             'amount' => ['required', 'numeric', 'gt:0', 'max:999999999999'],
             'currency' => ['required', 'alpha', 'size:3'],
             'method' => ['required', Rule::in(['cash', 'bank', 'hawala', 'other'])],
