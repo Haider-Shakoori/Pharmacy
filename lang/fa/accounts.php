@@ -34,4 +34,6 @@ return [
     'reversed' => 'برگشت شده',
     'reverse_reason' => 'دلیل برگشت',
     'reverse_confirm' => 'آیا پرداخت برگشت داده شود؟',
+    'save_print' => 'ثبت و چاپ',
+    'location' => 'محل پرداخت',
 ];

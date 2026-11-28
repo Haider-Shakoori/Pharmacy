@@ -99,6 +99,8 @@ Route::domain('{pharmacy}.'.config('pharmacy.tenant_domain'))->middleware([
 
             Route::get('/customers/{customer}/payments/{payment}/receipt', [\App\Http\Controllers\Pharmacy\AccountStatementController::class, 'customerReceipt'])->middleware('permission:customers.manage')->name('customers.payments.receipt');
             Route::get('/suppliers/{supplier}/payments/{payment}/receipt', [\App\Http\Controllers\Pharmacy\AccountStatementController::class, 'supplierReceipt'])->middleware('permission:purchases.manage')->name('suppliers.payments.receipt');
+            Route::get('/customers/{customer}/combined-receipt', [\App\Http\Controllers\Pharmacy\AccountStatementController::class, 'customerCombined'])->middleware('permission:customers.manage')->name('customers.combined-receipt');
+            Route::get('/suppliers/{supplier}/combined-receipt', [\App\Http\Controllers\Pharmacy\AccountStatementController::class, 'supplierCombined'])->middleware('permission:purchases.manage')->name('suppliers.combined-receipt');
             Route::post('/customers/{customer}/bulk-payment', [\App\Http\Controllers\Pharmacy\AccountStatementController::class, 'customerBulk'])->middleware('permission:customers.manage')->name('customers.bulk-payment');
             Route::post('/suppliers/{supplier}/bulk-payment', [\App\Http\Controllers\Pharmacy\AccountStatementController::class, 'supplierBulk'])->middleware('permission:purchases.pay')->name('suppliers.bulk-payment');
             Route::post('/customers/{customer}/payments/{payment}/reverse', [\App\Http\Controllers\Pharmacy\AccountStatementController::class, 'reverseCustomer'])->middleware('permission:accounting.manage')->name('customers.payments.reverse');

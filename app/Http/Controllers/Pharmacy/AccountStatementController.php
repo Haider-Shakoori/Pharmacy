@@ -48,6 +48,7 @@ class AccountStatementController extends Controller
     private function bulk(Request $request, Customer|Supplier $party, \App\Services\Accounting\AllocateAccountPayment $allocator, bool $customer): \Illuminate\Http\RedirectResponse
     {
         $data = $request->validate([
+            'stock_location_id'=>['nullable','exists:stock_locations,id'],
             'amount'=>['required','numeric','gt:0','decimal:0,4','max:999999999999'],
             'currency'=>['required','alpha','size:3'],
             'method'=>['required',$customer?'in:cash,bank,mobile':'in:cash,bank,hawala,other'],
@@ -55,7 +56,10 @@ class AccountStatementController extends Controller
             'idempotency_key'=>['required','uuid'],
         ]);
         $data['currency'] = strtoupper($data['currency']);
-        $allocator->record($party,$data,$request->user()->id);
+        $payments = $allocator->record($party,$data,$request->user()->id);
+        if ($request->boolean('print')) {
+            return redirect()->route('pharmacy.'.($customer?'customers':'suppliers').'.combined-receipt',[$party,'payments'=>implode(',',array_map(fn($p)=>$p->id,$payments))]);
+        }
         return back()->with('success',__('accounts.payment_recorded'));
     }
 
@@ -71,6 +75,25 @@ class AccountStatementController extends Controller
         abort_unless((string)$payment->supplier_id === (string)$supplier->id,404);
         $service->reverse($payment,$request->validate(['reason'=>'required|string|max:500'])['reason'],$request->user()->id);
         return back();
+    }
+
+    public function customerCombined(Request $request, Customer $customer): View
+    {
+        return $this->combined($request,$customer,true);
+    }
+
+    public function supplierCombined(Request $request, Supplier $supplier): View
+    {
+        return $this->combined($request,$supplier,false);
+    }
+
+    private function combined(Request $request, Customer|Supplier $party, bool $customer): View
+    {
+        $ids = array_unique(explode(',', $request->validate(['payments'=>'required|string|max:20000'])['payments']));
+        $query = $customer ? \App\Models\CustomerSettlement::whereIn('sale_id',$party->sales()->select('id')) : \App\Models\SupplierPayment::where('supplier_id',$party->id);
+        $payments = $query->whereIn('id',$ids)->with('paymentJournal')->get();
+        abort_unless($payments->count() === count($ids) && $payments->pluck('currency')->unique()->count() === 1,404);
+        return view('pharmacy.accounts.combined',compact('party','payments','customer'));
     }
 
     private function statement(Request $request, Customer|Supplier $party, string $key, bool $payable): View

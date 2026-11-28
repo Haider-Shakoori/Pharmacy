@@ -12,8 +12,8 @@ use Illuminate\Validation\ValidationException;
 
 class AllocateAccountPayment {
     public function __construct(private RecordCustomerSettlement $customers, private RecordSupplierPayment $suppliers) {}
-    public function record(Customer|Supplier $party, array $data, int $userId): void {
-        DB::transaction(function () use ($party,$data,$userId) {
+    public function record(Customer|Supplier $party, array $data, int $userId): array {
+        return DB::transaction(function () use ($party,$data,$userId) {
             $party = $party->newQuery()->lockForUpdate()->findOrFail($party->id);
             $customer = $party instanceof Customer;
             $key = $data['idempotency_key'];
@@ -22,7 +22,13 @@ class AllocateAccountPayment {
             $existing = $model::query()->where('idempotency_key',$firstKey)->first();
             if ($existing) {
                 abort_unless((int)$existing->created_by === $userId && ($customer ? $party->sales()->whereKey($existing->sale_id)->exists() : $existing->supplier_id === $party->id),409);
-                return;
+                $payments = [];
+                for ($i=0; $i<10000; $i++) {
+                    $item = $model::query()->where('idempotency_key',$this->allocationKey($key,$i))->first();
+                    if (!$item) break;
+                    $payments[] = $item;
+                }
+                return $payments;
             }
             $column = $customer ? 'due_total' : 'balance_due';
             $query = $customer ? $party->sales()->where('status','completed') : $party->invoices()->whereNotIn('status',['cancelled','paid']);
@@ -32,6 +38,7 @@ class AllocateAccountPayment {
             if (!$remaining->isPositive() || $remaining->isGreaterThan($total)) {
                 throw ValidationException::withMessages(['amount'=>'Payment exceeds outstanding balance.']);
             }
+            $payments = [];
             foreach ($invoices as $index=>$invoice) {
                 if ($remaining->isZero()) break;
                 $due = BigDecimal::of($invoice->$column);
@@ -39,12 +46,13 @@ class AllocateAccountPayment {
                 $allocation = [...$data,'amount'=>(string)$amount,'idempotency_key'=>$this->allocationKey($key,$index)];
                 if ($customer) {
                     unset($allocation['currency']);
-                    $this->customers->record($party,$invoice->id,$allocation,$userId);
+                    $payments[] = $this->customers->record($party,$invoice->id,$allocation,$userId);
                 } else {
-                    $this->suppliers->record($invoice,[...$allocation,'paid_at'=>now()],$userId);
+                    $payments[] = $this->suppliers->record($invoice,[...$allocation,'paid_at'=>now()],$userId);
                 }
                 $remaining = $remaining->minus($amount);
             }
+            return $payments;
         });
     }
     private function allocationKey(string $key,int $index): string {

@@ -195,6 +195,40 @@ class AccountingTest extends TestCase
         });
     }
 
+    public function test_customer_settlement_and_reversal_restore_balance(): void
+    {
+        $tenant = $this->createTenant(['slug'=>'settlement-test']);
+        app(TrialProvisioner::class)->provision($tenant);
+        app(TenantContext::class)->run($tenant, function (): void {
+            $user = User::query()->create(['name'=>'Accountant','email'=>'settlement@example.test','password'=>'password123']);
+            $customer = \App\Models\Customer::query()->create(['code'=>'C1','name'=>'Customer']);
+            $branch = Branch::query()->create(['code'=>'SET','name'=>'Branch','is_active'=>true]);
+            $location = StockLocation::query()->create(['branch_id'=>$branch->id,'code'=>'SET','name'=>'Store','is_active'=>true]);
+            $sale = Sale::query()->create(['sale_number'=>'SET-1','customer_id'=>$customer->id,'stock_location_id'=>$location->id,'business_date'=>now()->toDateString(),'status'=>'completed','currency'=>'AFN','grand_total'=>'100','due_total'=>'100','paid_total'=>'0','payment_status'=>'credit','created_by'=>$user->id]);
+            $data = ['amount'=>'40','method'=>'cash','idempotency_key'=>(string)\Illuminate\Support\Str::uuid()];
+            $service = app(\App\Services\Sales\RecordCustomerSettlement::class);
+            $payment = $service->record($customer,$sale->id,$data,$user->id);
+            $this->assertSame($payment->id,$service->record($customer,$sale->id,$data,$user->id)->id);
+            $this->assertSame('60.0000',$sale->fresh()->due_total);
+            $this->assertSame('40.0000',$payment->paymentJournal->total_debit);
+            app(\App\Services\Accounting\ReverseAccountPayment::class)->reverse($payment,'Test reversal',$user->id);
+            $this->assertSame('100.0000',$sale->fresh()->due_total);
+            $this->assertSame('reversed',$payment->fresh()->paymentJournal->status);
+            $second = $sale->replicate();
+            $second->sale_number = 'SET-2';
+            $second->save();
+            $allocator = app(\App\Services\Accounting\AllocateAccountPayment::class);
+            $bulk = ['amount'=>'150','currency'=>'AFN','method'=>'cash','idempotency_key'=>(string)\Illuminate\Support\Str::uuid()];
+            $payments = $allocator->record($customer,$bulk,$user->id);
+            $this->assertCount(2,$payments);
+            $this->assertSame('50.0000',(string)\Brick\Math\BigDecimal::of($sale->fresh()->due_total)->plus($second->fresh()->due_total));
+            $this->assertSame(array_column($payments,'id'),array_column($allocator->record($customer,$bulk,$user->id),'id'));
+            $snapshot = app(\App\Services\DailyClosing\DailyClosingService::class)->snapshot($location);
+            $this->assertSame('150.0000',$snapshot['cash_collected']);
+
+        });
+    }
+
     public function test_expense_reversal_preserves_original_and_posts_opposite_journal(): void
     {
         $tenant = $this->createTenant(['slug' => 'accounting-expense']);

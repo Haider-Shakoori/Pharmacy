@@ -169,7 +169,7 @@ class OperationalAccountingService
         $key = $this->paymentAccountKey($payment->method);
 
         $this->appendDebit($lines, 'accounts_payable', $amount, null, 'Supplier liability settled', Supplier::class, $payment->supplier_id);
-        $this->appendCredit($lines, $key, $amount, null, 'Supplier payment', Supplier::class, $payment->supplier_id);
+        $this->appendCredit($lines, $key, $amount, $payment->stock_location_id, 'Supplier payment', Supplier::class, $payment->supplier_id);
 
         return $this->ledger->post([
             'business_date' => $payment->paid_at->toDateString(),

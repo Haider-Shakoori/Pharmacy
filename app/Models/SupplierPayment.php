@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'purchase_invoice_id', 'supplier_id', 'payment_number', 'amount', 'currency',
-    'method', 'reference', 'paid_at', 'idempotency_key', 'created_by', 'notes',
+    'stock_location_id', 'method', 'reference', 'paid_at', 'idempotency_key', 'created_by', 'notes',
 ])]
 class SupplierPayment extends Model
 {

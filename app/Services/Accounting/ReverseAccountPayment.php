@@ -18,6 +18,9 @@ class ReverseAccountPayment {
             if ($customer && ($invoice->status !== 'completed' || $this->closing->salesBlocked($invoice->location,$date))) {
                 throw ValidationException::withMessages(['reason'=>'Sale unavailable or business day closed.']);
             }
+            if (!$customer && $payment->stock_location_id && $this->closing->salesBlocked(\App\Models\StockLocation::findOrFail($payment->stock_location_id),$date)) {
+                throw ValidationException::withMessages(['reason'=>'Daily closing has already been finalized.']);
+            }
             if (!$customer && $invoice->status === 'cancelled') {
                 throw ValidationException::withMessages(['reason'=>'Cancelled invoice cannot be adjusted.']);
             }
@@ -29,7 +32,7 @@ class ReverseAccountPayment {
             $reversal = $this->ledger->reverse($entry,$reason,$actor);
             $reversal->update(['business_date'=>$date]);
             $invoice->update(['paid_total'=>(string)$paid,$column=>(string)$due,
-                ($customer?'payment_status':'status')=>$customer?($paid->isZero()?'credit':'partial'):($paid->isZero()?'posted':'partially_paid')]);
+                ($customer?'payment_status':'status')=>$customer?($paid->isZero()?'credit':'partial'):($paid->isZero()?'open':'partially_paid')]);
         });
     }
 }

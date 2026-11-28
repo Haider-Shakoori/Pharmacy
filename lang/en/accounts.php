@@ -34,4 +34,6 @@ return [
     'reversed' => 'Reversed',
     'reverse_reason' => 'Reversal reason',
     'reverse_confirm' => 'Reverse this payment?',
+    'save_print' => 'Save & Print',
+    'location' => 'Payment location',
 ];

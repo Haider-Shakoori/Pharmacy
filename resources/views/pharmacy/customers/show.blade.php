@@ -10,7 +10,7 @@
 @if(auth()->user()->hasPermission('pos.sell'))
 @include('pharmacy.accounts.bulk', ['party'=>$customer, 'invoices'=>$outstandingSales, 'isCustomer'=>true])
 <section class="mx-auto mt-5 max-w-7xl space-y-4 rounded-2xl border bg-white p-5">
-<h2 class="text-xl font-bold">{{ __('accounts.receive_payment') }}</h2>
+<h2 id="account-payment" class="text-xl font-bold">{{ __('accounts.receive_payment') }}</h2>
 @forelse($outstandingSales as $invoice)
 <form method="POST" action="{{ route('pharmacy.customers.payments.store', $customer) }}" class="space-y-3 rounded-xl border p-4">
 @csrf
@@ -21,7 +21,7 @@
 <label>{{ __('accounts.amount') }}<input class="block w-full rounded border p-2" type="number" name="amount" min="0.0001" step="0.0001" max="{{ $invoice->due_total }}" required></label>
 <label>{{ __('accounts.method') }}<select class="block w-full rounded border p-2" name="method">@foreach(['cash','bank','mobile'] as $method)<option value="{{ $method }}">{{ __('accounts.'.$method) }}</option>@endforeach</select></label>
 <label>{{ __('accounts.reference') }}<input class="block w-full rounded border p-2" name="reference" maxlength="160"></label>
-</div><button class="rounded-xl bg-teal-700 px-4 py-2 font-bold text-white">{{ __('accounts.receive_payment') }}</button>
+</div><button class="rounded-xl bg-teal-700 px-4 py-2 font-bold text-white">{{ __('accounts.receive_payment') }}</button> <button name="print" value="1" class="rounded border px-4 py-2">{{ __('accounts.save_print') }}</button>
 </form>
 @empty<p>{{ __('accounts.no_due') }}</p>@endforelse
 </section>

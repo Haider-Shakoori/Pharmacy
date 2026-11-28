@@ -23,6 +23,7 @@ class RecordSupplierPayment
             if (! empty($data['idempotency_key'])) {
                 $existing = SupplierPayment::query()->where('idempotency_key', $data['idempotency_key'])->first();
                 if ($existing) {
+                    abort_unless($existing->purchase_invoice_id === $locked->id && (int)$existing->created_by === $userId,409);
                     return $existing;
                 }
             }
@@ -42,6 +43,12 @@ class RecordSupplierPayment
                 throw ValidationException::withMessages(['amount' => 'Payment must be greater than zero and cannot exceed the balance due.']);
             }
 
+            if (!empty($data['stock_location_id'])) {
+                $location = \App\Models\StockLocation::query()->findOrFail($data['stock_location_id']);
+                if (app(\App\Services\DailyClosing\DailyClosingService::class)->salesBlocked($location, \Illuminate\Support\Carbon::parse($data['paid_at'])->toDateString())) {
+                    throw ValidationException::withMessages(['paid_at'=>'Daily closing has already been finalized.']);
+                }
+            }
             $payment = SupplierPayment::query()->create([
                 ...$data,
                 'supplier_id' => $locked->supplier_id,

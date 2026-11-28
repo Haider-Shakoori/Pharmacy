@@ -69,7 +69,8 @@ class CustomerController extends Controller
         ]);
         $saleId = $data['sale_id'];
         unset($data['sale_id']);
-        $recorder->record($customer, $saleId, $data, $request->user()->id);
+        $payment = $recorder->record($customer, $saleId, $data, $request->user()->id);
+        if ($request->boolean('print')) return redirect()->route('pharmacy.customers.payments.receipt', [$customer,$payment,'print'=>1]);
         return back()->with('success', __('accounts.payment_recorded'));
     }
 

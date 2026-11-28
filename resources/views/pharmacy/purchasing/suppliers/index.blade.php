@@ -21,7 +21,7 @@
                         <td class="px-4 py-3"><p>{{ $supplier->contact_person ?: '—' }}</p><p class="text-xs text-slate-500">{{ $supplier->phone ?: $supplier->whatsapp ?: '—' }}</p></td>
                         <td class="px-4 py-3">{{ $supplier->purchase_orders_count }}</td>
                         <td class="px-4 py-3">{{ $supplier->invoices_count }}</td>
-                        <td class="px-4 py-3 text-end"><a class="font-semibold text-blue-700" href="{{ route('pharmacy.suppliers.edit', $supplier) }}">Edit</a></td>
+                        <td class="px-4 py-3 text-end"><a class="font-semibold text-blue-700" href="{{ route('pharmacy.suppliers.edit', $supplier) }}">Edit</a> <a class="ms-2 text-teal-700" href="{{ route('pharmacy.suppliers.statement', $supplier) }}">{{ __('accounts.statement') }}</a> @if(auth()->user()->hasPermission('purchases.pay'))<a class="ms-2 text-teal-700" href="{{ route('pharmacy.suppliers.edit', $supplier) }}#account-payment">{{ __('accounts.make_payment') }}</a>@endif</td>
                     </tr>
                 @empty
                     <tr><td colspan="5" class="px-4 py-10 text-center text-slate-500">No suppliers found.</td></tr>

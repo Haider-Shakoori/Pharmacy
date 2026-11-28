@@ -2,7 +2,7 @@
 <html lang="{{ app()->getLocale() }}" dir="{{ in_array(app()->getLocale(), ['fa','ps']) ? 'rtl' : 'ltr' }}">
 <head><meta charset="utf-8"><title>{{ __('accounts.statement') }} — {{ $party->name }}</title>
 <style>body{font:15px sans-serif;margin:24px;color:#172033}table{width:100%;border-collapse:collapse}td,th{padding:8px;border:1px solid #ccc;text-align:start}button,input{padding:8px} @media print{.controls{display:none}body{margin:0}} @page{size:A4;margin:15mm}</style></head>
-<body>
+<body><h2>{{ app(\App\Support\Tenancy\TenantContext::class)->tenant()->name }}</h2>
 <h1>{{ __('accounts.statement') }}</h1><h2>{{ $party->name }}</h2><p>{{ $party->phone }}</p>
 <form class="controls" method="get"><label>{{ __('accounts.from') }} <input type="date" name="from" value="{{ $filters['from'] ?? '' }}"></label>
 <label>{{ __('accounts.to') }} <input type="date" name="to" value="{{ $filters['to'] ?? '' }}"></label>

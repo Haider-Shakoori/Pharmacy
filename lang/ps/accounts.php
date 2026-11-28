@@ -34,4 +34,6 @@ return [
     'reversed' => 'بېرته ګرځول شوې',
     'reverse_reason' => 'د بېرته ګرځولو دلیل',
     'reverse_confirm' => 'تادیه بېرته وګرځول شي؟',
+    'save_print' => 'ثبت او چاپ',
+    'location' => 'د تادیې ځای',
 ];
