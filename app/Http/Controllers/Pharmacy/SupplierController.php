@@ -45,7 +45,10 @@ class SupplierController extends Controller
 
     public function edit(Supplier $supplier): View
     {
-        return view('pharmacy.purchasing.suppliers.edit', compact('supplier'));
+        $outstandingInvoices = $supplier->invoices()->where('balance_due', '>', 0)->whereNotIn('status', ['cancelled', 'paid'])->orderBy('invoice_date')->get();
+
+        $settlements = \App\Models\SupplierPayment::query()->with("paymentJournal")->where('supplier_id', $supplier->id)->latest('paid_at')->paginate(20, ['*'], 'payments_page');
+        return view('pharmacy.purchasing.suppliers.edit', compact('supplier', 'outstandingInvoices', 'settlements'));
     }
 
     public function update(UpdateSupplierRequest $request, Supplier $supplier): RedirectResponse

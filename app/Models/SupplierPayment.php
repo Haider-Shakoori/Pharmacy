@@ -29,4 +29,8 @@ class SupplierPayment extends Model
     {
         return ['amount' => 'decimal:4', 'paid_at' => 'datetime'];
     }
+    public function paymentJournal(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(JournalEntry::class, 'source_id')->where('source_type', self::class)->where('source_event','paid');
+    }
 }

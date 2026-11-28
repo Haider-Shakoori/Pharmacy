@@ -7,6 +7,7 @@ use App\Models\DailyClosing;
 use App\Models\DailyClosingEvent;
 use App\Models\Sale;
 use App\Models\SalePayment;
+use App\Models\CustomerSettlement;
 use App\Models\SaleReturn;
 use App\Models\SaleReturnRefund;
 use App\Models\StockLocation;
@@ -44,7 +45,7 @@ class DailyClosingService
 
         $grossSales = BigDecimal::of((string) ($sales->clone()->sum('grand_total') ?? 0));
         $discounts = BigDecimal::of((string) ($sales->clone()->sum('discount_total') ?? 0));
-        $credit = BigDecimal::of((string) ($sales->clone()->sum('due_total') ?? 0));
+        $credit = BigDecimal::of((string) (SalePayment::query()->join('sales', 'sales.id', '=', 'sale_payments.sale_id')->where('sales.stock_location_id', $location->id)->whereDate('sales.business_date', $date)->where('sales.status', 'completed')->where('sale_payments.method', 'credit')->sum('sale_payments.amount') ?? 0));
         $change = BigDecimal::of((string) ($sales->clone()->sum('change_total') ?? 0));
 
         $payments = SalePayment::query()
@@ -55,6 +56,13 @@ class DailyClosingService
             ->where('sales.status', 'completed')
             ->groupBy('sale_payments.method')
             ->pluck('total', 'method');
+
+        $settlements = CustomerSettlement::query()
+            ->join('sales', 'sales.id', '=', 'customer_settlements.sale_id')
+            ->where('sales.stock_location_id', $location->id)
+            ->whereDate('customer_settlements.business_date', $date)
+            ->selectRaw('customer_settlements.method, SUM(customer_settlements.amount) as total')
+            ->groupBy('customer_settlements.method')->pluck('total', 'method');
 
         $returnTotal = BigDecimal::of((string) SaleReturn::query()
             ->where('stock_location_id', $location->id)
@@ -71,12 +79,12 @@ class DailyClosingService
             ->groupBy('sale_return_refunds.method')
             ->pluck('total', 'method');
 
-        $cash = BigDecimal::of((string) ($payments['cash'] ?? 0))
+        $cash = BigDecimal::of((string) ($payments['cash'] ?? 0))->plus(BigDecimal::of((string) ($settlements['cash'] ?? 0)))
             ->minus($change)
             ->minus(BigDecimal::of((string) ($refunds['cash'] ?? 0)));
-        $bank = BigDecimal::of((string) ($payments['bank'] ?? 0))
+        $bank = BigDecimal::of((string) ($payments['bank'] ?? 0))->plus(BigDecimal::of((string) ($settlements['bank'] ?? 0)))
             ->minus(BigDecimal::of((string) ($refunds['bank'] ?? 0)));
-        $mobile = BigDecimal::of((string) ($payments['mobile'] ?? 0))
+        $mobile = BigDecimal::of((string) ($payments['mobile'] ?? 0))->plus(BigDecimal::of((string) ($settlements['mobile'] ?? 0)))
             ->minus(BigDecimal::of((string) ($refunds['mobile'] ?? 0)));
         $credit = $credit->minus(BigDecimal::of((string) ($refunds['credit'] ?? 0)));
 
@@ -149,8 +157,17 @@ class DailyClosingService
             ->where('completed_at', '>=', $shift->opened_at)
             ->sum('change_total');
 
+        $settledCash = CustomerSettlement::query()
+            ->join('sales', 'sales.id', '=', 'customer_settlements.sale_id')
+            ->where('sales.stock_location_id', $shift->stock_location_id)
+            ->where('customer_settlements.created_by', $shift->user_id)
+            ->whereDate('customer_settlements.business_date', $shift->business_date->toDateString())
+            ->where('customer_settlements.method', 'cash')
+            ->where('customer_settlements.paid_at', '>=', $shift->opened_at)
+            ->sum('customer_settlements.amount');
+
         $expected = BigDecimal::of($shift->opening_cash)
-            ->plus(BigDecimal::of((string) $cash))
+            ->plus(BigDecimal::of((string) $cash))->plus(BigDecimal::of((string) $settledCash))
             ->minus(BigDecimal::of((string) $change));
         $counted = BigDecimal::of($countedCash);
 
