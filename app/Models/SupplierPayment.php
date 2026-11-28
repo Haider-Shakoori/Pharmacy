@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'purchase_invoice_id', 'supplier_id', 'payment_number', 'amount', 'currency',
-    'method', 'reference', 'paid_at', 'idempotency_key', 'created_by', 'notes',
+    'stock_location_id', 'method', 'reference', 'paid_at', 'idempotency_key', 'created_by', 'notes',
 ])]
 class SupplierPayment extends Model
 {
@@ -28,5 +29,10 @@ class SupplierPayment extends Model
     protected function casts(): array
     {
         return ['amount' => 'decimal:4', 'paid_at' => 'datetime'];
+    }
+
+    public function paymentJournal(): HasOne
+    {
+        return $this->hasOne(JournalEntry::class, 'source_id')->where('source_type', self::class)->where('source_event', 'paid');
     }
 }

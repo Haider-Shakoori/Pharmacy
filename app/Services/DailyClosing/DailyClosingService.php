@@ -3,13 +3,16 @@
 namespace App\Services\DailyClosing;
 
 use App\Models\CashierShift;
+use App\Models\CustomerSettlement;
 use App\Models\DailyClosing;
 use App\Models\DailyClosingEvent;
+use App\Models\JournalLine;
 use App\Models\Sale;
 use App\Models\SalePayment;
 use App\Models\SaleReturn;
 use App\Models\SaleReturnRefund;
 use App\Models\StockLocation;
+use App\Models\SupplierPayment;
 use App\Models\User;
 use App\Services\Accounting\OperationalAccountingService;
 use App\Services\Settings\PharmacySettings;
@@ -44,7 +47,7 @@ class DailyClosingService
 
         $grossSales = BigDecimal::of((string) ($sales->clone()->sum('grand_total') ?? 0));
         $discounts = BigDecimal::of((string) ($sales->clone()->sum('discount_total') ?? 0));
-        $credit = BigDecimal::of((string) ($sales->clone()->sum('due_total') ?? 0));
+        $credit = BigDecimal::of((string) (SalePayment::query()->join('sales', 'sales.id', '=', 'sale_payments.sale_id')->where('sales.stock_location_id', $location->id)->whereDate('sales.business_date', $date)->where('sales.status', 'completed')->where('sale_payments.method', 'credit')->sum('sale_payments.amount') ?? 0));
         $change = BigDecimal::of((string) ($sales->clone()->sum('change_total') ?? 0));
 
         $payments = SalePayment::query()
@@ -55,6 +58,34 @@ class DailyClosingService
             ->where('sales.status', 'completed')
             ->groupBy('sale_payments.method')
             ->pluck('total', 'method');
+
+        $settlements = CustomerSettlement::query()
+            ->join('sales', 'sales.id', '=', 'customer_settlements.sale_id')
+            ->where('sales.stock_location_id', $location->id)
+            ->whereDate('customer_settlements.business_date', $date)
+            ->selectRaw('customer_settlements.method, SUM(customer_settlements.amount) as total')
+            ->groupBy('customer_settlements.method')->pluck('total', 'method');
+
+        $reversals = JournalLine::query()
+            ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
+            ->join('ledger_accounts', 'ledger_accounts.id', '=', 'journal_lines.ledger_account_id')
+            ->where('journal_entries.source_type', CustomerSettlement::class)
+            ->where('journal_entries.source_event', 'reversal')
+            ->whereDate('journal_entries.business_date', $date)
+            ->where('journal_lines.stock_location_id', $location->id)
+            ->groupBy('ledger_accounts.system_key')
+            ->selectRaw('ledger_accounts.system_key, SUM(journal_lines.credit) as total')
+            ->pluck('total', 'system_key');
+
+        $supplierCash = JournalLine::query()
+            ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
+            ->join('ledger_accounts', 'ledger_accounts.id', '=', 'journal_lines.ledger_account_id')
+            ->where('journal_entries.source_type', SupplierPayment::class)
+            ->whereIn('journal_entries.status', ['posted', 'reversed'])
+            ->whereDate('journal_entries.business_date', $date)
+            ->where('journal_lines.stock_location_id', $location->id)
+            ->where('ledger_accounts.system_key', 'cash_on_hand')
+            ->selectRaw('COALESCE(SUM(journal_lines.credit - journal_lines.debit),0) as net')->value('net');
 
         $returnTotal = BigDecimal::of((string) SaleReturn::query()
             ->where('stock_location_id', $location->id)
@@ -71,13 +102,13 @@ class DailyClosingService
             ->groupBy('sale_return_refunds.method')
             ->pluck('total', 'method');
 
-        $cash = BigDecimal::of((string) ($payments['cash'] ?? 0))
-            ->minus($change)
+        $cash = BigDecimal::of((string) ($payments['cash'] ?? 0))->plus(BigDecimal::of((string) ($settlements['cash'] ?? 0)))
+            ->minus($change)->minus((string) $supplierCash)->minus((string) ($reversals['cash_on_hand'] ?? 0))
             ->minus(BigDecimal::of((string) ($refunds['cash'] ?? 0)));
-        $bank = BigDecimal::of((string) ($payments['bank'] ?? 0))
-            ->minus(BigDecimal::of((string) ($refunds['bank'] ?? 0)));
-        $mobile = BigDecimal::of((string) ($payments['mobile'] ?? 0))
-            ->minus(BigDecimal::of((string) ($refunds['mobile'] ?? 0)));
+        $bank = BigDecimal::of((string) ($payments['bank'] ?? 0))->plus(BigDecimal::of((string) ($settlements['bank'] ?? 0)))
+            ->minus(BigDecimal::of((string) ($refunds['bank'] ?? 0)))->minus((string) ($reversals['bank'] ?? 0));
+        $mobile = BigDecimal::of((string) ($payments['mobile'] ?? 0))->plus(BigDecimal::of((string) ($settlements['mobile'] ?? 0)))
+            ->minus(BigDecimal::of((string) ($refunds['mobile'] ?? 0)))->minus((string) ($reversals['mobile_money'] ?? 0));
         $credit = $credit->minus(BigDecimal::of((string) ($refunds['credit'] ?? 0)));
 
         $openingCash = BigDecimal::of((string) CashierShift::query()
@@ -149,8 +180,28 @@ class DailyClosingService
             ->where('completed_at', '>=', $shift->opened_at)
             ->sum('change_total');
 
+        $settledCash = CustomerSettlement::query()
+            ->join('sales', 'sales.id', '=', 'customer_settlements.sale_id')
+            ->where('sales.stock_location_id', $shift->stock_location_id)
+            ->where('customer_settlements.created_by', $shift->user_id)
+            ->whereDate('customer_settlements.business_date', $shift->business_date->toDateString())
+            ->where('customer_settlements.method', 'cash')
+            ->where('customer_settlements.paid_at', '>=', $shift->opened_at)
+            ->sum('customer_settlements.amount');
+
+        $adjustments = JournalLine::query()
+            ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
+            ->join('ledger_accounts', 'ledger_accounts.id', '=', 'journal_lines.ledger_account_id')
+            ->where('journal_lines.stock_location_id', $shift->stock_location_id)
+            ->where('journal_entries.posted_by', $shift->user_id)
+            ->whereDate('journal_entries.business_date', $shift->business_date->toDateString())
+            ->where('journal_entries.occurred_at', '>=', $shift->opened_at)
+            ->where('ledger_accounts.system_key', 'cash_on_hand')
+            ->where(fn ($q) => $q->where('journal_entries.source_type', SupplierPayment::class)->orWhere(fn ($q) => $q->where('journal_entries.source_type', CustomerSettlement::class)->where('journal_entries.source_event', 'reversal')))
+            ->selectRaw('COALESCE(SUM(journal_lines.debit - journal_lines.credit),0) as net')->value('net');
+
         $expected = BigDecimal::of($shift->opening_cash)
-            ->plus(BigDecimal::of((string) $cash))
+            ->plus(BigDecimal::of((string) $cash))->plus(BigDecimal::of((string) $settledCash))->plus((string) $adjustments)
             ->minus(BigDecimal::of((string) $change));
         $counted = BigDecimal::of($countedCash);
 

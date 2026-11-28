@@ -21,7 +21,7 @@
                         <td class="px-4 py-3">{{ $customer->sales_count }}</td>
                         <td class="px-4 py-3 text-end">{{ number_format((float) $customer->credit_limit, 2) }} AFN</td>
                         <td class="px-4 py-3 text-end font-semibold {{ (float) ($customer->outstanding_credit ?? 0) > 0 ? 'text-amber-700' : 'text-slate-700' }}">{{ number_format((float) ($customer->outstanding_credit ?? 0), 2) }} AFN</td>
-                        <td class="px-4 py-3 text-end"><a class="font-semibold text-blue-700" href="{{ route('pharmacy.customers.edit', $customer) }}">Edit</a></td>
+                        <td class="px-4 py-3 text-end"><a class="font-semibold text-blue-700" href="{{ route('pharmacy.customers.edit', $customer) }}">Edit</a> <a class="ms-2 text-teal-700" href="{{ route('pharmacy.customers.statement', $customer) }}">{{ __('accounts.statement') }}</a> @if(auth()->user()->hasPermission('pos.sell'))<a class="ms-2 text-teal-700" href="{{ route('pharmacy.customers.show', $customer) }}#account-payment">{{ __('accounts.receive_payment') }}</a>@endif</td>
                     </tr>
                 @empty
                     <tr><td colspan="5" class="px-4 py-10 text-center text-slate-500">No customers found.</td></tr>

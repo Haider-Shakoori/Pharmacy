@@ -3,6 +3,7 @@
 namespace Tests\Feature\Pharmacy;
 
 use App\Models\Branch;
+use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\JournalEntry;
 use App\Models\LedgerAccount;
@@ -15,14 +16,20 @@ use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Access\RbacProvisioner;
 use App\Services\Accounting\AccountingProvisioner;
+use App\Services\Accounting\AllocateAccountPayment;
 use App\Services\Accounting\ExpenseService;
 use App\Services\Accounting\OperationalAccountingService;
+use App\Services\Accounting\ReverseAccountPayment;
+use App\Services\DailyClosing\DailyClosingService;
 use App\Services\Inventory\StockMovementService;
 use App\Services\Purchasing\RecordSupplierPayment;
+use App\Services\Sales\RecordCustomerSettlement;
 use App\Services\Subscriptions\TrialProvisioner;
 use App\Support\Tenancy\TenantContext;
+use Brick\Math\BigDecimal;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AccountingTest extends TestCase
@@ -192,6 +199,40 @@ class AccountingTest extends TestCase
                 'ledger_account_id' => LedgerAccount::query()->where('system_key', 'hawala_clearing')->value('id'),
                 'credit' => 25,
             ]);
+        });
+    }
+
+    public function test_customer_settlement_and_reversal_restore_balance(): void
+    {
+        $tenant = $this->createTenant(['slug' => 'settlement-test']);
+        app(TrialProvisioner::class)->provision($tenant);
+        app(TenantContext::class)->run($tenant, function (): void {
+            $user = User::query()->create(['name' => 'Accountant', 'email' => 'settlement@example.test', 'password' => 'password123']);
+            $customer = Customer::query()->create(['code' => 'C1', 'name' => 'Customer']);
+            $branch = Branch::query()->create(['code' => 'SET', 'name' => 'Branch', 'is_active' => true]);
+            $location = StockLocation::query()->create(['branch_id' => $branch->id, 'code' => 'SET', 'name' => 'Store', 'is_active' => true]);
+            $sale = Sale::query()->create(['sale_number' => 'SET-1', 'customer_id' => $customer->id, 'stock_location_id' => $location->id, 'business_date' => now()->toDateString(), 'status' => 'completed', 'currency' => 'AFN', 'grand_total' => '100', 'due_total' => '100', 'paid_total' => '0', 'payment_status' => 'credit', 'created_by' => $user->id]);
+            $data = ['amount' => '40', 'method' => 'cash', 'idempotency_key' => (string) Str::uuid()];
+            $service = app(RecordCustomerSettlement::class);
+            $payment = $service->record($customer, $sale->id, $data, $user->id);
+            $this->assertSame($payment->id, $service->record($customer, $sale->id, $data, $user->id)->id);
+            $this->assertSame('60.0000', $sale->fresh()->due_total);
+            $this->assertSame('40.0000', $payment->paymentJournal->total_debit);
+            app(ReverseAccountPayment::class)->reverse($payment, 'Test reversal', $user->id);
+            $this->assertSame('100.0000', $sale->fresh()->due_total);
+            $this->assertSame('reversed', $payment->fresh()->paymentJournal->status);
+            $second = $sale->replicate();
+            $second->sale_number = 'SET-2';
+            $second->save();
+            $allocator = app(AllocateAccountPayment::class);
+            $bulk = ['amount' => '150', 'currency' => 'AFN', 'method' => 'cash', 'idempotency_key' => (string) Str::uuid()];
+            $payments = $allocator->record($customer, $bulk, $user->id);
+            $this->assertCount(2, $payments);
+            $this->assertSame('50.0000', (string) BigDecimal::of($sale->fresh()->due_total)->plus($second->fresh()->due_total));
+            $this->assertSame(array_column($payments, 'id'), array_column($allocator->record($customer, $bulk, $user->id), 'id'));
+            $snapshot = app(DailyClosingService::class)->snapshot($location);
+            $this->assertSame('150.0000', $snapshot['cash_collected']);
+
         });
     }
 

@@ -24,6 +24,10 @@ class SupplierPaymentController extends Controller
             $request->user()->id,
         );
 
+        if ($request->boolean('print')) {
+            return redirect()->route('pharmacy.suppliers.payments.receipt', [$purchaseInvoice->supplier_id, $payment, 'print' => 1]);
+        }
+
         return back()->with('success', "Supplier payment {$payment->payment_number} recorded.");
     }
 }

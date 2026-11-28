@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Pharmacy\AccountingAdjustmentController;
 use App\Http\Controllers\Pharmacy\AccountingController;
+use App\Http\Controllers\Pharmacy\AccountStatementController;
 use App\Http\Controllers\Pharmacy\AlertController;
 use App\Http\Controllers\Pharmacy\AlertHistoryController;
 use App\Http\Controllers\Pharmacy\Auth\LoginController as PharmacyLoginController;
@@ -94,10 +95,22 @@ Route::domain('{pharmacy}.'.config('pharmacy.tenant_domain'))->middleware([
                 ->middleware('permission:medicines.manage')
                 ->name('medicine-references.store');
 
+            Route::get('/customers/{customer}/statement', [AccountStatementController::class, 'customer'])->middleware('permission:customers.manage')->name('customers.statement');
+            Route::get('/suppliers/{supplier}/statement', [AccountStatementController::class, 'supplier'])->middleware('permission:purchases.manage')->name('suppliers.statement');
+
+            Route::get('/customers/{customer}/payments/{payment}/receipt', [AccountStatementController::class, 'customerReceipt'])->middleware('permission:customers.manage')->name('customers.payments.receipt');
+            Route::get('/suppliers/{supplier}/payments/{payment}/receipt', [AccountStatementController::class, 'supplierReceipt'])->middleware('permission:purchases.manage')->name('suppliers.payments.receipt');
+            Route::get('/customers/{customer}/combined-receipt', [AccountStatementController::class, 'customerCombined'])->middleware('permission:customers.manage')->name('customers.combined-receipt');
+            Route::get('/suppliers/{supplier}/combined-receipt', [AccountStatementController::class, 'supplierCombined'])->middleware('permission:purchases.manage')->name('suppliers.combined-receipt');
+            Route::post('/customers/{customer}/bulk-payment', [AccountStatementController::class, 'customerBulk'])->middleware('permission:customers.manage')->name('customers.bulk-payment');
+            Route::post('/suppliers/{supplier}/bulk-payment', [AccountStatementController::class, 'supplierBulk'])->middleware('permission:purchases.pay')->name('suppliers.bulk-payment');
+            Route::post('/customers/{customer}/payments/{payment}/reverse', [AccountStatementController::class, 'reverseCustomer'])->middleware('permission:accounting.manage')->name('customers.payments.reverse');
+            Route::post('/suppliers/{supplier}/payments/{payment}/reverse', [AccountStatementController::class, 'reverseSupplier'])->middleware('permission:accounting.manage')->name('suppliers.payments.reverse');
             Route::resource('suppliers', SupplierController::class)
                 ->except(['show', 'destroy'])
                 ->middleware('permission:purchases.manage');
 
+            Route::post('/customers/{customer}/payments', [CustomerController::class, 'receivePayment'])->middleware('permission:customers.manage')->name('customers.payments.store');
             Route::resource('customers', CustomerController::class)
                 ->except(['destroy'])
                 ->middleware('permission:customers.manage');
